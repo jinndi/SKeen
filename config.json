@@ -1,0 +1,131 @@
+{
+  "log": {
+    "disabled": false,
+    "level": "error",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "listen_port": 2080,
+      "type": "socks"
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "type": "selector",
+      "default": "auto",
+      "interrupt_exist_connections": false,
+      "outbounds": [
+        "auto",
+        "EXAMPLE1",
+        "EXAMPLE2",
+        "direct"
+      ]
+    },
+    {
+      "tag": "auto",
+      "type": "urltest",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": "10m",
+      "tolerance": 50,
+      "idle_timeout": "30m",
+      "interrupt_exist_connections": false,
+      "outbounds": [
+        "EXAMPLE1",
+        "EXAMPLE2"
+      ]
+    },
+    {
+      "tag": "direct",
+      "type": "direct"
+    },
+    {
+      "tag": "EXAMPLE1",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example1.online",
+      "server_port": 443,
+      "tls": {
+        "alpn": [
+          "h1", "h2"
+        ],
+        "enabled": true,
+        "server_name": "example1.online",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        }
+      }
+    },
+    {
+      "tag": "EXAMPLE2",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example2.online",
+      "server_port": 443,
+      "tls": {
+        "alpn": [
+          "h1", "h2"
+        ],
+        "enabled": true,
+        "server_name": "example2.online",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        }
+      }
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "final": "proxy",
+    "rules": [
+      {
+        "action": "sniff"
+      },
+      {
+        "action": "reject",
+        "rule_set": "adguard"
+      },
+      {
+        "action": "route",
+        "clash_mode": "direct",
+        "outbound": "direct"
+      },
+      {
+        "action": "route",
+        "clash_mode": "global",
+        "outbound": "proxy"
+      }
+    ],
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": "adguard",
+        "format": "binary",
+        "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs",
+        "download_detour": "direct",
+        "update_interval": "24h0m0s"
+      }
+    ]
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "external_ui_download_url": "https://ghproxy.cc/https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip",
+      "external_ui": "/opt/etc/sing-box/zashboard",
+      "external_ui_download_detour": "direct",
+      "default_mode": "rule"
+    },
+    "cache_file": {
+      "enabled": true,
+      "path": "/opt/etc/sing-box/cache.db"
+    }
+  }
+}
