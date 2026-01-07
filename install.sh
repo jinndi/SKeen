@@ -255,7 +255,9 @@ install(){
   if is_singbox_running; then
     exiterr "Sing-box is already running. Please stop and delete it before installing."
   fi
-  read -n1 -r -p "Press any key to start installation..."
+  printf "Press any key to start installation..." > /dev/tty
+  dd bs=1 count=1 < /dev/tty >/dev/null 2>&1
+  echo > /dev/tty
   get_os_release
   get_architecture
   check_ndmc
