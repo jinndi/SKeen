@@ -68,7 +68,7 @@ get_latest_version() {
 }
 
 show_header() {
-  printf '\033[1;35m'
+  printf '\n\033[1;35m'
   cat <<EOF
 #############################################
  SING-BOX KEENETIC $(get_current_version)
@@ -313,17 +313,17 @@ show_menu(){
   show_header
 
   if is_singbox_running; then
-    printf "$(cyan "Service status:") $(green "active")"
-    printf "\n$(cyan "Select option:")\n"
-    printf " $(green "1.") ❌ Stop\n"
+    printf "%s %s\n" "$(cyan "Service status:")" "$(green "active")"
+    printf "\n%s\n" "$(cyan "Select option:")"
+    printf " %s ❌ Stop\n" "$(green "1.")"
   else
-    printf "$(cyan "Service status:") $(red "not active")\n"
-    printf "\n$(cyan "Select option:")\n"
-    printf " $(green "1.") 🚀 Start\n"
+    printf "%s %s\n" "$(cyan "Service status:")" "$(red "not active")"
+    printf "\n%s\n" "$(cyan "Select option:")"
+    printf " %s 🚀 Start\n" "$(green "1.")"
   fi
-  printf " $(green "2.") 🌀 Restart\n"
-  printf " $(green "3.") 🪣 Uninstall\n"
-  printf " $(green "4.") 🚪 Exit\n"
+  printf " %s 🌀 Restart\n"   "$(green "2.")"
+  printf " %s 🪣 Uninstall\n" "$(green "3.")"
+  printf " %s 🚪 Exit\n"      "$(green "4.")"
 
   while :; do
     printf "Choice: " > /dev/tty
@@ -358,9 +358,10 @@ run(){
     LATEST_VERSION="$(get_latest_version)"
 
     if [ -n "$LATEST_VERSION" ] && [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
-      printf "$(cyan "New version of the sing-box core is available:") $(green "$LATEST_VERSION")"
-      printf "$(cyan "Current installed version:") $(red "$CURRENT_VERSION")"
-      printf "$(cyan "More details:") $(green "https://github.com/SagerNet/sing-box/releases")"
+      printf "%s %s\n" "$(cyan "New version of the sing-box core is available:")" "$(green "$LATEST_VERSION")"
+      printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$CURRENT_VERSION")"
+      printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/SagerNet/sing-box/releases")"
+
       while :; do
         printf "Perform the update? [y/n] (default: n): " > /dev/tty
         read option < /dev/tty
