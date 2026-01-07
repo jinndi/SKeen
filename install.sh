@@ -337,14 +337,14 @@ show_menu(){
         if is_singbox_running; then
           "$INIT_SCRIPT" stop
         else
-          "$INIT_SCRIPT" start
+          "$INIT_SCRIPT" start >/dev/null 2>&1 </dev/null &
         fi
         press_any_side_to_open_menu
       ;;
       2)
         printf "\n"
         echomsg "------------------------------------------------"
-        "$INIT_SCRIPT" restart
+        "$INIT_SCRIPT" restart >/dev/null 2>&1 </dev/null &
         press_any_side_to_open_menu
       ;;
       3) accept_uninstall;;
@@ -380,7 +380,7 @@ run(){
             get_architecture
             download_latest_version "$LATEST_VERSION"
             install_sb_bin
-            "$INIT_SCRIPT" start
+            "$INIT_SCRIPT" start >/dev/null 2>&1 </dev/null & 
             echook "The sing-box core has been successfully updated"
             press_any_side_to_open_menu
           ;;
