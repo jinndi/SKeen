@@ -349,7 +349,6 @@ restart_singbox() {
 
   if [ "$rc" -eq 0 ]; then
     echook "Sing-box restarted successfully."
-    return 0
   else
     echoerr "Failed to restart Sing-box."
   fi
