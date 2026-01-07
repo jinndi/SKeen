@@ -124,6 +124,12 @@ get_architecture(){
   esac
 }
 
+check_ndmc(){
+  if ! command -v ndmc >/dev/null 2>&1; then
+    exiterr "ndmc not found! Please install ndmc before proceeding."
+  fi
+}
+
 download_latest_version(){
   download_version="$1"
 
@@ -175,7 +181,11 @@ install_sb_bin(){
 }
 
 create_sb_config(){
-  [ -d "$CONFIG_DIR" ] && rm -rf "$CONFIG_DIR"
+  if [ -d "$CONFIG_DIR" ] && ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
+    return
+  else
+    rm -rf "$CONFIG_DIR"
+  fi
   
   echomsg "Creating configuration directory at $CONFIG_DIR" 1
   mkdir -p "$CONFIG_DIR"
@@ -247,6 +257,7 @@ install(){
   read -n1 -r -p "Press any key to start installation..."
   get_os_release
   get_architecture
+  check_ndmc
   download_latest_version
   install_sb_bin
   create_sb_config
