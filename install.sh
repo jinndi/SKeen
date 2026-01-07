@@ -310,6 +310,24 @@ accept_uninstall(){
   show_menu
 }
 
+start_singbox() {
+  echomsg "Starting Sing-box..."
+  ( trap '' HUP INT; "$INIT_SCRIPT" start >/dev/null 2>&1 </dev/null & )
+  echook "Sing-box started."
+}
+
+stop_singbox() {
+  echomsg "Stopping Sing-box..."
+  "$INIT_SCRIPT" stop >/dev/null 2>&1
+  echook "Sing-box stopped."
+}
+
+restart_singbox() {
+  echomsg "Restarting Sing-box..."
+  ( trap '' HUP INT; "$INIT_SCRIPT" restart >/dev/null 2>&1 </dev/null & )
+  echook "Sing-box restarted."
+}
+
 show_menu(){
   show_header
 
@@ -335,16 +353,16 @@ show_menu(){
         printf "\n"
         echomsg "------------------------------------------------"
         if is_singbox_running; then
-          "$INIT_SCRIPT" stop
+          stop_singbox
         else
-          "$INIT_SCRIPT" start >/dev/null 2>&1 </dev/null &
+          start_singbox
         fi
         press_any_side_to_open_menu
       ;;
       2)
         printf "\n"
         echomsg "------------------------------------------------"
-        "$INIT_SCRIPT" restart >/dev/null 2>&1 </dev/null &
+        restart_singbox
         press_any_side_to_open_menu
       ;;
       3) accept_uninstall;;
@@ -374,13 +392,13 @@ run(){
         case "$option" in
           y|Y)
             if is_singbox_running; then
-              "$INIT_SCRIPT" stop
+              stop_singbox
             fi
             get_os_release
             get_architecture
             download_latest_version "$LATEST_VERSION"
             install_sb_bin
-            "$INIT_SCRIPT" start >/dev/null 2>&1 </dev/null & 
+            start_singbox
             echook "The sing-box core has been successfully updated"
             press_any_side_to_open_menu
           ;;
