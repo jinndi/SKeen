@@ -314,20 +314,45 @@ accept_uninstall(){
 
 start_singbox() {
   echomsg "Starting Sing-box..."
-  echo "$INIT_SCRIPT start >/dev/null 2>&1" | at now
-  echook "Sing-box started."
+  trap '' INT
+  "$INIT_SCRIPT" start >/dev/null 2>&1
+  rc=$?
+  trap - INT
+
+  if [ "$rc" -eq 0 ]; then
+    echook "Sing-box started."
+  else
+    echoerr "Failed to start Sing-box."
+  fi
 }
 
 stop_singbox() {
   echomsg "Stopping Sing-box..."
+  trap '' INT
   "$INIT_SCRIPT" stop >/dev/null 2>&1
-  echook "Sing-box stopped."
+  rc=$?
+  trap - INT
+
+  if [ "$rc" -eq 0 ]; then
+    echook "Sing-box stopped."
+  else
+    echoerr "Failed to stop Sing-box."
+  fi
 }
 
 restart_singbox() {
   echomsg "Restarting Sing-box..."
-  echo "$INIT_SCRIPT restart >/dev/null 2>&1" | at now
-  echook "Sing-box restarted."
+  trap '' INT
+  "$INIT_SCRIPT" restart >/dev/null 2>&1
+  rc=$?
+  trap - INT
+
+  if [ "$rc" -eq 0 ]; then
+    echook "Sing-box restarted successfully."
+    return 0
+  else
+    echoerr "Failed to restart Sing-box."
+  fi
 }
 
 show_menu(){
