@@ -7,6 +7,8 @@
 # Released under the MIT License, see the accompanying file LICENSE
 # or https://opensource.org/licenses/MIT
 
+trap '' INT QUIT HUP
+
 PKG_OS=""
 PKG_ARCH=""
 PKG_SUFFIX=""
@@ -272,7 +274,7 @@ install(){
   printf "\n"
   echook "Installation completed, sing-box version:"
   "$SB_BIN" version
-  echomsg "You can now configure sing-box by editing $CONFIG_FILE" 1
+  echomsg "You can now configure sing-box by editing $CONFIG_DIR" 1
   press_any_side_to_open_menu
 }
 
@@ -286,6 +288,10 @@ uninstall(){
   rm -f "$INIT_SCRIPT"
   echomsg "Removing current script..."
   rm -f "$PATH_SCRIPT"
+  echomsg "Removing proxy interface Proxy0 from ndmc..."
+  ndmc -c interface Proxy0 down  &&
+  ndmc -c no interface Proxy0 &&
+  ndmc -c system configuration save
 }
 
 accept_uninstall(){
@@ -314,11 +320,8 @@ accept_uninstall(){
 
 start_singbox() {
   echomsg "Starting Sing-box..."
-  trap '' INT
   "$INIT_SCRIPT" start >/dev/null 2>&1
   rc=$?
-  trap - INT
-
   if [ "$rc" -eq 0 ]; then
     echook "Sing-box started."
   else
@@ -328,11 +331,8 @@ start_singbox() {
 
 stop_singbox() {
   echomsg "Stopping Sing-box..."
-  trap '' INT
   "$INIT_SCRIPT" stop >/dev/null 2>&1
   rc=$?
-  trap - INT
-
   if [ "$rc" -eq 0 ]; then
     echook "Sing-box stopped."
   else
@@ -342,11 +342,8 @@ stop_singbox() {
 
 restart_singbox() {
   echomsg "Restarting Sing-box..."
-  trap '' INT
   "$INIT_SCRIPT" restart >/dev/null 2>&1
   rc=$?
-  trap - INT
-
   if [ "$rc" -eq 0 ]; then
     echook "Sing-box restarted successfully."
   else
@@ -358,11 +355,11 @@ show_menu(){
   show_header
 
   if is_singbox_running; then
-    printf "\n%s %s\n" "$(cyan "Service status:")" "$(green "active")"
+    printf "\n%s %s\n" "$(cyan "Status:")" "$(green "active")"
     printf "\n%s\n" "$(cyan "Select option:")"
     printf " %s ❌ Stop\n" "$(green "1.")"
   else
-    printf "\n%s %s\n" "$(cyan "Service status:")" "$(red "not active")"
+    printf "\n%s %s\n" "$(cyan "Status:")" "$(red "not active")"
     printf "\n%s\n" "$(cyan "Select option:")"
     printf " %s 🚀 Start\n" "$(green "1.")"
   fi
@@ -391,8 +388,11 @@ show_menu(){
         restart_singbox
         press_any_side_to_open_menu
       ;;
-      3) accept_uninstall;;
-      4) exit 0 ;;
+      3) accept_uninstall ;;
+      4) 
+        trap - INT QUIT HUP
+        exit 0 
+      ;;
       *)
         echoerr "Incorrect option"
       ;;
