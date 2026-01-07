@@ -274,11 +274,11 @@ uninstall(){
   if is_singbox_running; then
     "$INIT_SCRIPT" stop
   fi
-  echomsg "Removing sing-box binary..." 1
+  echomsg "Removing sing-box binary..."
   rm -f "$SB_BIN"
-  echomsg "Removing init script..." 1
+  echomsg "Removing init script..."
   rm -f "$INIT_SCRIPT"
-  echomsg "Removing current script..." 1
+  echomsg "Removing current script..."
   rm -f "$PATH_SCRIPT"
 }
 
@@ -288,6 +288,12 @@ accept_uninstall(){
     [ -z "$option" ] && option="n"
     case "$option" in
       y|Y|n|N)
+        echomsg "Uninstalling Sing-box..." 1
+        uninstall
+        echook "Sing-box has been uninstalled successfully."
+        exit 0
+      ;;
+      n|N)
         break
       ;;
       *)
@@ -295,15 +301,7 @@ accept_uninstall(){
       ;;
     esac
   done
-
-  if [ "$option" = y ] || [ "$option" = Y ]; then
-    echomsg "Uninstalling Sing-box..." 1
-    uninstall
-    echook "Sing-box has been uninstalled successfully."
-    exit 0
-  else
-    show_menu
-  fi
+  show_menu
 }
 
 show_menu(){
@@ -320,36 +318,30 @@ show_menu(){
   fi
   printf " $(green "2.") 🌀 Restart\n"
   printf " $(green "3.") 🪣 Uninstall\n"
-  printf " $(green "4.") 🚪 Exit"
+  printf " $(green "4.") 🚪 Exit\n"
 
   while :; do
     read -rp "Choice: " option
     case "$option" in
-      1|2|3|4)
-        break
+      1)
+        if is_singbox_running; then
+          "$INIT_SCRIPT" stop
+        else
+          "$INIT_SCRIPT" start
+        fi
+        press_any_side_to_open_menu
       ;;
+      2)
+        "$INIT_SCRIPT" restart
+        press_any_side_to_open_menu
+      ;;
+      3) accept_uninstall;;
+      4) exit 0 ;;
       *)
         echoerr "Incorrect option"
       ;;
     esac
   done
-
-  case "$option" in
-    1)
-      if is_singbox_running; then
-        "$INIT_SCRIPT" stop
-      else
-        "$INIT_SCRIPT" start
-      fi
-      press_any_side_to_open_menu
-    ;;
-    2)
-      "$INIT_SCRIPT" restart
-      press_any_side_to_open_menu
-    ;;
-    3) accept_uninstall;;
-    4) exit 0 ;;
-  esac
 }
 
 run(){
@@ -366,7 +358,19 @@ run(){
         read -rp "Perform the update? [y/n] (default: n): " option
         [ -z "$option" ] && option="n"
         case "$option" in
-          y|Y|n|N)
+          y|Y)
+            if is_singbox_running; then
+              "$INIT_SCRIPT" stop
+            fi
+            get_os_release
+            get_architecture
+            download_latest_version "$LATEST_VERSION"
+            install_sb_bin
+            "$INIT_SCRIPT" start
+            echook "The sing-box core has been successfully updated"
+            press_any_side_to_open_menu
+          ;;
+          n|N)
             break
           ;;
           *)
@@ -374,19 +378,6 @@ run(){
           ;;
         esac
       done
-
-      if [ "$option" = y ] || [ "$option" = Y ]; then
-        if is_singbox_running; then
-          "$INIT_SCRIPT" stop
-        fi
-        get_os_release
-        get_architecture
-        download_latest_version "$LATEST_VERSION"
-        install_sb_bin
-        "$INIT_SCRIPT" start
-        echook "The sing-box core has been successfully updated"
-        press_any_side_to_open_menu
-      fi
     fi
   fi
 
