@@ -312,7 +312,7 @@ accept_uninstall(){
 
 start_singbox() {
   echomsg "Starting Sing-box..."
-  ( trap '' HUP INT; "$INIT_SCRIPT" start >/dev/null 2>&1 </dev/null & )
+  echo "$INIT_SCRIPT start >/dev/null 2>&1" | at now
   echook "Sing-box started."
 }
 
@@ -324,7 +324,7 @@ stop_singbox() {
 
 restart_singbox() {
   echomsg "Restarting Sing-box..."
-  ( trap '' HUP INT; "$INIT_SCRIPT" restart >/dev/null 2>&1 </dev/null & )
+  echo "$INIT_SCRIPT restart >/dev/null 2>&1" | at now
   echook "Sing-box restarted."
 }
 
