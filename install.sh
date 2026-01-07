@@ -319,7 +319,7 @@ show_menu(){
   printf " $(green "2.") 🌀 Restart\n"
   printf " $(green "3.") 🪣 Uninstall\n"
   printf " $(green "4.") 🚪 Exit\n"
-
+  sleep 10
   while :; do
     read -rp "Choice: " option
     case "$option" in
