@@ -1,2 +1,43 @@
-# sing-box-keenetic
-Installation script for sing-box on Keenetic routers
+<p align="center">
+  <img alt="sing-box-keenetic" src="/logo.webp" width="180">
+</p>
+<h1 align="center">
+  sing-box-keenetic
+</h1>
+<h3 align="center">
+Installation script for sing-box on Keenetic/Netcraze routers
+</h3>
+
+<p align="center">
+<img alt="Release" src="https://img.shields.io/github/v/release/jinndi/sing-box-keenetic">
+<img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/sing-box-keenetic">
+<img alt="License" src="https://img.shields.io/github/license/jinndi/sing-box-keenetic">
+<img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2Fsing-box-keenetic&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
+</p>
+
+> [!WARNING]
+> Tested on the aarch64 (arm64) CPU architecture. Please report any issues.
+
+### 🚀 Features
+- Installing the latest version of sing-box on Keenetic/Netcraze routers
+- Detecting CPU architecture and type to select the appropriate sing-box IPK package
+- Updating the sing-box core from the management script upon launch
+- Creating and configuring a proxy interface for sing-box inbound
+- Start/stop/restart/remove options from the script menu
+- Pre-configured Zashboard web panel via Clash API
+
+### 📋 Requirements
+- CPU types: aarch64 (arm64), armv6, armv7, mipsel, mips
+- Entware installed and configured on the router
+- `curl` and `tar` packages installed via `opkg install`
+- **Proxy Client** component is installed on the router
+- Other sing-box packages removed beforehand
+
+### 💾 Installation
+
+**Run from Entware via SSH:**
+
+```
+curl -Ls https://raw.githubusercontent.com/jinndi/sing-box-keenetic/main/install.sh | sh
+```
+Manage the package further using the `sb` command.
