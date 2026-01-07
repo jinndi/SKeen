@@ -278,7 +278,7 @@ install(){
 
 uninstall(){
   if is_singbox_running; then
-    "$INIT_SCRIPT" stop
+    stop_singbox
   fi
   echomsg "Removing sing-box binary..."
   rm -f "$SB_BIN"
