@@ -292,6 +292,14 @@ uninstall(){
   ndmc -c interface Proxy0 down  &&
   ndmc -c no interface Proxy0 &&
   ndmc -c system configuration save
+  echomsg "Removing sing-box cache and temporary files..."
+  for item in "$SINGBOX_DIR"/*; do
+    if [ "$item" != "$CONFIG_DIR" ]; then
+      rm -rf "$item"
+    fi
+  done
+  echomsg "Configuration directory $CONFIG_DIR is retained."
+  echomsg "If you want to remove it manually, run: rm -rf '$CONFIG_DIR'"
 }
 
 accept_uninstall(){
