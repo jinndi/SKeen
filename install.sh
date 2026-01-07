@@ -287,6 +287,7 @@ uninstall(){
 }
 
 accept_uninstall(){
+  printf "\n"
   while :; do
     printf "Uninstall Sing-box? [y/n]: " > /dev/tty
     read option < /dev/tty
@@ -313,11 +314,11 @@ show_menu(){
   show_header
 
   if is_singbox_running; then
-    printf "%s %s\n" "$(cyan "Service status:")" "$(green "active")"
+    printf "\n%s %s\n" "$(cyan "Service status:")" "$(green "active")"
     printf "\n%s\n" "$(cyan "Select option:")"
     printf " %s ❌ Stop\n" "$(green "1.")"
   else
-    printf "%s %s\n" "$(cyan "Service status:")" "$(red "not active")"
+    printf "\n%s %s\n" "$(cyan "Service status:")" "$(red "not active")"
     printf "\n%s\n" "$(cyan "Select option:")"
     printf " %s 🚀 Start\n" "$(green "1.")"
   fi
@@ -331,6 +332,8 @@ show_menu(){
 
     case "$option" in
       1)
+        printf "\n"
+        echomsg "------------------------------------------------"
         if is_singbox_running; then
           "$INIT_SCRIPT" stop
         else
@@ -339,6 +342,8 @@ show_menu(){
         press_any_side_to_open_menu
       ;;
       2)
+        printf "\n"
+        echomsg "------------------------------------------------"
         "$INIT_SCRIPT" restart
         press_any_side_to_open_menu
       ;;
