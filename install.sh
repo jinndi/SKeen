@@ -242,7 +242,8 @@ create_current_script(){
 
 press_any_side_to_open_menu(){
   echomsg "------------------------------------------------"
-  read -n1 -r -p "Press any key to open menu..."
+  printf "Press any key to open menu..." > /dev/tty
+  dd bs=1 count=1 < /dev/tty >/dev/null 2>&1
   show_menu
 }
 
@@ -264,7 +265,8 @@ install(){
   create_init_script
   create_proxy_interface
   create_current_script
-  echook "\nInstallation completed, sing-box version:"
+  printf "\n"
+  echook "Installation completed, sing-box version:"
   "$SB_BIN" version
   echomsg "You can now configure sing-box by editing $CONFIG_FILE" 1
   press_any_side_to_open_menu
@@ -284,7 +286,8 @@ uninstall(){
 
 accept_uninstall(){
   while :; do
-    read -rp "Uninstall Sing-box? [y/n]: " option
+    printf "Uninstall Sing-box? [y/n]: " > /dev/tty
+    read option < /dev/tty
     [ -z "$option" ] && option="n"
     case "$option" in
       y|Y|n|N)
@@ -319,9 +322,11 @@ show_menu(){
   printf " $(green "2.") 🌀 Restart\n"
   printf " $(green "3.") 🪣 Uninstall\n"
   printf " $(green "4.") 🚪 Exit\n"
-  sleep 10
+
   while :; do
-    read -rp "Choice: " option
+    printf "Choice: " > /dev/tty
+    read option < /dev/tty
+
     case "$option" in
       1)
         if is_singbox_running; then
@@ -355,7 +360,8 @@ run(){
       printf "$(cyan "Current installed version:") $(red "$CURRENT_VERSION")"
       printf "$(cyan "More details:") $(green "https://github.com/SagerNet/sing-box/releases")"
       while :; do
-        read -rp "Perform the update? [y/n] (default: n): " option
+        printf "Perform the update? [y/n] (default: n): " > /dev/tty
+        read option < /dev/tty
         [ -z "$option" ] && option="n"
         case "$option" in
           y|Y)
