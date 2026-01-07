@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "sing-box-keenetic",
+      "changelog-path": "CHANGELOG.md"
+    }
+  },
+  "changelog-sections": [
+    { "type": "feat", "section": "🚀 Feat" },
+    { "type": "fix", "section": "🐛 Fix" },
+    { "type": "style", "section": "🎨 Style" },
+    { "type": "refactor", "section": "🛠 Refactor" },
+    { "type": "perf", "section": "⚡ Perf" },
+    { "type": "build", "section": "📦 Build" },
+    { "type": "ci", "section": "🤖 CI/CD" },
+    { "type": "revert", "section": "↩️ Revert" },
+    { "type": "deps", "section": "📦 Deps" },
+    { "type": "env", "section": "🌐 Env" },
+    { "type": "config", "section": "⚙️ Config" },
+    { "type": "test", "section": "🧪 Test" },
+    { "type": "chore", "section": "🧰 Chore" }
+  ]
+}
