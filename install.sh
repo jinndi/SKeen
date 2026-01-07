@@ -28,6 +28,7 @@ CONFIG_FILE_URL="${REPO_BASE_URL}/config.json"
 
 INIT_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99sing-box"
 INIT_SCRIPT_URL="${REPO_BASE_URL}/S99sing-box"
+INIT_SCRIPT_DISABLE="${ENTWARE_DIR}/etc/sing-box/S99sing-box"
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -326,22 +327,38 @@ accept_uninstall(){
   show_menu
 }
 
+enable_init_script(){
+  if [ -f "$INIT_SCRIPT_DISABLE" ]; then
+    mv "$INIT_SCRIPT_DISABLE" "$INIT_SCRIPT" >/dev/null 2>&1
+  fi
+}
+
+disable_init_script(){
+  if [ -f "$INIT_SCRIPT" ]; then
+    mv "$INIT_SCRIPT" "$INIT_SCRIPT_DISABLE" >/dev/null 2>&1
+  fi
+}
+
 start_singbox() {
   echomsg "Starting Sing-box..."
+  enable_init_script
   "$INIT_SCRIPT" start >/dev/null 2>&1
   rc=$?
   if [ "$rc" -eq 0 ]; then
     echook "Sing-box started."
   else
+    disable_init_script
     echoerr "Failed to start Sing-box."
   fi
 }
 
 stop_singbox() {
   echomsg "Stopping Sing-box..."
+  enable_init_script
   "$INIT_SCRIPT" stop >/dev/null 2>&1
   rc=$?
   if [ "$rc" -eq 0 ]; then
+    disable_init_script
     echook "Sing-box stopped."
   else
     echoerr "Failed to stop Sing-box."
@@ -350,11 +367,13 @@ stop_singbox() {
 
 restart_singbox() {
   echomsg "Restarting Sing-box..."
+  enable_init_script
   "$INIT_SCRIPT" restart >/dev/null 2>&1
   rc=$?
   if [ "$rc" -eq 0 ]; then
     echook "Sing-box restarted successfully."
   else
+    disable_init_script
     echoerr "Failed to restart Sing-box."
   fi
 }
@@ -362,15 +381,33 @@ restart_singbox() {
 show_menu(){
   show_header
 
-  if is_singbox_running; then
-    printf "\n%s %s\n" "$(cyan "Status:")" "$(green "active")"
-    printf "\n%s\n" "$(cyan "Select option:")"
-    printf " %s ❌ Stop\n" "$(green "1.")"
+  if [ -f "$INIT_SCRIPT" ]; then
+    autostart_status="$(green "enable")"
   else
-    printf "\n%s %s\n" "$(cyan "Status:")" "$(red "not active")"
-    printf "\n%s\n" "$(cyan "Select option:")"
-    printf " %s 🚀 Start\n" "$(green "1.")"
+    autostart_status="$(red "disable")"
   fi
+
+  if is_singbox_running; then
+    running_status="$(green "active")"
+    action="❌ Stop"
+    if [ -f "$INIT_SCRIPT_DISABLE" ]; then
+      mv "$INIT_SCRIPT_DISABLE" "$INIT_SCRIPT" >/dev/null 2>&1
+      autostart_status="$(green "enable")"
+    fi
+  else
+    running_status="$(red "not active")"
+    action="🚀 Start"
+    if [ -f "$INIT_SCRIPT" ]; then
+      mv "$INIT_SCRIPT" "$INIT_SCRIPT_DISABLE" >/dev/null 2>&1
+      autostart_status="$(green "disable")"
+    fi
+  fi
+
+  printf "\n%s %s\n" "$(cyan "Status:")" "$running_status"
+  printf "%s %s\n" "$(cyan "Autostart:")" "$autostart_status"
+
+  printf "\n%s\n" "$(cyan "Select option:")"
+  printf " %s ${action}\n"    "$(green "1.")"
   printf " %s 🌀 Restart\n"   "$(green "2.")"
   printf " %s 🪣 Uninstall\n" "$(green "3.")"
   printf " %s 🚪 Exit\n"      "$(green "4.")"
