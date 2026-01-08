@@ -41,3 +41,12 @@ Installation script for sing-box on Keenetic/Netcraze routers
 curl -Ls https://raw.githubusercontent.com/jinndi/sing-box-keenetic/main/install.sh | sh
 ```
 Manage the package further using the `sb` command.
+
+Configure sing-box by editing `etc/sing-box/config/config.json`
+
+You can organize the files in the `etc/sing-box/config` folder however you like.  
+All of them will be used when running sing-box.  
+The folder itself will not be deleted when uninstalling the program — this must be done manually.  
+It will also not be overwritten if it already exists during a reinstallation.
+
+Access the web interface at the router's IP (usually 192.168.1.1) on port `9090`

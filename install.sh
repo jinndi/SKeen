@@ -274,7 +274,7 @@ install(){
   printf "\n"
   echook "Installation completed, sing-box version:"
   "$SB_BIN" version
-  echomsg "You can now configure sing-box by editing $CONFIG_DIR" 1
+  echomsg "Configure sing-box by editing $CONFIG_DIR" 1
   press_any_side_to_open_menu
 }
 
