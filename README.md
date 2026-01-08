@@ -27,7 +27,7 @@ Installation script for sing-box on Keenetic/Netcraze routers
 - Pre-configured Zashboard web panel via Clash API
 
 ### 📋 Requirements
-- CPU types: aarch64 (arm64), armv6, armv7, mipsel, mips
+- CPU types: aarch64(arm64), mipsel(little-endian), mips(big-endian)
 - Entware installed and configured on the router
 - `curl` and `tar` packages installed via `opkg install`
 - **Proxy Client** component is installed on the router

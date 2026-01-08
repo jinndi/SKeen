@@ -91,39 +91,37 @@ get_os_release(){
   fi
 }
 
-get_architecture(){
-  case "$(uname -m)" in
-    armv8* | armv8 | arm64 | aarch64) 
+get_architecture() {
+  uname_m=$(uname -m | tr '[:upper:]' '[:lower:]')
+  cpuinfo=$(cat /proc/cpuinfo | tr '[:upper:]' '[:lower:]')
+  cpupart=$(echo "$cpuinfo" | sed -n 's/.*cpu part.*: //p' | head -n1)
+
+  case "$uname_m" in
+    # ARM64
+    *aarch64* | *arm64* | *armv8*)
       ARCH="aarch64"
-      CPU_PART="$(awk -F': ' '/CPU part/ {print $2; exit}' /proc/cpuinfo)"
-      case "$CPU_PART" in
-        0xd03) PKG_ARCH="${ARCH}_cortex-a53" ;;
-        0xd08) PKG_ARCH="${ARCH}_cortex-a72" ;;
-        0xd0b) PKG_ARCH="${ARCH}_cortex-a76" ;;
-        *) PKG_ARCH="${ARCH}_generic" ;;
+      case "$cpupart" in
+        *0xd03*) echo "${ARCH}_cortex-a53"; return ;;
+        *0xd08*) echo "${ARCH}_cortex-a72"; return ;;
+        *0xd0b*) echo "${ARCH}_cortex-a76"; return ;;
+        *)       echo "${ARCH}_generic";    return ;;
       esac
     ;;
-    armv7* | armv7 | armv6* | armv6) 
-      ARCH="arm"
-      MODEL="$(awk -F': ' '/model name/ {print $2; exit}' /proc/cpuinfo)"
-      case "$MODEL" in
-        *A15*) PKG_ARCH="${ARCH}_cortex-a15_neon-vfpv4" ;;
-        *A9*)  PKG_ARCH="${ARCH}_cortex-a9" ;;
-        *A8*)  PKG_ARCH="${ARCH}_cortex-a8_vfpv3" ;;
-        *A7*)  PKG_ARCH="${ARCH}_cortex-a7" ;;
-        *A5*)  PKG_ARCH="${ARCH}_cortex-a5_vfpv4" ;;
-        *)     PKG_ARCH="${ARCH}_cortex-a7" ;;
-      esac
-    ;;
-    mipsel*) 
-      ARCH="mipsel"
-      PKG_ARCH="${ARCH}_24kc"
-    ;;
-    mips*) 
-      ARCH="mips" 
-      PKG_ARCH="${ARCH}_24kc"
-    ;;
-    *) exiterr "Unsupported CPU architecture!" ;;
+
+    # MIPS endian
+    *mipsel*|*mipsle*) ARCH="mipsel" ;;
+    *mips*)            ARCH="mips" ;;
+
+    *) exiterr "Unsupported CPU architecture (uname -m=$uname_m)" ;;
+  esac
+
+  # MIPS core
+  case "$cpuinfo" in
+    *74k*|*34k*)     echo "${ARCH}_74kc" ;;
+    *24k*f*|*24kf*)  echo "${ARCH}_24kc_24kf" ;;
+    *24k*|*1004*)    echo "${ARCH}_24kc" ;;
+    *4k*)            echo "${ARCH}_4kec" ;;
+    *)               echo "${ARCH}_mips32" ;;
   esac
 }
 
