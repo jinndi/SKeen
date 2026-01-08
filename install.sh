@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# https://github.com/jinndi/sing-box-keenetic
+# https://github.com/jinndi/SKeen
 #
 # Copyright (c) 2026 Jinndi <alncores@gmail.ru>
 #
@@ -15,20 +15,20 @@ PKG_SUFFIX=""
 PKG_NAME=""
 
 ENTWARE_DIR="/opt"
-REPO_BASE_URL="https://raw.githubusercontent.com/jinndi/sing-box-keenetic/main"
+REPO_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/main"
 
 TMP_DIR="${ENTWARE_DIR}/tmp"
 SB_BIN="${ENTWARE_DIR}/bin/sing-box"
-PATH_SCRIPT="${ENTWARE_DIR}/bin/sb"
+PATH_SCRIPT="${ENTWARE_DIR}/bin/skeen"
 PATH_SCRIPT_URL="${REPO_BASE_URL}/install.sh"
 
-CONFIG_DIR="${ENTWARE_DIR}/etc/sing-box/config"
-CONFIG_FILE="${CONFIG_DIR}/config.json"
-CONFIG_FILE_URL="${REPO_BASE_URL}/config.json"
+CONFIG_DIR="${ENTWARE_DIR}/etc/skeen/config"
+CONFIG_FILE="${CONFIG_DIR}/example_config.json"
+CONFIG_FILE_URL="${REPO_BASE_URL}/example_config.json"
 
-INIT_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99sing-box"
-INIT_SCRIPT_URL="${REPO_BASE_URL}/S99sing-box"
-INIT_SCRIPT_DISABLE="${ENTWARE_DIR}/etc/sing-box/S99sing-box"
+INIT_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
+INIT_SCRIPT_URL="${REPO_BASE_URL}/S99SKeen"
+INIT_SCRIPT_DISABLE="${ENTWARE_DIR}/etc/skeen/S99SKeen"
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -74,10 +74,10 @@ get_latest_version() {
 show_header() {
   printf '\n\033[1;35m'
   cat <<EOF
-#############################################
- SING-BOX KEENETIC $(get_current_version)
- https://github.com/jinndi/sing-box-keenetic
-#############################################
+###################################
+ SKeen $(get_current_version)
+ https://github.com/jinndi/SKeen
+###################################
 EOF
   printf '\033[0m'
 }
@@ -305,14 +305,14 @@ uninstall(){
 accept_uninstall(){
   printf "\n"
   while :; do
-    printf "Uninstall Sing-box? [y/n]: " > /dev/tty
+    printf "Uninstall SKeen? [y/n]: " > /dev/tty
     read option < /dev/tty
     [ -z "$option" ] && option="n"
     case "$option" in
       y|Y|n|N)
-        echomsg "Uninstalling Sing-box..." 1
+        echomsg "Uninstalling SKeen..." 1
         uninstall
-        echook "Sing-box has been uninstalled successfully."
+        echook "SKeen has been uninstalled successfully."
         exit 0
       ;;
       n|N)

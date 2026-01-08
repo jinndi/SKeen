@@ -3,7 +3,7 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "package-name": "sing-box-keenetic",
+      "package-name": "SKeen",
       "changelog-path": "CHANGELOG.md"
     }
   },

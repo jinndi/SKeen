@@ -1,18 +1,18 @@
 <p align="center">
-  <img alt="sing-box-keenetic" src="/logo.webp" width="180">
+  <img alt="SKeen" src="/logo.webp" width="180">
 </p>
 <h1 align="center">
-  sing-box-keenetic
+  SKeen
 </h1>
 <h3 align="center">
 Installation script for sing-box on Keenetic/Netcraze routers
 </h3>
 
 <p align="center">
-<img alt="Release" src="https://img.shields.io/github/v/release/jinndi/sing-box-keenetic">
-<img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/sing-box-keenetic">
-<img alt="License" src="https://img.shields.io/github/license/jinndi/sing-box-keenetic">
-<img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2Fsing-box-keenetic&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
+<img alt="Release" src="https://img.shields.io/github/v/release/jinndi/SKeen">
+<img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/SKeen">
+<img alt="License" src="https://img.shields.io/github/license/jinndi/SKeen">
+<img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FXSKeen&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
 </p>
 
 > [!WARNING]
@@ -21,13 +21,12 @@ Installation script for sing-box on Keenetic/Netcraze routers
 ### 🚀 Features
 - Installing the latest version of sing-box on Keenetic/Netcraze routers
 - Detecting CPU architecture and type to select the appropriate sing-box IPK package
-- Updating the sing-box core from the management script upon launch
 - Creating and configuring a proxy interface for sing-box inbound
-- Start/stop/restart/remove options from the script menu
+- Start/stop/restart/update/uninstall options from the script menu
 - Pre-configured Zashboard web panel via Clash API
 
 ### 📋 Requirements
-- CPU types: aarch64(arm64), mipsel(little-endian), mips(big-endian)
+- CPU types: aarch64 (arm64), mipsel (little-endian), mips (big-endian)
 - Entware installed and configured on the router
 - `curl` and `tar` packages installed via `opkg install`
 - **Proxy Client** component is installed on the router
@@ -38,13 +37,13 @@ Installation script for sing-box on Keenetic/Netcraze routers
 **Run from Entware via SSH:**
 
 ```
-curl -Ls https://raw.githubusercontent.com/jinndi/sing-box-keenetic/main/install.sh | sh
+curl -Ls https://raw.githubusercontent.com/jinndi/XKeen/main/install.sh | sh
 ```
-Manage the package further using the `sb` command.
+Manage the package further using the `skeen` command.
 
-Configure sing-box by editing `etc/sing-box/config/config.json`
+Configure sing-box by editing `/opt/etc/skeen/config/config.json`
 
-You can organize the files in the `etc/sing-box/config` folder however you like.  
+You can organize the files in the `/opt/etc/skeen/config` folder however you like.  
 All of them will be used when running sing-box.  
 The folder itself will not be deleted when uninstalling the program — this must be done manually.  
 It will also not be overwritten if it already exists during a reinstallation.
