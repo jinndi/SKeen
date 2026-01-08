@@ -49,6 +49,7 @@ echoerr() {
 
 exiterr() {
   red "$1" >&2
+  trap - INT QUIT HUP
   exit 1
 }
 
