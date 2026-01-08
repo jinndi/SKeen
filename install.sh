@@ -30,7 +30,7 @@ CONFIG_FILE_URL="${REPO_BASE_URL}/example_config.json"
 
 INIT_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 INIT_SCRIPT_URL="${REPO_BASE_URL}/S99SKeen"
-INIT_SCRIPT_DISABLE="${ENTWARE_DIR}/etc/skeen/S99SKeen"
+INIT_SCRIPT_DISABLE="${SKEEN_DIR}/S99SKeen"
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
