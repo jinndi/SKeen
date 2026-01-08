@@ -22,7 +22,9 @@ SB_BIN="${ENTWARE_DIR}/bin/sing-box"
 PATH_SCRIPT="${ENTWARE_DIR}/bin/skeen"
 PATH_SCRIPT_URL="${REPO_BASE_URL}/install.sh"
 
-CONFIG_DIR="${ENTWARE_DIR}/etc/skeen/config"
+SKEEN_DIR="${ENTWARE_DIR}/etc/skeen"
+
+CONFIG_DIR="${SKEEN_DIR}/config"
 CONFIG_FILE="${CONFIG_DIR}/example_config.json"
 CONFIG_FILE_URL="${REPO_BASE_URL}/example_config.json"
 
@@ -292,12 +294,14 @@ uninstall(){
   ndmc -c interface Proxy0 down  &&
   ndmc -c no interface Proxy0 &&
   ndmc -c system configuration save
-  echomsg "Removing sing-box cache and temporary files..."
-  for item in "$SINGBOX_DIR"/*; do
-    if [ "$item" != "$CONFIG_DIR" ]; then
-      rm -rf "$item"
-    fi
-  done
+  if [ -d "$SKEEN_DIR" ]; then
+    echomsg "Removing SKeen dir..."
+    for item in "$SKEEN_DIR"/*; do
+      if [ "$item" != "$CONFIG_DIR" ]; then
+        rm -rf "$item"
+      fi
+    done
+  fi
   echomsg "Configuration directory $CONFIG_DIR is retained."
   echomsg "If you want to remove it manually, run: rm -rf '$CONFIG_DIR'"
 }
