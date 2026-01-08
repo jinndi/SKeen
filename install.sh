@@ -255,7 +255,7 @@ press_any_side_to_open_menu(){
 }
 
 is_singbox_running(){
-  pidof sing-box >/dev/null 2>&1
+  pidof skeen-box >/dev/null 2>&1
 }
 
 install(){
