@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.1](https://github.com/jinndi/SKeen/compare/SKeen-v2.0.0...SKeen-v2.0.1) (2026-01-08)
+
+
+### 🐛 Fix
+
+* path INIT_SCRIPT_DISABLE ([00e0472](https://github.com/jinndi/SKeen/commit/00e0472332eddce18510f85b35c2cbef6a8f78fb))
+* skeen paths on example_config.json ([662a9b1](https://github.com/jinndi/SKeen/commit/662a9b1bc50369519c2b187ac0a7490afa5661ab))
+* uninstall SKeen dir ([b34c2cd](https://github.com/jinndi/SKeen/commit/b34c2cdbf7f2627c440c2eb80780df97121bf420))
+
 ## [2.0.0](https://github.com/jinndi/sing-box-keenetic/compare/SKeen-v1.2.0...SKeen-v2.0.0) (2026-01-08)
 
 
