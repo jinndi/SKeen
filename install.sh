@@ -18,7 +18,7 @@ ENTWARE_DIR="/opt"
 REPO_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/main"
 
 TMP_DIR="${ENTWARE_DIR}/tmp"
-SB_BIN="${ENTWARE_DIR}/bin/sing-box"
+SB_BIN="${ENTWARE_DIR}/bin/skeen-box"
 PATH_SCRIPT="${ENTWARE_DIR}/bin/skeen"
 PATH_SCRIPT_URL="${REPO_BASE_URL}/install.sh"
 
@@ -65,10 +65,12 @@ get_latest_version() {
   latest_release=$(curl --connect-timeout 10 -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
-    exiterr "Failed to fetch the latest version information."
+    echoerr "Failed to fetch the latest version information."
+    return 1
   fi
   if [ "$(echo "$latest_release" | grep tag_name | wc -l)" -eq 0 ]; then
-    exiterr "Failed to parse the latest version information:\n$(echo "$latest_release" | grep message)"
+    echoerr "Failed to parse the latest version information:\n$(echo "$latest_release" | grep message)"
+    return 1
   fi
   echo $(echo "$latest_release" | grep tag_name | head -n 1 | awk -F: '{print $2}' | sed 's/[", v]//g')
 }
@@ -137,7 +139,10 @@ download_latest_version(){
 
   if [ -z "$download_version" ]; then
     echomsg "Fetching the latest version number..." 1
-    download_version="$(get_latest_version)"
+    download_version="$(get_latest_version)" || {
+      trap '' INT QUIT HUP
+      exit 1
+    }
     echook "Latest version is $download_version"
   fi
 
@@ -379,16 +384,32 @@ restart_singbox() {
   fi
 }
 
+update_core(){
+  if is_singbox_running; then
+    stop_singbox
+  fi
+  get_os_release
+  get_architecture
+  download_latest_version "$LATEST_VERSION"
+  install_sb_bin
+  start_singbox
+  echook "The sing-box core has been successfully updated"
+  press_any_side_to_open_menu
+}
+
 check_update(){
   echomsg "Checking for updates..." 1
   current_ver="$(get_current_version)"
-  latest_ver="$(get_latest_version)"
+  latest_ver="$(get_latest_version)" || press_any_side_to_open_menu
 
-  if [ -z "$current_ver" ] || [ -z "$latest_ver" ]; then
-    echoerr "Failed to get sing-box version"
-    press_any_side_to_open_menu
+  if [ -z "$current_ver" ]; then
+    if [ -f "$SB_BIN" ]; then
+      echoerr "Failed to get sing-box version"
+    else
+      update_core
+    fi
   fi
-  
+
   if [ "$latest_ver" != "$current_ver" ]; then
     printf "%s %s\n" "$(cyan "New version of the sing-box core is available:")" "$(green "$latest_ver")"
     printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$current_ver")"
@@ -400,16 +421,7 @@ check_update(){
       [ -z "$option" ] && option="n"
       case "$option" in
         y|Y)
-          if is_singbox_running; then
-            stop_singbox
-          fi
-          get_os_release
-          get_architecture
-          download_latest_version "$LATEST_VERSION"
-          install_sb_bin
-          start_singbox
-          echook "The sing-box core has been successfully updated"
-          press_any_side_to_open_menu
+          update_core
         ;;
         n|N)
           show_menu

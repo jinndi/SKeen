@@ -30,7 +30,7 @@ Installation script for sing-box on Keenetic/Netcraze routers
 - Entware installed and configured on the router
 - `curl` and `tar` packages installed via `opkg install`
 - **Proxy Client** component is installed on the router
-- Other sing-box packages removed beforehand
+- GitHub connection is available (for installation and updates)
 
 ### 💾 Installation
 
