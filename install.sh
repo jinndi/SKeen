@@ -95,19 +95,15 @@ get_os_release(){
 }
 
 get_architecture() {
-  uname_m=$(uname -m | tr '[:upper:]' '[:lower:]')
-  cpupart="$(grep -i 'cpu part' /proc/cpuinfo | sed -e 's/.*: //' | tr '[:upper:]' '[:lower:]' | head -n1)"
-  cpumodel="$(grep -i 'cpu model' /proc/cpuinfo | sed -e 's/.*: //i' | tr '[:upper:]' '[:lower:]')"
-
-  case "$uname_m" in
+  case "$(uname -m | tr '[:upper:]' '[:lower:]')" in
     # ARM64
     *aarch64* | *arm64* | *armv8*)
       ARCH="aarch64"
-      case "$cpupart" in
-        *0xd03*) echo "${ARCH}_cortex-a53"; return ;;
-        *0xd08*) echo "${ARCH}_cortex-a72"; return ;;
-        *0xd0b*) echo "${ARCH}_cortex-a76"; return ;;
-        *)       echo "${ARCH}_generic";    return ;;
+      case "$(grep -i 'cpu part' /proc/cpuinfo | sed -e 's/.*: //' | tr '[:upper:]' '[:lower:]' | head -n1)" in
+        *0xd03*) PKG_ARCH="${ARCH}_cortex-a53" ;;
+        *0xd08*) PKG_ARCH="${ARCH}_cortex-a72" ;;
+        *0xd0b*) PKG_ARCH="${ARCH}_cortex-a76" ;;
+        *)       PKG_ARCH="${ARCH}_generic" ;;
       esac
     ;;
 
@@ -115,16 +111,18 @@ get_architecture() {
     *mipsel*|*mipsle*) ARCH="mipsel" ;;
     *mips*)            ARCH="mips" ;;
 
-    *) exiterr "Unsupported CPU architecture (uname -m=$uname_m)" ;;
+    *) exiterr "Unsupported CPU architecture" ;;
   esac
 
+  [ -n "$PKG_ARCH" ] && return
+
   # MIPS core
-  case "$cpuinfo" in
-    *74k*|*34k*)    echo "${ARCH}_74kc" ;;
-    *24k*f*|*24kf*) echo "${ARCH}_24kc_24kf" ;;
-    *24k*|*1004*)   echo "${ARCH}_24kc" ;;
-    *4kec*)         echo "${ARCH}_4kec" ;;
-    *)              echo "${ARCH}_mips32" ;;
+  case "$(grep -i 'cpu model' /proc/cpuinfo | sed -e 's/.*: //i' | tr '[:upper:]' '[:lower:]')" in
+    *74k*|*34k*)    PKG_ARCH="${ARCH}_74kc" ;;
+    *24k*f*|*24kf*) PKG_ARCH="${ARCH}_24kc_24kf" ;;
+    *24k*|*1004*)   PKG_ARCH="${ARCH}_24kc" ;;
+    *4kec*)         PKG_ARCH="${ARCH}_4kec" ;;
+    *)              PKG_ARCH="${ARCH}_mips32" ;;
   esac
 }
 
