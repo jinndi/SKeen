@@ -93,8 +93,8 @@ get_os_release(){
 
 get_architecture() {
   uname_m=$(uname -m | tr '[:upper:]' '[:lower:]')
-  cpuinfo=$(cat /proc/cpuinfo | tr '[:upper:]' '[:lower:]')
-  cpupart=$(echo "$cpuinfo" | sed -n 's/.*cpu part.*: //p' | head -n1)
+  cpupart="$(grep -i 'cpu part' /proc/cpuinfo | sed -e 's/.*: //' | tr '[:upper:]' '[:lower:]' | head -n1)"
+  cpumodel="$(grep -i 'cpu model' /proc/cpuinfo | sed -e 's/.*: //i' | tr '[:upper:]' '[:lower:]')"
 
   case "$uname_m" in
     # ARM64
@@ -117,11 +117,11 @@ get_architecture() {
 
   # MIPS core
   case "$cpuinfo" in
-    *74k*|*34k*)     echo "${ARCH}_74kc" ;;
-    *24k*f*|*24kf*)  echo "${ARCH}_24kc_24kf" ;;
-    *24k*|*1004*)    echo "${ARCH}_24kc" ;;
-    *4k*)            echo "${ARCH}_4kec" ;;
-    *)               echo "${ARCH}_mips32" ;;
+    *74k*|*34k*)    echo "${ARCH}_74kc" ;;
+    *24k*f*|*24kf*) echo "${ARCH}_24kc_24kf" ;;
+    *24k*|*1004*)   echo "${ARCH}_24kc" ;;
+    *4kec*)         echo "${ARCH}_4kec" ;;
+    *)              echo "${ARCH}_mips32" ;;
   esac
 }
 
