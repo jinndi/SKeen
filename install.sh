@@ -376,6 +376,52 @@ restart_singbox() {
   fi
 }
 
+check_update(){
+  echomsg "Checking for updates..." 1
+  current_ver="$(get_current_version)"
+  latest_ver="$(get_latest_version)"
+
+  if [ -z "$current_ver" ] || [ -z "$latest_ver" ]; then
+    echoerr "Failed to get sing-box version"
+    press_any_side_to_open_menu
+  fi
+  
+  if [ "$latest_ver" != "$current_ver" ]; then
+    printf "%s %s\n" "$(cyan "New version of the sing-box core is available:")" "$(green "$latest_ver")"
+    printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$current_ver")"
+    printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/SagerNet/sing-box/releases")"
+
+    while :; do
+      printf "Perform the update? [y/n] (default: n): " > /dev/tty
+      read option < /dev/tty
+      [ -z "$option" ] && option="n"
+      case "$option" in
+        y|Y)
+          if is_singbox_running; then
+            stop_singbox
+          fi
+          get_os_release
+          get_architecture
+          download_latest_version "$LATEST_VERSION"
+          install_sb_bin
+          start_singbox
+          echook "The sing-box core has been successfully updated"
+          press_any_side_to_open_menu
+        ;;
+        n|N)
+          show_menu
+        ;;
+        *)
+          echoerr "Incorrect option"
+        ;;
+      esac
+    done
+  else
+    echook "The latest sing-box version $latest_ver is already installed"
+    press_any_side_to_open_menu
+  fi
+}
+
 show_menu(){
   show_header
 
@@ -407,8 +453,9 @@ show_menu(){
   printf "\n%s\n" "$(cyan "Select option:")"
   printf " %s ${action}\n"    "$(green "1.")"
   printf " %s 🌀 Restart\n"   "$(green "2.")"
-  printf " %s 🪣 Uninstall\n" "$(green "3.")"
-  printf " %s 🚪 Exit\n"      "$(green "4.")"
+  printf " %s 🔄 Update\n"    "$(green "3.")"
+  printf " %s 🪣 Uninstall\n" "$(green "4.")"
+  printf " %s 🚪 Exit\n"      "$(green "5.")"
 
   while :; do
     printf "Choice: " > /dev/tty
@@ -431,8 +478,9 @@ show_menu(){
         restart_singbox
         press_any_side_to_open_menu
       ;;
-      3) accept_uninstall ;;
-      4) 
+      3) check_update ;;
+      4) accept_uninstall ;;
+      5) 
         trap - INT QUIT HUP
         exit 0 
       ;;
@@ -443,50 +491,8 @@ show_menu(){
   done
 }
 
-run(){
-  CURRENT_VERSION="$(get_current_version)"
-
-  if [ -n "$CURRENT_VERSION" ]; then
-    LATEST_VERSION="$(get_latest_version)"
-
-    if [ -n "$LATEST_VERSION" ] && [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
-      printf "%s %s\n" "$(cyan "New version of the sing-box core is available:")" "$(green "$LATEST_VERSION")"
-      printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$CURRENT_VERSION")"
-      printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/SagerNet/sing-box/releases")"
-
-      while :; do
-        printf "Perform the update? [y/n] (default: n): " > /dev/tty
-        read option < /dev/tty
-        [ -z "$option" ] && option="n"
-        case "$option" in
-          y|Y)
-            if is_singbox_running; then
-              stop_singbox
-            fi
-            get_os_release
-            get_architecture
-            download_latest_version "$LATEST_VERSION"
-            install_sb_bin
-            start_singbox
-            echook "The sing-box core has been successfully updated"
-            press_any_side_to_open_menu
-          ;;
-          n|N)
-            break
-          ;;
-          *)
-            echoerr "Incorrect option"
-          ;;
-        esac
-      done
-    fi
-  fi
-
-  if [ -f "$PATH_SCRIPT" ]; then
-    show_menu
-  else
-    install
-  fi
-}
-
-run
+if [ -f "$PATH_SCRIPT" ]; then
+  show_menu
+else
+  install
+fi
