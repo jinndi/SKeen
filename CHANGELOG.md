@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/jinndi/sing-box-keenetic/compare/sing-box-keenetic-v1.1.0...sing-box-keenetic-v1.1.1) (2026-01-08)
+
+
+### 🐛 Fix
+
+* drop armv6/armv7 support, improve MIPS endian detection ([0140dfc](https://github.com/jinndi/sing-box-keenetic/commit/0140dfc8987b3dc7c1c7a1201f9fa8158b7c05ff))
+
 ## [1.1.0](https://github.com/jinndi/sing-box-keenetic/compare/sing-box-keenetic-v1.0.0...sing-box-keenetic-v1.1.0) (2026-01-07)
 
 
