@@ -37,7 +37,7 @@ Installation script for sing-box on Keenetic/Netcraze routers
 **Run from Entware via SSH:**
 
 ```
-curl -Ls https://raw.githubusercontent.com/jinndi/XKeen/main/install.sh | sh
+curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh | sh
 ```
 Manage the package further using the `skeen` command.
 
