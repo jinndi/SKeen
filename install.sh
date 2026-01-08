@@ -446,7 +446,7 @@ show_menu(){
     action="🚀 Start"
     if [ -f "$INIT_SCRIPT" ]; then
       mv "$INIT_SCRIPT" "$INIT_SCRIPT_DISABLE" >/dev/null 2>&1
-      autostart_status="$(green "disable")"
+      autostart_status="$(red "disable")"
     fi
   fi
 
