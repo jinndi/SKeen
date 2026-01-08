@@ -59,7 +59,7 @@ get_current_version() {
 }
 
 get_latest_version() {
-  latest_release=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
+  latest_release=$(curl --connect-timeout 10 -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exiterr "Failed to fetch the latest version information."
@@ -146,7 +146,7 @@ download_latest_version(){
   echomsg "Downloading $PKG_NAME ..." 1
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR"
-  curl --fail -Lo "$PKG_NAME" "$pkg_url"
+  curl --fail --connect-timeout 10 -Lo "$PKG_NAME" "$pkg_url"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exiterr "Failed to download $PKG_NAME"
@@ -192,7 +192,7 @@ create_sb_config(){
   mkdir -p "$CONFIG_DIR"
 
   echo "Downloading default configuration file..."
-  curl --fail -Lo "$CONFIG_FILE" "$CONFIG_FILE_URL"
+  curl --fail --connect-timeout 10 -Lo "$CONFIG_FILE" "$CONFIG_FILE_URL"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exit $curl_exit_status
@@ -204,7 +204,7 @@ create_init_script(){
   [ -f "$INIT_SCRIPT" ] && rm -f "$INIT_SCRIPT"
 
   echomsg "Downloading startup script at $INIT_SCRIPT" 1
-  curl --fail -Lo "$INIT_SCRIPT" "$INIT_SCRIPT_URL"
+  curl --fail --connect-timeout 10 -Lo "$INIT_SCRIPT" "$INIT_SCRIPT_URL"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exiterr "Failed to download the startup script"
@@ -231,7 +231,7 @@ create_current_script(){
   [ -f "$PATH_SCRIPT" ] && rm -f "$PATH_SCRIPT"
 
   echomsg "Downloading current script at $PATH_SCRIPT" 1
-  curl --fail -Lo "$PATH_SCRIPT" "$PATH_SCRIPT_URL"
+  curl --fail --connect-timeout 10 -Lo "$PATH_SCRIPT" "$PATH_SCRIPT_URL"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exiterr "Failed to download the current script"
