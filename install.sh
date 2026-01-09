@@ -9,6 +9,8 @@
 
 trap '' INT QUIT HUP
 
+SKEEN_VERSION="2.0.1"
+
 PKG_OS=""
 PKG_ARCH=""
 PKG_SUFFIX=""
@@ -55,13 +57,13 @@ exiterr() {
   exit 1
 }
 
-get_current_version() {
+get_sb_current_version() {
   if [ -f "$SB_BIN" ]; then
     echo "$("$SB_BIN" version | awk 'NR==1 {print $3}' | xargs)"
   fi
 }
 
-get_latest_version() {
+get_sb_latest_version() {
   latest_release=$(curl --connect-timeout 10 -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
@@ -75,13 +77,30 @@ get_latest_version() {
   echo $(echo "$latest_release" | grep tag_name | head -n 1 | awk -F: '{print $2}' | sed 's/[", v]//g')
 }
 
+get_sk_latest_version() {
+  latest_release=$(curl --connect-timeout 10 -s https://api.github.com/repos/jinndi/SKeen/releases/latest)
+  curl_exit_status=$?
+  if [ $curl_exit_status -ne 0 ]; then
+    echoerr "Failed to fetch the latest version information."
+    return 1
+  fi
+  if [ "$(echo "$latest_release" | grep tag_name | wc -l)" -eq 0 ]; then
+    echoerr "Failed to parse the latest version information:\n$(echo "$latest_release" | grep message)"
+    return 1
+  fi
+  echo $(echo "$latest_release" | grep tag_name | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+}
+
 show_header() {
-  printf '\n\033[1;35m'
+  printf '\033[1;35m'
   cat <<EOF
-###################################
- SKeen $(get_current_version)
- https://github.com/jinndi/SKeen
-###################################
+
+░██████╗██╗░░██╗███████╗███████╗███╗░░██╗
+██╔════╝██║░██╔╝██╔════╝██╔════╝████╗░██║
+╚█████╗░█████═╝░█████╗░░█████╗░░██╔██╗██║
+░╚═══██╗██╔═██╗░██╔══╝░░██╔══╝░░██║╚████║
+██████╔╝██║░╚██╗███████╗███████╗██║░╚███║
+╚═════╝░╚═╝░░╚═╝╚══════╝╚══════╝╚═╝░░╚══╝                                  
 EOF
   printf '\033[0m'
 }
@@ -134,12 +153,12 @@ check_ndmc(){
   fi
 }
 
-download_latest_version(){
+download_sb_latest_version(){
   download_version="$1"
 
   if [ -z "$download_version" ]; then
     echomsg "Fetching the latest version number..." 1
-    download_version="$(get_latest_version)" || {
+    download_version="$(get_sb_latest_version)" || {
       trap '' INT QUIT HUP
       exit 1
     }
@@ -155,7 +174,12 @@ download_latest_version(){
   curl --fail --connect-timeout 10 -Lo "$PKG_NAME" "$pkg_url"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
-    exiterr "Failed to download $PKG_NAME"
+    if [ -n "$download_version" ]; then
+      echoerr "Failed to download $PKG_NAME"
+      return 1
+    else
+      exiterr "Failed to download $PKG_NAME"
+    fi
   fi
   echook "Downloaded $PKG_NAME successfully."
 }
@@ -251,7 +275,12 @@ press_any_side_to_open_menu(){
   echomsg "------------------------------------------------"
   printf "Press any key to open menu..." > /dev/tty
   dd bs=1 count=1 < /dev/tty >/dev/null 2>&1
-  show_menu
+  if [ "$1" == "reload" ];then
+    trap - INT QUIT HUP
+    exec sh "$0" "$@"
+  else
+    show_menu
+  fi
 }
 
 is_singbox_running(){
@@ -270,7 +299,7 @@ install(){
   get_os_release
   get_architecture
   check_ndmc
-  download_latest_version
+  download_sb_latest_version
   install_sb_bin
   create_sb_config
   create_init_script
@@ -310,13 +339,12 @@ uninstall(){
 }
 
 accept_uninstall(){
-  printf "\n"
   while :; do
     printf "Uninstall SKeen? [y/n]: " > /dev/tty
     read option < /dev/tty
     [ -z "$option" ] && option="n"
     case "$option" in
-      y|Y|n|N)
+      y|Y)
         echomsg "Uninstalling SKeen..." 1
         uninstall
         echook "SKeen has been uninstalled successfully."
@@ -347,6 +375,7 @@ disable_init_script(){
 
 start_singbox() {
   echomsg "Starting Sing-box..."
+  "$SB_BIN" check -C "$CONFIG_DIR" || press_any_side_to_open_menu
   enable_init_script
   "$INIT_SCRIPT" start >/dev/null 2>&1
   rc=$?
@@ -371,8 +400,18 @@ stop_singbox() {
   fi
 }
 
+switch_singbox_state(){
+  if is_singbox_running; then
+    stop_singbox
+  else
+    start_singbox
+  fi
+  press_any_side_to_open_menu
+}
+
 restart_singbox() {
   echomsg "Restarting Sing-box..."
+  "$SB_BIN" check -C "$CONFIG_DIR" || press_any_side_to_open_menu
   enable_init_script
   "$INIT_SCRIPT" restart >/dev/null 2>&1
   rc=$?
@@ -382,6 +421,7 @@ restart_singbox() {
     disable_init_script
     echoerr "Failed to restart Sing-box."
   fi
+  press_any_side_to_open_menu
 }
 
 update_core(){
@@ -390,19 +430,58 @@ update_core(){
   fi
   get_os_release
   get_architecture
-  download_latest_version "$LATEST_VERSION"
+  download_sb_latest_version "$latest_sb_ver" || return 1
   install_sb_bin
-  start_singbox
   echook "The sing-box core has been successfully updated"
-  press_any_side_to_open_menu
+}
+
+update_skeen(){
+  pkg_name="SKeen-v${latest_sk_ver}.tar.gz"
+  pkg_url="https://github.com/jinndi/SKeen/archive/${pkg_name}"
+  
+  echomsg "Downloading SKeen-v${latest_sk_ver}.tar.gz ..." 1
+  mkdir -p "$TMP_DIR"
+  cd "$TMP_DIR"
+  curl --fail --connect-timeout 10 -Lo "$pkg_name" "$pkg_url"
+  curl_exit_status=$?
+  if [ $curl_exit_status -ne 0 ]; then
+    echoerr "Failed to download $pkg_name"
+    return 1
+  fi
+  echook "Downloaded $pkg_name successfully."
+
+  tmp_unpack_dir="${TMP_DIR}/SKeen-unpack"
+
+  if [ -d "$tmp_unpack_dir" ]; then
+    rm -rf "$tmp_unpack_dir"
+  fi
+
+  echomsg "Extracting $pkg_name" 1
+  mkdir "$tmp_unpack_dir"
+  cd "$tmp_unpack_dir"
+  tar -xf "../${pkg_name}"
+  echook "Extraction completed."
+
+  echomsg "Installing SKeen to $PATH_SCRIPT" 1
+  [ -f "$PATH_SCRIPT" ] && rm -f "$PATH_SCRIPT"
+  mv ./install.sh "$PATH_SCRIPT"
+  chmod 755 "$PATH_SCRIPT"
+  chmod +x "$PATH_SCRIPT"
+  echook "SKeen installed successfully."
+
+  echomsg "Cleaning up temporary files..." 1
+  rm -rf "$tmp_unpack_dir"
+  rm -f "${TMP_DIR}/${pkg_name}"
+  echook "Cleanup completed."
+  echook "The SKeen has been successfully updated"
 }
 
 check_update(){
-  echomsg "Checking for updates..." 1
-  current_ver="$(get_current_version)"
-  latest_ver="$(get_latest_version)" || press_any_side_to_open_menu
+  echomsg "Checking sing-box for updates..."
+  current_sb_ver="$(get_sb_current_version)"
+  latest_sb_ver="$(get_sb_latest_version)" || press_any_side_to_open_menu
 
-  if [ -z "$current_ver" ]; then
+  if [ -z "$current_sb_ver" ]; then
     if [ -f "$SB_BIN" ]; then
       echoerr "Failed to get sing-box version"
     else
@@ -410,98 +489,124 @@ check_update(){
     fi
   fi
 
-  if [ "$latest_ver" != "$current_ver" ]; then
-    printf "%s %s\n" "$(cyan "New version of the sing-box core is available:")" "$(green "$latest_ver")"
-    printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$current_ver")"
-    printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/SagerNet/sing-box/releases")"
+  if [ -n "$latest_sb_ver" ] && [ -n "$current_sb_ver" ]; then
+    if [ "$latest_sb_ver" != "$current_sb_ver" ]; then
+      printf "%s %s\n" "$(cyan "New version of the sing-box core is available:")" "$(green "$latest_sb_ver")"
+      printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$current_sb_ver")"
+      printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/SagerNet/sing-box/releases")"
 
-    while :; do
-      printf "Perform the update? [y/n] (default: n): " > /dev/tty
-      read option < /dev/tty
-      [ -z "$option" ] && option="n"
-      case "$option" in
-        y|Y)
-          update_core
-        ;;
-        n|N)
-          show_menu
-        ;;
-        *)
-          echoerr "Incorrect option"
-        ;;
-      esac
-    done
-  else
-    echook "The latest sing-box version $latest_ver is already installed"
-    press_any_side_to_open_menu
+      while :; do
+        printf "Perform the update? [y/n] (default: n): " > /dev/tty
+        read option < /dev/tty
+        [ -z "$option" ] && option="n"
+        case "$option" in
+          y|Y)
+            update_core
+          ;;
+          n|N)
+            break
+          ;;
+          *)
+            echoerr "Incorrect option"
+          ;;
+        esac
+      done
+    else
+      echook "The latest sing-box version $latest_sb_ver is already installed"
+    fi
   fi
+
+  echomsg "Checking SKeen for updates..." 1
+  current_sk_ver="$SKEEN_VERSION"
+  latest_sk_ver="$(get_sk_latest_version)" || press_any_side_to_open_menu
+
+  if [ -z "$current_sk_ver" ]; then
+    echoerr "Failed to get SKeen version"
+  fi
+
+  if [ -n "$latest_sk_ver" ] && [ -n "$current_sk_ver" ]; then
+    if [ "$latest_sk_ver" != "$current_sk_ver" ]; then
+      printf "%s %s\n" "$(cyan "New version SKeen script is available:")" "$(green "$latest_sk_ver")"
+      printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$current_sk_ver")"
+      printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/jinndi/SKeen/releases")"
+
+      while :; do
+        printf "Perform the update? [y/n] (default: n): " > /dev/tty
+        read option < /dev/tty
+        [ -z "$option" ] && option="n"
+        case "$option" in
+          y|Y)
+            update_skeen
+          ;;
+          n|N)
+            break
+          ;;
+          *)
+            echoerr "Incorrect option"
+          ;;
+        esac
+      done
+    else
+      echook "The latest Skeen version $latest_sk_ver is already installed"
+    fi
+  fi
+
+  if ! is_singbox_running; then
+    start_singbox
+  fi
+  press_any_side_to_open_menu "reload"
 }
 
 show_menu(){
   show_header
 
   if [ -f "$INIT_SCRIPT" ]; then
-    autostart_status="$(green "enable")"
+    autostart_status="$(green "yes")"
   else
-    autostart_status="$(red "disable")"
+    autostart_status="$(red "no")"
   fi
 
   if is_singbox_running; then
-    running_status="$(green "active")"
-    action="❌ Stop"
+    running_status="$(green "running")"
+    action="Stop"
     if [ -f "$INIT_SCRIPT_DISABLE" ]; then
       mv "$INIT_SCRIPT_DISABLE" "$INIT_SCRIPT" >/dev/null 2>&1
-      autostart_status="$(green "enable")"
+      autostart_status="$(green "yes")"
     fi
   else
-    running_status="$(red "not active")"
-    action="🚀 Start"
+    running_status="$(red "stopped")"
+    action="Start"
     if [ -f "$INIT_SCRIPT" ]; then
       mv "$INIT_SCRIPT" "$INIT_SCRIPT_DISABLE" >/dev/null 2>&1
-      autostart_status="$(red "disable")"
+      autostart_status="$(red "no")"
     fi
   fi
 
-  printf "\n%s %s\n" "$(cyan "Status:")" "$running_status"
-  printf "%s %s\n" "$(cyan "Autostart:")" "$autostart_status"
+  printf "\n%s %s" "SKeen version:" "$(cyan "v${SKEEN_VERSION}")"
+  printf "\n%s %s" "sing-box version:" "$(cyan "v$(get_sb_current_version)")"
+  printf "\n%s %s\n" "sing-box state:" "$running_status"
+  printf "%s %s\n" "Start automatically:" "$autostart_status"
 
   printf "\n%s\n" "$(cyan "Select option:")"
-  printf " %s ${action}\n"    "$(green "1.")"
-  printf " %s 🌀 Restart\n"   "$(green "2.")"
-  printf " %s 🔄 Update\n"    "$(green "3.")"
-  printf " %s 🪣 Uninstall\n" "$(green "4.")"
-  printf " %s 🚪 Exit\n"      "$(green "5.")"
+  printf "  %s ${action} sing-box\n" "$(green "1.")"
+  printf "  %s Restart sing-box\n" "$(green "2.")"
+  printf "  %s Check Updates\n" "$(green "3.")"
+  printf "  %s Uninstall SKeen\n" "$(green "4.")"
+  printf "  %s Exit\n" "$(green "5.")"
 
   while :; do
-    printf "Choice: " > /dev/tty
+    printf "\nEnter your selection [1-5]: " > /dev/tty
     read option < /dev/tty
-
+    if [ "$option" -ge 1 ] && [ "$option" -le 4 ]; then
+      echomsg "------------------------------------------------" 1
+    fi
     case "$option" in
-      1)
-        printf "\n"
-        echomsg "------------------------------------------------"
-        if is_singbox_running; then
-          stop_singbox
-        else
-          start_singbox
-        fi
-        press_any_side_to_open_menu
-      ;;
-      2)
-        printf "\n"
-        echomsg "------------------------------------------------"
-        restart_singbox
-        press_any_side_to_open_menu
-      ;;
+      1) switch_singbox_state ;;
+      2) restart_singbox ;;
       3) check_update ;;
       4) accept_uninstall ;;
-      5) 
-        trap - INT QUIT HUP
-        exit 0 
-      ;;
-      *)
-        echoerr "Incorrect option"
-      ;;
+      5) trap - INT QUIT HUP && exit 0 ;;
+      *) echoerr "Incorrect option" ;;
     esac
   done
 }
