@@ -490,6 +490,8 @@ check_update(){
       echoerr "Failed to get sing-box version"
     else
       update_core
+      current_sb_ver="$(get_sb_current_version)"
+      latest_sb_ver="$current_sb_ver"
     fi
   fi
 
@@ -506,6 +508,7 @@ check_update(){
         case "$option" in
           y|Y)
             update_core
+            break
           ;;
           n|N)
             break
@@ -541,6 +544,7 @@ check_update(){
         case "$option" in
           y|Y)
             update_skeen
+            break
           ;;
           n|N)
             break
