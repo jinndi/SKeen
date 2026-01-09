@@ -9,7 +9,7 @@
 
 trap '' INT QUIT HUP
 
-SKEEN_VERSION="2.0.1"
+SKEEN_VERSION="2.1.1"
 
 PKG_OS=""
 PKG_ARCH=""

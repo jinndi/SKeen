@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="SKeen" src="/logo.webp" width="180">
+  <img alt="SKeen" src="/logo.webp" width="280">
 </p>
 <h1 align="center">
   SKeen
