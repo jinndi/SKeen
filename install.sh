@@ -7,7 +7,7 @@
 # Released under the MIT License, see the accompanying file LICENSE
 # or https://opensource.org/licenses/MIT
 
-trap '' INT QUIT HUP
+trap 'exit 0' INT QUIT HUP TERM
 
 SKEEN_VERSION="2.1.1"
 
@@ -64,7 +64,7 @@ get_sb_current_version() {
 }
 
 get_sb_latest_version() {
-  latest_release=$(curl --connect-timeout 10 -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
+  latest_release=$(curl --connect-timeout 10 --max-time 90 -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     echoerr "Failed to fetch the latest version information."
@@ -78,7 +78,7 @@ get_sb_latest_version() {
 }
 
 get_sk_latest_version() {
-  latest_release=$(curl --connect-timeout 10 -s https://api.github.com/repos/jinndi/SKeen/releases/latest)
+  latest_release=$(curl --connect-timeout 10 --max-time 90 -s https://api.github.com/repos/jinndi/SKeen/releases/latest)
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     echoerr "Failed to fetch the latest version information."
@@ -171,7 +171,7 @@ download_sb_latest_version(){
   echomsg "Downloading $PKG_NAME ..." 1
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR"
-  curl --fail --connect-timeout 10 -Lo "$PKG_NAME" "$pkg_url"
+  curl --fail --connect-timeout 10 --max-time 90 -Lo "$PKG_NAME" "$pkg_url"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     if [ -n "$download_version" ]; then
@@ -222,7 +222,7 @@ create_sb_config(){
   mkdir -p "$CONFIG_DIR"
 
   echo "Downloading default configuration file..."
-  curl --fail --connect-timeout 10 -Lo "$CONFIG_FILE" "$CONFIG_FILE_URL"
+  curl --fail --connect-timeout 10 --max-time 90 -Lo "$CONFIG_FILE" "$CONFIG_FILE_URL"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exit $curl_exit_status
@@ -234,7 +234,7 @@ create_init_script(){
   [ -f "$INIT_SCRIPT" ] && rm -f "$INIT_SCRIPT"
 
   echomsg "Downloading startup script at $INIT_SCRIPT" 1
-  curl --fail --connect-timeout 10 -Lo "$INIT_SCRIPT" "$INIT_SCRIPT_URL"
+  curl --fail --connect-timeout 10 --max-time 90 -Lo "$INIT_SCRIPT" "$INIT_SCRIPT_URL"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exiterr "Failed to download the startup script"
@@ -261,7 +261,7 @@ create_current_script(){
   [ -f "$PATH_SCRIPT" ] && rm -f "$PATH_SCRIPT"
 
   echomsg "Downloading current script at $PATH_SCRIPT" 1
-  curl --fail --connect-timeout 10 -Lo "$PATH_SCRIPT" "$PATH_SCRIPT_URL"
+  curl --fail --connect-timeout 10 --max-time 90 -Lo "$PATH_SCRIPT" "$PATH_SCRIPT_URL"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exiterr "Failed to download the current script"
@@ -273,13 +273,17 @@ create_current_script(){
 
 press_any_side_to_open_menu(){
   echomsg "------------------------------------------------"
-  printf "Press any key to open menu..." > /dev/tty
-  dd bs=1 count=1 < /dev/tty >/dev/null 2>&1
-  if [ "$1" == "reload" ];then
-    trap - INT QUIT HUP
-    exec sh "$0" "$@"
+  if [ -t 0 ]; then
+    printf "Press any key to open menu..." > /dev/tty
+    dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
+    if [ "$1" == "reload" ];then
+      exec sh "$0" "$@"
+    else
+      show_menu
+    fi
   else
-    show_menu
+    echo "No TTY detected, exiting menu prompt."
+    exit 0
   fi
 }
 
@@ -293,9 +297,13 @@ install(){
   fi
   printf "\n"
   echomsg "------------------------------------------------"
-  printf "Press any key to start installation..." > /dev/tty
-  dd bs=1 count=1 < /dev/tty >/dev/null 2>&1
-  echo > /dev/tty
+  if [ -t 0 ]; then
+    printf "Press any key to start installation..." > /dev/tty
+    dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
+    echo > /dev/tty
+  else
+    echo "No TTY detected, proceeding with installation automatically."
+  fi
   get_os_release
   get_architecture
   check_ndmc
@@ -339,10 +347,18 @@ uninstall(){
 }
 
 accept_uninstall(){
-  while :; do
-    printf "Uninstall SKeen? [y/n]: " > /dev/tty
-    read option < /dev/tty
-    [ -z "$option" ] && option="n"
+  max_attempts=3
+  attempt=0
+  while [ $attempt -lt $max_attempts ]; do
+    if [ -t 0 ]; then
+      printf "Uninstall SKeen? [y/n]: " > /dev/tty
+      read option < /dev/tty
+      [ -z "$option" ] && option="n"
+    else
+      echoerr "No TTY detected, exiting uninstall prompt."
+      break
+    fi
+    
     case "$option" in
       y|Y)
         echomsg "Uninstalling SKeen..." 1
@@ -355,6 +371,7 @@ accept_uninstall(){
       ;;
       *)
         echoerr "Incorrect option"
+        attempt=$((attempt+1))
       ;;
     esac
   done
@@ -442,7 +459,7 @@ update_skeen(){
   echomsg "Downloading SKeen-v${latest_sk_ver}.tar.gz ..." 1
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR"
-  curl --fail --connect-timeout 10 -Lo "$pkg_name" "$pkg_url"
+  curl --fail --connect-timeout 10 --max-time 60 -Lo "$pkg_name" "$pkg_url"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     echoerr "Failed to download $pkg_name"
@@ -602,22 +619,32 @@ show_menu(){
   printf "  %s Uninstall SKeen\n" "$(green "4.")"
   printf "  %s Exit\n" "$(green "5.")"
 
-  while :; do
-    printf "\nEnter your selection [1-5]: " > /dev/tty
-    read option < /dev/tty
-    if [ "$option" -ge 1 ] && [ "$option" -le 4 ]; then
-      echomsg "------------------------------------------------" 1
-    fi
-    case "$option" in
-      1) switch_singbox_state ;;
-      2) restart_singbox ;;
-      3) check_update ;;
-      4) accept_uninstall ;;
-      5) trap - INT QUIT HUP && exit 0 ;;
-      *) echoerr "Incorrect option" ;;
-    esac
-  done
-}
+  max_attempts=10
+   attempt=0
+   while [ $attempt -lt $max_attempts ]; do
+     if [ -t 0 ]; then
+       printf "\nEnter your selection [1-5]: " > /dev/tty
+       read option < /dev/tty
+       if [ "$option" -ge 1 ] && [ "$option" -le 4 ]; then
+         echomsg "------------------------------------------------" 1
+       fi
+       case "$option" in
+         1) switch_singbox_state ;;
+         2) restart_singbox ;;
+         3) check_update ;;
+         4) accept_uninstall ;;
+         5) trap - INT QUIT HUP TERM && exit 0 ;;
+         *) echoerr "Incorrect option" ;;
+       esac
+     else
+       echoerr "No TTY detected, exiting menu."
+       exit 0
+     fi
+     attempt=$((attempt+1))
+   done
+   echoerr "Maximum attempts reached, exiting menu."
+   exit 0
+ }
 
 if [ -f "$PATH_SCRIPT" ]; then
   show_menu
