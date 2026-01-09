@@ -9,7 +9,7 @@
 
 trap 'exit 0' INT QUIT HUP TERM
 
-SKEEN_VERSION="2.1.1"
+SKEEN_VERSION="2.1.2"
 
 PKG_OS=""
 PKG_ARCH=""
