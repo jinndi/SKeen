@@ -459,16 +459,20 @@ update_skeen(){
   echomsg "Extracting $pkg_name" 1
   mkdir "$tmp_unpack_dir"
   cd "$tmp_unpack_dir"
-  tar -xf "../${pkg_name}"
+  tar -xf "../${pkg_name}" --strip-components=1
   echook "Extraction completed."
 
   echomsg "Installing SKeen to $PATH_SCRIPT" 1
+  mkdir -p "$(dirname "$PATH_SCRIPT")"
   [ -f "$PATH_SCRIPT" ] && rm -f "$PATH_SCRIPT"
-  mv ./install.sh "$PATH_SCRIPT"
-  chmod 755 "$PATH_SCRIPT"
-  chmod +x "$PATH_SCRIPT"
-  echook "SKeen installed successfully."
-
+  if [ -f "install.sh" ];then
+    mv ./install.sh "$PATH_SCRIPT"
+    chmod 755 "$PATH_SCRIPT"
+    chmod +x "$PATH_SCRIPT"
+    echook "SKeen installed successfully."
+  else
+    echoerr "install.sh not found in archive!"
+  fi
   echomsg "Cleaning up temporary files..." 1
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${pkg_name}"
