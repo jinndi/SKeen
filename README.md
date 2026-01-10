@@ -41,7 +41,7 @@ curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh | sh
 ```
 Manage the package further using the `skeen` command.
 
-Configure sing-box by editing `/opt/etc/skeen/config/config.json`
+Configure sing-box by editing `/opt/etc/skeen/config/example_config.json`
 
 You can organize the files in the `/opt/etc/skeen/config` folder however you like.  
 All of them will be used when running sing-box.  

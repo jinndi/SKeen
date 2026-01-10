@@ -9,7 +9,7 @@
 
 trap 'exit 0' INT QUIT HUP TERM
 
-SKEEN_VERSION="2.1.2"
+SKEEN_VERSION="2.1.3"
 
 PKG_OS=""
 PKG_ARCH=""
@@ -53,8 +53,7 @@ echoerr() {
 
 exiterr() {
   red "$1" >&2
-  trap - INT QUIT HUP
-  exit 1
+  exit
 }
 
 get_sb_current_version() {
@@ -158,10 +157,7 @@ download_sb_latest_version(){
 
   if [ -z "$download_version" ]; then
     echomsg "Fetching the latest version number..." 1
-    download_version="$(get_sb_latest_version)" || {
-      trap '' INT QUIT HUP
-      exit 1
-    }
+    download_version="$(get_sb_latest_version)" || exit
     echook "Latest version is $download_version"
   fi
 
@@ -283,7 +279,7 @@ press_any_side_to_open_menu(){
     fi
   else
     echo "No TTY detected, exiting menu prompt."
-    exit 0
+    exit
   fi
 }
 
@@ -364,7 +360,7 @@ accept_uninstall(){
         echomsg "Uninstalling SKeen..." 1
         uninstall
         echook "SKeen has been uninstalled successfully."
-        exit 0
+        exit
       ;;
       n|N)
         break
@@ -619,7 +615,7 @@ show_menu(){
   printf "  %s Uninstall SKeen\n" "$(green "4.")"
   printf "  %s Exit\n" "$(green "5.")"
 
-  max_attempts=10
+  max_attempts=5
    attempt=0
    while [ $attempt -lt $max_attempts ]; do
      if [ -t 0 ]; then
@@ -633,17 +629,15 @@ show_menu(){
          2) restart_singbox ;;
          3) check_update ;;
          4) accept_uninstall ;;
-         5) trap - INT QUIT HUP TERM && exit 0 ;;
+         5) exit ;;
          *) echoerr "Incorrect option" ;;
        esac
      else
-       echoerr "No TTY detected, exiting menu."
-       exit 0
+       exiterr "No TTY detected, exiting menu."
      fi
      attempt=$((attempt+1))
    done
-   echoerr "Maximum attempts reached, exiting menu."
-   exit 0
+   exiterr "Maximum attempts reached, exiting menu."
  }
 
 if [ -f "$PATH_SCRIPT" ]; then
