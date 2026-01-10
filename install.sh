@@ -6,42 +6,39 @@
 #
 # Released under the MIT License, see the accompanying file LICENSE
 # or https://opensource.org/licenses/MIT
-
-trap 'exit 0' INT QUIT HUP TERM
-
 PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+ACTION=$1
+
 APP_NAME="SKeen"
-APP_VERSION="2.1.3"
+APP_VERSION="2.1.4"
 
 ENTWARE_DIR="/opt"
 WORK_DIR="${ENTWARE_DIR}/etc/skeen"
+
+REPO_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/main"
+
 CONFIG_NAME_DIR="config"
 CONFIG_NAME_FILE="example_config.json"
 CONFIG_DIR="${WORK_DIR}/${CONFIG_NAME_DIR}"
 CONFIG_FILE="${CONFIG_DIR}/${CONFIG_NAME_FILE}"
 CONFIG_FILE_URL="${REPO_BASE_URL}/${CONFIG_NAME_FILE}"
-SETTINGS_FILE="${WORK_DIR}/settings.conf"
 
 PROC="skeen-box"
 PROC_ARGS="run -D $WORK_DIR -C $CONFIG_NAME_DIR"
 
-ACTION=$1
-
-PKG_OS=""
-PKG_ARCH=""
-PKG_SUFFIX=""
-PKG_NAME=""
-
-REPO_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/main"
+SETTINGS_FILE="${WORK_DIR}/settings.conf"
 
 TMP_DIR="${ENTWARE_DIR}/tmp"
+
 SB_BIN="${ENTWARE_DIR}/bin/${PROC}"
 
 PATH_SCRIPT="${ENTWARE_DIR}/bin/skeen"
 PATH_SCRIPT_URL="${REPO_BASE_URL}/install.sh"
 
 INIT_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
+
+DEPENDENCIES="curl tar ndmc start-stop-daemon"
 
 create_settings(){
   mkdir -p "$(dirname "$SETTINGS_FILE")"
@@ -75,7 +72,7 @@ echoerr() {
 
 exiterr() {
   red "$1" >&2
-  exit
+  exit 1
 }
 
 get_sb_current_version() {
@@ -168,10 +165,12 @@ get_architecture() {
   esac
 }
 
-check_ndmc(){
-  if ! command -v ndmc >/dev/null 2>&1; then
-    exiterr "ndmc not found! Please install ndmc before proceeding."
-  fi
+check_dependencies() {
+  missing=""
+  for cmd in $DEPENDENCIES; do
+    command -v "$cmd" >/dev/null 2>&1 || missing="$missing $cmd"
+  done
+  [ -n "$missing" ] && exiterr "Missing dependencies: $missing"
 }
 
 download_sb_latest_version(){
@@ -179,7 +178,7 @@ download_sb_latest_version(){
 
   if [ -z "$download_version" ]; then
     echomsg "Fetching the latest version number..." 1
-    download_version="$(get_sb_latest_version)" || exit
+    download_version="$(get_sb_latest_version)" || exit 1
     echook "Latest version is $download_version"
   fi
 
@@ -243,7 +242,8 @@ create_sb_config(){
   curl --fail --connect-timeout 10 --max-time 90 -Lo "$CONFIG_FILE" "$CONFIG_FILE_URL"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
-    exit $curl_exit_status
+    echoerr "Failed to download configuration file"
+    return 1
   fi
   echook "Configuration file created successfully."
 }
@@ -292,8 +292,8 @@ press_any_side_to_open_menu(){
   echomsg "------------------------------------------------"
   printf "Press any key to open menu..." > /dev/tty
   dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
-  if [ "$1" == "reload" ];then
-    exec sh "$0" "$@"
+  if [ "$1" = "reload" ];then
+    exec sh "$0"
   else
     show_menu
   fi
@@ -314,7 +314,7 @@ install(){
   echo > /dev/tty
   get_os_release
   get_architecture
-  check_ndmc
+  check_dependencies
   download_sb_latest_version
   install_sb_bin
   create_sb_config
@@ -356,7 +356,7 @@ accept_uninstall(){
         echomsg "Uninstalling SKeen..." 1
         uninstall
         echook "SKeen has been uninstalled successfully."
-        exit
+        exit 0
       ;;
       n|N)
         break
@@ -391,7 +391,7 @@ start() {
   if [ $status_check -ne 0 ]; then
     [ -z "$ACTION" ] && press_any_side_to_open_menu
   fi
-  $PROC $PROC_ARGS > /dev/null 2>&1 &
+  start-stop-daemon -S -b -x $PROC -- $PROC_ARGS
   status_start=$?
   if [ $status_start -eq 0 ]; then
     echook "Sing-box started."
@@ -407,7 +407,7 @@ start() {
 stop(){
   echomsg "Stopping Sing-box..."
   is_running || ( echook "Sing-box stopped." && return 0 )
-  killall "$PROC" 2>/dev/null
+  start-stop-daemon -K -x $PROC >/dev/null
   status_stop=$?
   if [ $status_stop -eq 0 ]; then
     echook "Sing-box stopped."
@@ -436,7 +436,6 @@ switch_state(){
 }
 
 restart() {
-  echomsg "Restarting Sing-box..."
   stop
   start
   press_any_side_to_open_menu
@@ -454,9 +453,7 @@ switch_autostart(){
 }
 
 update_core(){
-  if is_running; then
-    stop
-  fi
+  is_running && stop
   get_os_release
   get_architecture
   download_sb_latest_version "$latest_sb_ver" || return 1
@@ -588,9 +585,7 @@ check_update(){
     fi
   fi
 
-  if ! is_running; then
-    start
-  fi
+  is_running || start
   press_any_side_to_open_menu "reload"
 }
 
@@ -640,7 +635,7 @@ show_menu(){
       3) switch_autostart ;;
       4) check_update ;;
       5) accept_uninstall ;;
-      6) exit ;;
+      6) exit 0 ;;
       *) echoerr "Incorrect option" ;;
     esac
      attempt=$((attempt+1))
