@@ -49,3 +49,17 @@ The folder itself will not be deleted when uninstalling the program — this mus
 It will also not be overwritten if it already exists during a reinstallation.
 
 Access the web interface at the router's IP (usually 192.168.1.1) on port `9090`
+
+### ⚡ Commands
+
+Example Usage: start the daemon `skeen start`
+(`skeen` without parameters launches the management menu)
+
+| Command | Description |
+| ------------ | -------------------------------------------------------------- |
+|`start`|Starts Sing-box. Checks configuration and will not start again if the process is already running|
+|`stop`|Stops Sing-box. If the process is not found, reports that the daemon is already stopped|
+|`restart`|Stops and then starts Sing-box again|
+|`status`|Shows the current status of the process|
+|`kill`|Forcefully terminates the Sing-box process (`kill -9`)|
+|`version`|Displays the current application version|

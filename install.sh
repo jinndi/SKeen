@@ -9,30 +9,52 @@
 
 trap 'exit 0' INT QUIT HUP TERM
 
-SKEEN_VERSION="2.1.3"
+PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+APP_NAME="SKeen"
+APP_VERSION="2.1.3"
+
+ENTWARE_DIR="/opt"
+WORK_DIR="${ENTWARE_DIR}/etc/skeen"
+CONFIG_NAME_DIR="config"
+CONFIG_NAME_FILE="example_config.json"
+CONFIG_DIR="${WORK_DIR}/${CONFIG_NAME_DIR}"
+CONFIG_FILE="${CONFIG_DIR}/${CONFIG_NAME_FILE}"
+CONFIG_FILE_URL="${REPO_BASE_URL}/${CONFIG_NAME_FILE}"
+SETTINGS_FILE="${WORK_DIR}/settings.conf"
+
+PROC="skeen-box"
+PROC_ARGS="run -D $WORK_DIR -C $CONFIG_NAME_DIR"
+
+ACTION=$1
 
 PKG_OS=""
 PKG_ARCH=""
 PKG_SUFFIX=""
 PKG_NAME=""
 
-ENTWARE_DIR="/opt"
 REPO_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/main"
 
 TMP_DIR="${ENTWARE_DIR}/tmp"
-SB_BIN="${ENTWARE_DIR}/bin/skeen-box"
+SB_BIN="${ENTWARE_DIR}/bin/${PROC}"
+
 PATH_SCRIPT="${ENTWARE_DIR}/bin/skeen"
 PATH_SCRIPT_URL="${REPO_BASE_URL}/install.sh"
 
-SKEEN_DIR="${ENTWARE_DIR}/etc/skeen"
-
-CONFIG_DIR="${SKEEN_DIR}/config"
-CONFIG_FILE="${CONFIG_DIR}/example_config.json"
-CONFIG_FILE_URL="${REPO_BASE_URL}/example_config.json"
-
 INIT_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
-INIT_SCRIPT_URL="${REPO_BASE_URL}/S99SKeen"
-INIT_SCRIPT_DISABLE="${SKEEN_DIR}/S99SKeen"
+
+create_settings(){
+  mkdir -p "$(dirname "$SETTINGS_FILE")"
+  {
+    echo "# Sing-box autostart on router reboot"
+    echo "# 0 - disabled, 1 - enabled"
+    echo "AUTO_START=1"
+  } > "$SETTINGS_FILE"
+  create_init_script > /dev/null 2>&1
+}
+
+[ -f "$SETTINGS_FILE" ] || create_settings
+. "$SETTINGS_FILE"
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -227,14 +249,13 @@ create_sb_config(){
 }
 
 create_init_script(){
+  echomsg "Create startup script at $INIT_SCRIPT" 1
   [ -f "$INIT_SCRIPT" ] && rm -f "$INIT_SCRIPT"
-
-  echomsg "Downloading startup script at $INIT_SCRIPT" 1
-  curl --fail --connect-timeout 10 --max-time 90 -Lo "$INIT_SCRIPT" "$INIT_SCRIPT_URL"
-  curl_exit_status=$?
-  if [ $curl_exit_status -ne 0 ]; then
-    exiterr "Failed to download the startup script"
-  fi
+  {
+    echo "#!/bin/sh"
+    echo "PATH=$PATH"
+    echo "skeen start"
+  } > "$INIT_SCRIPT"
   chmod 755 "$INIT_SCRIPT"
   chmod +x "$INIT_SCRIPT"
   echook "Startup script created successfully."
@@ -269,37 +290,28 @@ create_current_script(){
 
 press_any_side_to_open_menu(){
   echomsg "------------------------------------------------"
-  if [ -t 0 ]; then
-    printf "Press any key to open menu..." > /dev/tty
-    dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
-    if [ "$1" == "reload" ];then
-      exec sh "$0" "$@"
-    else
-      show_menu
-    fi
+  printf "Press any key to open menu..." > /dev/tty
+  dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
+  if [ "$1" == "reload" ];then
+    exec sh "$0" "$@"
   else
-    echo "No TTY detected, exiting menu prompt."
-    exit
+    show_menu
   fi
 }
 
-is_singbox_running(){
-  pidof skeen-box >/dev/null 2>&1
+is_running(){
+  if [ -n "$(pidof "$PROC")" ]; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 install(){
-  if is_singbox_running; then
-    exiterr "Sing-box is already running. Please stop and delete it before installing."
-  fi
-  printf "\n"
   echomsg "------------------------------------------------"
-  if [ -t 0 ]; then
-    printf "Press any key to start installation..." > /dev/tty
-    dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
-    echo > /dev/tty
-  else
-    echo "No TTY detected, proceeding with installation automatically."
-  fi
+  printf "Press any key to start installation..." > /dev/tty
+  dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
+  echo > /dev/tty
   get_os_release
   get_architecture
   check_ndmc
@@ -317,9 +329,7 @@ install(){
 }
 
 uninstall(){
-  if is_singbox_running; then
-    stop_singbox
-  fi
+  is_running && stop
   echomsg "Removing sing-box binary..."
   rm -f "$SB_BIN"
   echomsg "Removing init script..."
@@ -330,31 +340,17 @@ uninstall(){
   ndmc -c interface Proxy0 down  &&
   ndmc -c no interface Proxy0 &&
   ndmc -c system configuration save
-  if [ -d "$SKEEN_DIR" ]; then
-    echomsg "Removing SKeen dir..."
-    for item in "$SKEEN_DIR"/*; do
-      if [ "$item" != "$CONFIG_DIR" ]; then
-        rm -rf "$item"
-      fi
-    done
-  fi
-  echomsg "Configuration directory $CONFIG_DIR is retained."
-  echomsg "If you want to remove it manually, run: rm -rf '$CONFIG_DIR'"
+  echomsg "Configuration directory $WORK_DIR is retained."
+  echomsg "If you want to remove it manually, run: rm -rf '$WORK_DIR'"
 }
 
 accept_uninstall(){
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    if [ -t 0 ]; then
-      printf "Uninstall SKeen? [y/n]: " > /dev/tty
-      read option < /dev/tty
-      [ -z "$option" ] && option="n"
-    else
-      echoerr "No TTY detected, exiting uninstall prompt."
-      break
-    fi
-    
+    printf "Uninstall SKeen? [y/n]: " > /dev/tty
+    read option < /dev/tty
+    [ -z "$option" ] && option="n"
     case "$option" in
       y|Y)
         echomsg "Uninstalling SKeen..." 1
@@ -374,72 +370,92 @@ accept_uninstall(){
   show_menu
 }
 
-enable_init_script(){
-  if [ -f "$INIT_SCRIPT_DISABLE" ]; then
-    mv "$INIT_SCRIPT_DISABLE" "$INIT_SCRIPT" >/dev/null 2>&1
-  fi
-}
-
-disable_init_script(){
-  if [ -f "$INIT_SCRIPT" ]; then
-    mv "$INIT_SCRIPT" "$INIT_SCRIPT_DISABLE" >/dev/null 2>&1
-  fi
-}
-
-start_singbox() {
-  echomsg "Starting Sing-box..."
-  "$SB_BIN" check -C "$CONFIG_DIR" || press_any_side_to_open_menu
-  enable_init_script
-  "$INIT_SCRIPT" start >/dev/null 2>&1
-  rc=$?
-  if [ "$rc" -eq 0 ]; then
-    echook "Sing-box started."
+update_settings_var(){
+  KEY=$1
+  VALUE=$2
+  [ -f "$SETTINGS_FILE" ] || create_settings
+  if grep -q "^[[:space:]]*$KEY[[:space:]]*=" "$SETTINGS_FILE"; then
+    sed -i "s|^[[:space:]]*$KEY[[:space:]]*=.*|$KEY=$VALUE|" "$SETTINGS_FILE"
   else
-    disable_init_script
-    echoerr "Failed to start Sing-box."
+    echo "$KEY=$VALUE" >> "$SETTINGS_FILE"
   fi
+  . "$SETTINGS_FILE"
 }
 
-stop_singbox() {
+start() {
+  [ -n "$ACTION" ] && [ "$AUTO_START" = "0" ] && return 0
+  echomsg "Starting Sing-box..."
+  is_running && echook "Sing-box started." && return 0
+  $PROC check -C $CONFIG_DIR
+  status_check=$?
+  if [ $status_check -ne 0 ]; then
+    [ -z "$ACTION" ] && press_any_side_to_open_menu
+  fi
+  $PROC $PROC_ARGS > /dev/null 2>&1 &
+  status_start=$?
+  if [ $status_start -eq 0 ]; then
+    echook "Sing-box started."
+    logger -p notice -t "$APP_NAME" "Started"
+    return 0
+  fi
+
+  echoerr "Failed to start Sing-box."
+  logger -p error -t "$APP_NAME" "Failed to start"
+  return 1
+}
+
+stop(){
   echomsg "Stopping Sing-box..."
-  enable_init_script
-  "$INIT_SCRIPT" stop >/dev/null 2>&1
-  rc=$?
-  if [ "$rc" -eq 0 ]; then
-    disable_init_script
+  is_running || ( echook "Sing-box stopped." && return 0 )
+  killall "$PROC" 2>/dev/null
+  status_stop=$?
+  if [ $status_stop -eq 0 ]; then
     echook "Sing-box stopped."
+    logger -p notice -t "$APP_NAME" "Stopped"
+    return 0
   else
     echoerr "Failed to stop Sing-box."
+    logger -p error -t "$APP_NAME" "Failed to stop"
+    return 1
   fi
 }
 
-switch_singbox_state(){
-  if is_singbox_running; then
-    stop_singbox
+kill_proc(){
+  is_running || ( echook "Sing-box not running." && return 0 )
+  echo "Killing ${PROC}..."
+  killall -9 "$PROC" 2>/dev/null
+}
+
+switch_state(){
+  if is_running; then
+    stop
   else
-    start_singbox
+    start
   fi
   press_any_side_to_open_menu
 }
 
-restart_singbox() {
+restart() {
   echomsg "Restarting Sing-box..."
-  "$SB_BIN" check -C "$CONFIG_DIR" || press_any_side_to_open_menu
-  enable_init_script
-  "$INIT_SCRIPT" restart >/dev/null 2>&1
-  rc=$?
-  if [ "$rc" -eq 0 ]; then
-    echook "Sing-box restarted successfully."
+  stop
+  start
+  press_any_side_to_open_menu
+}
+
+switch_autostart(){
+  if [ "$AUTO_START" = "1" ]; then
+    update_settings_var "AUTO_START" "0"
+    echook "Autostart disabled"
   else
-    disable_init_script
-    echoerr "Failed to restart Sing-box."
+    update_settings_var "AUTO_START" "1"
+    echook "Autostart enabled"
   fi
   press_any_side_to_open_menu
 }
 
 update_core(){
-  if is_singbox_running; then
-    stop_singbox
+  if is_running; then
+    stop
   fi
   get_os_release
   get_architecture
@@ -537,7 +553,7 @@ check_update(){
   fi
 
   echomsg "Checking SKeen for updates..." 1
-  current_sk_ver="$SKEEN_VERSION"
+  current_sk_ver="$APP_VERSION"
   latest_sk_ver="$(get_sk_latest_version)" || press_any_side_to_open_menu
 
   if [ -z "$current_sk_ver" ]; then
@@ -572,8 +588,8 @@ check_update(){
     fi
   fi
 
-  if ! is_singbox_running; then
-    start_singbox
+  if ! is_running; then
+    start
   fi
   press_any_side_to_open_menu "reload"
 }
@@ -581,67 +597,71 @@ check_update(){
 show_menu(){
   show_header
 
-  if [ -f "$INIT_SCRIPT" ]; then
+  if [ "$AUTO_START" = "1" ]; then
     autostart_status="$(green "yes")"
+    autostart_text="Disable"
   else
     autostart_status="$(red "no")"
+    autostart_text="Enable"
   fi
 
-  if is_singbox_running; then
+  if is_running; then
     running_status="$(green "running")"
-    action="Stop"
-    if [ -f "$INIT_SCRIPT_DISABLE" ]; then
-      mv "$INIT_SCRIPT_DISABLE" "$INIT_SCRIPT" >/dev/null 2>&1
-      autostart_status="$(green "yes")"
-    fi
+    running_text="Stop"
   else
     running_status="$(red "stopped")"
-    action="Start"
-    if [ -f "$INIT_SCRIPT" ]; then
-      mv "$INIT_SCRIPT" "$INIT_SCRIPT_DISABLE" >/dev/null 2>&1
-      autostart_status="$(red "no")"
-    fi
+    running_text="Start"
   fi
 
-  printf "\n%s %s" "SKeen version:" "$(cyan "v${SKEEN_VERSION}")"
+  printf "\n%s %s" "SKeen version:" "$(cyan "v${APP_VERSION}")"
   printf "\n%s %s" "sing-box version:" "$(cyan "v$(get_sb_current_version)")"
   printf "\n%s %s\n" "sing-box state:" "$running_status"
   printf "%s %s\n" "Start automatically:" "$autostart_status"
 
   printf "\n%s\n" "$(cyan "Select option:")"
-  printf "  %s ${action} sing-box\n" "$(green "1.")"
+  printf "  %s $running_text sing-box\n" "$(green "1.")"
   printf "  %s Restart sing-box\n" "$(green "2.")"
-  printf "  %s Check Updates\n" "$(green "3.")"
-  printf "  %s Uninstall SKeen\n" "$(green "4.")"
-  printf "  %s Exit\n" "$(green "5.")"
+  printf "  %s $autostart_text Autostart\n" "$(green "3.")"
+  printf "  %s Check Updates\n" "$(green "4.")"
+  printf "  %s Uninstall SKeen\n" "$(green "5.")"
+  printf "  %s Exit\n" "$(green "6.")"
 
   max_attempts=5
    attempt=0
    while [ $attempt -lt $max_attempts ]; do
-     if [ -t 0 ]; then
-       printf "\nEnter your selection [1-5]: " > /dev/tty
-       read option < /dev/tty
-       if [ "$option" -ge 1 ] && [ "$option" -le 4 ]; then
-         echomsg "------------------------------------------------" 1
-       fi
-       case "$option" in
-         1) switch_singbox_state ;;
-         2) restart_singbox ;;
-         3) check_update ;;
-         4) accept_uninstall ;;
-         5) exit ;;
-         *) echoerr "Incorrect option" ;;
-       esac
-     else
-       exiterr "No TTY detected, exiting menu."
-     fi
+    printf "\nEnter your selection [1-6]: " > /dev/tty
+    read option < /dev/tty
+    if [ "$option" -ge 1 ] && [ "$option" -le 4 ]; then
+      echomsg "------------------------------------------------" 1
+    fi
+    case "$option" in
+      1) switch_state ;;
+      2) restart ;;
+      3) switch_autostart ;;
+      4) check_update ;;
+      5) accept_uninstall ;;
+      6) exit ;;
+      *) echoerr "Incorrect option" ;;
+    esac
      attempt=$((attempt+1))
    done
    exiterr "Maximum attempts reached, exiting menu."
  }
 
-if [ -f "$PATH_SCRIPT" ]; then
-  show_menu
-else
-  install
-fi
+case "$ACTION" in
+  start)   start ;;
+  stop)    stop ;;
+  restart) restart ;;
+  status)  is_running && echook "running" || echoerr "stopped" ;;
+  kill)    kill_proc ;;
+  version) echo "$APP_NAME v${APP_VERSION}" ;;
+  *)
+    if [ -n "$ACTION" ]; then
+      echomsg "Usage: skeen (start|stop|restart|status|kill|version)"
+    elif [ -f "$PATH_SCRIPT" ]; then
+      show_menu
+    else
+      install
+    fi
+  ;;
+esac
