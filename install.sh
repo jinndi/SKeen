@@ -631,7 +631,7 @@ show_menu(){
    while [ $attempt -lt $max_attempts ]; do
     printf "\nEnter your selection [1-6]: " > /dev/tty
     read option < /dev/tty
-    if [ "$option" -ge 1 ] && [ "$option" -le 4 ]; then
+    if [ "$option" -ge 1 ] && [ "$option" -le 5 ]; then
       echomsg "------------------------------------------------" 1
     fi
     case "$option" in
