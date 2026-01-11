@@ -16,7 +16,7 @@ CONFIG_DIR="${WORK_DIR}/config"
 TMP_DIR="${ENTWARE_DIR}/tmp"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="2.1.4"
+SKEEN_VERSION="2.1.5"
 SKEEN_REPO_URL="https://raw.githubusercontent.com/jinndi/SKeen/main"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/skeen"
 SKEEN_SCRIPT_URL="${SKEEN_REPO_URL}/install.sh"
