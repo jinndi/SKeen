@@ -10,34 +10,25 @@ PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin
 
 ACTION=$1
 
-APP_NAME="SKeen"
-APP_VERSION="2.1.4"
-
 ENTWARE_DIR="/opt"
 WORK_DIR="${ENTWARE_DIR}/etc/skeen"
-
-REPO_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/main"
-
-CONFIG_NAME_DIR="config"
-CONFIG_NAME_FILE="example_config.json"
-CONFIG_DIR="${WORK_DIR}/${CONFIG_NAME_DIR}"
-CONFIG_FILE="${CONFIG_DIR}/${CONFIG_NAME_FILE}"
-CONFIG_FILE_URL="${REPO_BASE_URL}/${CONFIG_NAME_FILE}"
-
-PROC="skeen-box"
-PROC_ARGS="run -D $WORK_DIR -C $CONFIG_NAME_DIR"
-
-SETTINGS_FILE="${WORK_DIR}/settings.conf"
-
+CONFIG_DIR="${WORK_DIR}/config"
 TMP_DIR="${ENTWARE_DIR}/tmp"
 
-SB_BIN="${ENTWARE_DIR}/bin/${PROC}"
+SKEEN_NAME="SKeen"
+SKEEN_VERSION="2.1.4"
+SKEEN_REPO_URL="https://raw.githubusercontent.com/jinndi/SKeen/main"
+SKEEN_SCRIPT="${ENTWARE_DIR}/bin/skeen"
+SKEEN_SCRIPT_URL="${SKEEN_REPO_URL}/install.sh"
+SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
+SETTINGS_FILE="${WORK_DIR}/settings.conf"
 
-PATH_SCRIPT="${ENTWARE_DIR}/bin/skeen"
-PATH_SCRIPT_URL="${REPO_BASE_URL}/install.sh"
+PROC="skeen-box"
+PROC_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
+SINGBOX_BIN="${ENTWARE_DIR}/bin/${PROC}"
+SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 
 INIT_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
-
 DEPENDENCIES="curl tar ndmc start-stop-daemon"
 
 create_settings(){
@@ -76,13 +67,14 @@ exiterr() {
 }
 
 get_sb_current_version() {
-  if [ -f "$SB_BIN" ]; then
-    echo "$("$SB_BIN" version | awk 'NR==1 {print $3}' | xargs)"
+  if [ -f "$SINGBOX_BIN" ]; then
+    echo "$("$SINGBOX_BIN" version | awk 'NR==1 {print $3}' | xargs)"
   fi
 }
 
-get_sb_latest_version() {
-  latest_release=$(curl --connect-timeout 10 --max-time 90 -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
+get_latest_version() {
+  api_url=$1
+  latest_release="$(curl --connect-timeout 5 --max-time 90 -s "$api_url")"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     echoerr "Failed to fetch the latest version information."
@@ -92,21 +84,7 @@ get_sb_latest_version() {
     echoerr "Failed to parse the latest version information:\n$(echo "$latest_release" | grep message)"
     return 1
   fi
-  echo $(echo "$latest_release" | grep tag_name | head -n 1 | awk -F: '{print $2}' | sed 's/[", v]//g')
-}
-
-get_sk_latest_version() {
-  latest_release=$(curl --connect-timeout 10 --max-time 90 -s https://api.github.com/repos/jinndi/SKeen/releases/latest)
-  curl_exit_status=$?
-  if [ $curl_exit_status -ne 0 ]; then
-    echoerr "Failed to fetch the latest version information."
-    return 1
-  fi
-  if [ "$(echo "$latest_release" | grep tag_name | wc -l)" -eq 0 ]; then
-    echoerr "Failed to parse the latest version information:\n$(echo "$latest_release" | grep message)"
-    return 1
-  fi
-  echo $(echo "$latest_release" | grep tag_name | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+  echo "$latest_release" | grep tag_name | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
 }
 
 show_header() {
@@ -173,12 +151,12 @@ check_dependencies() {
   [ -n "$missing" ] && exiterr "Missing dependencies: $missing"
 }
 
-download_sb_latest_version(){
+download_singbox(){
   download_version="$1"
 
   if [ -z "$download_version" ]; then
     echomsg "Fetching the latest version number..." 1
-    download_version="$(get_sb_latest_version)" || exit 1
+    download_version="$(get_latest_version "$SINGBOX_API_URL")" || exit 1
     echook "Latest version is $download_version"
   fi
 
@@ -188,7 +166,7 @@ download_sb_latest_version(){
   echomsg "Downloading $PKG_NAME ..." 1
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR"
-  curl --fail --connect-timeout 10 --max-time 90 -Lo "$PKG_NAME" "$pkg_url"
+  curl --fail --connect-timeout 5 --max-time 90 -Lo "$PKG_NAME" "$pkg_url"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     if [ -n "$download_version" ]; then
@@ -201,7 +179,7 @@ download_sb_latest_version(){
   echook "Downloaded $PKG_NAME successfully."
 }
 
-install_sb_bin(){
+install_singbox(){
   tmp_unpack_dir="${TMP_DIR}/sing-box-unpack"
 
   if [ -d "$tmp_unpack_dir" ]; then
@@ -215,11 +193,11 @@ install_sb_bin(){
   tar -xzf data.tar.gz
   echook "Extraction completed."
 
-  echomsg "Installing sing-box binary to $SB_BIN" 1
-  [ -f "$SB_BIN" ] && rm -f "$SB_BIN"
-  mv ./usr/bin/sing-box "$SB_BIN"
-  chmod 755 "$SB_BIN"
-  chmod +x "$SB_BIN"
+  echomsg "Installing sing-box binary to $SINGBOX_BIN" 1
+  [ -f "$SINGBOX_BIN" ] && rm -f "$SINGBOX_BIN"
+  mv ./usr/bin/sing-box "$SINGBOX_BIN"
+  chmod 755 "$SINGBOX_BIN"
+  chmod +x "$SINGBOX_BIN"
   echook "sing-box binary installed successfully."
 
   echomsg "Cleaning up temporary files..." 1
@@ -228,23 +206,139 @@ install_sb_bin(){
   echook "Cleanup completed."
 }
 
-create_sb_config(){
+create_config(){
   if [ -d "$CONFIG_DIR" ] && ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
     return
-  else
-    rm -rf "$CONFIG_DIR"
   fi
-  
-  echomsg "Creating configuration directory at $CONFIG_DIR" 1
+  echomsg "Creating default configuration files..." 1
   mkdir -p "$CONFIG_DIR"
-
-  echo "Downloading default configuration file..."
-  curl --fail --connect-timeout 10 --max-time 90 -Lo "$CONFIG_FILE" "$CONFIG_FILE_URL"
-  curl_exit_status=$?
-  if [ $curl_exit_status -ne 0 ]; then
-    echoerr "Failed to download configuration file"
-    return 1
-  fi
+  cat <<EOF > "$CONFIG_DIR/log.json"
+{
+  "log": {
+    "disabled": false,
+    "level": "error",
+    "timestamp": true
+  }
+}
+EOF
+  cat <<EOF > "$CONFIG_DIR/inbounds.json"
+{
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "listen_port": 2080,
+      "type": "socks"
+    }
+  ]
+}
+EOF
+  cat <<EOF > "$CONFIG_DIR/outbounds.json"
+{
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "type": "selector",
+      "default": "auto",
+      "interrupt_exist_connections": false,
+      "outbounds": [
+        "auto",
+        "VLESS",
+        "direct"
+      ]
+    },
+    {
+      "tag": "auto",
+      "type": "urltest",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": "5m",
+      "tolerance": 50,
+      "idle_timeout": "30m",
+      "interrupt_exist_connections": false,
+      "outbounds": [
+        "VLESS"
+      ]
+    },
+    {
+      "tag": "direct",
+      "type": "direct"
+    },
+    {
+      "tag": "VLESS",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example.com",
+      "server_port": 443,
+      "tls": {
+        "alpn": [
+          "h1", "h2"
+        ],
+        "enabled": true,
+        "server_name": "example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        }
+      }
+    }
+  ]
+}
+EOF
+  cat <<EOF > "$CONFIG_DIR/route.json"
+{
+  "route": {
+    "auto_detect_interface": true,
+    "final": "proxy",
+    "rules": [
+      {
+        "action": "sniff"
+      },
+      {
+        "action": "reject",
+        "rule_set": "adguard"
+      },
+      {
+        "action": "route",
+        "clash_mode": "direct",
+        "outbound": "direct"
+      },
+      {
+        "action": "route",
+        "clash_mode": "global",
+        "outbound": "proxy"
+      }
+    ],
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": "adguard",
+        "format": "binary",
+        "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs",
+        "download_detour": "direct",
+        "update_interval": "24h0m0s"
+      }
+    ]
+  }
+}
+EOF
+  cat <<EOF > "$CONFIG_DIR/inbounds.json"
+{
+  "experimental": {
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/archive/gh-pages.zip",
+      "external_ui": "zashboard",
+      "external_ui_download_detour": "direct",
+      "default_mode": "rule"
+    },
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db"
+    }
+  }
+}
+EOF
   echook "Configuration file created successfully."
 }
 
@@ -266,7 +360,7 @@ create_proxy_interface(){
   ndmc -c interface Proxy0 && 
   ndmc -c interface Proxy0 proxy protocol socks5 && 
   ndmc -c interface Proxy0 proxy socks5-udp && 
-  ndmc -c interface Proxy0 proxy upstream 127.0.0.1 2080  && 
+  ndmc -c interface Proxy0 proxy upstream 127.0.0.1 2080 && 
   ndmc -c interface Proxy0 description Sing-box && 
   ndmc -c interface Proxy0 ip global auto && 
   ndmc -c interface Proxy0 up && 
@@ -275,23 +369,23 @@ create_proxy_interface(){
 }
 
 create_current_script(){
-  [ -f "$PATH_SCRIPT" ] && rm -f "$PATH_SCRIPT"
+  [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
 
-  echomsg "Downloading current script at $PATH_SCRIPT" 1
-  curl --fail --connect-timeout 10 --max-time 90 -Lo "$PATH_SCRIPT" "$PATH_SCRIPT_URL"
+  echomsg "Downloading current script at $SKEEN_SCRIPT" 1
+  curl --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     exiterr "Failed to download the current script"
   fi
-  chmod 755 "$PATH_SCRIPT"
-  chmod +x "$PATH_SCRIPT"
+  chmod 755 "$SKEEN_SCRIPT"
+  chmod +x "$SKEEN_SCRIPT"
   echook "Current script created successfully."
 }
 
-press_any_side_to_open_menu(){
+press_any_key_to_menu(){
   echomsg "------------------------------------------------"
-  printf "Press any key to open menu..." > /dev/tty
-  dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
+  printf "Press any key to open menu..."
+  read -r -n 1 </dev/tty
   if [ "$1" = "reload" ];then
     exec sh "$0"
   else
@@ -309,33 +403,32 @@ is_running(){
 
 install(){
   echomsg "------------------------------------------------"
-  printf "Press any key to start installation..." > /dev/tty
-  dd bs=1 count=1 if=/dev/tty of=/dev/null 2>&1
-  echo > /dev/tty
+  printf "Press any key to start installation..."
+  read -r -n 1 </dev/tty
   get_os_release
   get_architecture
   check_dependencies
-  download_sb_latest_version
-  install_sb_bin
-  create_sb_config
+  download_singbox
+  install_singbox
+  create_config
   create_init_script
   create_proxy_interface
   create_current_script
   printf "\n"
   echook "Installation completed, sing-box version:"
-  "$SB_BIN" version
-  echomsg "Configure sing-box by editing $CONFIG_DIR" 1
-  press_any_side_to_open_menu
+  "$SINGBOX_BIN" version
+  echomsg "Configure sing-box by editing: $CONFIG_DIR" 1
+  press_any_key_to_menu
 }
 
 uninstall(){
   is_running && stop
   echomsg "Removing sing-box binary..."
-  rm -f "$SB_BIN"
+  rm -f "$SINGBOX_BIN"
   echomsg "Removing init script..."
   rm -f "$INIT_SCRIPT"
-  echomsg "Removing current script..."
-  rm -f "$PATH_SCRIPT"
+  echomsg "Removing SKeen script..."
+  rm -f "$SKEEN_SCRIPT"
   echomsg "Removing proxy interface Proxy0 from ndmc..."
   ndmc -c interface Proxy0 down  &&
   ndmc -c no interface Proxy0 &&
@@ -389,18 +482,18 @@ start() {
   $PROC check -C $CONFIG_DIR
   status_check=$?
   if [ $status_check -ne 0 ]; then
-    [ -z "$ACTION" ] && press_any_side_to_open_menu
+    [ -z "$ACTION" ] && press_any_key_to_menu
   fi
   start-stop-daemon -S -b -x $PROC -- $PROC_ARGS
   status_start=$?
   if [ $status_start -eq 0 ]; then
     echook "Sing-box started."
-    logger -p notice -t "$APP_NAME" "Started"
+    logger -p notice -t "$SKEEN_NAME" "Started"
     return 0
   fi
 
   echoerr "Failed to start Sing-box."
-  logger -p error -t "$APP_NAME" "Failed to start"
+  logger -p error -t "$SKEEN_NAME" "Failed to start"
   return 1
 }
 
@@ -411,11 +504,11 @@ stop(){
   status_stop=$?
   if [ $status_stop -eq 0 ]; then
     echook "Sing-box stopped."
-    logger -p notice -t "$APP_NAME" "Stopped"
+    logger -p notice -t "$SKEEN_NAME" "Stopped"
     return 0
   else
     echoerr "Failed to stop Sing-box."
-    logger -p error -t "$APP_NAME" "Failed to stop"
+    logger -p error -t "$SKEEN_NAME" "Failed to stop"
     return 1
   fi
 }
@@ -432,13 +525,12 @@ switch_state(){
   else
     start
   fi
-  press_any_side_to_open_menu
+  press_any_key_to_menu
 }
 
 restart() {
-  stop
-  start
-  press_any_side_to_open_menu
+  stop; start
+  press_any_key_to_menu
 }
 
 switch_autostart(){
@@ -449,26 +541,26 @@ switch_autostart(){
     update_settings_var "AUTO_START" "1"
     echook "Autostart enabled"
   fi
-  press_any_side_to_open_menu
+  press_any_key_to_menu
 }
 
 update_core(){
   is_running && stop
   get_os_release
   get_architecture
-  download_sb_latest_version "$latest_sb_ver" || return 1
-  install_sb_bin
+  download_singbox "$latest_sb_ver" || return 1
+  install_singbox
   echook "The sing-box core has been successfully updated"
 }
 
 update_skeen(){
-  pkg_name="SKeen-v${latest_sk_ver}.tar.gz"
+  pkg_name="${SKEEN_NAME}-v${latest_sk_ver}.tar.gz"
   pkg_url="https://github.com/jinndi/SKeen/archive/${pkg_name}"
   
   echomsg "Downloading SKeen-v${latest_sk_ver}.tar.gz ..." 1
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR"
-  curl --fail --connect-timeout 10 --max-time 60 -Lo "$pkg_name" "$pkg_url"
+  curl --fail --connect-timeout 5 --max-time 90 -Lo "$pkg_name" "$pkg_url"
   curl_exit_status=$?
   if [ $curl_exit_status -ne 0 ]; then
     echoerr "Failed to download $pkg_name"
@@ -476,7 +568,7 @@ update_skeen(){
   fi
   echook "Downloaded $pkg_name successfully."
 
-  tmp_unpack_dir="${TMP_DIR}/SKeen-unpack"
+  tmp_unpack_dir="${TMP_DIR}/${SKEEN_NAME}-unpack"
 
   if [ -d "$tmp_unpack_dir" ]; then
     rm -rf "$tmp_unpack_dir"
@@ -488,14 +580,14 @@ update_skeen(){
   tar -xf "../${pkg_name}" --strip-components=1
   echook "Extraction completed."
 
-  echomsg "Installing SKeen to $PATH_SCRIPT" 1
-  mkdir -p "$(dirname "$PATH_SCRIPT")"
-  [ -f "$PATH_SCRIPT" ] && rm -f "$PATH_SCRIPT"
-  if [ -f "install.sh" ];then
-    mv ./install.sh "$PATH_SCRIPT"
-    chmod 755 "$PATH_SCRIPT"
-    chmod +x "$PATH_SCRIPT"
-    echook "SKeen installed successfully."
+  echomsg "Installing $SKEEN_NAME to $SKEEN_SCRIPT" 1
+  mkdir -p "$(dirname "$SKEEN_SCRIPT")"
+  [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
+  if [ -f "install.sh" ]; then
+    mv ./install.sh "$SKEEN_SCRIPT"
+    chmod 755 "$SKEEN_SCRIPT"
+    chmod +x "$SKEEN_SCRIPT"
+    echook "$SKEEN_NAME installed successfully."
   else
     echoerr "install.sh not found in archive!"
   fi
@@ -503,16 +595,16 @@ update_skeen(){
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${pkg_name}"
   echook "Cleanup completed."
-  echook "The SKeen has been successfully updated"
+  echook "The $SKEEN_NAME has been successfully updated"
 }
 
 check_update(){
   echomsg "Checking sing-box for updates..."
   current_sb_ver="$(get_sb_current_version)"
-  latest_sb_ver="$(get_sb_latest_version)" || press_any_side_to_open_menu
+  latest_sb_ver="$(get_latest_version "$SINGBOX_API_URL")"
 
   if [ -z "$current_sb_ver" ]; then
-    if [ -f "$SB_BIN" ]; then
+    if [ -f "$SINGBOX_BIN" ]; then
       echoerr "Failed to get sing-box version"
     else
       update_core
@@ -549,17 +641,17 @@ check_update(){
     fi
   fi
 
-  echomsg "Checking SKeen for updates..." 1
-  current_sk_ver="$APP_VERSION"
-  latest_sk_ver="$(get_sk_latest_version)" || press_any_side_to_open_menu
+  echomsg "Checking $SKEEN_NAME for updates..." 1
+  current_sk_ver="$SKEEN_VERSION"
+  latest_sk_ver="$(get_latest_version "$SKEEN_API_URL")"
 
   if [ -z "$current_sk_ver" ]; then
-    echoerr "Failed to get SKeen version"
+    echoerr "Failed to get $SKEEN_NAME version"
   fi
 
   if [ -n "$latest_sk_ver" ] && [ -n "$current_sk_ver" ]; then
     if [ "$latest_sk_ver" != "$current_sk_ver" ]; then
-      printf "%s %s\n" "$(cyan "New version SKeen script is available:")" "$(green "$latest_sk_ver")"
+      printf "%s %s\n" "$(cyan "New version $SKEEN_NAME script is available:")" "$(green "$latest_sk_ver")"
       printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$current_sk_ver")"
       printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/jinndi/SKeen/releases")"
 
@@ -581,12 +673,12 @@ check_update(){
         esac
       done
     else
-      echook "The latest Skeen version $latest_sk_ver is already installed"
+      echook "The latest $SKEEN_NAME version $latest_sk_ver is already installed"
     fi
   fi
 
   is_running || start
-  press_any_side_to_open_menu "reload"
+  press_any_key_to_menu "reload"
 }
 
 show_menu(){
@@ -608,7 +700,7 @@ show_menu(){
     running_text="Start"
   fi
 
-  printf "\n%s %s" "SKeen version:" "$(cyan "v${APP_VERSION}")"
+  printf "\n%s %s" "$SKEEN_NAME version:" "$(cyan "v${SKEEN_VERSION}")"
   printf "\n%s %s" "sing-box version:" "$(cyan "v$(get_sb_current_version)")"
   printf "\n%s %s\n" "sing-box state:" "$running_status"
   printf "%s %s\n" "Start automatically:" "$autostart_status"
@@ -618,7 +710,7 @@ show_menu(){
   printf "  %s Restart sing-box\n" "$(green "2.")"
   printf "  %s $autostart_text Autostart\n" "$(green "3.")"
   printf "  %s Check Updates\n" "$(green "4.")"
-  printf "  %s Uninstall SKeen\n" "$(green "5.")"
+  printf "  %s Uninstall $SKEEN_NAME\n" "$(green "5.")"
   printf "  %s Exit\n" "$(green "6.")"
 
   max_attempts=5
@@ -649,11 +741,11 @@ case "$ACTION" in
   restart) restart ;;
   status)  is_running && echook "running" || echoerr "stopped" ;;
   kill)    kill_proc ;;
-  version) echo "$APP_NAME v${APP_VERSION}" ;;
+  version) echo "$SKEEN_NAME v${SKEEN_VERSION}" ;;
   *)
     if [ -n "$ACTION" ]; then
       echomsg "Usage: skeen (start|stop|restart|status|kill|version)"
-    elif [ -f "$PATH_SCRIPT" ]; then
+    elif [ -f "$SKEEN_SCRIPT" ]; then
       show_menu
     else
       install
