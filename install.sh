@@ -441,7 +441,7 @@ accept_uninstall(){
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    printf "Uninstall SKeen? [y/n]: " > /dev/tty
+    printf "Uninstall ${SKEEN_NAME}? [y/n]: " > /dev/tty
     read option < /dev/tty
     [ -z "$option" ] && option="n"
     case "$option" in
@@ -486,6 +486,7 @@ start() {
   fi
   start-stop-daemon -S -b -x $PROC -- $PROC_ARGS
   status_start=$?
+  sleep 1
   if [ $status_start -eq 0 ]; then
     echook "Sing-box started."
     logger -p notice -t "$SKEEN_NAME" "Started"
@@ -502,6 +503,7 @@ stop(){
   is_running || ( echook "Sing-box stopped." && return 0 )
   start-stop-daemon -K -x $PROC >/dev/null
   status_stop=$?
+  sleep 1
   if [ $status_stop -eq 0 ]; then
     echook "Sing-box stopped."
     logger -p notice -t "$SKEEN_NAME" "Stopped"
@@ -713,42 +715,40 @@ show_menu(){
   printf "  %s Uninstall $SKEEN_NAME\n" "$(green "5.")"
   printf "  %s Exit\n" "$(green "6.")"
 
-  max_attempts=5
+  max_attempts=3
    attempt=0
    while [ $attempt -lt $max_attempts ]; do
     printf "\nEnter your selection [1-6]: " > /dev/tty
     read option < /dev/tty
-    if [ "$option" -ge 1 ] && [ "$option" -le 5 ]; then
+    if echo "$option" | grep -Eq '^[1-5]$'; then
       echomsg "------------------------------------------------" 1
+      case "$option" in
+        1) switch_state ;;
+        2) restart ;;
+        3) switch_autostart ;;
+        4) check_update ;;
+        5) accept_uninstall ;;
+      esac
+    else
+      [ "$option" = 6 ] && exit 0
+      echoerr "Incorrect option"
+      attempt=$((attempt+1))
     fi
-    case "$option" in
-      1) switch_state ;;
-      2) restart ;;
-      3) switch_autostart ;;
-      4) check_update ;;
-      5) accept_uninstall ;;
-      6) exit 0 ;;
-      *) echoerr "Incorrect option" ;;
-    esac
-     attempt=$((attempt+1))
    done
    exiterr "Maximum attempts reached, exiting menu."
  }
 
-case "$ACTION" in
-  start)   start ;;
-  stop)    stop ;;
-  restart) restart ;;
-  status)  is_running && echook "running" || echoerr "stopped" ;;
-  kill)    kill_proc ;;
-  version) echo "$SKEEN_NAME v${SKEEN_VERSION}" ;;
-  *)
-    if [ -n "$ACTION" ]; then
-      echomsg "Usage: skeen (start|stop|restart|status|kill|version)"
-    elif [ -f "$SKEEN_SCRIPT" ]; then
-      show_menu
-    else
-      install
-    fi
-  ;;
-esac
+if [ -f "$SKEEN_SCRIPT" ]; then
+  case "$ACTION" in
+    start)   start ;;
+    stop)    stop ;;
+    restart) restart ;;
+    status)  is_running && echook "running" || echoerr "stopped" ;;
+    kill)    kill_proc ;;
+    version) echo "$SKEEN_NAME v${SKEEN_VERSION}" ;;
+    "") show_menu ;;
+    *) echomsg "Usage: skeen (start|stop|restart|status|kill|version)" ;;
+  esac
+else
+  install
+fi
