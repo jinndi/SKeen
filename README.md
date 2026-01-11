@@ -41,12 +41,9 @@ curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh | sh
 ```
 Manage the package further using the `skeen` command.
 
-Configure sing-box by editing `/opt/etc/skeen/config/example_config.json`
-
-You can organize the files in the `/opt/etc/skeen/config` folder however you like.  
-All of them will be used when running sing-box.  
-The folder itself will not be deleted when uninstalling the program — this must be done manually.  
-It will also not be overwritten if it already exists during a reinstallation.
+Configure the sing-box JSON configuration files located in the `/opt/etc/skeen/config/` directory, where example configuration files are provided.
+The directory is not removed during program uninstallation and must be deleted manually if required.
+It is also not overwritten during reinstallation if it already exists.
 
 Access the web interface at the router's IP (usually 192.168.1.1) on port `9090`
 

@@ -66,10 +66,21 @@ exiterr() {
   exit 1
 }
 
-get_sb_current_version() {
-  if [ -f "$SINGBOX_BIN" ]; then
-    echo "$("$SINGBOX_BIN" version | awk 'NR==1 {print $3}' | xargs)"
-  fi
+get_current_version() {
+  case "$(printf '%s\n' "$1" | tr '[:upper:]' '[:lower:]')" in
+    skeen-box)
+      if [ -f "$SINGBOX_BIN" ]; then
+        echo "$("$SINGBOX_BIN" version | awk 'NR==1 {print $3}' | xargs)"
+      fi
+    ;;
+    skeen)
+      echo "$SKEEN_VERSION"
+    ;;
+    *)
+      echoerr "Unknown program: $1"
+      return 1
+    ;;
+  esac
 }
 
 get_latest_version() {
@@ -602,7 +613,7 @@ update_skeen(){
 
 check_update(){
   echomsg "Checking sing-box for updates..."
-  current_sb_ver="$(get_sb_current_version)"
+  current_sb_ver="$(get_current_version "skeen-box")"
   latest_sb_ver="$(get_latest_version "$SINGBOX_API_URL")"
 
   if [ -z "$current_sb_ver" ]; then
@@ -610,7 +621,7 @@ check_update(){
       echoerr "Failed to get sing-box version"
     else
       update_core
-      current_sb_ver="$(get_sb_current_version)"
+      current_sb_ver="$(get_current_version "skeen-box")"
       latest_sb_ver="$current_sb_ver"
     fi
   fi
@@ -702,8 +713,8 @@ show_menu(){
     running_text="Start"
   fi
 
-  printf "\n%s %s" "$SKEEN_NAME version:" "$(cyan "v${SKEEN_VERSION}")"
-  printf "\n%s %s" "sing-box version:" "$(cyan "v$(get_sb_current_version)")"
+  printf "\n%s %s" "$SKEEN_NAME version:" "$(cyan "v$(get_current_version "skeen")")"
+  printf "\n%s %s" "sing-box version:" "$(cyan "v$(get_current_version "skeen-box")")"
   printf "\n%s %s\n" "sing-box state:" "$running_status"
   printf "%s %s\n" "Start automatically:" "$autostart_status"
 
@@ -745,7 +756,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     restart) restart ;;
     status)  is_running && echook "running" || echoerr "stopped" ;;
     kill)    kill_proc ;;
-    version) echo "$SKEEN_NAME v${SKEEN_VERSION}" ;;
+    version) echomsg "$SKEEN_NAME v$(get_current_version "skeen")" ;;
     "") show_menu ;;
     *) echomsg "Usage: skeen (start|stop|restart|status|kill|version)" ;;
   esac
