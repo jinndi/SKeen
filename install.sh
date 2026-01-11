@@ -219,6 +219,7 @@ install_singbox(){
 
 create_config(){
   if [ -d "$CONFIG_DIR" ] && ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
+    echomsg "Configuration files already exist in $CONFIG_DIR, skipping creation." 1
     return
   fi
   echomsg "Creating default configuration files..." 1
