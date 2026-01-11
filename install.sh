@@ -656,7 +656,7 @@ check_update(){
   fi
 
   echomsg "Checking $SKEEN_NAME for updates..." 1
-  current_sk_ver="$SKEEN_VERSION"
+  current_sk_ver="$(get_current_version "skeen")"
   latest_sk_ver="$(get_latest_version "$SKEEN_API_URL")"
 
   if [ -z "$current_sk_ver" ]; then
