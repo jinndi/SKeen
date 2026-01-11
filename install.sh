@@ -571,7 +571,7 @@ update_skeen(){
   pkg_name="${SKEEN_NAME}-v${latest_sk_ver}.tar.gz"
   pkg_url="https://github.com/jinndi/SKeen/archive/${pkg_name}"
   
-  echomsg "Downloading SKeen-v${latest_sk_ver}.tar.gz ..." 1
+  echomsg "Downloading $pkg_name ..." 1
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR"
   curl --fail --connect-timeout 5 --max-time 90 -Lo "$pkg_name" "$pkg_url"
