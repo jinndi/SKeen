@@ -10,7 +10,8 @@ PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin
 
 ACTION="$1"
 CALLER="$2"
-[ -z "$CALLER" ] && CALLER="menu"
+[ -z "$CALLER" ] && CALLER="cli"
+[ -z "$ACTION" ] && CALLER="menu"
 
 DEPENDENCIES="curl tar ndmc start-stop-daemon"
 # + jsonfilter
@@ -602,7 +603,7 @@ update_conf_var(){
 }
 
 start() {
-  [ "$CALLER" != "menu" ] && [ "$AUTO_START" = "0" ] && return 0
+  [ "$CALLER" = "init" ] && [ "$AUTO_START" = "0" ] && return 0
 
   if is_running; then
     echook "$SINGBOX_NAME already started"
