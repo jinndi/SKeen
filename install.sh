@@ -13,19 +13,18 @@ CALLER="$2"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-DEPENDENCIES="curl tar ndmc start-stop-daemon"
-# + jsonfilter
+DEPENDENCIES="ndmc start-stop-daemon iptables jsonfilter curl tar"
 
 ENTWARE_DIR="/opt"
 WORK_DIR="${ENTWARE_DIR}/etc/skeen"
 CONFIG_DIR="${WORK_DIR}/config"
 TMP_DIR="${ENTWARE_DIR}/tmp"
-# NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
-# MODULES_OS_DIR="/lib/modules/$(uname -r)"
-# MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
+NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
+MODULES_OS_DIR="/lib/modules/$(uname -r)"
+MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="2.1.6"
+SKEEN_VERSION="3.0.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
@@ -40,6 +39,66 @@ SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
 SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
 SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 
+FIREWALL_HOOK_FILE="${NETFILTER_DIR}/firewall_${SKEEN_PROC}.sh"
+CHAIN_PREROUTING="skeen"
+CHAIN_OUTPUT="skeen_mask"
+TABLE_REDIRECT="nat"
+TABLE_TPROXY="mangle"
+TABLE_MARK="0x112"
+TABLE_ID="112"
+DNS_PORT=53
+
+SYS_IPV4_TEST_HOSTS="1.1.1.1 77.88.8.8 223.5.5.5"
+SYS_IPV6_TEST_HOSTS="2606:4700:4700::1111 2a02:6b8::feed:0ff 2400:3200::1"
+
+# IETF/IANA IPv4 Special-Purpose Address Registry
+# https://www.iana.org/assignments/iana-ipv4-special-registry/
+RESERVED_IPV4="
+0.0.0.0/8          # 'This host on this network' (RFC 1122)
+10.0.0.0/8         # Private-Use (RFC 1918)
+100.64.0.0/10      # Shared Address Space (RFC 6598)
+127.0.0.0/8        # Loopback (RFC 1122)
+169.254.0.0/16     # Link Local (RFC 3927)
+172.16.0.0/12      # Private-Use (RFC 1918)
+192.0.0.0/24       # IETF Protocol Assignments (RFC 6890)
+192.0.2.0/24       # Documentation (TEST-NET-1) (RFC 5737)
+192.31.196.0/24    # AS112-v4 (RFC7535)
+192.52.193.0/24    # AMT (RFC7450)
+192.88.99.0/24     # 6to4 Relay Anycast (RFC 3068, deprecated)
+192.88.99.2/32     # 6a44-relay anycast (RFC6751)
+192.168.0.0/16     # Private-Use (RFC 1918)
+# 198.18.0.0/15      # Benchmarking (RFC 2544) + sing-box fakeip
+198.51.100.0/24    # Documentation (TEST-NET-2) (RFC 5737)
+203.0.113.0/24     # Documentation (TEST-NET-3) (RFC 5737)
+224.0.0.0/4        # Multicast (RFC 5771)
+240.0.0.0/4        # Reserved for Future Use (RFC 1112)
+255.255.255.255/32 # Direct Delegation AS112 Service (RFC7534)
+"
+
+# IETF/IANA IPv6 Special-Purpose Address Registry
+# https://www.iana.org/assignments/iana-ipv6-special-registry/
+RESERVED_IPV6="
+::/128             # Unspecified Address (RFC 4291)
+::1/128            # Loopback Address (RFC 4291)
+::/96              # Zero-prefix / IPv4-compatible (RFC 4291, best practice)
+::ffff:0:0/96      # IPv4-mapped Address (RFC 4291)
+64:ff9b::/96       # IPv4-IPv6 Translation (RFC 6052) – (for NAT64) 
+64:ff9b:1::/48     # IPv4-IPv6 Translation (RFC 8215)
+100::/64           # Discard-Only Address Block (RFC 6666)
+100:0:0:1::/64     # Dummy IPv6 Prefix (RFC 9780)
+2001::/23          # IETF Protocol Assignments (RFC 2928)
+2001::/32          # TEREDO (RFC 4380) – (tunnel)
+2001:2::/48        # Benchmarking (RFC 5180)
+2001:20::/28       # ORCHIDv2 (RFC 7343)
+2001:db8::/32      # Documentation (RFC 3849)
+2002::/16          # 6to4 (RFC 3056, deprecated)
+3fff::/20          # Documentation (RFC 9637)
+fc00::/7           # Unique Local Addresses (RFC 4193) – (include fd00::/8)
+fe80::/10          # Link-Local Unicast (RFC 4291)
+ff00::/8           # Multicast (RFC 4291)
+"
+
+
 create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
 
@@ -47,8 +106,23 @@ create_skeen_config(){
     echo "# Sing-box autostart on router reboot"
     echo "# 0 - disabled, 1 - enabled"
     echo "AUTO_START=1"
+    echo "# Auto-start delay in seconds"
+    echo "AUTO_START_DELAY=0"
+    echo
+    echo "# Domains or IPs for testing the internet connection (no more than 3)"
+    echo "IPV4_TEST_HOSTS=\"$SYS_IPV4_TEST_HOSTS\""
+    echo "IPV6_TEST_HOSTS=\"$SYS_IPV6_TEST_HOSTS\""
+    echo
     echo "# Router policy name for $SKEEN_NAME traffic"
-    echo "# POLICY_NAME=\"${SKEEN_NAME}\""
+    echo "POLICY_NAME=\"${SKEEN_NAME}\""
+    echo
+    echo "# Excluded ip addreses for traffic redirection, defined as a comma-separated list"
+    echo "EXCLUDE_IPV4_ADDRESES=\"\""
+    echo "EXCLUDE_IPV6_ADDRESES=\"\""
+    echo
+    echo "# Excluded subnets for traffic redirection, defined as a comma-separated list"
+    echo "EXCLUDE_IPV4_SUBNETS=\"\""
+    echo "EXCLUDE_IPV6_SUBNETS=\"\""
   } > "$SKEEN_CONFIG"
 
   create_autostart_script > /dev/null 2>&1
@@ -71,6 +145,7 @@ exiterr() { red "$1" >&2; exit 1; }
 logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
+
 get_current_version() {
   case "$(printf '%s\n' "$1" | tr '[:upper:]' '[:lower:]')" in
     "$SINGBOX_PROC")
@@ -87,6 +162,7 @@ get_current_version() {
     ;;
   esac
 }
+
 
 get_latest_version() {
   api_url=$1
@@ -107,6 +183,7 @@ get_latest_version() {
   echo "$latest_release" | grep tag_name | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
 }
 
+
 show_header() {
   printf '\033[1;35m'
   cat <<EOF
@@ -121,6 +198,7 @@ EOF
   printf '\033[0m'
 }
 
+
 get_os_release(){
   release_path=$(command -v opkg)
 
@@ -131,6 +209,7 @@ get_os_release(){
     PKG_SUFFIX=".ipk"
   fi
 }
+
 
 get_architecture() {
   case "$(uname -m | tr '[:upper:]' '[:lower:]')" in
@@ -164,15 +243,36 @@ get_architecture() {
   esac
 }
 
-check_dependencies() {
-  missing=""
 
-  for cmd in $DEPENDENCIES; do
-    command -v "$cmd" >/dev/null 2>&1 || missing="$missing $cmd"
+install_dependencies() {
+  pkg_missing=""
+
+  echomsg "Checking dependencies" 1
+  opkg update >/dev/null 2>&1
+
+  for pkg_name in $DEPENDENCIES; do
+    printf "Installing %s ... " "$pkg_name"
+
+    if command -v "$pkg_name" >/dev/null 2>&1; then
+      echook "Already installed"
+      continue
+    fi
+
+    if opkg install "$pkg_name" >/dev/null 2>&1; then
+      echook "OK"
+    else
+      echoerr "FAILED"
+      pkg_missing="${pkg_missing:+$pkg_missing }$pkg_name"
+    fi
   done
 
-  [ -n "$missing" ] && exiterr "Missing dependencies: $missing"
+  if [ -n "$pkg_missing" ]; then
+    exiterr "Missing dependencies: $pkg_missing"
+  fi
+
+  echook "All dependencies are installed"
 }
+
 
 download_singbox(){
   download_version="$1"
@@ -206,6 +306,7 @@ download_singbox(){
   echook "Downloaded $PKG_NAME successfully."
 }
 
+
 install_singbox(){
   tmp_unpack_dir="${TMP_DIR}/sing-box-unpack"
 
@@ -232,6 +333,7 @@ install_singbox(){
   rm -f "${TMP_DIR}/${PKG_NAME}"
   echook "Cleanup completed."
 }
+
 
 create_singbox_config(){
   if [ -d "$CONFIG_DIR" ] && ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
@@ -440,6 +542,7 @@ EOF
   echook "Configuration file created successfully."
 }
 
+
 create_autostart_script(){
   echomsg "Create $SKEEN_NAME autostart script at $SKEEN_AUTOSTART_SCRIPT" 1
 
@@ -457,6 +560,7 @@ create_autostart_script(){
   echook "Autostart script created successfully."
 }
 
+
 create_proxy_interface(){
   echomsg "Creating proxy interface Proxy0 in ndmc" 1
 
@@ -471,6 +575,7 @@ create_proxy_interface(){
 
   echook "Proxy interface Proxy0 created successfully."
 }
+
 
 create_current_script(){
   [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
@@ -490,6 +595,7 @@ create_current_script(){
   echook "Current script created successfully."
 }
 
+
 press_any_key_to_menu(){
   [ "$CALLER" != "menu" ] && return 0
 
@@ -504,6 +610,7 @@ press_any_key_to_menu(){
   fi
 }
 
+
 is_running(){
   if [ -n "$(pidof "$SINGBOX_PROC")" ]; then
     return 0
@@ -512,6 +619,7 @@ is_running(){
   fi
 }
 
+
 install(){
   echomsg "------------------------------------------------"
   printf "Press any key to start installation..."
@@ -519,7 +627,7 @@ install(){
 
   get_os_release
   get_architecture
-  check_dependencies
+  install_dependencies
   download_singbox
   install_singbox
   create_singbox_config
@@ -534,6 +642,7 @@ install(){
 
   press_any_key_to_menu
 }
+
 
 uninstall(){
   echomsg "Uninstalling ${SKEEN_NAME}..." 1
@@ -559,6 +668,7 @@ uninstall(){
   echook "${SKEEN_NAME} has been uninstalled successfully."
   exit 0
 }
+
 
 accept_uninstall(){
   max_attempts=3
@@ -587,6 +697,7 @@ accept_uninstall(){
   show_menu
 }
 
+
 update_conf_var(){
   KEY=$1
   VALUE=$2
@@ -602,9 +713,686 @@ update_conf_var(){
   . "$SKEEN_CONFIG"
 }
 
-start() {
-  [ "$CALLER" = "init" ] && [ "$AUTO_START" = "0" ] && return 0
 
+get_inet_tests_hosts() {
+  ipv="$1"
+  hosts=""
+  sys_hosts=""
+  max="3"
+
+  if [ "$ipv" = "4" ]; then
+    hosts="$IPV4_TEST_HOSTS"
+    sys_hosts="$SYS_IPV4_TEST_HOSTS"
+  else
+    hosts="$IPV6_TEST_HOSTS"
+    sys_hosts="$SYS_IPV6_TEST_HOSTS"
+  fi
+
+  if [ -z "$hosts" ]; then
+    echo "$sys_hosts" && return
+  fi 
+
+  hosts="$(echo "$hosts" | \
+    tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
+
+  set -- $hosts
+
+  count=0
+  result=""
+
+  while [ $# -gt 0 ] && [ "$count" -lt "$max" ]; do
+    result="${result:+$result }$1"
+    count=$((count + 1))
+    shift
+  done
+
+  echo "$result"
+}
+
+
+check_internet() {
+  hosts="$(get_inet_tests_hosts "4")"
+  max_attempts="3"
+  delay="7"
+
+  for host in $hosts; do
+    attempt=1
+    while [ $attempt -le "$max_attempts" ]; do
+      ping -c 1 "$host" >/dev/null 2>&1
+      if [ $? -eq 0 ]; then
+        logger_notice "Internet is available via ${host}, starting"
+        return 0
+      else
+        msg="Internet is not available (${host}), attempt ${attempt}/${max_attempts}..."
+        echowarn "$msg"
+        logger_notice "$msg"
+      fi
+      attempt=$((attempt + 1))
+      sleep "$delay"
+    done
+  done
+
+  msg="Internet is not available via any of the checked hosts"
+  logger_error "$msg"
+  exiterr "$msg"
+}
+
+
+get_inbounds_data() {
+  type="$1"
+
+  for file in $(find "$CONFIG_DIR" -name '*.json'); do
+
+    port=$(jsonfilter -i "$file" \
+      -e '@.inbounds[@.type="'"$type"'"].listen_port' \
+      | head -n1 2>/dev/null)
+
+    [ -z "$port" ] && continue
+
+    if [ "$type" = "redirect" ]; then
+      echo "${port}|tcp"
+      return 0
+    fi
+
+    network=$(jsonfilter -i "$file" \
+      -e '@.inbounds[@.type="'"$type"'"].network' \
+      | head -n1 2>/dev/null)
+
+    if [ -n "$network" ]; then
+      echo "${port}|${network}"
+    else
+      echo "${port}|tcpudp"
+    fi
+
+    return 0
+  done
+
+  return 0
+}
+
+
+has_dns_servers() {
+  for file in "$CONFIG_DIR"/*.json; do
+    [ -f "$file" ] || continue
+    if jsonfilter -i "$file" -e '@.dns.servers[0]' >/dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+
+check_router_port() {
+  port_ssl=$(curl -kfsS "127.0.0.1:79/rci/ip/http/ssl" 2>/dev/null | jsonfilter -e '@.port')
+
+  if [ "$port_ssl" = "443" ]; then
+    echoerr "Port 443 is occupied by router services"
+    echoerr "Free it on the 'Users and Access'"
+    logger_error "Port 443 must be freed"
+    press_any_key_to_menu
+    exit 1
+  fi
+}
+
+
+load_module() {
+  module="$1"
+  modname="${module%.ko}"
+
+  if lsmod | grep -q "^$modname"; then
+    return 0
+  fi
+
+  path_entware="${MODULES_ENTWARE_DIR}/${module}"
+  path_os="${MODULES_OS_DIR}/${module}"
+
+  if [ -f "$path_entware" ]; then
+    insmod "$path_entware" >/dev/null 2>&1 && return 0
+  fi
+
+  if [ -f "$path_os" ]; then
+    mkdir -p "$MODULES_ENTWARE_DIR"
+    cp "$path_os" "$path_entware" 2>/dev/null
+    insmod "$path_os" >/dev/null 2>&1 && return 0
+  fi
+
+  echoerr "Module '$module' not found"
+  return 1
+}
+
+
+loading_modules() {
+  error=0
+  modules=""
+
+  case "$SKEEN_FIREWALL_MODE" in
+    tproxy|hybrid)
+      modules="xt_TPROXY.ko xt_socket.ko xt_owner.ko"
+      echomsg "Loading modules: $modules"
+    ;;
+  esac
+
+  if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
+    modules="$modules xt_owner.ko"
+    echomsg "Loading modules: xt_owner.ko"
+  fi
+
+  modules="$(echo "$modules" | tr ' ' '\n' | sort -u)"
+
+  for module in $modules; do
+    load_module "$module" || error=1
+  done
+
+  if [ "$error" -ne 0 ]; then
+    echoerr "The '$SKEEN_FIREWALL_MODE' mode requires kernel modules"
+    echoerr "Install router component: Netfilter Subsystem Kernel Modules"
+    logger_error "Missing Netfilter kernel modules"
+    press_any_key_to_menu
+    exit 1
+  fi
+
+  return 0
+}
+
+
+get_iptables_list(){
+  ipt4="$(ip -4 addr show | grep -q "inet " && \
+    command -v iptables >/dev/null 2>&1 && echo iptables)"
+
+  ipt6="$(ip -6 addr show | grep -q "inet6 " && \
+    command -v ip6tables >/dev/null 2>&1 && echo ip6tables)"
+
+  set -- $ipt4 $ipt6
+  ipt_list="$*"
+
+  echomsg "Detected iptables: $ipt_list"
+  echo "$ipt_list"
+}
+
+
+get_mark_policy(){
+  [ -n "$POLICY_NAME" ] && \
+  mark=$(ndmc -c show ip policy | awk -v d="$(printf '%s' "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')" '
+    /description =/ { f = (tolower($0) ~ "description = " d) }
+    f && /mark:/ { print $2; exit }')
+
+  if [ -z "$POLICY_NAME" ]; then
+    echowarn "Policy name (POLICY_NAME var) not set"
+  elif [ -z "$mark" ]; then
+    echowarn "Policy $POLICY_NAME not found"
+  else
+    echomsg "Detected policy mark: $mark"
+    echomsg "Routing for the $POLICY_NAME policy"
+
+    echo "0x${mark}"
+    return 0
+  fi
+  
+  echowarn "Routing for the entire device"
+  return 0
+}
+
+
+set_route_rules() {
+  if ip -"$IP_VERSION" rule show | grep -q "fwmark $TABLE_MARK lookup $TABLE_ID"; then
+    return 0
+  fi
+
+  if [ -n "$SKEEN_MARK_POLICY" ]; then
+    table_policy=$(ip rule show | awk -v policy="$SKEEN_MARK_POLICY" '$0 ~ policy && /lookup/ && !/blackhole/{print $NF}')
+  fi
+
+  ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
+  ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID" >/dev/null 2>&1
+
+  if [ -n "$table_policy" ]; then
+    ip -"$IP_VERSION" route show table "$table_policy" | grep -Ev '^default' |
+    while read route; do
+      table_main_route=$(ip -"$IP_VERSION" route show table main | grep -F "$route")
+      ip -"$IP_VERSION" route add table "$TABLE_ID" $table_main_route >/dev/null 2>&1
+    done
+  else
+    ip -"$IP_VERSION" route show table main | grep -Ev '^default' |
+    while read route; do
+      ip -"$IP_VERSION" route add table "$TABLE_ID" $route >/dev/null 2>&1
+    done
+  fi
+}
+
+
+get_exclude_addresses() {
+  ip_v="$1"
+  eth_subnet=""
+  reserved_subnets=""
+  user_exclude_adresses=""
+
+  get_eth_subnet() {
+    _ip_v="$1"
+    addresses="$(get_inet_tests_hosts "$_ip_v")"
+    prefix_length="32"
+    [ "$_ip_v" = "6" ] && prefix_length="128"
+
+    for address in $addresses; do
+      eth_ip="$(ip -"$_ip_v" route get "$address" 2>/dev/null |
+                awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
+      [ -n "$eth_ip" ] && echo "${eth_ip}/${prefix_length}" && break
+    done
+  }
+
+  if [ "$ip_v" = "4" ]; then
+    eth_subnet="$(get_eth_subnet "$ip_v")"
+    reserved_subnets="$RESERVED_IPV4"
+    user_exclude_adresses="${EXCLUDE_IPV4_ADDRESES},${EXCLUDE_IPV4_SUBNETS}"
+  else
+    eth_subnet="$(get_eth_subnet "$ip_v")"
+    reserved_subnets="$RESERVED_IPV6"
+    user_exclude_adresses="${EXCLUDE_IPV6_ADDRESES},${EXCLUDE_IPV6_SUBNETS}"
+  fi
+
+  user_exclude_adresses="$(echo "$user_exclude_adresses" | \
+    tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
+
+  all_list="$eth_subnet"
+
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    case "$line" in
+      \#*) continue ;;
+    esac
+    subnet=$(echo "$line" | cut -d ' ' -f1)
+    all_list="$all_list $subnet"
+  done <<EOF
+$reserved_subnets
+EOF
+
+  for address in $user_exclude_adresses; do
+    if echo "$address" | grep -Eq \
+    '^(([0-9]{1,3}\.){3}[0-9]{1,3}(/[0-9]{1,2})?|([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}(/[0-9]{1,3})?)$'; 
+    then
+      all_list="$all_list $address"
+    else
+      echowarn "Invalid exclude address: $address"
+    fi
+  done
+
+  echo "$all_list" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+
+set_exclude_rules() {
+  iptables="$1"
+  table="$2"
+  chain="$3"
+
+  use_dns=0
+  [ "$chain" != "$CHAIN_OUTPUT" ] && [ "$SKEEN_USE_DNS_CONFIG" = "1" ] && use_dns=1
+
+  ipt() {
+    $iptables -w -t "$table" -A "$chain" -d "$exclude" "$@" -j RETURN >/dev/null 2>&1
+  }
+
+  for exclude in $EXCLUDE_ADDRESSES; do
+    is_private_dns=0
+
+    case "$exclude" in
+      192.168.0.0/16|fd00::/8)
+        is_private_dns=1
+      ;;
+    esac
+
+    if [ "$is_private_dns" -eq 1 ] && [ "$use_dns" -eq 1 ]; then
+      case "$SKEEN_FIREWALL_MODE:$table" in
+        hybrid:mangle)
+          ipt -p tcp --dport "$DNS_PORT"
+          ipt -p udp ! --dport "$DNS_PORT"
+        ;;
+        hybrid:nat)
+          ipt -p tcp ! --dport "$DNS_PORT"
+          ipt -p udp --dport "$DNS_PORT"
+        ;;
+        tproxy:mangle)
+          ipt -p tcp ! --dport "$DNS_PORT"
+          ipt -p udp ! --dport "$DNS_PORT"
+        ;;
+      esac
+    else
+      ipt
+    fi
+  done
+}
+
+
+set_iptables_rules() {
+  iptables="$1"
+  table="$2"
+  chain="$3"
+
+  if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
+    $iptables -t "$table" -N "$chain" || return 0
+
+    set_exclude_rules "$iptables" "$table" "$chain"
+
+    case "$SKEEN_FIREWALL_MODE" in
+      hybrid)
+        if [ "$table" = "$TABLE_REDIRECT" ]; then
+          set -- -p tcp -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+          $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+        else
+          set -- -p udp -m socket --transparent \
+                -j MARK --set-mark "$TABLE_MARK"
+          $iptables -w -t "$table" -I "$chain" "$@" >/dev/null 2>&1
+
+          set -- -p udp -j TPROXY \
+                --on-ip "$PROXY_IP" \
+                --on-port "$SKEEN_TPROXY_PORT" \
+                --tproxy-mark "$TABLE_MARK"
+          $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+        fi
+      ;;
+      tproxy)
+        for net in $SKEEN_FIREWALL_NETWORK; do
+          set -- -p "$net" -m socket --transparent \
+                  -j MARK --set-mark "$TABLE_MARK"
+          $iptables -w -t "$table" -I "$chain" "$@" >/dev/null 2>&1
+
+          set -- -p "$net" -j TPROXY \
+                --on-ip "$PROXY_IP" \
+                --on-port "$SKEEN_TPROXY_PORT" \
+                --tproxy-mark "$TABLE_MARK"
+          $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+        done
+      ;;
+      redirect)
+        set -- -p tcp -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+        $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+      ;;
+      *) return 0 ;;
+    esac
+  fi
+
+  if [ "$table" = "$TABLE_TPROXY" ]; then
+    chain="$CHAIN_OUTPUT"
+
+    if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
+      $iptables -t "$table" -N "$chain" || return 0
+
+      set_exclude_rules "$iptables" "$table" "$chain"
+
+      for net in $SKEEN_FIREWALL_NETWORK; do
+        set -- -p "$net" -j CONNMARK --set-mark "$TABLE_MARK"
+        $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+      done
+    fi
+  fi
+}
+
+
+set_prerouting_rules() {
+  iptables="$1"
+  base_table="$2"
+  connmark_option=""
+
+  for net in $SKEEN_FIREWALL_NETWORK; do
+    table="$base_table"
+    proto_arg=""
+
+    if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
+      case "$net" in
+        tcp)
+          table="$TABLE_REDIRECT"
+          proto_arg="-p tcp"
+        ;;
+        udp)
+          table="$TABLE_TPROXY"
+          proto_arg="-p udp"
+        ;;
+        *) continue ;;
+      esac
+    fi
+
+    if [ -n "$SKEEN_MARK_POLICY" ]; then
+      connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
+    fi
+
+    set -- PREROUTING \
+        $connmark_option \
+        -m conntrack ! --ctstate INVALID \
+        $proto_arg \
+        -j "$CHAIN_PREROUTING"
+
+    if ! $iptables -t "$table" -C "$@" >/dev/null 2>&1; then
+      $iptables -t "$table" -A "$@" >/dev/null 2>&1
+    fi
+  done
+}
+
+
+add_output_rules() {
+  iptables="$1"
+  table="$2"
+
+  case "$SKEEN_FIREWALL_MODE" in
+    tproxy)
+      set -- OUTPUT \
+          -m owner ! --gid-owner skeen-box \
+          -m conntrack ! --ctstate INVALID \
+          ! -p icmp \
+          -j "$CHAIN_OUTPUT"
+    ;;
+    hybrid)
+      set -- OUTPUT \
+          -m owner ! --gid-owner skeen-box \
+          -m conntrack ! --ctstate INVALID \
+          -p udp \
+          -j "$CHAIN_OUTPUT"
+    ;;
+    *) return 0 ;;
+  esac
+
+  if ! $iptables -t "$table" -C "$@" >/dev/null 2>&1; then
+    $iptables -t "$table" -A "$@" >/dev/null 2>&1
+  fi
+}
+
+
+prepare_firewall(){
+  ip_v4=0
+  ip_v6=0
+
+  echomsg "Preparing a firewall..." 1
+
+  complete_msg="Firewall preparation is complete"
+
+  redirect_data="$(get_inbounds_data "redirect")"
+  SKEEN_REDIRECT_PORT="$(echo "$redirect_data" | cut -d'|' -f1)"
+
+  tproxy_data="$(get_inbounds_data "tproxy")"
+  SKEEN_TPROXY_PORT="$(echo "$tproxy_data" | cut -d'|' -f1)"
+  SKEEN_TPROXY_NETWORK="$(echo "$tproxy_data" | cut -d'|' -f2)"
+
+  SKEEN_USE_DNS_CONFIG="0"
+  if has_dns_servers; then
+    SKEEN_USE_DNS_CONFIG="1"
+    echomsg "Detected use of DNS configuration"
+  fi
+  
+  if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
+    SKEEN_FIREWALL_MODE="tproxy"
+  elif [ -n "$SKEEN_REDIRECT_PORT" ] && [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" != "tcp" ]; then
+    SKEEN_FIREWALL_MODE="hybrid"
+  elif [ -n "$SKEEN_REDIRECT_PORT" ]; then
+    SKEEN_FIREWALL_MODE="redirect"
+  else
+    SKEEN_FIREWALL_MODE="none"
+  fi
+  echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
+
+  if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then 
+    echook "$complete_msg"
+    return 0
+  fi
+
+  if [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
+    SKEEN_FIREWALL_NETWORK="tcp"
+  else
+    SKEEN_FIREWALL_NETWORK="tcp udp"
+
+    check_router_port
+
+    loading_modules
+  fi
+  echomsg "Detected firewall networks: $SKEEN_FIREWALL_NETWORK"
+
+  SKEEN_MARK_POLICY="$(get_mark_policy)"
+
+  SKEEN_IPTABLES_LIST="$(get_iptables_list)"
+
+  SKEEN_EXCLUDE_v4_ADDRESSES=""
+  if echo "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
+    ip_v4=1
+    SKEEN_EXCLUDE_v4_ADDRESSES="$(get_exclude_addresses "4")"
+  fi
+  
+  SKEEN_EXCLUDE_v6_ADDRESSES=""
+  if echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
+    ip_v6=1
+    SKEEN_EXCLUDE_v6_ADDRESSES="$(get_exclude_addresses "6")"
+  fi
+
+  [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
+
+  {
+    echo "#!/bin/sh"
+    echo "# $SKEEN_NAME $SKEEN_VERSION firewall hook"
+
+    echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
+
+    echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
+    echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
+    echo "export SKEEN_TPROXY_NETWORK=\"$SKEEN_TPROXY_NETWORK\""
+    echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
+    echo "export SKEEN_FIREWALL_NETWORK=\"$SKEEN_FIREWALL_NETWORK\""
+    echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
+    echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
+    [ $ip_v4 -eq 1 ] && echo "export SKEEN_EXCLUDE_v4_ADDRESSES=\"$SKEEN_EXCLUDE_v4_ADDRESSES\""
+    [ $ip_v6 -eq 1 ] && echo "export SKEEN_EXCLUDE_v6_ADDRESSES=\"$SKEEN_EXCLUDE_v6_ADDRESSES\""
+    echo "export SKEEN_USE_DNS_CONFIG=\"$SKEEN_USE_DNS_CONFIG\""
+    
+
+    echo "$SKEEN_SCRIPT apply_firewall"
+  } > "$FIREWALL_HOOK_FILE"
+
+  chmod +x "$FIREWALL_HOOK_FILE"
+
+  echook "$complete_msg"
+}
+
+
+apply_firewall(){
+  is_running || return 0
+
+  [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
+
+  echomsg "Applying firewall rules..." 1
+
+  for iptables in $SKEEN_IPTABLES_LIST; do
+    if [ "$iptables" = "ip6tables" ]; then
+      IP_VERSION="6"
+      PROXY_IP="::1"
+      EXCLUDE_ADDRESSES="$SKEEN_EXCLUDE_v6_ADDRESSES"
+    elif [ "$iptables" = "iptables" ]; then
+      IP_VERSION="4"
+      PROXY_IP="127.0.0.1"
+      EXCLUDE_ADDRESSES="$SKEEN_EXCLUDE_v4_ADDRESSES"
+    else
+      exiterr "Unknown iptables: $iptables"
+    fi
+
+    set_route_rules
+
+    if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
+      for table in "$TABLE_TPROXY" "$TABLE_REDIRECT"; do
+        set_iptables_rules "$iptables" "$table" "$CHAIN_PREROUTING"
+        set_prerouting_rules "$iptables" "$table"
+      done
+    elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
+      set_iptables_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING"
+      set_prerouting_rules "$iptables" "$TABLE_TPROXY"
+    elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
+      set_iptables_rules "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING"
+      set_prerouting_rules "$iptables" "$TABLE_REDIRECT"
+    fi
+
+    if [ "$SKEEN_FIREWALL_MODE" != "redirect" ]; then
+      set_iptables_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_OUTPUT"
+      add_output_rules "$iptables"
+    fi
+  done
+
+  echook "Firewall rules applied successfully."
+}
+
+
+clean_firewall() {
+  [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
+
+  clean_chain() {
+    iptables="$1"
+    table="$2"
+    chain="$3"
+    parent="$4"
+
+    if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    $iptables -w -t "$table" -F "$chain" >/dev/null 2>&1
+
+    while :; do
+      rule_num=$(
+        $iptables -w -t "$table" -nL "$parent" --line-numbers 2>/dev/null |
+        awk -v ch="$chain" '$0 ~ ch {print $1; exit}'
+      )
+      [ -z "$rule_num" ] && break
+      $iptables -w -t "$table" -D "$parent" "$rule_num" >/dev/null 2>&1
+    done
+
+    $iptables -w -t "$table" -X "$chain" >/dev/null 2>&1
+  }
+
+  for iptables in iptables ip6tables; do
+    for table in nat mangle; do
+      clean_chain "$iptables" "$table" "$CHAIN_PREROUTING" PREROUTING
+      clean_chain "$iptables" "$table" "$CHAIN_OUTPUT"     OUTPUT
+    done
+  done
+
+  if command -v ip >/dev/null 2>&1; then
+    for ip_version in 4 6; do
+      if ip -"$ip_version" rule show | grep -q "fwmark $TABLE_MARK lookup $TABLE_ID"; then
+        ip -"$ip_version" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
+        ip -"$ip_version" route flush table "$TABLE_ID" >/dev/null 2>&1
+      fi
+    done
+  fi
+}
+
+
+start() {
+  if [ "$CALLER" = "init" ]; then
+    if [ "$AUTO_START" = "0" ]; then
+      return 0
+    else
+      if expr "$AUTO_START_DELAY" + 0 >/dev/null 2>&1; then
+        sleep "$AUTO_START_DELAY"
+        check_internet
+      else
+        sleep 5
+        check_internet
+      fi
+    fi
+  fi
+  
   if is_running; then
     echook "$SINGBOX_NAME already started"
     return 0
@@ -615,21 +1403,31 @@ start() {
   $SINGBOX_PROC check -C $CONFIG_DIR
   [ $? -ne 0 ] && press_any_key_to_menu
 
-  start-stop-daemon -S -b -x $SINGBOX_PROC -- $SINGBOX_ARGS
+  prepare_firewall
+
+  if ! id "skeen-box" >/dev/null 2>&1; then
+    adduser -D -H -u 3228 "skeen-box"
+    sed -i "/^skeen-box:/c\skeen-box:x:0:3228:::" /opt/etc/passwd
+  fi
+
+  start-stop-daemon -S -b -x $SINGBOX_PROC -c "skeen-box" -- $SINGBOX_ARGS
   status_start=$?
 
   sleep 1
 
   if [ $status_start -eq 0 ]; then
+    [ "$SKEEN_FIREWALL_MODE" != "none" ] && apply_firewall
     echook "$SINGBOX_NAME started."
     logger_notice "Started"
     return 0
   fi
 
+  [ "$SKEEN_FIREWALL_MODE" != "none" ] && clean_firewall
   echoerr "Failed to start $SINGBOX_NAME"
   logger_error "Failed to start"
   return 1
 }
+
 
 stop(){
   echomsg "Stopping ${SINGBOX_NAME}..."
@@ -638,6 +1436,8 @@ stop(){
     echook "$SINGBOX_NAME already stopped"
     return 0
   fi
+
+  clean_firewall
 
   start-stop-daemon -K -x $SINGBOX_PROC >/dev/null
   status_stop=$?
@@ -655,14 +1455,18 @@ stop(){
   fi
 }
 
+
 kill_proc(){
   if ! is_running; then
     echook "$SINGBOX_NAME is not running"
     return 0
   fi
+
   echo "Killing ${SINGBOX_PROC}..."
   killall -9 "$SINGBOX_PROC" 2>/dev/null
+  clean_firewall  
 }
+
 
 switch_state(){
   if is_running; then
@@ -673,10 +1477,12 @@ switch_state(){
   press_any_key_to_menu
 }
 
+
 restart() {
   stop; start
   press_any_key_to_menu
 }
+
 
 switch_autostart(){
   if [ "$AUTO_START" = "1" ]; then
@@ -690,6 +1496,7 @@ switch_autostart(){
   press_any_key_to_menu
 }
 
+
 update_core(){
   is_running && stop
   get_os_release
@@ -699,6 +1506,7 @@ update_core(){
 
   echook "The $SINGBOX_NAME core has been successfully updated"
 }
+
 
 update_skeen(){
   pkg_name="${SKEEN_NAME}-v${latest_sk_ver}.tar.gz"
@@ -750,6 +1558,7 @@ update_skeen(){
 
   echook "The $SKEEN_NAME has been successfully updated"
 }
+
 
 check_update(){
   echomsg "Checking $SINGBOX_NAME for updates..."
@@ -841,6 +1650,7 @@ check_update(){
   press_any_key_to_menu "reload"
 }
 
+
 show_menu(){
   show_header
 
@@ -862,8 +1672,8 @@ show_menu(){
 
   printf "\n%s %s" "$SKEEN_NAME version:" "$(cyan "v$(get_current_version "skeen")")"
   printf "\n%s %s" "$SINGBOX_NAME version:" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
-  printf "\n%s %s\n" "$SINGBOX_NAME state:" "$running_status"
-  printf "%s %s\n" "Start automatically:" "$autostart_status"
+  printf "\n%s %s" "$SINGBOX_NAME state:" "$running_status"
+  printf "\n%s %s\n" "Start automatically:" "$autostart_status"
 
   printf "\n%s\n" "$(cyan "Select option:")"
   printf "  %s $running_text ${SINGBOX_NAME}\n" "$(green "1.")"
@@ -898,6 +1708,7 @@ show_menu(){
   exiterr "Maximum attempts reached, exiting menu."
  }
 
+
 if [ -f "$SKEEN_SCRIPT" ]; then
   case "$ACTION" in
     start)   start ;;
@@ -906,6 +1717,8 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     status)  is_running && echook "running" || echoerr "stopped" ;;
     kill)    kill_proc ;;
     version) echomsg "$SKEEN_NAME v$(get_current_version "skeen")" ;;
+    apply_firewall) apply_firewall ;;
+    clean_firewall) clean_firewall ;;
     "") show_menu ;;
     *) echomsg "Usage: skeen (start|stop|restart|status|kill|version)" ;;
   esac
