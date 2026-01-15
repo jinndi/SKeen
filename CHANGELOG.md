@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.0.0](https://github.com/jinndi/SKeen/compare/SKeen-v2.1.5...SKeen-v3.0.0) (2026-01-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* implement firewall modes: tproxy, redirect, hybrid
+
+### 🚀 Feat
+
+* implement firewall modes: tproxy, redirect, hybrid ([4411bee](https://github.com/jinndi/SKeen/commit/4411bee1402ec133b8c75dc511603765d1326e99))
+
+
+### 🐛 Fix
+
+* start (CALLER) ([7f888c0](https://github.com/jinndi/SKeen/commit/7f888c0093e12b773ffba94ba16ec44b2223cdd1))
+
+
+### 🧰 Chore
+
+* preparing for redirect mode and TProxy ([e8b2838](https://github.com/jinndi/SKeen/commit/e8b283829d140c056654d36befaf2f36c4f45a02))
+
 ## [2.1.5](https://github.com/jinndi/SKeen/compare/SKeen-v2.1.4...SKeen-v2.1.5) (2026-01-11)
 
 
