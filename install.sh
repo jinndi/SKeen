@@ -24,7 +24,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.0.0"
+SKEEN_VERSION="3.0.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
@@ -93,7 +93,7 @@ RESERVED_IPV6="
 2001:db8::/32      # Documentation (RFC 3849)
 2002::/16          # 6to4 (RFC 3056, deprecated)
 3fff::/20          # Documentation (RFC 9637)
-fc00::/7           # Unique Local Addresses (RFC 4193) – (include fd00::/8)
+# fc00::/7           # Unique Local Addresses (RFC 4193) – include fd00::/8 + sing-box fakeip
 fe80::/10          # Link-Local Unicast (RFC 4291)
 ff00::/8           # Multicast (RFC 4291)
 "
@@ -348,7 +348,7 @@ create_singbox_config(){
 {
   "log": {
     "disabled": false,
-    "level": "error",
+    "level": "debug",
     "timestamp": true
   }
 }
@@ -359,14 +359,39 @@ EOF
   "dns": {
     "servers": [
       {
-        "tag": "dns-local",
-        "type": "local"
+        "tag": "dns-direct",
+        "type": "tls",
+        "server": "common.dot.dns.yandex.net",
+        "domain_resolver": "dns-resolver"
+      },
+      {
+        "tag": "fakeip",
+        "type": "fakeip",
+        "inet4_range": "198.18.0.0/15",
+        "inet6_range": "fc00::/18"
+      },
+      {
+        "tag": "dns-resolver",
+        "type": "udp",
+        "server": "77.88.8.8"
       }
     ],
     "rules": [
+      {
+        "rule_set": "adguard",
+        "action": "reject"
+      },
+      {
+        "query_type": [
+          "A",
+          "AAAA"
+        ],
+        "server": "fakeip"
+      }
     ],
-    "final": "dns-local",
-    "strategy": "prefer_ipv4"
+    "final": "dns-direct",
+    "strategy": "prefer_ipv4",
+    "independent_cache": true
   }
 }
 EOF
@@ -455,8 +480,8 @@ EOF
   cat <<EOF > "$CONFIG_DIR/route.json"
 {
   "route": {
+    "default_domain_resolver": "dns-resolver",
     "auto_detect_interface": true,
-    "default_domain_resolver": "dns-local",
     "final": "selector",
     "rules": [
       {
@@ -503,6 +528,11 @@ EOF
       },
       {
         "action": "route",
+        "rule_set": "geosite-cheburnet",
+        "outbound": "direct"
+      },
+      {
+        "action": "route",
         "clash_mode": "global",
         "outbound": "selector"
       }
@@ -513,6 +543,14 @@ EOF
         "tag": "adguard",
         "format": "binary",
         "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs",
+        "download_detour": "direct",
+        "update_interval": "24h0m0s"
+      },
+      {
+        "type": "remote",
+        "tag": "geosite-cheburnet",
+        "format": "binary",
+        "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs",
         "download_detour": "direct",
         "update_interval": "24h0m0s"
       }
@@ -533,7 +571,9 @@ EOF
     },
     "cache_file": {
       "enabled": true,
-      "path": "cache.db"
+      "path": "cache.db",
+      "store_fakeip": true,
+      "store_rdrc": true
     }
   }
 }
