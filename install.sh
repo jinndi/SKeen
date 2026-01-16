@@ -98,6 +98,7 @@ fe80::/10          # Link-Local Unicast (RFC 4291)
 ff00::/8           # Multicast (RFC 4291)
 "
 
+DELIMETER="------------------------------------------------"
 
 create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
@@ -136,11 +137,11 @@ red()   { printf '\033[31m%s\033[0m\n' "$1"; }
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
 yellow() { printf '\033[33m%s\033[0m\n' "$1"; }
 
-echomsg() { [ -n "$2" ] && printf '\n' >&2; cyan "$1" >&2; }
-echook() { green "$1" >&2; }
-echowarn() { yellow "$1" >&2; }
-echoerr() { red "$1" >&2; }
-exiterr() { red "$1" >&2; exit 1; }
+echomsg() { [ -n "$2" ] && printf '\n' >&2; cyan "[INFO]: $1" >&2; }
+echook() { green "[OK]: $1" >&2; }
+echowarn() { yellow "[WARN]: $1" >&2; }
+echoerr() { red "[ERROR]: $1" >&2; }
+exiterr() { red "[FATAL]: $1" >&2; exit 1; }
 
 logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
@@ -639,7 +640,7 @@ create_current_script(){
 press_any_key_to_menu(){
   [ "$CALLER" != "menu" ] && return 0
 
-  echomsg "------------------------------------------------"
+  echo "$DELIMETER"
   printf "Press any key to open menu..."
   read -r -n 1 </dev/tty
 
@@ -661,7 +662,7 @@ is_running(){
 
 
 install(){
-  echomsg "------------------------------------------------"
+  echo "$DELIMETER"
   printf "Press any key to start installation..."
   read -r -n 1 </dev/tty
 
@@ -1231,7 +1232,7 @@ prepare_firewall(){
   ip_v4=0
   ip_v6=0
 
-  echomsg "Preparing a firewall..." 1
+  echomsg "Preparing a firewall..."
 
   complete_msg="Firewall preparation is complete"
 
@@ -1331,7 +1332,7 @@ apply_firewall(){
 
   [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
 
-  echomsg "Applying firewall rules..." 1
+  echomsg "Applying firewall rules..."
 
   for iptables in $SKEEN_IPTABLES_LIST; do
     if [ "$iptables" = "ip6tables" ]; then
@@ -1692,6 +1693,10 @@ check_update(){
 show_menu(){
   show_header
 
+  set -a
+  eval "$(grep '^export ' "$FIREWALL_HOOK_FILE" | sed 's/^export //')"
+  set +a
+
   if [ "$AUTO_START" = "1" ]; then
     autostart_status="$(green "yes")"
     autostart_text="Disable"
@@ -1708,12 +1713,26 @@ show_menu(){
     running_text="Start"
   fi
 
-  printf "\n%s %s" "$SKEEN_NAME version:" "$(cyan "v$(get_current_version "skeen")")"
-  printf "\n%s %s" "$SINGBOX_NAME version:" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
-  printf "\n%s %s" "$SINGBOX_NAME state:" "$running_status"
-  printf "\n%s %s\n" "Start automatically:" "$autostart_status"
+  printf "\n %s %s" "$SKEEN_NAME version:" "$(cyan "v$(get_current_version "skeen")")"
+  printf "\n %s %s" "$SINGBOX_NAME version:" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+  printf "\n %s %s" "$SINGBOX_NAME state:" "$running_status"
+  printf "\n %s %s" "Start automatically:" "$autostart_status"
+  if [ "$running_text" = "Stop" ]; then
+    echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
+    echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
-  printf "\n%s\n" "$(cyan "Select option:")"
+    sb_dns_work_text="$(red "no")"
+    if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
+      sb_dns_work_text="$(green "yes")"
+    fi
+
+    printf "\n %s %s" "${SINGBOX_NAME} DNS working:" "$sb_dns_work_text"
+    printf "\n %s %s" "Firewall mode:" "$(cyan "$SKEEN_FIREWALL_MODE")"
+    printf "\n %s %s" "Firewall network:" "$(cyan "$SKEEN_FIREWALL_NETWORK")"
+    printf "\n %s %s" "Firewall IP ver.:" "$ipv4 $ipv6"
+  fi
+
+  printf "\n\n%s\n" "$(cyan "Select option:")"
   printf "  %s $running_text ${SINGBOX_NAME}\n" "$(green "1.")"
   printf "  %s Restart ${SINGBOX_NAME}\n" "$(green "2.")"
   printf "  %s $autostart_text Autostart\n" "$(green "3.")"
@@ -1728,7 +1747,7 @@ show_menu(){
     read option < /dev/tty
 
     if echo "$option" | grep -Eq '^[1-5]$'; then
-      echomsg "------------------------------------------------" 1
+      echo "$DELIMETER"
       case "$option" in
         1) switch_state ;;
         2) restart ;;
