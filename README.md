@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="SKeen" src="/logo.webp" width="280">
+  <img alt="SKeen" src="/logo.webp" width="300">
 </p>
 <h1 align="center">
   SKeen
@@ -19,18 +19,16 @@ Installation script for sing-box on Keenetic/Netcraze routers
 > Tested on the aarch64 (arm64) CPU architecture. Please report any issues.
 
 ### 🚀 Features
-- Installing the latest version of sing-box on Keenetic/Netcraze routers
-- Detecting CPU architecture and type to select the appropriate sing-box IPK package
-- Creating and configuring a proxy interface for sing-box inbound
-- Start/stop/restart/update/uninstall options from the script menu
-- Pre-configured Zashboard web panel via Clash API
+- TProxy/Redirect/Hybrid modes ✓
+- IPv4 and IPv6 supports ✓
+- Sing-box DNS module working ✓
+- Sing-box fakeip working ✓
+- Zashboard via Clash API configured ✓
 
 ### 📋 Requirements
-- CPU types: aarch64, mipsel, mips
-- Entware installed and configured on the router
+- Entware installed and configured
+- Netfilter Subsystem Kernel Module installed
 - `curl` installed via `opkg install curl`
-- **Proxy Client** component is installed on the router
-- GitHub connection is available (for installation and updates)
 
 ### 💾 Installation
 
@@ -39,13 +37,16 @@ Installation script for sing-box on Keenetic/Netcraze routers
 ```
 curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh | sh
 ```
-Manage the package further using the `skeen` command.
 
 Configure the sing-box JSON configuration files located in the `/opt/etc/skeen/config/` directory, where example configuration files are provided.
-The directory is not removed during program uninstallation and must be deleted manually if required.
-It is also not overwritten during reinstallation if it already exists.
 
-Access the web interface at the router's IP (usually 192.168.1.1) on port `9090`
+The SKeen settings are located in the file at `/opt/etc/skeen/skeen.conf`.
+
+`/opt/etc/skeen` directory is not removed during program uninstallation and must be deleted manually if required. It is also not overwritten during reinstallation if it already exists.
+
+Access the web interface at the router's IP (usually 192.168.1.1) on http://192.168.1.1:9090
+
+Manage the package further using the `skeen` command.
 
 ### ⚡ Commands
 
