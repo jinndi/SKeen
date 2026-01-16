@@ -1303,7 +1303,7 @@ prepare_firewall(){
 
   {
     echo "#!/bin/sh"
-    echo "# $SKEEN_NAME $SKEEN_VERSION firewall hook"
+    echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
     echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
 
@@ -1317,7 +1317,13 @@ prepare_firewall(){
     [ $ip_v4 -eq 1 ] && echo "export SKEEN_EXCLUDE_v4_ADDRESSES=\"$SKEEN_EXCLUDE_v4_ADDRESSES\""
     [ $ip_v6 -eq 1 ] && echo "export SKEEN_EXCLUDE_v6_ADDRESSES=\"$SKEEN_EXCLUDE_v6_ADDRESSES\""
     echo "export SKEEN_USE_DNS_CONFIG=\"$SKEEN_USE_DNS_CONFIG\""
-    
+
+    echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
+    echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
+    [ "$SKEEN_FIREWALL_NETWORK" = "redirect" ] && echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
+    [ "$SKEEN_FIREWALL_NETWORK" = "tproxy" ] && echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0"
+
+    echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table" 
 
     echo "$SKEEN_SCRIPT apply_firewall"
   } > "$FIREWALL_HOOK_FILE"
