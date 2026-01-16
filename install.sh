@@ -1072,15 +1072,7 @@ set_exclude_rules() {
   }
 
   for exclude in $EXCLUDE_ADDRESSES; do
-    is_private_dns=0
-
-    case "$exclude" in
-      192.168.0.0/16|fd00::/8)
-        is_private_dns=1
-      ;;
-    esac
-
-    if [ "$is_private_dns" -eq 1 ] && [ "$use_dns" -eq 1 ]; then
+    if [ "$exclude" = "192.168.0.0/16" ] && [ "$use_dns" -eq 1 ]; then
       case "$SKEEN_FIREWALL_MODE:$table" in
         hybrid:mangle)
           ipt -p tcp --dport "$DNS_PORT"
