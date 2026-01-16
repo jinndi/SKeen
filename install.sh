@@ -402,11 +402,6 @@ EOF
 {
   "inbounds": [
     {
-      "type": "mixed",
-      "listen": "::",
-      "listen_port": 2080
-    },
-    {
       "type": "redirect",
       "listen": "::",
       "listen_port": 2081,
@@ -603,22 +598,6 @@ create_autostart_script(){
 }
 
 
-create_proxy_interface(){
-  echomsg "Creating proxy interface Proxy0 in ndmc" 1
-
-  ndmc -c interface Proxy0 &&
-  ndmc -c interface Proxy0 proxy protocol socks5 &&
-  ndmc -c interface Proxy0 proxy socks5-udp &&
-  ndmc -c interface Proxy0 proxy upstream 127.0.0.1 2080 &&
-  ndmc -c interface Proxy0 description Sing-box &&
-  ndmc -c interface Proxy0 ip global auto &&
-  ndmc -c interface Proxy0 up &&
-  ndmc -c system configuration save
-
-  echook "Proxy interface Proxy0 created successfully."
-}
-
-
 create_current_script(){
   [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
 
@@ -676,7 +655,6 @@ install(){
   install_singbox
   create_singbox_config
   create_autostart_script
-  create_proxy_interface
   create_current_script
 
   printf "\n"
@@ -702,12 +680,7 @@ uninstall(){
   echomsg "Removing $SKEEN_NAME script..."
   rm -f "$SKEEN_SCRIPT"
 
-  echomsg "Removing proxy interface Proxy0 from ndmc..."
-  ndmc -c interface Proxy0 down  &&
-  ndmc -c no interface Proxy0 &&
-  ndmc -c system configuration save
   echomsg "Configuration directory $WORK_DIR is retained."
-
   echomsg "If you want to remove it manually, run: rm -rf '$WORK_DIR'"
   echook "${SKEEN_NAME} has been uninstalled successfully."
   exit 0
