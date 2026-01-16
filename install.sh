@@ -82,7 +82,7 @@ RESERVED_IPV6="
 ::1/128            # Loopback Address (RFC 4291)
 ::/96              # Zero-prefix / IPv4-compatible (RFC 4291, best practice)
 ::ffff:0:0/96      # IPv4-mapped Address (RFC 4291)
-64:ff9b::/96       # IPv4-IPv6 Translation (RFC 6052) – (for NAT64) 
+64:ff9b::/96       # IPv4-IPv6 Translation (RFC 6052) – (for NAT64)
 64:ff9b:1::/48     # IPv4-IPv6 Translation (RFC 8215)
 100::/64           # Discard-Only Address Block (RFC 6666)
 100:0:0:1::/64     # Dummy IPv6 Prefix (RFC 9780)
@@ -130,6 +130,7 @@ create_skeen_config(){
 }
 
 [ -f "$SKEEN_CONFIG" ] || create_skeen_config
+# shellcheck disable=SC1090
 . "$SKEEN_CONFIG"
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
@@ -151,7 +152,7 @@ get_current_version() {
   case "$(printf '%s\n' "$1" | tr '[:upper:]' '[:lower:]')" in
     "$SINGBOX_PROC")
       if [ -f "$SINGBOX_BIN" ]; then
-        echo "$("$SINGBOX_BIN" version | awk 'NR==1 {print $3}' | xargs)"
+        $SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs
       fi
     ;;
     "$SKEEN_PROC")
@@ -176,7 +177,7 @@ get_latest_version() {
     return 1
   fi
 
-  if [ "$(echo "$latest_release" | grep tag_name | wc -l)" -eq 0 ]; then
+  if [ "$(echo "$latest_release" | grep -c tag_name)" -eq 0 ]; then
     echoerr "Failed to parse the latest version information:\n$(echo "$latest_release" | grep message)"
     return 1
   fi
@@ -194,7 +195,7 @@ show_header() {
 ╚█████╗░█████═╝░█████╗░░█████╗░░██╔██╗██║
 ░╚═══██╗██╔═██╗░██╔══╝░░██╔══╝░░██║╚████║
 ██████╔╝██║░╚██╗███████╗███████╗██║░╚███║
-╚═════╝░╚═╝░░╚═╝╚══════╝╚══════╝╚═╝░░╚══╝                                  
+╚═════╝░╚═╝░░╚═╝╚══════╝╚══════╝╚═╝░░╚══╝
 EOF
   printf '\033[0m'
 }
@@ -237,7 +238,7 @@ get_architecture() {
   # MIPS core
   case "$(grep -i 'cpu model' /proc/cpuinfo | sed -e 's/.*: //i' | tr '[:upper:]' '[:lower:]')" in
     *74k*|*34k*)    PKG_ARCH="${ARCH}_74kc" ;;
-    *24k*f*|*24kf*) PKG_ARCH="${ARCH}_24kc_24kf" ;;
+    *24kf*|*24k*f*) PKG_ARCH="${ARCH}_24kc_24kf" ;;
     *24k*|*1004*)   PKG_ARCH="${ARCH}_24kc" ;;
     *4kec*)         PKG_ARCH="${ARCH}_4kec" ;;
     *)              PKG_ARCH="${ARCH}_mips32" ;;
@@ -290,7 +291,7 @@ download_singbox(){
   echomsg "Downloading $PKG_NAME ..." 1
 
   mkdir -p "$TMP_DIR"
-  cd "$TMP_DIR"
+  cd "$TMP_DIR" || exit
 
   curl --fail --connect-timeout 5 --max-time 90 -Lo "$PKG_NAME" "$pkg_url"
   curl_exit_status=$?
@@ -317,7 +318,7 @@ install_singbox(){
 
   echomsg "Extracting $PKG_NAME" 1
   mkdir "$tmp_unpack_dir"
-  cd "$tmp_unpack_dir"
+  cd "$tmp_unpack_dir" || exit
   tar -xf "../${PKG_NAME}"
   tar -xzf data.tar.gz
   echook "Extraction completed."
@@ -605,13 +606,13 @@ create_autostart_script(){
 create_proxy_interface(){
   echomsg "Creating proxy interface Proxy0 in ndmc" 1
 
-  ndmc -c interface Proxy0 && 
-  ndmc -c interface Proxy0 proxy protocol socks5 && 
-  ndmc -c interface Proxy0 proxy socks5-udp && 
-  ndmc -c interface Proxy0 proxy upstream 127.0.0.1 2080 && 
-  ndmc -c interface Proxy0 description Sing-box && 
-  ndmc -c interface Proxy0 ip global auto && 
-  ndmc -c interface Proxy0 up && 
+  ndmc -c interface Proxy0 &&
+  ndmc -c interface Proxy0 proxy protocol socks5 &&
+  ndmc -c interface Proxy0 proxy socks5-udp &&
+  ndmc -c interface Proxy0 proxy upstream 127.0.0.1 2080 &&
+  ndmc -c interface Proxy0 description Sing-box &&
+  ndmc -c interface Proxy0 ip global auto &&
+  ndmc -c interface Proxy0 up &&
   ndmc -c system configuration save
 
   echook "Proxy interface Proxy0 created successfully."
@@ -642,7 +643,8 @@ press_any_key_to_menu(){
 
   echo "$DELIMETER"
   printf "Press any key to open menu..."
-  read -r -n 1 </dev/tty
+
+  read -r key 2>/dev/null
 
   if [ "$1" = "reload" ];then
     exec sh "$0"
@@ -664,7 +666,8 @@ is_running(){
 install(){
   echo "$DELIMETER"
   printf "Press any key to start installation..."
-  read -r -n 1 </dev/tty
+  # shellcheck disable=SC2034
+  read -r key 2>/dev/null
 
   get_os_release
   get_architecture
@@ -716,8 +719,8 @@ accept_uninstall(){
   attempt=0
 
   while [ $attempt -lt $max_attempts ]; do
-    printf "Uninstall ${SKEEN_NAME}? [y/n]: " > /dev/tty
-    read option < /dev/tty
+    printf "Uninstall, %s? [y/n]: " "$SKEEN_NAME" > /dev/tty
+    read -r option < /dev/tty
 
     [ -z "$option" ] && option="n"
 
@@ -745,12 +748,13 @@ update_conf_var(){
 
   [ -f "$SKEEN_CONFIG" ] || create_skeen_config
 
-  if grep -q "^[[:space:]]*$KEY[[:space:]]*=" "$SKEEN_CONFIG"; then
-    sed -i "s|^[[:space:]]*$KEY[[:space:]]*=.*|$KEY=$VALUE|" "$SKEEN_CONFIG"
+  if grep -q "^[[:space:]]*${KEY}[[:space:]]*=" "$SKEEN_CONFIG"; then
+    sed -i "s|^[[:space:]]*${KEY}[[:space:]]*=.*|$KEY=$VALUE|" "$SKEEN_CONFIG"
   else
     echo "$KEY=$VALUE" >> "$SKEEN_CONFIG"
   fi
 
+  # shellcheck disable=SC1090
   . "$SKEEN_CONFIG"
 }
 
@@ -771,12 +775,12 @@ get_inet_tests_hosts() {
 
   if [ -z "$hosts" ]; then
     echo "$sys_hosts" && return
-  fi 
+  fi
 
   hosts="$(echo "$hosts" | \
     tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
 
-  set -- $hosts
+  set -- "$hosts"
 
   count=0
   result=""
@@ -799,8 +803,7 @@ check_internet() {
   for host in $hosts; do
     attempt=1
     while [ $attempt -le "$max_attempts" ]; do
-      ping -c 1 "$host" >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
+      if ping -c 1 "$host" >/dev/null 2>&1; then
         logger_notice "Internet is available via ${host}, starting"
         return 0
       else
@@ -822,7 +825,9 @@ check_internet() {
 get_inbounds_data() {
   type="$1"
 
-  for file in $(find "$CONFIG_DIR" -name '*.json'); do
+  json_files="$(find "$CONFIG_DIR" -name '*.json')"
+
+  for file in $json_files; do
 
     port=$(jsonfilter -i "$file" \
       -e '@.inbounds[@.type="'"$type"'"].listen_port' \
@@ -943,7 +948,7 @@ get_iptables_list(){
   ipt6="$(ip -6 addr show | grep -q "inet6 " && \
     command -v ip6tables >/dev/null 2>&1 && echo ip6tables)"
 
-  set -- $ipt4 $ipt6
+  set -- "$ipt4" "$ipt6"
   ipt_list="$*"
 
   echomsg "Detected iptables: $ipt_list"
@@ -968,7 +973,7 @@ get_mark_policy(){
     echo "0x${mark}"
     return 0
   fi
-  
+
   echowarn "Routing for the entire device"
   return 0
 }
@@ -988,14 +993,14 @@ set_route_rules() {
 
   if [ -n "$table_policy" ]; then
     ip -"$IP_VERSION" route show table "$table_policy" | grep -Ev '^default' |
-    while read route; do
-      table_main_route=$(ip -"$IP_VERSION" route show table main | grep -F "$route")
-      ip -"$IP_VERSION" route add table "$TABLE_ID" $table_main_route >/dev/null 2>&1
+    while read -r route; do
+      table_main_route="$(ip -"$IP_VERSION" route show table main | grep -F "$route")"
+      ip -"$IP_VERSION" route add table "$TABLE_ID" "$table_main_route" >/dev/null 2>&1
     done
   else
     ip -"$IP_VERSION" route show table main | grep -Ev '^default' |
-    while read route; do
-      ip -"$IP_VERSION" route add table "$TABLE_ID" $route >/dev/null 2>&1
+    while read -r route; do
+      ip -"$IP_VERSION" route add table "$TABLE_ID" "$route" >/dev/null 2>&1
     done
   fi
 }
@@ -1048,7 +1053,7 @@ EOF
 
   for address in $user_exclude_adresses; do
     if echo "$address" | grep -Eq \
-    '^(([0-9]{1,3}\.){3}[0-9]{1,3}(/[0-9]{1,2})?|([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}(/[0-9]{1,3})?)$'; 
+    '^(([0-9]{1,3}\.){3}[0-9]{1,3}(/[0-9]{1,2})?|([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}(/[0-9]{1,3})?)$';
     then
       all_list="$all_list $address"
     else
@@ -1187,6 +1192,7 @@ set_prerouting_rules() {
       connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
     fi
 
+    # shellcheck disable=SC2086
     set -- PREROUTING \
         $connmark_option \
         -m conntrack ! --ctstate INVALID \
@@ -1248,7 +1254,7 @@ prepare_firewall(){
     SKEEN_USE_DNS_CONFIG="1"
     echomsg "Detected use of DNS configuration"
   fi
-  
+
   if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
     SKEEN_FIREWALL_MODE="tproxy"
   elif [ -n "$SKEEN_REDIRECT_PORT" ] && [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" != "tcp" ]; then
@@ -1260,7 +1266,7 @@ prepare_firewall(){
   fi
   echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
 
-  if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then 
+  if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
     echook "$complete_msg"
     return 0
   fi
@@ -1285,7 +1291,7 @@ prepare_firewall(){
     ip_v4=1
     SKEEN_EXCLUDE_v4_ADDRESSES="$(get_exclude_addresses "4")"
   fi
-  
+
   SKEEN_EXCLUDE_v6_ADDRESSES=""
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
     ip_v6=1
@@ -1316,7 +1322,7 @@ prepare_firewall(){
     [ "$SKEEN_FIREWALL_NETWORK" = "redirect" ] && echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
     [ "$SKEEN_FIREWALL_NETWORK" = "tproxy" ] && echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0"
 
-    echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table\""  
+    echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table\""
 
     echo "$SKEEN_SCRIPT apply_firewall"
   } > "$FIREWALL_HOOK_FILE"
@@ -1422,7 +1428,7 @@ start() {
     if [ "$AUTO_START" = "0" ]; then
       return 0
     else
-      if expr "$AUTO_START_DELAY" + 0 >/dev/null 2>&1; then
+      if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null; then
         sleep "$AUTO_START_DELAY"
         check_internet
       else
@@ -1431,7 +1437,7 @@ start() {
       fi
     fi
   fi
-  
+
   if is_running; then
     echook "$SINGBOX_NAME already started"
     return 0
@@ -1439,8 +1445,7 @@ start() {
 
   echomsg "Starting ${SINGBOX_NAME}..."
 
-  $SINGBOX_PROC check -C $CONFIG_DIR
-  [ $? -ne 0 ] && press_any_key_to_menu
+  $SINGBOX_PROC check -C $CONFIG_DIR || press_any_key_to_menu
 
   prepare_firewall
 
@@ -1449,6 +1454,7 @@ start() {
     sed -i "/^skeen-box:/c\skeen-box:x:0:3228:::" /opt/etc/passwd
   fi
 
+  # shellcheck disable=SC2086
   start-stop-daemon -S -b -x $SINGBOX_PROC -c "skeen-box" -- $SINGBOX_ARGS
   status_start=$?
 
@@ -1503,7 +1509,7 @@ kill_proc(){
 
   echo "Killing ${SINGBOX_PROC}..."
   killall -9 "$SINGBOX_PROC" 2>/dev/null
-  clean_firewall  
+  clean_firewall
 }
 
 
@@ -1554,7 +1560,7 @@ update_skeen(){
   echomsg "Downloading $pkg_name ..." 1
 
   mkdir -p "$TMP_DIR"
-  cd "$TMP_DIR"
+  cd "$TMP_DIR" || exit
 
   curl --fail --connect-timeout 5 --max-time 90 -Lo "$pkg_name" "$pkg_url"
   curl_exit_status=$?
@@ -1572,7 +1578,7 @@ update_skeen(){
 
   echomsg "Extracting $pkg_name" 1
   mkdir "$tmp_unpack_dir"
-  cd "$tmp_unpack_dir"
+  cd "$tmp_unpack_dir" || exit
   tar -xf "../${pkg_name}" --strip-components=1
   echook "Extraction completed."
 
@@ -1623,7 +1629,7 @@ check_update(){
 
       while :; do
         printf "Perform the update? [y/n] (default: n): " > /dev/tty
-        read option < /dev/tty
+        read -r option < /dev/tty
 
         [ -z "$option" ] && option="n"
 
@@ -1662,7 +1668,7 @@ check_update(){
 
       while :; do
         printf "Perform the update? [y/n] (default: n): " > /dev/tty
-        read option < /dev/tty
+        read -r option < /dev/tty
 
         [ -z "$option" ] && option="n"
 
@@ -1744,7 +1750,7 @@ show_menu(){
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
     printf "\nEnter your selection [1-6]: " > /dev/tty
-    read option < /dev/tty
+    read -r option < /dev/tty
 
     if echo "$option" | grep -Eq '^[1-5]$'; then
       echo "$DELIMETER"
@@ -1771,7 +1777,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     start)   start ;;
     stop)    stop ;;
     restart) restart ;;
-    status)  is_running && echook "running" || echoerr "stopped" ;;
+    status)  if is_running; then echook "running"; else echoerr "stopped"; fi ;;
     kill)    kill_proc ;;
     version) echomsg "$SKEEN_NAME v$(get_current_version "skeen")" ;;
     apply_firewall) apply_firewall ;;
