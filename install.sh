@@ -1679,10 +1679,6 @@ check_update(){
 show_menu(){
   show_header
 
-  set -a
-  eval "$(grep '^export ' "$FIREWALL_HOOK_FILE" | sed 's/^export //')"
-  set +a
-
   if [ "$AUTO_START" = "1" ]; then
     autostart_status="$(green "yes")"
     autostart_text="Disable"
@@ -1692,6 +1688,9 @@ show_menu(){
   fi
 
   if is_running; then
+    set -a
+    eval "$(grep '^export ' "$FIREWALL_HOOK_FILE" | sed 's/^export //')"
+    set +a
     running_status="$(green "running")"
     running_text="Stop"
   else
