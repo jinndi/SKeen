@@ -69,6 +69,7 @@ The file `/opt/etc/skeen/skeen.conf` has the following settings:
 | Variable | Description |
 | ------------ | -------------------------------------------------------------- |
 |`AUTO_START`|Sing-box autostart on router reboot (0 - disabled, 1 - enabled)|
+|`AUTO_START_DELAY`|Auto-start delay in seconds (Default 0)|
 |`IPV4_TEST_HOSTS`, `IPV6_TEST_HOSTS` |Domains or IPs for testing the internet connection (no more than 3)|
 |`POLICY_NAME`|Router policy name for SKeen traffic (Default `SKeen`)|
 |`EXCLUDE_IPV4_ADDRESES`, `EXCLUDE_IPV6_ADDRESES`|Excluded ip addreses for traffic redirection, defined as a comma-separated list|
