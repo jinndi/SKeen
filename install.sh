@@ -246,6 +246,14 @@ get_architecture() {
 }
 
 
+wait_input(){
+  printf "\n"
+  stty -icanon -echo min 1 time 0
+  dd bs=1 count=1 2>/dev/null
+  stty sane
+}
+
+
 install_dependencies() {
   pkg_missing=""
 
@@ -621,12 +629,12 @@ press_any_key_to_menu(){
   [ "$CALLER" != "menu" ] && return 0
 
   echo "$DELIMETER"
-  printf "Press any key to open menu..."
 
-  read -r key 2>/dev/null
+  printf "Press any key to open menu..."
+  wait_input
 
   if [ "$1" = "reload" ];then
-    exec sh "$0"
+    exec sh "$SKEEN_SCRIPT"
   else
     show_menu
   fi
@@ -645,8 +653,7 @@ is_running(){
 install(){
   echo "$DELIMETER"
   printf "Press any key to start installation..."
-  # shellcheck disable=SC2034
-  read -r key 2>/dev/null
+  wait_input
 
   get_os_release
   get_architecture
