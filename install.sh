@@ -248,9 +248,11 @@ get_architecture() {
 
 wait_input(){
   printf "\n"
-  stty -icanon -echo min 1 time 0
-  dd bs=1 count=1 2>/dev/null
-  stty sane
+  oldstty=$(stty -g < /dev/tty)
+  stty -icanon -echo min 1 time 0 < /dev/tty
+  dd bs=1 count=1 < /dev/tty 2>/dev/null
+  stty "$oldstty" < /dev/tty
+  echo > /dev/tty
 }
 
 
@@ -630,7 +632,7 @@ press_any_key_to_menu(){
 
   echo "$DELIMETER"
 
-  printf "Press any key to open menu..."
+  printf "Press any key to open menu..." > /dev/tty
   wait_input
 
   if [ "$1" = "reload" ];then
@@ -652,7 +654,7 @@ is_running(){
 
 install(){
   echo "$DELIMETER"
-  printf "Press any key to start installation..."
+  printf "Press any key to start installation..." > /dev/tty
   wait_input
 
   get_os_release
