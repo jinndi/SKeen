@@ -674,8 +674,8 @@ uninstall(){
   echomsg "Removing $SINGBOX_NAME binary..."
   rm -f "$SINGBOX_BIN"
 
-  echomsg "Removing init script..."
-  rm -f "$INIT_SCRIPT"
+  echomsg "Removing auto-start script..."
+  rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
   echomsg "Removing $SKEEN_NAME script..."
   rm -f "$SKEEN_SCRIPT"
