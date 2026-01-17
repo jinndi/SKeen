@@ -894,7 +894,7 @@ loading_modules() {
 
   case "$SKEEN_FIREWALL_MODE" in
     tproxy|hybrid)
-      modules="xt_TPROXY.ko xt_socket.ko xt_owner.ko"
+      modules="xt_TPROXY.ko xt_socket.ko"
       echomsg "Loading modules: $modules"
     ;;
   esac
