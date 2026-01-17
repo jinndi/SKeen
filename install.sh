@@ -138,7 +138,7 @@ red()   { printf '\033[31m%s\033[0m\n' "$1"; }
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
 yellow() { printf '\033[33m%s\033[0m\n' "$1"; }
 
-echomsg() { [ -n "$2" ] && printf '\n' >&2; cyan "[INFO]: $1" >&2; }
+echomsg() { cyan "[INFO]: $1" >&2; }
 echook() { green "[OK]: $1" >&2; }
 echowarn() { yellow "[WARN]: $1" >&2; }
 echoerr() { red "[ERROR]: $1" >&2; }
@@ -257,7 +257,7 @@ wait_input(){
 install_dependencies() {
   pkg_missing=""
 
-  echomsg "Checking dependencies" 1
+  echomsg "Checking dependencies"
   opkg update >/dev/null 2>&1
 
   for pkg_name in $DEPENDENCIES; do
@@ -288,7 +288,7 @@ download_singbox(){
   download_version="$1"
 
   if [ -z "$download_version" ]; then
-    echomsg "Fetching the latest version number..." 1
+    echomsg "Fetching the latest version number..."
     download_version="$(get_latest_version "$SINGBOX_API_URL")" || exit 1
     echook "Latest version is $download_version"
   fi
@@ -296,7 +296,7 @@ download_singbox(){
   PKG_NAME="sing-box_${download_version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
   pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${download_version}/${PKG_NAME}"
 
-  echomsg "Downloading $PKG_NAME ..." 1
+  echomsg "Downloading $PKG_NAME ..."
 
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR" || exit
@@ -324,21 +324,21 @@ install_singbox(){
     rm -rf "$tmp_unpack_dir"
   fi
 
-  echomsg "Extracting $PKG_NAME" 1
+  echomsg "Extracting $PKG_NAME"
   mkdir "$tmp_unpack_dir"
   cd "$tmp_unpack_dir" || exit
   tar -xf "../${PKG_NAME}"
   tar -xzf data.tar.gz
   echook "Extraction completed."
 
-  echomsg "Installing $SINGBOX_NAME binary to $SINGBOX_BIN" 1
+  echomsg "Installing $SINGBOX_NAME binary to $SINGBOX_BIN"
   [ -f "$SINGBOX_BIN" ] && rm -f "$SINGBOX_BIN"
   mv ./usr/bin/sing-box "$SINGBOX_BIN"
   chmod 755 "$SINGBOX_BIN"
   chmod +x "$SINGBOX_BIN"
   echook "$SINGBOX_NAME binary installed successfully."
 
-  echomsg "Cleaning up temporary files..." 1
+  echomsg "Cleaning up temporary files..."
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${PKG_NAME}"
   echook "Cleanup completed."
@@ -347,11 +347,11 @@ install_singbox(){
 
 create_singbox_config(){
   if [ -d "$CONFIG_DIR" ] && ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
-    echomsg "Configuration files already exist in $CONFIG_DIR, skipping creation." 1
+    echomsg "Configuration files already exist in $CONFIG_DIR, skipping creation."
     return
   fi
 
-  echomsg "Creating default configuration files..." 1
+  echomsg "Creating default configuration files..."
 
   mkdir -p "$CONFIG_DIR"
   cat <<EOF > "$CONFIG_DIR/log.json"
@@ -589,7 +589,7 @@ EOF
 
 
 create_autostart_script(){
-  echomsg "Create $SKEEN_NAME autostart script at $SKEEN_AUTOSTART_SCRIPT" 1
+  echomsg "Create $SKEEN_NAME autostart script at $SKEEN_AUTOSTART_SCRIPT"
 
   [ -f "$SKEEN_AUTOSTART_SCRIPT" ] && rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
@@ -609,7 +609,7 @@ create_autostart_script(){
 create_current_script(){
   [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
 
-  echomsg "Downloading current script at $SKEEN_SCRIPT" 1
+  echomsg "Downloading current script at $SKEEN_SCRIPT"
 
   curl --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"
   curl_exit_status=$?
@@ -667,14 +667,14 @@ install(){
   printf "\n"
   echook "Installation completed, $SINGBOX_NAME version:"
   "$SINGBOX_BIN" version
-  echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR" 1
+  echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
 
   press_any_key_to_menu
 }
 
 
 uninstall(){
-  echomsg "Uninstalling ${SKEEN_NAME}..." 1
+  echomsg "Uninstalling ${SKEEN_NAME}..."
 
   is_running && stop
 
@@ -1537,7 +1537,7 @@ update_skeen(){
   pkg_name="${SKEEN_NAME}-v${latest_sk_ver}.tar.gz"
   pkg_url="${SKEEN_ARCHIVE_URL}/${pkg_name}"
 
-  echomsg "Downloading $pkg_name ..." 1
+  echomsg "Downloading $pkg_name ..."
 
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR" || exit
@@ -1556,13 +1556,13 @@ update_skeen(){
     rm -rf "$tmp_unpack_dir"
   fi
 
-  echomsg "Extracting $pkg_name" 1
+  echomsg "Extracting $pkg_name"
   mkdir "$tmp_unpack_dir"
   cd "$tmp_unpack_dir" || exit
   tar -xf "../${pkg_name}" --strip-components=1
   echook "Extraction completed."
 
-  echomsg "Installing $SKEEN_NAME to $SKEEN_SCRIPT" 1
+  echomsg "Installing $SKEEN_NAME to $SKEEN_SCRIPT"
   mkdir -p "$(dirname "$SKEEN_SCRIPT")"
 
   [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
@@ -1576,7 +1576,7 @@ update_skeen(){
     echoerr "install.sh not found in archive!"
   fi
 
-  echomsg "Cleaning up temporary files..." 1
+  echomsg "Cleaning up temporary files..."
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${pkg_name}"
   echook "Cleanup completed."
@@ -1631,7 +1631,7 @@ check_update(){
     fi
   fi
 
-  echomsg "Checking $SKEEN_NAME for updates..." 1
+  echomsg "Checking $SKEEN_NAME for updates..."
 
   current_sk_ver="$(get_current_version "skeen")"
   latest_sk_ver="$(get_latest_version "$SKEEN_API_URL")"
@@ -1669,8 +1669,6 @@ check_update(){
       echook "The latest $SKEEN_NAME version $latest_sk_ver is already installed"
     fi
   fi
-
-  is_running || start
 
   press_any_key_to_menu "reload"
 }
@@ -1733,6 +1731,7 @@ show_menu(){
 
     if echo "$option" | grep -Eq '^[1-5]$'; then
       echo "$DELIMETER"
+
       case "$option" in
         1) switch_state ;;
         2) restart ;;
