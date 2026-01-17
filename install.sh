@@ -247,7 +247,6 @@ get_architecture() {
 
 
 wait_input(){
-  printf "\n"
   oldstty=$(stty -g < /dev/tty)
   stty -icanon -echo min 1 time 0 < /dev/tty
   dd bs=1 count=1 < /dev/tty 2>/dev/null
@@ -1730,6 +1729,8 @@ show_menu(){
   while [ $attempt -lt $max_attempts ]; do
     printf "\nEnter your selection [1-6]: " > /dev/tty
     read -r option < /dev/tty
+
+    printf "\n"
 
     if echo "$option" | grep -Eq '^[1-5]$'; then
       echo "$DELIMETER"
