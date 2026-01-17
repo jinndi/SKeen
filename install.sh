@@ -565,7 +565,7 @@ EOF
 }
 EOF
 
-  cat <<EOF > "$CONFIG_DIR/inbounds.json"
+  cat <<EOF > "$CONFIG_DIR/experimental.json"
 {
   "experimental": {
     "clash_api": {
