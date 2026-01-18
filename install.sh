@@ -1069,7 +1069,32 @@ get_exclude_addresses() {
   ip_v="$1"
   eth_subnet=""
   reserved_subnets=""
-  user_exclude_adresses=""
+  user_exclude=""
+
+  [ "$ip_v" = "4" ] && prefix_length_default="32" || prefix_length_default="128"
+
+  is_valid_ipv4() {
+      addr="${1%%/*}"
+      IFS=. read -r o1 o2 o3 o4 <<EOF
+$addr
+EOF
+    for o in $o1 $o2 $o3 $o4; do
+      [ "$o" -ge 0 ] 2>/dev/null || return 1
+      [ "$o" -le 255 ] 2>/dev/null || return 1
+    done
+
+    return 0
+  }
+
+  is_valid_ipv6() {
+    addr="$1"
+    if ip -6 addr add "$addr" dev lo 2>/dev/null; then
+      ip -6 addr del "$addr" dev lo
+      return 0
+    fi
+
+    return 1
+  }
 
   get_eth_subnet() {
     _ip_v="$1"
@@ -1087,14 +1112,14 @@ get_exclude_addresses() {
   if [ "$ip_v" = "4" ]; then
     eth_subnet="$(get_eth_subnet "$ip_v")"
     reserved_subnets="$RESERVED_IPV4"
-    user_exclude_adresses="${EXCLUDE_IPV4_ADDRESES},${EXCLUDE_IPV4_SUBNETS}"
+    user_exclude="${EXCLUDE_IPV4_ADDRESES},${EXCLUDE_IPV4_SUBNETS}"
   else
     eth_subnet="$(get_eth_subnet "$ip_v")"
     reserved_subnets="$RESERVED_IPV6"
-    user_exclude_adresses="${EXCLUDE_IPV6_ADDRESES},${EXCLUDE_IPV6_SUBNETS}"
+    user_exclude="${EXCLUDE_IPV6_ADDRESES},${EXCLUDE_IPV6_SUBNETS}"
   fi
 
-  user_exclude_adresses="$(echo "$user_exclude_adresses" | \
+  user_exclude="$(echo "$user_exclude" | \
     tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
 
   all_list="$eth_subnet"
@@ -1110,14 +1135,25 @@ get_exclude_addresses() {
 $reserved_subnets
 EOF
 
-  for address in $user_exclude_adresses; do
-    if echo "$address" | grep -Eq \
-    '^(([0-9]{1,3}\.){3}[0-9]{1,3}(/[0-9]{1,2})?|([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}(/[0-9]{1,3})?)$';
-    then
-      all_list="$all_list $address"
-    else
-      echowarn "Invalid exclude address: $address"
-    fi
+  for addr in $user_exclude; do
+    case "$ip_v" in
+      4)
+        [ "${addr#*/}" = "$addr" ] && addr="${addr}/${prefix_length_default}"
+        if is_valid_ipv4 "$addr"; then
+          all_list="$all_list $addr"
+        else
+          echowarn "Invalid IPv4 exclude address: $addr"
+        fi
+      ;;
+      6)
+        [ "${addr#*/}" = "$addr" ] && addr="${addr}/${prefix_length_default}"
+        if is_valid_ipv6 "$addr"; then
+          all_list="$all_list $addr"
+        else
+          echowarn "Invalid IPv6 exclude address: $addr"
+        fi
+      ;;
+    esac
   done
 
   echo "$all_list" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
