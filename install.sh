@@ -40,6 +40,7 @@ SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
 SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 
 FIREWALL_HOOK_FILE="${NETFILTER_DIR}/firewall_${SKEEN_PROC}.sh"
+TMP_WAIT_DEFAULT_ROUTE="${TMP_DIR}/${SKEEN_PROC}_wait_dafault_route"
 CHAIN_PREROUTING="skeen"
 CHAIN_OUTPUT="skeen_mask"
 TABLE_REDIRECT="nat"
@@ -107,21 +108,33 @@ create_skeen_config(){
     echo "# Sing-box autostart on router reboot"
     echo "# 0 - disabled, 1 - enabled"
     echo "AUTO_START=1"
+    echo
     echo "# Auto-start delay in seconds"
     echo "AUTO_START_DELAY=0"
     echo
     echo "# Domains or IPs for testing the internet connection (no more than 3)"
+    echo "# List: ya.ru,77.88.8.8,... or ya.ru 77.88.8.8"
     echo "IPV4_TEST_HOSTS=\"$SYS_IPV4_TEST_HOSTS\""
     echo "IPV6_TEST_HOSTS=\"$SYS_IPV6_TEST_HOSTS\""
     echo
     echo "# Router policy name for $SKEEN_NAME traffic"
     echo "POLICY_NAME=\"${SKEEN_NAME}\""
     echo
-    echo "# Excluded ip addreses for traffic redirection, defined as a comma-separated list"
+    echo "# Ports to intercept and redirect via TProxy/Redirect (all ports if not specified)."
+    echo "# List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000"
+    echo "INTERCEPT_PORTS=\"\""
+    echo
+    echo "# Ports to excluded redirect via TProxy/Redirect"
+    echo "# List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000"
+    echo "EXCLUDE_PORTS=\"\""
+    echo
+    echo "# Excluded ip addreses for traffic redirection"
+    echo "# List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ..."
     echo "EXCLUDE_IPV4_ADDRESES=\"\""
     echo "EXCLUDE_IPV6_ADDRESES=\"\""
     echo
-    echo "# Excluded subnets for traffic redirection, defined as a comma-separated list"
+    echo "# Excluded subnets for traffic redirection"
+    echo "# List: 192.155.1.1/24,192.200.1.1/24,... or 192.155.1.1/24 192.200.1.1/24 ..."
     echo "EXCLUDE_IPV4_SUBNETS=\"\""
     echo "EXCLUDE_IPV6_SUBNETS=\"\""
   } > "$SKEEN_CONFIG"
@@ -145,6 +158,7 @@ echoerr() { red "[ERROR]: $1" >&2; }
 exiterr() { red "[FATAL]: $1" >&2; exit 1; }
 
 logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
+logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
 logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
 
@@ -755,42 +769,40 @@ get_inet_tests_hosts() {
   fi
 
   if [ -z "$hosts" ]; then
-    echo "$sys_hosts" && return
+    echo "$sys_hosts"
+  else
+    hosts="$(echo "$hosts" | \
+      tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
+
+    set -- "$hosts"
+
+    count=0
+    result=""
+
+    while [ $# -gt 0 ] && [ "$count" -lt "$max" ]; do
+      result="${result:+$result }$1"
+      count=$((count + 1))
+      shift
+    done
+
+    echo "$result"
   fi
-
-  hosts="$(echo "$hosts" | \
-    tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
-
-  set -- "$hosts"
-
-  count=0
-  result=""
-
-  while [ $# -gt 0 ] && [ "$count" -lt "$max" ]; do
-    result="${result:+$result }$1"
-    count=$((count + 1))
-    shift
-  done
-
-  echo "$result"
 }
 
 
 check_internet() {
   hosts="$(get_inet_tests_hosts "4")"
   max_attempts="3"
-  delay="7"
+  delay="5"
 
   for host in $hosts; do
     attempt=1
     while [ $attempt -le "$max_attempts" ]; do
       if ping -c 1 "$host" >/dev/null 2>&1; then
-        logger_notice "Internet is available via ${host}, starting"
+        logger_notice "Internet is available via ${host}"
         return 0
       else
-        msg="Internet is not available (${host}), attempt ${attempt}/${max_attempts}..."
-        echowarn "$msg"
-        logger_notice "$msg"
+        logger_warning "Internet is not available (${host}), attempt ${attempt}/${max_attempts}..."
       fi
       attempt=$((attempt + 1))
       sleep "$delay"
@@ -929,7 +941,8 @@ get_iptables_list(){
   ipt6="$(ip -6 addr show | grep -q "inet6 " && \
     command -v ip6tables >/dev/null 2>&1 && echo ip6tables)"
 
-  set -- "$ipt4" "$ipt6"
+  # shellcheck disable=SC2086
+  set -- $ipt4 $ipt6
   ipt_list="$*"
 
   echomsg "Detected iptables: $ipt_list"
@@ -961,29 +974,68 @@ get_mark_policy(){
 
 
 set_route_rules() {
-  if ip -"$IP_VERSION" rule show | grep -q "fwmark $TABLE_MARK lookup $TABLE_ID"; then
-    return 0
-  fi
-
   if [ -n "$SKEEN_MARK_POLICY" ]; then
-    table_policy=$(ip rule show | awk -v policy="$SKEEN_MARK_POLICY" '$0 ~ policy && /lookup/ && !/blackhole/{print $NF}')
-  fi
-
-  ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
-  ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID" >/dev/null 2>&1
-
-  if [ -n "$table_policy" ]; then
-    ip -"$IP_VERSION" route show table "$table_policy" | grep -Ev '^default' |
-    while read -r route; do
-      table_main_route="$(ip -"$IP_VERSION" route show table main | grep -F "$route")"
-      ip -"$IP_VERSION" route add table "$TABLE_ID" "$table_main_route" >/dev/null 2>&1
-    done
+    source_table=$(ip rule show |
+      awk -v p="$SKEEN_MARK_POLICY" '$0 ~ p && /lookup/ && !/blackhole/ {print $NF; exit}' | sed -n '1p')
+    policy_table="$source_table"
   else
-    ip -"$IP_VERSION" route show table main | grep -Ev '^default' |
-    while read -r route; do
-      ip -"$IP_VERSION" route add table "$TABLE_ID" "$route" >/dev/null 2>&1
-    done
+    source_table="main"
+    policy_table=""
   fi
+
+  check_default_route() {
+    if [ "$IP_VERSION" = "6" ] && ! ip -6 route show default 2>/dev/null | grep -q .; then
+      return 0
+    fi
+
+    if [ "$source_table" = "main" ]; then
+      ip -"$IP_VERSION" route show default 2>/dev/null | grep -q '^default'
+    else
+      ip -"$IP_VERSION" route show table all 2>/dev/null |
+      grep -E "^[[:space:]]*default .* table $policy_table( |$)" |
+      grep -vq 'unreachable'
+    fi
+  }
+
+  i=0
+  until check_default_route; do
+    [ -f "$TMP_WAIT_DEFAULT_ROUTE" ] || touch "$TMP_WAIT_DEFAULT_ROUTE"
+
+    msg="Waiting for default route in table '$source_table' (IPv$IP_VERSION), attempt $((i+1))/10"
+    echowarn "$msg"
+    logger_warning "$msg"
+
+    i=$((i+1))
+    if [ "$i" -ge 10 ]; then
+      msg="Check your internet connection"
+      if [ -n "$SKEEN_MARK_POLICY" ]; then
+        msg="$msg for policy $POLICY_NAME"
+      fi
+      logger_error "$msg"
+      exiterr "$msg"
+    fi
+    sleep 5
+  done
+
+  [ "$i" -eq 0 ] || {
+    msg="Default route found in table '$source_table' (IPv$IP_VERSION)"
+    echook "$msg"
+    logger_notice "$msg"
+  }
+
+  ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
+  ip -"$IP_VERSION" route flush table "$TABLE_ID" >/dev/null 2>&1
+
+  ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
+  ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID"
+
+  ip -"$IP_VERSION" route show table "$source_table" 2>/dev/null |
+  while read -r r; do
+    case "$r" in
+      default*|blackhole*|unreachable*) continue ;;
+    esac
+    ip -"$IP_VERSION" route add table "$TABLE_ID" "$r" 2>/dev/null
+  done
 }
 
 
@@ -1287,6 +1339,8 @@ prepare_firewall(){
 
     echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
 
+    echo "[ -f \"$TMP_WAIT_DEFAULT_ROUTE\" ] && exit 0"
+
     echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
     echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
     echo "export SKEEN_TPROXY_NETWORK=\"$SKEEN_TPROXY_NETWORK\""
@@ -1336,6 +1390,11 @@ apply_firewall(){
 
     set_route_rules
 
+    if [ -f "$TMP_WAIT_DEFAULT_ROUTE" ]; then
+      EXCLUDE_ADDRESSES="$(get_exclude_addresses "$IP_VERSION")"
+      sed -i "/SKEEN_EXCLUDE_v${IP_VERSION}/c\export SKEEN_EXCLUDE_v${IP_VERSION}_ADDRESSES=\"$EXCLUDE_ADDRESSES\"" "$FIREWALL_HOOK_FILE"
+    fi
+
     if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
       for table in "$TABLE_TPROXY" "$TABLE_REDIRECT"; do
         set_iptables_rules "$iptables" "$table" "$CHAIN_PREROUTING"
@@ -1354,6 +1413,8 @@ apply_firewall(){
       add_output_rules "$iptables"
     fi
   done
+
+  [ -f "$TMP_WAIT_DEFAULT_ROUTE" ] && rm -f "$TMP_WAIT_DEFAULT_ROUTE"
 
   echook "Firewall rules applied successfully."
 }
@@ -1444,13 +1505,13 @@ start() {
   if [ $status_start -eq 0 ]; then
     [ "$SKEEN_FIREWALL_MODE" != "none" ] && apply_firewall
     echook "$SINGBOX_NAME started."
-    logger_notice "Started"
+    logger_notice "$SINGBOX_NAME started"
     return 0
   fi
 
   [ "$SKEEN_FIREWALL_MODE" != "none" ] && clean_firewall
   echoerr "Failed to start $SINGBOX_NAME"
-  logger_error "Failed to start"
+  logger_error "$SINGBOX_NAME failed to start"
   return 1
 }
 
