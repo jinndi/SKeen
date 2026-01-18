@@ -902,18 +902,20 @@ load_module() {
 
 loading_modules() {
   error=0
-  modules=""
+  modules="xt_TPROXY.ko xt_socket.ko xt_owner.ko xt_multiport.ko"
 
   case "$SKEEN_FIREWALL_MODE" in
     tproxy|hybrid)
-      modules="xt_TPROXY.ko xt_socket.ko"
-      echomsg "Loading modules: $modules"
+      echomsg "Loading modules: xt_TPROXY.ko xt_socket.ko"
     ;;
   esac
 
   if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
-    modules="$modules xt_owner.ko"
     echomsg "Loading modules: xt_owner.ko"
+  fi
+
+  if [ -n "$INTERCEPT_PORTS" ] || [ -n "$EXCLUDE_PORTS" ]; then
+    echomsg "Loading modules: xt_multiport.ko"
   fi
 
   modules="$(echo "$modules" | tr ' ' '\n' | sort -u)"
