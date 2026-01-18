@@ -1221,20 +1221,87 @@ set_prerouting_rules() {
       esac
     fi
 
-    if [ -n "$SKEEN_MARK_POLICY" ]; then
+    [ -n "$SKEEN_MARK_POLICY" ] &&
       connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
+
+    ports=""
+    dports_op=""
+
+    if [ -n "$INTERCEPT_PORTS" ]; then
+      ports="$INTERCEPT_PORTS"
+      dports_op="--dports"
+    elif [ -n "$EXCLUDE_PORTS" ]; then
+      ports="$EXCLUDE_PORTS"
+      dports_op="! --dports"
     fi
 
-    # shellcheck disable=SC2086
-    set -- PREROUTING \
+    if [ -z "$ports" ]; then
+      # shellcheck disable=SC2086
+      set -- PREROUTING \
         $connmark_option \
         -m conntrack ! --ctstate INVALID \
         $proto_arg \
         -j "$CHAIN_PREROUTING"
 
-    if ! $iptables -t "$table" -C "$@" >/dev/null 2>&1; then
-      $iptables -t "$table" -A "$@" >/dev/null 2>&1
+      if ! $iptables -t "$table" -C "$@" >/dev/null 2>&1; then
+        $iptables -t "$table" -A "$@" >/dev/null 2>&1
+      fi
+      continue
     fi
+
+    validate_ports() {
+      for p in $(echo "$1" | tr ', ' '\n' | sed '/^$/d'); do
+        case "$p" in
+          *:*)
+            start="${p%%:*}"
+            end="${p##*:}"
+          ;;
+          *)
+            start="$p"
+            end="$p"
+          ;;
+        esac
+
+        case "$start$end" in
+          *[!0-9]*|'') return 1 ;;
+        esac
+
+        [ "$start" -ge 1 ] && [ "$end" -le 65535 ] && [ "$start" -le "$end" ] || return 1
+      done
+      return 0
+    }
+
+    if ! validate_ports "$ports"; then
+      stop
+      exiterr "Invalid ports definition: $ports"
+    fi
+
+    ports_list="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
+    total=$(printf '%s' "$ports_list" | wc -l)
+    i=1
+
+    while [ "$i" -le "$total" ]; do
+      chunk="$(printf '%s\n' "$ports_list" |
+              sed -n "${i},$((i+6))p" |
+              tr '\n' ',' |
+              sed 's/,$//')"
+
+      [ -z "$chunk" ] && break
+
+      # shellcheck disable=SC2086
+      set -- PREROUTING \
+        $connmark_option \
+        -m conntrack ! --ctstate INVALID \
+        $proto_arg \
+        -m multiport $dports_op "$chunk" \
+        -j "$CHAIN_PREROUTING"
+
+      if ! $iptables -t "$table" -C "$@" >/dev/null 2>&1; then
+        $iptables -t "$table" -A "$@" >/dev/null 2>&1
+      fi
+
+      i=$((i + 7))
+    done
   done
 }
 
@@ -1519,12 +1586,12 @@ start() {
 stop(){
   echomsg "Stopping ${SINGBOX_NAME}..."
 
+  clean_firewall
+
   if ! is_running; then
     echook "$SINGBOX_NAME already stopped"
     return 0
   fi
-
-  clean_firewall
 
   start-stop-daemon -K -x $SINGBOX_PROC >/dev/null
   status_stop=$?
