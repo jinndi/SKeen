@@ -1550,8 +1550,8 @@ apply_firewall(){
 }
 
 
-clean_firewall() {
-  [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
+clean_firewall(){
+  [ -f "$FIREWALL_HOOK_FILE" ] && : > "$FIREWALL_HOOK_FILE"
 
   clean_chain() {
     iptables="$1"
@@ -1577,18 +1577,18 @@ clean_firewall() {
     $iptables -w -t "$table" -X "$chain" >/dev/null 2>&1
   }
 
-  for iptables in iptables ip6tables; do
-    for table in nat mangle; do
-      clean_chain "$iptables" "$table" "$CHAIN_PREROUTING" PREROUTING
-      clean_chain "$iptables" "$table" "$CHAIN_OUTPUT"     OUTPUT
+  for ipt_cmd in iptables ip6tables; do
+    for tbl in nat mangle; do
+      clean_chain "$ipt_cmd" "$tbl" "$CHAIN_PREROUTING" PREROUTING
+      clean_chain "$ipt_cmd" "$tbl" "$CHAIN_OUTPUT"     OUTPUT
     done
   done
 
   if command -v ip >/dev/null 2>&1; then
-    for ip_version in 4 6; do
-      if ip -"$ip_version" rule show | grep -q "fwmark $TABLE_MARK lookup $TABLE_ID"; then
-        ip -"$ip_version" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
-        ip -"$ip_version" route flush table "$TABLE_ID" >/dev/null 2>&1
+    for ip_ver in 4 6; do
+      if ip -"$ip_ver" rule show | grep -q "fwmark $TABLE_MARK lookup $TABLE_ID"; then
+        ip -"$ip_ver" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
+        ip -"$ip_ver" route flush table "$TABLE_ID" >/dev/null 2>&1
       fi
     done
   fi
