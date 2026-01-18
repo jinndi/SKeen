@@ -70,7 +70,9 @@ The file `/opt/etc/skeen/skeen.conf` has the following settings:
 | ------------ | -------------------------------------------------------------- |
 |`AUTO_START`|Sing-box autostart on router reboot (0 - disabled, 1 - enabled)|
 |`AUTO_START_DELAY`|Auto-start delay in seconds (Default 0)|
-|`IPV4_TEST_HOSTS`, `IPV6_TEST_HOSTS` |Domains or IPs for testing the internet connection (no more than 3)|
+|`IPV4_TEST_HOSTS`, `IPV6_TEST_HOSTS` |Domains or IPs for testing the internet connection (no more than 3). List: ya.ru,77.88.8.8,... or ya.ru 77.88.8.8|
 |`POLICY_NAME`|Router policy name for SKeen traffic (Default `SKeen`)|
-|`EXCLUDE_IPV4_ADDRESES`, `EXCLUDE_IPV6_ADDRESES`|Excluded ip addreses for traffic redirection, defined as a comma-separated list|
-|`EXCLUDE_IPV4_SUBNETS`, `EXCLUDE_IPV6_SUBNETS`|Excluded subnets for traffic redirection, defined as a comma-separated list|
+|`INTERCEPT_PORTS`|Ports to intercept and redirect via TProxy/Redirect (all ports if not specified). List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000|
+|`EXCLUDE_PORTS`|Ports to excluded redirect via TProxy/Redirect (Not working if ports are set in `INTERCEPT_PORTS`). List: port and port ranges use colon e.g. 8080,1443,1300:2300 or 8080 1443 1300:2300|
+|`EXCLUDE_IPV4_ADDRESES`, `EXCLUDE_IPV6_ADDRESES`|Excluded ip addreses for traffic redirection. List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ...|
+|`EXCLUDE_IPV4_SUBNETS`, `EXCLUDE_IPV6_SUBNETS`|Excluded subnets for traffic redirection. List: 192.155.1.1/24,192.200.1.1/24,... or 192.155.1.1/24 192.200.1.1/24 ...|

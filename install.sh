@@ -120,12 +120,12 @@ create_skeen_config(){
     echo "# Router policy name for $SKEEN_NAME traffic"
     echo "POLICY_NAME=\"${SKEEN_NAME}\""
     echo
-    echo "# Ports to intercept and redirect via TProxy/Redirect (all ports if not specified)."
+    echo "# Ports to intercept and redirect via TProxy/Redirect (all ports if not specified)"
     echo "# List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000"
     echo "INTERCEPT_PORTS=\"\""
     echo
     echo "# Ports to excluded redirect via TProxy/Redirect"
-    echo "# List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000"
+    echo "# List: port and port ranges use colon e.g. 8080,1443,1300:2300 or 8080 1443 1300:2300"
     echo "EXCLUDE_PORTS=\"\""
     echo
     echo "# Excluded ip addreses for traffic redirection"
