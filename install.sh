@@ -24,7 +24,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.1.1"
+SKEEN_VERSION="3.2.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
@@ -874,6 +874,24 @@ check_router_port() {
 }
 
 
+is_owner_module_working() {
+  chain="TEST_OWNER_CHAIN"
+
+  iptables -w -t mangle -N "$chain" >/dev/null 2>&1 || return 1
+
+  if iptables -w -t mangle -A "$chain" -m owner --gid-owner 65534 -j RETURN >/dev/null 2>&1; then
+    result=0
+  else
+    result=1
+  fi
+
+  iptables -w -t mangle -F "$chain" >/dev/null 2>&1
+  iptables -w -t mangle -X "$chain" >/dev/null 2>&1
+
+  return "$result"
+}
+
+
 load_module() {
   module="$1"
   modname="${module%.ko}"
@@ -911,7 +929,13 @@ loading_modules() {
   esac
 
   if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
-    echomsg "Loading modules: xt_owner.ko"
+    if is_owner_module_working; then
+      echomsg "Loading modules: xt_owner.ko"
+    else
+      SKEEN_USE_DNS_CONFIG=0
+      echowarn "iptables owner module is unavailable"
+      echowarn "$SINGBOX_NAME DNS functionality will be disabled"
+    fi
   fi
 
   if [ -n "$INTERCEPT_PORTS" ] || [ -n "$EXCLUDE_PORTS" ]; then
@@ -1379,9 +1403,10 @@ prepare_firewall(){
     SKEEN_FIREWALL_NETWORK="tcp udp"
 
     check_router_port
-
-    loading_modules
   fi
+
+  loading_modules
+
   echomsg "Detected firewall networks: $SKEEN_FIREWALL_NETWORK"
 
   SKEEN_MARK_POLICY="$(get_mark_policy)"
