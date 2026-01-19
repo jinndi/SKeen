@@ -1375,14 +1375,14 @@ add_output_rules() {
   case "$SKEEN_FIREWALL_MODE" in
     tproxy)
       set -- OUTPUT \
-          -m owner ! --gid-owner skeen-box \
+          -m owner ! --gid-owner "$SINGBOX_PROC" \
           -m conntrack ! --ctstate INVALID \
           ! -p icmp \
           -j "$CHAIN_OUTPUT"
     ;;
     hybrid)
       set -- OUTPUT \
-          -m owner ! --gid-owner skeen-box \
+          -m owner ! --gid-owner "$SINGBOX_PROC" \
           -m conntrack ! --ctstate INVALID \
           -p udp \
           -j "$CHAIN_OUTPUT"
@@ -1540,7 +1540,7 @@ apply_firewall(){
 
     if [ "$SKEEN_FIREWALL_MODE" != "redirect" ]; then
       set_iptables_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_OUTPUT"
-      add_output_rules "$iptables"
+      add_output_rules "$iptables" "$TABLE_TPROXY"
     fi
   done
 
@@ -1621,9 +1621,9 @@ start() {
 
   prepare_firewall
 
-  if ! id "skeen-box" >/dev/null 2>&1; then
-    adduser -D -H -u 3228 "skeen-box"
-    sed -i "/^skeen-box:/c\skeen-box:x:0:3228:::" /opt/etc/passwd
+  if ! id "$SINGBOX_PROC" >/dev/null 2>&1; then
+    adduser -D -H -u 3228 "$SINGBOX_PROC"
+    sed -i "/^${SINGBOX_PROC}:/c\\${SINGBOX_PROC}:x:0:3228:::" /opt/etc/passwd
   fi
 
   # shellcheck disable=SC2086
