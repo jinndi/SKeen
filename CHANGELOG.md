@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.3.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.3.3...SKeen-v3.3.4) (2026-01-20)
+
+
+### 🐛 Fix
+
+* update dependencies only after script update when triggered from menu ([e146a5c](https://github.com/jinndi/SKeen/commit/e146a5c593c2173c20d9e519573561baac624b3c))
+
+
+### 🧰 Chore
+
+* update logo to a compact version ([7538dbf](https://github.com/jinndi/SKeen/commit/7538dbf7dcc7e4ca24014d21a2ee420a92c24b37))
+
 ## [3.3.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.3.2...SKeen-v3.3.3) (2026-01-20)
 
 
