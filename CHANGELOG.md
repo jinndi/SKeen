@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.3.0...SKeen-v3.3.1) (2026-01-20)
+
+
+### 🐛 Fix
+
+* after update SKeen install deps ([b00a923](https://github.com/jinndi/SKeen/commit/b00a923ec53299cd14650b2826c4e83ca451c567))
+
 ## [3.3.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.2.3...SKeen-v3.3.0) (2026-01-20)
 
 
