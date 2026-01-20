@@ -13,7 +13,7 @@ CALLER="$2"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-DEPENDENCIES="ndmc start-stop-daemon iptables jsonfilter curl tar"
+DEPENDENCIES="ndmc start-stop-daemon iptables curl tar jsonfilter logger"
 
 ENTWARE_DIR="/opt"
 WORK_DIR="${ENTWARE_DIR}/etc/skeen"
@@ -24,7 +24,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.2.1"
+SKEEN_VERSION="3.2.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
@@ -928,18 +928,12 @@ loading_modules() {
     ;;
   esac
 
-  if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
-    if is_owner_module_working; then
-      echomsg "Loading modules: xt_owner.ko"
-    else
-      SKEEN_USE_DNS_CONFIG=0
-      echowarn "iptables owner module is unavailable"
-      echowarn "$SINGBOX_NAME DNS functionality will be disabled"
-    fi
-  fi
-
   if [ -n "$INTERCEPT_PORTS" ] || [ -n "$EXCLUDE_PORTS" ]; then
     echomsg "Loading modules: xt_multiport.ko"
+  fi
+
+  if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
+    echomsg "Loading modules: xt_owner.ko"
   fi
 
   modules="$(echo "$modules" | tr ' ' '\n' | sort -u)"
@@ -947,6 +941,14 @@ loading_modules() {
   for module in $modules; do
     load_module "$module" || error=1
   done
+
+  if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
+    if ! is_owner_module_working; then
+      SKEEN_USE_DNS_CONFIG=0
+      echowarn "iptables owner module is not working"
+      echowarn "$SINGBOX_NAME DNS functionality will be disabled"
+    fi
+  fi
 
   if [ "$error" -ne 0 ]; then
     echoerr "The '$SKEEN_FIREWALL_MODE' mode requires kernel modules"
@@ -1663,11 +1665,11 @@ stop(){
 
   if [ $status_stop -eq 0 ]; then
     echook "$SINGBOX_NAME stopped."
-    logger_notice "Stopped"
+    logger_notice "$SINGBOX_NAME stopped."
     return 0
   else
     echoerr "Failed to stop $SINGBOX_NAME"
-    logger_error "Failed to stop"
+    logger_error "Failed to stop $SINGBOX_NAME"
     return 1
   fi
 }
