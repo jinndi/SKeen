@@ -643,12 +643,18 @@ create_current_script(){
 press_any_key_to_menu(){
   [ "$CALLER" != "menu" ] && return 0
 
+  action="$1"
+
   echo "$DELIMETER"
 
   printf "Press any key to open menu..." > /dev/tty
   wait_input
 
-  show_menu
+  if [ "$action" = "reload" ]; then
+    exec sh "$SKEEN_SCRIPT"
+  else
+    show_menu
+  fi
 }
 
 
@@ -1777,6 +1783,7 @@ update_skeen(){
   echook "Cleanup completed."
 
   echook "The $SKEEN_NAME has been successfully updated"
+  is_update_skeen=1
 }
 
 
@@ -1835,6 +1842,8 @@ check_update(){
     echoerr "Failed to get $SKEEN_NAME version"
   fi
 
+  is_update_skeen=0
+
   if [ -n "$latest_sk_ver" ] && [ -n "$current_sk_ver" ]; then
     if [ "$latest_sk_ver" != "$current_sk_ver" ]; then
       printf "%s %s\n" "$(cyan "New version $SKEEN_NAME script is available:")" "$(green "$latest_sk_ver")"
@@ -1865,7 +1874,11 @@ check_update(){
     fi
   fi
 
-  exec sh "$SKEEN_SCRIPT" check_deps menu
+  if [ $is_update_skeen -eq 1 ]; then
+    exec sh "$SKEEN_SCRIPT" check_deps menu
+  else
+    press_any_key_to_menu "reload"
+  fi
 }
 
 import_firewall_vars(){
