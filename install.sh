@@ -1339,7 +1339,8 @@ set_prerouting_rules() {
 
     ports_list="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
 
-    set -- "$ports_list"
+    # shellcheck disable=SC2086
+    set -- $ports_list
     total=$#
     i=1
 
@@ -1875,6 +1876,99 @@ import_firewall_vars(){
 }
 
 
+fw_test() {
+  # $1 — table
+  # $2 — chain
+  # $3 — content
+  # $4 — grep pattern
+  # $5 — test name (human readable)
+
+  if echo "$3" | grep -Eq "$4"; then
+    cyan "[$1/$2] $5: $(green "exists")"
+  else
+    cyan "[$1/$2] $5: $(red "missing")"
+  fi
+}
+
+
+fw_test_chain() {
+  # $1 — table
+  # $2 — chain
+
+  echomsg "Testing $1 $2 chain"
+
+  content="$(iptables -w -t "$1" -nvL "$2" 2>/dev/null)"
+
+  fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Chain reference"
+
+  fw_test "$1" "$2" "$content" "$test_exclude_address" "Exclude addresses rule"
+
+  if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
+    fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK rule"
+  fi
+
+  [ "$2" = "$CHAIN_OUTPUT" ] && return 0
+
+  fw_test "$1" "$2" "$content" "redir|redirect" "Redirect rule"
+
+  [ "$SKEEN_USE_DNS_CONFIG" -eq 1 ] && \
+    fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "DNS port ${DNS_PORT} rule"
+
+  if [ -n "$INTERCEPT_PORTS" ] || [ -n "$EXCLUDE_PORTS" ]; then
+    # shellcheck disable=SC2015
+    fw_test "$1" "$2" "$(iptables -t "$1" -nvL | grep -w "$2")" "multiport" "Multiport rule"
+  fi
+}
+
+
+diagnostic_firewall() {
+  if ! is_running; then
+    echoerr "Diagnostics are available only when Sing-box is running"
+    press_any_key_to_menu
+    exit 1
+  else
+    import_firewall_vars
+  fi
+
+  if [ ! -f "$FIREWALL_HOOK_FILE" ]; then
+    echoerr "The file at path $FIREWALL_HOOK_FILE is missing!"
+    echomsg "Please reboot $SINGBOX_NAME"
+    press_any_key_to_menu
+    exit 1
+  fi
+
+  if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
+    echowarn "Testing is available in redirect, tproxy, and hybrid modes"
+    press_any_key_to_menu
+    exit 1
+  elif [ "$SKEEN_FIREWALL_MODE" != "redirect" ]; then
+    tables="nat mangle"
+  else
+    tables="nat"
+  fi
+
+  if [ -z "$SKEEN_IPTABLES_LIST" ]; then
+    echoerr "iptables utility is not installed"
+    press_any_key_to_menu
+    exit 1
+  fi
+
+  test_exclude_address="0.0.0.0/8"
+
+  for iptables in $SKEEN_IPTABLES_LIST; do
+    for table in $tables; do
+      for chain in $CHAIN_PREROUTING; do
+        fw_test_chain "$table" "$chain"
+      done
+    done
+
+    fw_test_chain mangle "$CHAIN_OUTPUT"
+  done
+
+  press_any_key_to_menu
+}
+
+
 show_menu(){
   show_header
 
@@ -1923,8 +2017,9 @@ show_menu(){
   printf "  %s Restart ${SINGBOX_NAME}\n" "$(green "2.")"
   printf "  %s $autostart_text Autostart\n" "$(green "3.")"
   printf "  %s Check Updates\n" "$(green "4.")"
-  printf "  %s Uninstall ${SKEEN_NAME}\n" "$(green "5.")"
-  printf "  %s Exit\n" "$(green "6.")"
+  printf "  %s Firewall diagnostic\n" "$(green "5.")"
+  printf "  %s Uninstall ${SKEEN_NAME}\n" "$(green "6.")"
+  printf "  %s Exit\n" "$(green "7.")"
 
   max_attempts=3
   attempt=0
@@ -1934,7 +2029,7 @@ show_menu(){
 
     printf "\n"
 
-    if echo "$option" | grep -Eq '^[1-5]$'; then
+    if echo "$option" | grep -Eq '^[1-6]$'; then
       echo "$DELIMETER"
 
       case "$option" in
@@ -1942,10 +2037,11 @@ show_menu(){
         2) restart ;;
         3) switch_autostart ;;
         4) check_update ;;
-        5) accept_uninstall ;;
+        5) diagnostic_firewall ;;
+        6) accept_uninstall ;;
       esac
     else
-      [ "$option" = 6 ] && exit 0
+      [ "$option" = 7 ] && exit 0
       echoerr "Incorrect option"
       attempt=$((attempt+1))
     fi
@@ -1968,6 +2064,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     ;;
     apply_firewall) apply_firewall ;;
     clean_firewall) clean_firewall ;;
+    diagnostic) diagnostic_firewall ;;
     "") show_menu ;;
     *) echomsg "Usage: skeen (start|stop|restart|status|kill|version)" ;;
   esac
