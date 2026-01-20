@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.2.3...SKeen-v3.3.0) (2026-01-20)
+
+
+### 🚀 Feat
+
+* add check_deps option to verify all dependencies and install missing ones ([1642448](https://github.com/jinndi/SKeen/commit/16424481a6783cc4525b6b6ad071c15d58e6535d))
+* add diagnostic option to check iptables rules for current operating mode ([1313acc](https://github.com/jinndi/SKeen/commit/1313accb6fb38839163c3bec37d1e07cb376a878))
+
 ## [3.2.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.2.2...SKeen-v3.2.3) (2026-01-20)
 
 
