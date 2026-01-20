@@ -792,12 +792,11 @@ get_inet_tests_hosts() {
 
 check_internet() {
   hosts="$(get_inet_tests_hosts "4")"
-  max_attempts="3"
-  delay="5"
+  max_attempts=3
 
   for host in $hosts; do
     attempt=1
-    while [ $attempt -le "$max_attempts" ]; do
+    while [ $attempt -le $max_attempts ]; do
       if ping -c 1 "$host" >/dev/null 2>&1; then
         logger_notice "Internet is available via ${host}"
         return 0
@@ -805,13 +804,11 @@ check_internet() {
         logger_warning "Internet is not available (${host}), attempt ${attempt}/${max_attempts}..."
       fi
       attempt=$((attempt + 1))
-      sleep "$delay"
+      sleep 5
     done
   done
 
-  msg="Internet is not available via any of the checked hosts"
-  logger_error "$msg"
-  exiterr "$msg"
+  logger_error "Internet is not available via any of the checked hosts"
 }
 
 
@@ -1508,14 +1505,14 @@ apply_firewall(){
   echomsg "Applying firewall rules..."
 
   for iptables in $SKEEN_IPTABLES_LIST; do
-    if [ "$iptables" = "ip6tables" ]; then
-      IP_VERSION="6"
-      PROXY_IP="::1"
-      EXCLUDE_ADDRESSES="$SKEEN_EXCLUDE_v6_ADDRESSES"
-    elif [ "$iptables" = "iptables" ]; then
+    if [ "$iptables" = "iptables" ]; then
       IP_VERSION="4"
       PROXY_IP="127.0.0.1"
       EXCLUDE_ADDRESSES="$SKEEN_EXCLUDE_v4_ADDRESSES"
+    elif [ "$iptables" = "ip6tables" ]; then
+      IP_VERSION="6"
+      PROXY_IP="::1"
+      EXCLUDE_ADDRESSES="$SKEEN_EXCLUDE_v6_ADDRESSES"
     else
       exiterr "Unknown iptables: $iptables"
     fi
@@ -1629,7 +1626,7 @@ start() {
   fi
 
   # shellcheck disable=SC2086
-  start-stop-daemon -S -b -x $SINGBOX_PROC -c "skeen-box" -- $SINGBOX_ARGS
+  start-stop-daemon -S -b -x $SINGBOX_PROC -c $SINGBOX_PROC -- $SINGBOX_ARGS
   status_start=$?
 
   sleep 1
@@ -1951,9 +1948,12 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     start)   start ;;
     stop)    stop ;;
     restart) restart ;;
-    status)  if is_running; then echook "running"; else echoerr "stopped"; fi ;;
+    status)  if is_running; then green "running"; else red "stopped"; fi ;;
     kill)    kill_proc ;;
-    version) echomsg "$SKEEN_NAME v$(get_current_version "skeen")" ;;
+    version)
+      cyan "${SKEEN_NAME}: v$(get_current_version "$SKEEN_PROC")";
+      cyan "${SINGBOX_NAME}: v$(get_current_version "$SINGBOX_PROC")"
+    ;;
     apply_firewall) apply_firewall ;;
     clean_firewall) clean_firewall ;;
     "") show_menu ;;
