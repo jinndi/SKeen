@@ -163,7 +163,7 @@ logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
 
 get_current_version() {
-  case "$(printf '%s\n' "$1" | tr '[:upper:]' '[:lower:]')" in
+  case "$1" in
     "$SINGBOX_PROC")
       if [ -f "$SINGBOX_BIN" ]; then
         $SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs
@@ -1338,7 +1338,9 @@ set_prerouting_rules() {
     fi
 
     ports_list="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
-    total=$(printf '%s' "$ports_list" | wc -l)
+
+    set -- "$ports_list"
+    total=$#
     i=1
 
     while [ "$i" -le "$total" ]; do
@@ -1824,7 +1826,7 @@ check_update(){
 
   echomsg "Checking $SKEEN_NAME for updates..."
 
-  current_sk_ver="$(get_current_version "skeen")"
+  current_sk_ver="$(get_current_version "$SKEEN_PROC")"
   latest_sk_ver="$(get_latest_version "$SKEEN_API_URL")"
 
   if [ -z "$current_sk_ver" ]; then
@@ -1864,9 +1866,19 @@ check_update(){
   press_any_key_to_menu "reload"
 }
 
+import_firewall_vars(){
+  if [ -f "$FIREWALL_HOOK_FILE" ]; then
+    set -a
+    eval "$(grep '^export ' "$FIREWALL_HOOK_FILE" | sed 's/^export //')"
+    set +a
+  fi
+}
+
 
 show_menu(){
   show_header
+
+  import_firewall_vars
 
   if [ "$AUTO_START" = "1" ]; then
     autostart_status="$(green "yes")"
@@ -1887,7 +1899,7 @@ show_menu(){
     running_text="Start"
   fi
 
-  printf "\n %s %s" "$SKEEN_NAME version:" "$(cyan "v$(get_current_version "skeen")")"
+  printf "\n %s %s" "$SKEEN_NAME version:" "$(cyan "v$(get_current_version "$SKEEN_PROC")")"
   printf "\n %s %s" "$SINGBOX_NAME version:" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
   printf "\n %s %s" "$SINGBOX_NAME state:" "$running_status"
   printf "\n %s %s" "Start automatically:" "$autostart_status"
