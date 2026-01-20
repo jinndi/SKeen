@@ -648,11 +648,7 @@ press_any_key_to_menu(){
   printf "Press any key to open menu..." > /dev/tty
   wait_input
 
-  if [ "$1" = "reload" ];then
-    exec sh "$SKEEN_SCRIPT" check_deps
-  else
-    show_menu
-  fi
+  show_menu
 }
 
 
@@ -1864,7 +1860,7 @@ check_update(){
     fi
   fi
 
-  press_any_key_to_menu "reload"
+  exec sh "$SKEEN_SCRIPT" check_deps menu
 }
 
 import_firewall_vars(){
