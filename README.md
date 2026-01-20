@@ -59,10 +59,10 @@ Example Usage: start the daemon `skeen start`
 |`stop`|Stops Sing-box. If the process is not found, reports that the daemon is already stopped|
 |`restart`|Stops and then starts Sing-box again|
 |`status`|Shows the current status of the process Sing-box|
-|`diagnostic`|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
-|`check_deps`|Check if all dependencies are installed (installs missing ones)|
 |`kill`|Forcefully terminates the Sing-box process (`kill -9`)|
 |`version`|Displays the current application version|
+|`diagnostic`|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
+|`check_deps`|Check if all dependencies are installed (installs missing ones)|
 
 ### ⚙️ Settigs
 

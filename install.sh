@@ -2076,7 +2076,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     diagnostic) diagnostic_firewall ;;
     check_deps) install_dependencies; press_any_key_to_menu ;;
     "") show_menu ;;
-    *) echomsg "Usage: skeen (start|stop|restart|status|kill|version)" ;;
+    *) echomsg "Usage: skeen (start|stop|restart|status|kill|version|diagnostic|check_deps)" ;;
   esac
 else
   install
