@@ -649,7 +649,7 @@ press_any_key_to_menu(){
   wait_input
 
   if [ "$1" = "reload" ];then
-    exec sh "$SKEEN_SCRIPT"
+    exec sh "$SKEEN_SCRIPT" check_deps
   else
     show_menu
   fi
@@ -1884,9 +1884,9 @@ fw_test() {
   # $5 — test name (human readable)
 
   if echo "$3" | grep -Eq "$4"; then
-    cyan "[$1/$2] $5: $(green "exists")"
+    printf "[$1/$2] $5: %s\n" "$(green "exists")"
   else
-    cyan "[$1/$2] $5: $(red "missing")"
+    printf "[$1/$2] $5: %s\n" "$(red "missing")"
   fi
 }
 
@@ -2065,6 +2065,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     apply_firewall) apply_firewall ;;
     clean_firewall) clean_firewall ;;
     diagnostic) diagnostic_firewall ;;
+    check_deps) install_dependencies; press_any_key_to_menu ;;
     "") show_menu ;;
     *) echomsg "Usage: skeen (start|stop|restart|status|kill|version)" ;;
   esac
