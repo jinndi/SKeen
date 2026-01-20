@@ -24,7 +24,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.3.3"
+SKEEN_VERSION="3.3.4"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
@@ -201,15 +201,12 @@ get_latest_version() {
 
 
 show_header() {
-  printf '\033[1;35m'
+  printf '\033[0;34m'
   cat <<EOF
 
-░██████╗██╗░░██╗███████╗███████╗███╗░░██╗
-██╔════╝██║░██╔╝██╔════╝██╔════╝████╗░██║
-╚█████╗░█████═╝░█████╗░░█████╗░░██╔██╗██║
-░╚═══██╗██╔═██╗░██╔══╝░░██╔══╝░░██║╚████║
-██████╔╝██║░╚██╗███████╗███████╗██║░╚███║
-╚═════╝░╚═╝░░╚═╝╚══════╝╚══════╝╚═╝░░╚══╝
+░█▀▀▀█ ░█ ▄▀ █▀▀ █▀▀ █▀▀▄
+─▀▀▀▄▄ ░█▀▄  █▀▀ █▀▀ █  █
+░█▄▄▄█ ░█ ░█ ▀▀▀ ▀▀▀ ▀  ▀
 EOF
   printf '\033[0m'
 }
