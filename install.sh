@@ -925,7 +925,7 @@ loading_modules() {
     echomsg "Loading modules: xt_multiport.ko"
   fi
 
-  if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
+  if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
     echomsg "Loading modules: xt_owner.ko"
   fi
 
@@ -935,9 +935,9 @@ loading_modules() {
     load_module "$module" || error=1
   done
 
-  if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
+  if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
     if ! is_owner_module_working; then
-      SKEEN_USE_DNS_CONFIG=0
+      SKEEN_DNS_SUPPORTED=0
       echowarn "iptables owner module is not working"
       echowarn "$SINGBOX_NAME DNS functionality will be disabled"
     fi
@@ -1161,7 +1161,9 @@ set_exclude_rules() {
   chain="$3"
 
   use_dns=0
-  [ "$chain" != "$CHAIN_OUTPUT" ] && [ "$SKEEN_USE_DNS_CONFIG" = "1" ] && use_dns=1
+  if [ "$chain" != "$CHAIN_OUTPUT" ] && [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
+    use_dns=1
+  fi
 
   ipt() {
     $iptables -w -t "$table" -A "$chain" -d "$exclude" "$@" -j RETURN >/dev/null 2>&1
@@ -1262,21 +1264,20 @@ set_prerouting_rules() {
 
   for net in $SKEEN_FIREWALL_NETWORK; do
     table="$base_table"
-    proto_arg=""
 
-    if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
-      case "$net" in
-        tcp)
-          table="$TABLE_REDIRECT"
-          proto_arg="-p tcp"
-        ;;
-        udp)
-          table="$TABLE_TPROXY"
-          proto_arg="-p udp"
-        ;;
-        *) continue ;;
-      esac
-    fi
+    case "$net" in
+      tcp)
+        [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && \
+        table="$TABLE_TPROXY" || \
+        table="$TABLE_REDIRECT"
+        proto_arg="-p tcp"
+      ;;
+      udp)
+        table="$TABLE_TPROXY"
+        proto_arg="-p udp"
+      ;;
+      *) continue ;;
+    esac
 
     [ -n "$SKEEN_MARK_POLICY" ] &&
       connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
@@ -1409,12 +1410,6 @@ prepare_firewall(){
   SKEEN_TPROXY_PORT="$(echo "$tproxy_data" | cut -d'|' -f1)"
   SKEEN_TPROXY_NETWORK="$(echo "$tproxy_data" | cut -d'|' -f2)"
 
-  SKEEN_USE_DNS_CONFIG="0"
-  if has_dns_servers; then
-    SKEEN_USE_DNS_CONFIG="1"
-    echomsg "Detected use of DNS configuration"
-  fi
-
   if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
     SKEEN_FIREWALL_MODE="tproxy"
   elif [ -n "$SKEEN_REDIRECT_PORT" ] && [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" != "tcp" ]; then
@@ -1429,6 +1424,16 @@ prepare_firewall(){
   if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
     echook "$complete_msg"
     return 0
+  fi
+
+  SKEEN_DNS_SUPPORTED="0"
+  if has_dns_servers; then
+    echomsg "Detected use of DNS configuration"
+
+    case "$SKEEN_FIREWALL_MODE" in
+      tproxy|hybrid) SKEEN_DNS_SUPPORTED="1" ;;
+      *) echowarn "In redirect mode, the DNS configuration is not used" ;;
+    esac
   fi
 
   if [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
@@ -1478,7 +1483,7 @@ prepare_firewall(){
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
     [ $ip_v4 -eq 1 ] && echo "export SKEEN_EXCLUDE_v4_ADDRESSES=\"$SKEEN_EXCLUDE_v4_ADDRESSES\""
     [ $ip_v6 -eq 1 ] && echo "export SKEEN_EXCLUDE_v6_ADDRESSES=\"$SKEEN_EXCLUDE_v6_ADDRESSES\""
-    echo "export SKEEN_USE_DNS_CONFIG=\"$SKEEN_USE_DNS_CONFIG\""
+    echo "export SKEEN_DNS_SUPPORTED=\"$SKEEN_DNS_SUPPORTED\""
 
     echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
     echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
@@ -1890,8 +1895,9 @@ fw_test() {
 fw_test_chain() {
   # $1 — table
   # $2 — chain
+  # $3 — iptables
 
-  echomsg "Testing $1 $2 chain"
+  echomsg "Testing $3: $1 $2 chain"
 
   content="$(iptables -w -t "$1" -nvL "$2" 2>/dev/null)"
 
@@ -1907,15 +1913,15 @@ fw_test_chain() {
 
   fw_test "$1" "$2" "$content" "redir|redirect" "Redirect rule"
 
-  [ "$SKEEN_USE_DNS_CONFIG" -eq 1 ] && \
-    fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "DNS port ${DNS_PORT} rule"
+  if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
+    fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS port ${DNS_PORT} rule"
+  fi
 
   if [ -n "$INTERCEPT_PORTS" ] || [ -n "$EXCLUDE_PORTS" ]; then
     # shellcheck disable=SC2015
-    fw_test "$1" "$2" "$(iptables -t "$1" -nvL | grep -w "$2")" "multiport" "Multiport rule"
+    fw_test "$1" "$2" "$(iptables -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport rule"
   fi
 }
-
 
 diagnostic_firewall() {
   if ! is_running; then
@@ -1937,8 +1943,10 @@ diagnostic_firewall() {
     echowarn "Testing is available in redirect, tproxy, and hybrid modes"
     press_any_key_to_menu
     exit 1
-  elif [ "$SKEEN_FIREWALL_MODE" != "redirect" ]; then
+  elif [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
     tables="nat mangle"
+  elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
+    tables="mangle"
   else
     tables="nat"
   fi
@@ -1953,12 +1961,10 @@ diagnostic_firewall() {
 
   for iptables in $SKEEN_IPTABLES_LIST; do
     for table in $tables; do
-      for chain in $CHAIN_PREROUTING; do
-        fw_test_chain "$table" "$chain"
-      done
+      fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
     done
 
-    fw_test_chain mangle "$CHAIN_OUTPUT"
+    [ "$tables" != "nat"  ] && fw_test_chain mangle "$CHAIN_OUTPUT" "$iptables"
   done
 
   press_any_key_to_menu
@@ -1995,10 +2001,9 @@ show_menu(){
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
-    sb_dns_work_text="$(red "no")"
-    if [ "$SKEEN_USE_DNS_CONFIG" = "1" ]; then
-      sb_dns_work_text="$(green "yes")"
-    fi
+    [ "$SKEEN_DNS_SUPPORTED" = "1" ] && \
+      sb_dns_work_text="$(green "yes")" || \
+      sb_dns_work_text="$(red "no")"
 
     printf "\n %s %s" "${SINGBOX_NAME} DNS working:" "$sb_dns_work_text"
     printf "\n %s %s" "Firewall mode:" "$(cyan "$SKEEN_FIREWALL_MODE")"
