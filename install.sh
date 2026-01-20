@@ -1979,9 +1979,7 @@ show_menu(){
   fi
 
   if is_running; then
-    set -a
-    eval "$(grep '^export ' "$FIREWALL_HOOK_FILE" | sed 's/^export //')"
-    set +a
+    import_firewall_vars
     running_status="$(green "running")"
     running_text="Stop"
   else
@@ -2013,7 +2011,7 @@ show_menu(){
   printf "  %s Restart ${SINGBOX_NAME}\n" "$(green "2.")"
   printf "  %s $autostart_text Autostart\n" "$(green "3.")"
   printf "  %s Check Updates\n" "$(green "4.")"
-  printf "  %s Firewall diagnostic\n" "$(green "5.")"
+  printf "  %s Diagnostic Firewall \n" "$(green "5.")"
   printf "  %s Uninstall ${SKEEN_NAME}\n" "$(green "6.")"
   printf "  %s Exit\n" "$(green "7.")"
 
