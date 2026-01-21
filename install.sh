@@ -1190,12 +1190,19 @@ set_exclude_rules() {
     use_dns=1
   fi
 
+  is_local_net() {
+    case "$1" in
+      192.168.0.0/16|fe80::/10) return 0 ;;
+      *) return 1 ;;
+    esac
+  }
+
   ipt() {
     $iptables -w -t "$table" -A "$chain" -d "$exclude" "$@" -j RETURN >/dev/null 2>&1
   }
 
   for exclude in $EXCLUDE_ADDRESSES; do
-    if [ "$exclude" = "192.168.0.0/16" ] && [ "$use_dns" -eq 1 ]; then
+    if is_local_net "$exclude" && [ "$use_dns" -eq 1 ]; then
       case "$SKEEN_FIREWALL_MODE:$table" in
         hybrid:mangle)
           ipt -p tcp --dport "$DNS_PORT"
@@ -1944,7 +1951,7 @@ fw_test_chain() {
 
   echomsg "Testing $3: $1 $2 chain"
 
-  content="$(iptables -w -t "$1" -nvL "$2" 2>/dev/null)"
+  content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
   fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Chain reference"
 
@@ -1964,7 +1971,7 @@ fw_test_chain() {
 
   if [ -n "$INTERCEPT_PORTS" ] || [ -n "$EXCLUDE_PORTS" ]; then
     # shellcheck disable=SC2015
-    fw_test "$1" "$2" "$(iptables -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport rule"
+    fw_test "$1" "$2" "$($3 -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport rule"
   fi
 }
 
@@ -2002,9 +2009,14 @@ test_firewall() {
     exit 1
   fi
 
-  test_exclude_address="0.0.0.0/8"
-
   for iptables in $SKEEN_IPTABLES_LIST; do
+    if [ "$iptables" = "ip6tables" ]; then
+      echo "$DELIMETER"
+      test_exclude_address="2002::/16"
+    elif [ "$iptables" = "iptables" ]; then
+      test_exclude_address="0.0.0.0/8"
+    fi
+
     for table in $tables; do
       fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
     done
