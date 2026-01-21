@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.4.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.3.4...SKeen-v3.4.0) (2026-01-21)
+
+
+### 🚀 Feat
+
+* **cli:** add update, backup, restore and reset options (see README) ([3f8b78c](https://github.com/jinndi/SKeen/commit/3f8b78c709ce93a15881ca57b8641f76c4a3ac4a))
+
+
+### 🧰 Chore
+
+* **sing-box:** update default DNS and routing configs ([00aa71d](https://github.com/jinndi/SKeen/commit/00aa71dd3b97796140c42a6ca27b99458ac50a74))
+
 ## [3.3.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.3.3...SKeen-v3.3.4) (2026-01-20)
 
 
