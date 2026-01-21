@@ -378,8 +378,15 @@ EOF
   "dns": {
     "servers": [
       {
-        "tag": "dns-direct",
+        "tag": "dns-proxy",
         "type": "tls",
+        "server": "one.one.one.one",
+        "domain_resolver": "dns-resolver",
+        "detour": "selector"
+      },
+      {
+        "tag": "dns-direct",
+        "type": "https",
         "server": "common.dot.dns.yandex.net",
         "domain_resolver": "dns-resolver"
       },
@@ -401,6 +408,19 @@ EOF
         "action": "reject"
       },
       {
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "clash_mode": "direct"
+          },
+          {
+            "rule_set": "geosite-cheburnet"
+          }
+        ],
+        "server": "dns-direct"
+      },
+      {
         "query_type": [
           "A",
           "AAAA"
@@ -408,7 +428,7 @@ EOF
         "server": "fakeip"
       }
     ],
-    "final": "dns-direct",
+    "final": "dns-proxy",
     "strategy": "prefer_ipv4",
     "independent_cache": true
   }
@@ -476,10 +496,8 @@ EOF
       "server": "example.com",
       "server_port": 443,
       "tls": {
-        "alpn": [
-          "h1", "h2"
-        ],
         "enabled": true,
+        "alpn": ["http/1.1", "h2"],
         "server_name": "example.com",
         "utls": {
           "enabled": true,
@@ -500,6 +518,7 @@ EOF
     "rules": [
       {
         "action": "sniff",
+        "timeout": "500ms"
       },
       {
         "type": "logical",
@@ -536,19 +555,17 @@ EOF
         "action": "reject"
       },
       {
-        "action": "route",
-        "clash_mode": "direct",
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "clash_mode": "direct",
+          },
+          {
+            "rule_set": "geosite-cheburnet",
+          }
+        ],
         "outbound": "direct"
-      },
-      {
-        "action": "route",
-        "rule_set": "geosite-cheburnet",
-        "outbound": "direct"
-      },
-      {
-        "action": "route",
-        "clash_mode": "global",
-        "outbound": "selector"
       }
     ],
     "rule_set": [
