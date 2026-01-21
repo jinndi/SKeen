@@ -24,7 +24,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.3.4"
+SKEEN_VERSION="3.4.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
@@ -334,11 +334,16 @@ install_singbox(){
   fi
 
   echomsg "Extracting $PKG_NAME"
-  mkdir "$tmp_unpack_dir"
+  mkdir -p "$tmp_unpack_dir"
   cd "$tmp_unpack_dir" || exit
-  tar -xf "../${PKG_NAME}"
-  tar -xzf data.tar.gz
-  echook "Extraction completed."
+
+  if tar -xf "../${PKG_NAME}" && tar -xzf data.tar.gz; then
+    echook "Extraction completed."
+  else
+    rm -rf "$tmp_unpack_dir"
+    rm -f "${TMP_DIR}/${PKG_NAME}"
+    exiterr "Error extracting archive"
+  fi
 
   echomsg "Installing $SINGBOX_NAME binary to $SINGBOX_BIN"
   [ -f "$SINGBOX_BIN" ] && rm -f "$SINGBOX_BIN"
@@ -355,7 +360,9 @@ install_singbox(){
 
 
 create_singbox_config(){
-  if [ -d "$CONFIG_DIR" ] && ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
+  act="${1:-}"
+
+  if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] && ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
     echomsg "Configuration files already exist in $CONFIG_DIR, skipping creation."
     return
   fi
@@ -363,6 +370,7 @@ create_singbox_config(){
   echomsg "Creating default configuration files..."
 
   mkdir -p "$CONFIG_DIR"
+
   cat <<EOF > "$CONFIG_DIR/log.json"
 {
   "log": {
@@ -1735,12 +1743,11 @@ switch_autostart(){
 
 
 update_core(){
-  is_running && stop
+  is_running && stop && is_stopped=1
   get_os_release
   get_architecture
   download_singbox "$latest_sb_ver" || return 1
   install_singbox
-
   echook "The $SINGBOX_NAME core has been successfully updated"
 }
 
@@ -1769,10 +1776,16 @@ update_skeen(){
   fi
 
   echomsg "Extracting $pkg_name"
-  mkdir "$tmp_unpack_dir"
+  mkdir -p "$tmp_unpack_dir"
   cd "$tmp_unpack_dir" || exit
-  tar -xf "../${pkg_name}" --strip-components=1
-  echook "Extraction completed."
+
+  if tar -xf "../${pkg_name}" --strip-components=1; then
+    echook "Extraction completed."
+  else
+    rm -rf "$tmp_unpack_dir"
+    rm -f "${TMP_DIR}/${pkg_name}"
+    exiterr "Error extracting archive"
+  fi
 
   echomsg "Installing $SKEEN_NAME to $SKEEN_SCRIPT"
   mkdir -p "$(dirname "$SKEEN_SCRIPT")"
@@ -1798,7 +1811,7 @@ update_skeen(){
 }
 
 
-check_update(){
+check_updates(){
   echomsg "Checking $SINGBOX_NAME for updates..."
 
   current_sb_ver="$(get_current_version "$SINGBOX_PROC")"
@@ -1813,6 +1826,8 @@ check_update(){
       latest_sb_ver="$current_sb_ver"
     fi
   fi
+
+  is_stopped=0
 
   if [ -n "$latest_sb_ver" ] && [ -n "$current_sb_ver" ]; then
     if [ "$latest_sb_ver" != "$current_sb_ver" ]; then
@@ -1885,12 +1900,17 @@ check_update(){
     fi
   fi
 
+  [ "$is_stopped" = "1" ] && start
+
+  [ "$CALLER" = "cli" ] && exit 0
+
   if [ $is_update_skeen -eq 1 ]; then
     exec sh "$SKEEN_SCRIPT" check_deps menu
   else
     press_any_key_to_menu "reload"
   fi
 }
+
 
 import_firewall_vars(){
   if [ -f "$FIREWALL_HOOK_FILE" ]; then
@@ -1947,9 +1967,9 @@ fw_test_chain() {
   fi
 }
 
-diagnostic_firewall() {
+test_firewall() {
   if ! is_running; then
-    echoerr "Diagnostics are available only when Sing-box is running"
+    echoerr "Testing are available only when $SINGBOX_NAME is running"
     press_any_key_to_menu
     exit 1
   else
@@ -1989,6 +2009,92 @@ diagnostic_firewall() {
     done
 
     [ "$tables" != "nat"  ] && fw_test_chain mangle "$CHAIN_OUTPUT" "$iptables"
+  done
+
+  press_any_key_to_menu
+}
+
+
+backup_config(){
+  if [ -d "$WORK_DIR" ] && [ "$(ls -A "$WORK_DIR")" ]; then
+    echomsg "Creating an backup of the current configuration..."
+    archive_path="${ENTWARE_DIR}/skeen_$(date '+%Y-%m-%d_%H%M%S').tar"
+    parent_dir=$(dirname "$WORK_DIR")
+    folder_name=$(basename "$WORK_DIR")
+    if tar -cf "$archive_path" -C "$parent_dir" "$folder_name"; then
+      echook "Backup successfully created at $archive_path"
+    else
+      echoerr "Error creating backup!"
+      return 1
+    fi
+  else
+    echowarn "No current configuration found, skipping backup"
+  fi
+  return 0
+}
+
+
+restore_config(){
+  while :; do
+    printf "Enter the name of the backup archive file\n"
+    printf "located in the /opt root directory,\n"
+    printf "for example %s: " "$(cyan "skeen.tar")" > /dev/tty
+    read -r tarname < /dev/tty
+
+    [ -z "$tarname" ] && press_any_key_to_menu && exit 1
+
+    archive_path="/opt/${tarname}"
+
+    if [ -f "$archive_path" ] && tar -tf "$archive_path" | grep -q "^skeen/"; then
+      rm -rf "${ENTWARE_DIR}/skeen"
+
+      echomsg "Extracting archive..."
+
+      if tar -xf "$archive_path" -C "$ENTWARE_DIR"; then
+        rm -rf "$WORK_DIR"
+        mv "${ENTWARE_DIR}/skeen" "$WORK_DIR"
+
+        echook "Backup successfully restored"
+      else
+        echoerr "Error extracting archive $archive_path"
+      fi
+    else
+      echoerr "Archive missing or 'skeen' folder not found"
+      continue
+    fi
+
+    break
+  done
+
+  press_any_key_to_menu
+}
+
+
+reset_config(){
+  while :; do
+    printf "A full configuration reset will be performed,\n"
+    printf "with a backup of the current configuration created\n"
+    printf "Continue? [y/n] : " > /dev/tty
+    read -r option < /dev/tty
+
+    [ -z "$option" ] && option="n"
+
+    case "$option" in
+      y|Y)
+        if backup_config; then
+          rm -rf "$WORK_DIR"
+          mkdir -p "$WORK_DIR"
+          create_singbox_config "force"
+          create_skeen_config
+          echook "Configuration reset completed"
+        else
+          echoerr "Failed to reset configuration!"
+        fi
+        break
+      ;;
+      n|N) break ;;
+      *) echoerr "Incorrect option" ;;
+    esac
   done
 
   press_any_key_to_menu
@@ -2040,7 +2146,7 @@ show_menu(){
   printf "  %s Restart ${SINGBOX_NAME}\n" "$(green "2.")"
   printf "  %s $autostart_text Autostart\n" "$(green "3.")"
   printf "  %s Check Updates\n" "$(green "4.")"
-  printf "  %s Diagnostic Firewall \n" "$(green "5.")"
+  printf "  %s Test Firewall\n" "$(green "5.")"
   printf "  %s Uninstall ${SKEEN_NAME}\n" "$(green "6.")"
   printf "  %s Exit\n" "$(green "7.")"
 
@@ -2059,8 +2165,8 @@ show_menu(){
         1) switch_state ;;
         2) restart ;;
         3) switch_autostart ;;
-        4) check_update ;;
-        5) diagnostic_firewall ;;
+        4) check_updates ;;
+        5) test_firewall ;;
         6) accept_uninstall ;;
       esac
     else
@@ -2082,15 +2188,18 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     status)  if is_running; then green "running"; else red "stopped"; fi ;;
     kill)    kill_proc ;;
     version)
-      cyan "${SKEEN_NAME}: v$(get_current_version "$SKEEN_PROC")";
-      cyan "${SINGBOX_NAME}: v$(get_current_version "$SINGBOX_PROC")"
+      printf "${SKEEN_NAME}: %s\n" "$(cyan "v$(get_current_version "$SKEEN_PROC")")";
+      printf "${SINGBOX_NAME}: %s\n" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")";
     ;;
+    update) check_updates ;;
+    test) test_firewall ;;
+    deps) install_dependencies; press_any_key_to_menu ;;
+    backup) backup_config ;;
+    restore) restore_config ;;
+    reset) reset_config ;;
     apply_firewall) apply_firewall ;;
-    clean_firewall) clean_firewall ;;
-    diagnostic) diagnostic_firewall ;;
-    check_deps) install_dependencies; press_any_key_to_menu ;;
     "") show_menu ;;
-    *) echomsg "Usage: skeen (start|stop|restart|status|kill|version|diagnostic|check_deps)" ;;
+    *) echomsg "Usage: skeen (start|stop|restart|status|kill|version|update|test|deps|backup|restore|reset)" ;;
   esac
 else
   install

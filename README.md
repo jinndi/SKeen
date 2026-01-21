@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="SKeen" src="/logo.webp" width="235">
+  <img alt="SKeen" src="/logo.webp" width="214">
 </p>
 <h1 align="center">
   SKeen
@@ -61,8 +61,12 @@ Example Usage: start the daemon `skeen start`
 |`status`|Shows the current status of the process Sing-box|
 |`kill`|Forcefully terminates the Sing-box process (`kill -9`)|
 |`version`|Displays the current application version|
-|`diagnostic`|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
-|`check_deps`|Check if all dependencies are installed (installs missing ones)|
+|`update`|Checks for available updates of the sing-box core and the SKeen script, and allows updating|
+|`test`|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
+|`deps`|Check if all dependencies are installed (installs missing ones)|
+|`backup`|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
+|`restore`|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
+|`reset`|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.conf` to defaults, performing a `backup` beforehand|
 
 ### ⚙️ Settigs
 
