@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.0...SKeen-v3.4.1) (2026-01-21)
+
+
+### 🐛 Fix
+
+* apply CONNMARK to TPROXY networks ([aec7cfe](https://github.com/jinndi/SKeen/commit/aec7cfe1914043dfaa14a9cf2db6d24321db0360))
+
 ## [3.4.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.3.4...SKeen-v3.4.0) (2026-01-21)
 
 
