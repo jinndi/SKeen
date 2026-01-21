@@ -1905,7 +1905,7 @@ check_updates(){
   [ "$CALLER" = "cli" ] && exit 0
 
   if [ $is_update_skeen -eq 1 ]; then
-    exec sh "$SKEEN_SCRIPT" check_deps menu
+    exec sh "$SKEEN_SCRIPT" deps menu
   else
     press_any_key_to_menu "reload"
   fi
