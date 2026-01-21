@@ -24,7 +24,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.4.0"
+SKEEN_VERSION="3.4.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
@@ -1222,7 +1222,9 @@ set_iptables_rules() {
   table="$2"
   chain="$3"
 
-  if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
+  if [ "$chain" = "$CHAIN_PREROUTING" ] && \
+    ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1;
+  then
     $iptables -t "$table" -N "$chain" || return 0
 
     set_exclude_rules "$iptables" "$table" "$chain"
@@ -1245,7 +1247,7 @@ set_iptables_rules() {
         fi
       ;;
       tproxy)
-        for net in $SKEEN_FIREWALL_NETWORK; do
+        for net in $SKEEN_TPROXY_NETWORK; do
           set -- -p "$net" -m socket --transparent \
                   -j MARK --set-mark "$TABLE_MARK"
           $iptables -w -t "$table" -I "$chain" "$@" >/dev/null 2>&1
@@ -1265,19 +1267,17 @@ set_iptables_rules() {
     esac
   fi
 
-  if [ "$table" = "$TABLE_TPROXY" ]; then
-    chain="$CHAIN_OUTPUT"
+  if [ "$chain" = "$CHAIN_OUTPUT" ] && \
+    ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1;
+  then
+    $iptables -t "$table" -N "$chain" || return 0
 
-    if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
-      $iptables -t "$table" -N "$chain" || return 0
+    set_exclude_rules "$iptables" "$table" "$chain"
 
-      set_exclude_rules "$iptables" "$table" "$chain"
-
-      for net in $SKEEN_FIREWALL_NETWORK; do
-        set -- -p "$net" -j CONNMARK --set-mark "$TABLE_MARK"
-        $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
-      done
-    fi
+    for net in $SKEEN_TPROXY_NETWORK; do
+      set -- -p "$net" -j CONNMARK --set-mark "$TABLE_MARK"
+      $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+    done
   fi
 }
 
@@ -1437,6 +1437,7 @@ prepare_firewall(){
 
   if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
     SKEEN_FIREWALL_MODE="tproxy"
+    SKEEN_TPROXY_NETWORK="tcp udp"
   elif [ -n "$SKEEN_REDIRECT_PORT" ] && [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" != "tcp" ]; then
     SKEEN_FIREWALL_MODE="hybrid"
   elif [ -n "$SKEEN_REDIRECT_PORT" ]; then
