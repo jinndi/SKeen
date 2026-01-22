@@ -14,7 +14,12 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
       - uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GH_PAT }}
@@ -25,8 +30,9 @@ jobs:
         run: sudo apt update && sudo apt install -y gh
 
       - name: Upload install.sh to release as skeen
+        if: steps.release.outputs.tag != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-          gh release upload "$TAG" install.sh --name skeen --clobber
+          echo "Release tag detected: ${{ steps.release.outputs.tag }}"
+          gh release upload "${{ steps.release.outputs.tag }}" install.sh --name skeen --clobber
