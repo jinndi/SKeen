@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.2...SKeen-v3.4.3) (2026-01-22)
+
+
+### 🐛 Fix
+
+* wait ipv6 default route ([b1ae597](https://github.com/jinndi/SKeen/commit/b1ae5979255210d2f2b416ef708a00075236eacf))
+
 ## [3.4.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.1...SKeen-v3.4.2) (2026-01-22)
 
 
