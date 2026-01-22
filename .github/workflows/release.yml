@@ -23,11 +23,10 @@ jobs:
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
 
-      - name: Upload Asset
+      - name: Upload SKeen
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: |
-          cp install.sh skeen
-          gh release upload ${{ steps.release.outputs.tag_name }} skeen
-          gh release edit ${{ steps.release.outputs.tag_name }} --notes "Direct download: [skeen](https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/skeen)"
+          shfmt -s -mn install.sh > skeen
+          gh release upload ${{ steps.release.outputs.tag_name }} skeen --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
