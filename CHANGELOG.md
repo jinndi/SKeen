@@ -5,6 +5,20 @@
 
 ### 🐛 Fix
 
+* release-please-action ([744ea87](https://github.com/jinndi/SKeen/commit/744ea8776fc6d80908c598f161f1af8f3f1d02e6))
+* release-please-action ([8d4460e](https://github.com/jinndi/SKeen/commit/8d4460eeb192ae8a186c379b2bdde2062a769f12))
+
+
+### 🧰 Chore
+
+* **main:** release SKeen 3.4.5 ([4561d0d](https://github.com/jinndi/SKeen/commit/4561d0df211cefe1e5d4fc35015d383c0ff83883))
+* **main:** release SKeen 3.4.5 ([d5bcd5c](https://github.com/jinndi/SKeen/commit/d5bcd5cddb54a57ef47c9de5c2ec3c46a2778034))
+
+## [3.4.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.4...SKeen-v3.4.5) (2026-01-22)
+
+
+### 🐛 Fix
+
 * release-please-action ([8d4460e](https://github.com/jinndi/SKeen/commit/8d4460eeb192ae8a186c379b2bdde2062a769f12))
 
 ## [3.4.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.3...SKeen-v3.4.4) (2026-01-22)
