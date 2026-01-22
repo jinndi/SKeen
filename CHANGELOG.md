@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.3...SKeen-v3.4.4) (2026-01-22)
+
+
+### 🛠 Refactor
+
+* update SKeen script ([8ef978c](https://github.com/jinndi/SKeen/commit/8ef978cdb5505d8e47f2e2da02af29c5b9fc6623))
+
 ## [3.4.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.2...SKeen-v3.4.3) (2026-01-22)
 
 
