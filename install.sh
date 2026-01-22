@@ -1122,26 +1122,38 @@ get_exclude_addresses() {
   [ "$ip_v" = "4" ] && prefix_length_default="32" || prefix_length_default="128"
 
   is_valid_ipv4() {
-      addr="${1%%/*}"
+      addr="$1"
+      ip="${addr%%/*}"
+      cidr="${addr#*/}"
       IFS=. read -r o1 o2 o3 o4 <<EOF
-$addr
+  $ip
 EOF
+
+    [ "$o1" ] && [ "$o2" ] && [ "$o3" ] && [ "$o4" ] || return 1
+
     for o in $o1 $o2 $o3 $o4; do
-      [ "$o" -ge 0 ] 2>/dev/null || return 1
-      [ "$o" -le 255 ] 2>/dev/null || return 1
+      [ "$o" -ge 0 ] 2>/dev/null || return 1;
+      [ "$o" -le 255 ] 2>/dev/null || return 1;
     done
 
-    return 0
+    if [ "$ip" != "$addr" ]; then
+      case "$cidr" in ''|[0-9]|[1-2][0-9]|3[0-2]) ;; *) return 1 ;; esac
+    fi
   }
 
   is_valid_ipv6() {
     addr="$1"
-    if ip -6 addr add "$addr" dev lo 2>/dev/null; then
-      ip -6 addr del "$addr" dev lo
-      return 0
-    fi
+    ip_only="${addr%%/*}"
+    cidr="${addr#*/}"
 
-    return 1
+    ip -6 route get "$ip_only" >/dev/null 2>&1 || return 1
+
+    if [ "$ip_only" != "$addr" ]; then
+      case "$cidr" in
+        ''|[0-9]|[1-9][0-9]|1[0-2][0-8]) ;;
+        *) return 1 ;;
+      esac
+    fi
   }
 
   get_eth_subnet() {
