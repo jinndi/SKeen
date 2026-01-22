@@ -10,6 +10,8 @@
 # exit on error or unset variable
 # set -e -u
 
+trap 'stty sane < /dev/tty 2>/dev/null || true' EXIT INT TERM
+
 PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 ACTION="${1:-}"
