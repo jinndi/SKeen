@@ -6,10 +6,15 @@
 #
 # Released under the MIT License, see the accompanying file LICENSE
 # or https://opensource.org/licenses/MIT
+
+# exit on error or unset variable
+# set -e -u
+
 PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-ACTION="$1"
-CALLER="$2"
+ACTION="${1:-}"
+CALLER="${2:-}"
+
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
@@ -362,7 +367,9 @@ install_singbox(){
 create_singbox_config(){
   act="${1:-}"
 
-  if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] && ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
+  if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] && \
+    ls "$CONFIG_DIR"/*.json >/dev/null 2>&1;
+  then
     echomsg "Configuration files already exist in $CONFIG_DIR, skipping creation."
     return
   fi
@@ -672,7 +679,7 @@ download_skeen_script(){
 press_any_key_to_menu(){
   [ "$CALLER" != "menu" ] && return 0
 
-  action="$1"
+  action="${1:-}"
 
   echo "$DELIMETER"
 
@@ -990,6 +997,15 @@ loading_modules() {
 }
 
 
+get_wait_ipv_file() {
+  ip_version="$1"
+
+  var_name="WAIT_IPV${ip_version}_DEF_ROUTE_FILE"
+
+  eval "echo \"\${$var_name:-}\""
+}
+
+
 get_iptables_list(){
   ipt4="$(ip -4 addr show | grep -q "inet " && \
     command -v iptables >/dev/null 2>&1 && echo iptables)"
@@ -1055,8 +1071,9 @@ set_route_rules() {
 
   i=0
   until check_default_route; do
-    [ -f "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE" ] || \
-      touch "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE"
+    wait_ipv_file="$(get_wait_ipv_file "$IP_VERSION")"
+
+    [ -n "$wait_ipv_file" ] && [ ! -f "$wait_ipv_file" ] && touch "$wait_ipv_file"
 
     msg="Waiting for default route in table '$source_table' (IPv$IP_VERSION), attempt $((i+1))/10"
     echowarn "$msg"
@@ -1066,7 +1083,7 @@ set_route_rules() {
     if [ "$i" -ge 10 ]; then
       msg="Check your internet connection"
       if [ -n "$SKEEN_MARK_POLICY" ]; then
-        msg="$msg for policy $POLICY_NAME"
+        msg="$msg for policy ${POLICY_NAME:-unknown}"
       fi
       logger_error "$msg"
       exiterr "$msg"
@@ -1080,8 +1097,8 @@ set_route_rules() {
     logger_notice "$msg"
   }
 
-  ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
-  ip -"$IP_VERSION" route flush table "$TABLE_ID" >/dev/null 2>&1
+  ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
+  ip -"$IP_VERSION" route flush table "$TABLE_ID" >/dev/null 2>&1 || true
 
   ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
   ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID"
@@ -1091,7 +1108,7 @@ set_route_rules() {
     case "$r" in
       default*|blackhole*|unreachable*) continue ;;
     esac
-    ip -"$IP_VERSION" route add table "$TABLE_ID" "$r" 2>/dev/null
+    ip -"$IP_VERSION" route add table "$TABLE_ID" "$r" 2>/dev/null || true
   done
 }
 
@@ -1548,25 +1565,30 @@ apply_firewall(){
 
   echomsg "Applying firewall rules..."
 
-  for iptables in $SKEEN_IPTABLES_LIST; do
+  for iptables in ${SKEEN_IPTABLES_LIST:-}; do
     if [ "$iptables" = "iptables" ]; then
       IP_VERSION="4"
       PROXY_IP="127.0.0.1"
-      EXCLUDE_ADDRESSES="$SKEEN_EXCLUDE_v4_ADDRESSES"
+      EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_v4_ADDRESSES:-}"
     elif [ "$iptables" = "ip6tables" ]; then
       IP_VERSION="6"
       PROXY_IP="::1"
-      EXCLUDE_ADDRESSES="$SKEEN_EXCLUDE_v6_ADDRESSES"
+      EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_v6_ADDRESSES:-}"
     else
       exiterr "Unknown iptables: $iptables"
     fi
 
     set_route_rules
 
-    if [ -f "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE" ]; then
+    wait_ipv_file="$(get_wait_ipv_file "$IP_VERSION")"
+
+    if [ -n "$wait_ipv_file" ] && [ -f "$wait_ipv_file" ]; then
       EXCLUDE_ADDRESSES="$(get_exclude_addresses "$IP_VERSION")"
+      [ -n "${FIREWALL_HOOK_FILE:-}" ] && \
       sed -i "/SKEEN_EXCLUDE_v${IP_VERSION}/c\export SKEEN_EXCLUDE_v${IP_VERSION}_ADDRESSES=\"$EXCLUDE_ADDRESSES\"" "$FIREWALL_HOOK_FILE"
     fi
+
+
 
     if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
       for table in "$TABLE_TPROXY" "$TABLE_REDIRECT"; do
@@ -1587,8 +1609,7 @@ apply_firewall(){
     fi
   done
 
-  [ -f "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE" ] && \
-    rm -f [ "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE" ]
+  [ -n "$wait_ipv_file" ] && [ -f "$wait_ipv_file" ] && rm -f "$wait_ipv_file"
 
   echook "Firewall rules applied successfully."
 }
@@ -2087,7 +2108,6 @@ show_menu(){
   fi
 
   if is_running; then
-    import_firewall_vars
     running_status="$(green "running")"
     running_text="Stop"
   else
