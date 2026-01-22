@@ -10,8 +10,6 @@
 # exit on error or unset variable
 # set -e -u
 
-trap 'stty sane < /dev/tty 2>/dev/null || true' EXIT INT TERM
-
 PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 ACTION="${1:-}"
@@ -31,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.4.7"
+SKEEN_VERSION="3.4.8"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -107,6 +105,16 @@ ff00::/8           # Multicast (RFC 4291)
 "
 
 DELIMETER="------------------------------------------------"
+
+
+setup_traps() {
+  cleanup() { stty sane < /dev/tty 2>/dev/null || true; }
+  trap cleanup EXIT TERM
+  trap 'printf "\n"; cleanup; exit 130' INT
+}
+
+setup_traps
+
 
 create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
