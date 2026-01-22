@@ -20,11 +20,11 @@ WORK_DIR="${ENTWARE_DIR}/etc/skeen"
 CONFIG_DIR="${WORK_DIR}/config"
 TMP_DIR="${ENTWARE_DIR}/tmp"
 NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
-MODULES_OS_DIR="/lib/modules/$(uname -r)"
+MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.4.2"
+SKEEN_VERSION="3.4.3"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
@@ -40,7 +40,8 @@ SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
 SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 
 FIREWALL_HOOK_FILE="${NETFILTER_DIR}/firewall_${SKEEN_PROC}.sh"
-TMP_WAIT_DEFAULT_ROUTE="${TMP_DIR}/${SKEEN_PROC}_wait_dafault_route"
+WAIT_IPV4_DEF_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_ipv4_dafault_route"
+WAIT_IPV6_DEF_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_ipv6_dafault_route"
 CHAIN_PREROUTING="skeen"
 CHAIN_OUTPUT="skeen_mask"
 TABLE_REDIRECT="nat"
@@ -825,7 +826,7 @@ check_internet() {
         logger_warning "Internet is not available (${host}), attempt ${attempt}/${max_attempts}..."
       fi
       attempt=$((attempt + 1))
-      sleep 5
+      sleep 8
     done
   done
 
@@ -919,7 +920,7 @@ load_module() {
   fi
 
   path_entware="${MODULES_ENTWARE_DIR}/${module}"
-  path_os="${MODULES_OS_DIR}/${module}"
+  path_os="${MODULES_OS_DIR}/$(uname -r)/${module}"
 
   if [ -f "$path_entware" ]; then
     insmod "$path_entware" >/dev/null 2>&1 && return 0
@@ -1045,7 +1046,8 @@ set_route_rules() {
 
   i=0
   until check_default_route; do
-    [ -f "$TMP_WAIT_DEFAULT_ROUTE" ] || touch "$TMP_WAIT_DEFAULT_ROUTE"
+    [ -f "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE" ] || \
+      touch "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE"
 
     msg="Waiting for default route in table '$source_table' (IPv$IP_VERSION), attempt $((i+1))/10"
     echowarn "$msg"
@@ -1060,7 +1062,7 @@ set_route_rules() {
       logger_error "$msg"
       exiterr "$msg"
     fi
-    sleep 5
+    sleep 8
   done
 
   [ "$i" -eq 0 ] || {
@@ -1505,7 +1507,8 @@ prepare_firewall(){
 
     echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
 
-    echo "[ -f \"$TMP_WAIT_DEFAULT_ROUTE\" ] && exit 0"
+    echo "[ -f \"$WAIT_IPV4_DEF_ROUTE_FILE\" ] && exit 0"
+    echo "[ -f \"$WAIT_IPV6_DEF_ROUTE_FILE\" ] && exit 0"
 
     echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
     echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
@@ -1556,7 +1559,7 @@ apply_firewall(){
 
     set_route_rules
 
-    if [ -f "$TMP_WAIT_DEFAULT_ROUTE" ]; then
+    if [ -f "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE" ]; then
       EXCLUDE_ADDRESSES="$(get_exclude_addresses "$IP_VERSION")"
       sed -i "/SKEEN_EXCLUDE_v${IP_VERSION}/c\export SKEEN_EXCLUDE_v${IP_VERSION}_ADDRESSES=\"$EXCLUDE_ADDRESSES\"" "$FIREWALL_HOOK_FILE"
     fi
@@ -1580,7 +1583,8 @@ apply_firewall(){
     fi
   done
 
-  [ -f "$TMP_WAIT_DEFAULT_ROUTE" ] && rm -f "$TMP_WAIT_DEFAULT_ROUTE"
+  [ -f "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE" ] && \
+    rm -f [ "$WAIT_IPV${IP_VERSION}_DEF_ROUTE_FILE" ]
 
   echook "Firewall rules applied successfully."
 }
@@ -2166,7 +2170,7 @@ show_menu(){
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    printf "\nEnter your selection [1-6]: " > /dev/tty
+    printf "\nEnter your selection [1-7]: " > /dev/tty
     read -r option < /dev/tty
 
     printf "\n"
