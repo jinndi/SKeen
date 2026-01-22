@@ -20,3 +20,13 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
+
+      - name: Install GitHub CLI
+        run: sudo apt update && sudo apt install -y gh
+
+      - name: Upload install.sh to release as skeen
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          gh release upload "$TAG" install.sh --name skeen --clobber

@@ -24,11 +24,10 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.4.3"
+SKEEN_VERSION="3.4.4"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
-SKEEN_SCRIPT_URL="https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh"
-SKEEN_ARCHIVE_URL="https://github.com/jinndi/SKeen/archive"
+SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
 SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.conf"
 SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
@@ -641,22 +640,32 @@ create_autostart_script(){
 }
 
 
-create_current_script(){
-  [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
+download_skeen_script(){
+  action="${1:-}"
+  backup_script="${SKEEN_SCRIPT}.backup"
 
-  echomsg "Downloading current script at $SKEEN_SCRIPT"
+  echomsg "Downloading $SKEEN_NAME script at $SKEEN_SCRIPT"
+
+  [ -f "$SKEEN_SCRIPT" ] && mv "$SKEEN_SCRIPT" "$backup_script"
 
   curl --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"
   curl_exit_status=$?
 
   if [ $curl_exit_status -ne 0 ]; then
-    exiterr "Failed to download the current script"
+    [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
+    mv "$backup_script" "$SKEEN_SCRIPT"
+    echoerr "Failed to download $SKEEN_NAME script"
+    [ "$action" != "update" ] && exit 1
+    return 1
   fi
 
   chmod 755 "$SKEEN_SCRIPT"
   chmod +x "$SKEEN_SCRIPT"
 
-  echook "Current script created successfully."
+  [ -f "$backup_script" ] && rm -f "$backup_script"
+
+  echook "$SKEEN_NAME script downloaded successfully"
+  return 0
 }
 
 
@@ -699,7 +708,7 @@ install(){
   install_singbox
   create_singbox_config
   create_autostart_script
-  create_current_script
+  download_skeen_script
 
   printf "\n"
   echook "Installation completed, $SINGBOX_NAME version:"
@@ -1765,61 +1774,12 @@ update_core(){
 
 
 update_skeen(){
-  pkg_name="${SKEEN_NAME}-v${latest_sk_ver}.tar.gz"
-  pkg_url="${SKEEN_ARCHIVE_URL}/${pkg_name}"
-
-  echomsg "Downloading $pkg_name ..."
-
-  mkdir -p "$TMP_DIR"
-  cd "$TMP_DIR" || exit
-
-  curl --fail --connect-timeout 5 --max-time 90 -Lo "$pkg_name" "$pkg_url"
-  curl_exit_status=$?
-  if [ $curl_exit_status -ne 0 ]; then
-    echoerr "Failed to download $pkg_name"
-    return 1
-  fi
-  echook "Downloaded $pkg_name successfully."
-
-  tmp_unpack_dir="${TMP_DIR}/${SKEEN_NAME}-unpack"
-
-  if [ -d "$tmp_unpack_dir" ]; then
-    rm -rf "$tmp_unpack_dir"
-  fi
-
-  echomsg "Extracting $pkg_name"
-  mkdir -p "$tmp_unpack_dir"
-  cd "$tmp_unpack_dir" || exit
-
-  if tar -xf "../${pkg_name}" --strip-components=1; then
-    echook "Extraction completed."
+  if download_skeen_script "update"; then
+    echook "The $SKEEN_NAME has been successfully updated"
+    is_update_skeen=1
   else
-    rm -rf "$tmp_unpack_dir"
-    rm -f "${TMP_DIR}/${pkg_name}"
-    exiterr "Error extracting archive"
+    echoerr "Failed to update $SKEEN_NAME"
   fi
-
-  echomsg "Installing $SKEEN_NAME to $SKEEN_SCRIPT"
-  mkdir -p "$(dirname "$SKEEN_SCRIPT")"
-
-  [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
-
-  if [ -f "install.sh" ]; then
-    mv ./install.sh "$SKEEN_SCRIPT"
-    chmod 755 "$SKEEN_SCRIPT"
-    chmod +x "$SKEEN_SCRIPT"
-    echook "$SKEEN_NAME installed successfully."
-  else
-    echoerr "install.sh not found in archive!"
-  fi
-
-  echomsg "Cleaning up temporary files..."
-  rm -rf "$tmp_unpack_dir"
-  rm -f "${TMP_DIR}/${pkg_name}"
-  echook "Cleanup completed."
-
-  echook "The $SKEEN_NAME has been successfully updated"
-  is_update_skeen=1
 }
 
 
