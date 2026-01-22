@@ -35,7 +35,7 @@ Installation script for sing-box on Keenetic/Netcraze routers
 **Run from Entware via SSH:**
 
 ```
-curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/main/install.sh | sh
+curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 ```
 
 Configure the sing-box JSON configuration files located in the `/opt/etc/skeen/config/` directory, where example configuration files are provided.
