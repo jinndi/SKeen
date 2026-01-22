@@ -4,6 +4,7 @@
     ".": {
       "release-type": "simple",
       "package-name": "SKeen",
+      "tag-prefix": "SKeen-v",
       "changelog-path": "CHANGELOG.md"
     }
   },
