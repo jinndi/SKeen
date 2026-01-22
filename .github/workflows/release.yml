@@ -20,7 +20,8 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - uses: googleapis/release-please-action@v4
+      - id: release
+        uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GH_PAT }}
           config-file: .github/release-please-config.json
