@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.4.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.1...SKeen-v3.4.2) (2026-01-22)
+
+
+### 🐛 Fix
+
+* unpack ipk file sing-box ([1542dbe](https://github.com/jinndi/SKeen/commit/1542dbe418014fa88b2e4fe1bc90e457e77ca177))
+
+
+### 🧰 Chore
+
+* add IPv6 support for firewall tests ([bae3f43](https://github.com/jinndi/SKeen/commit/bae3f4352707864b568c53b8d8b9b33ef0a98279))
+
 ## [3.4.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.0...SKeen-v3.4.1) (2026-01-21)
 
 
