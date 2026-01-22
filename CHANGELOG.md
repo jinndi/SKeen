@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.4.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.4...SKeen-v3.4.5) (2026-01-22)
+
+
+### 📦 Build
+
+* add minified skeen to release assets ([230f4a1](https://github.com/jinndi/SKeen/commit/230f4a1e1d0d0d4da82000ccdae39c847919b600))
+
+
+### 🧰 Chore
+
+* **main:** release SKeen 3.4.4 ([2dd31b8](https://github.com/jinndi/SKeen/commit/2dd31b86b8a5fc5629cff6e3a20fe0dd5b378169))
+* **main:** release SKeen 3.4.4 ([fd3ddb4](https://github.com/jinndi/SKeen/commit/fd3ddb4736f72cd7d6590ff57349f77f6f4409cf))
+
 ## [3.4.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.3...SKeen-v3.4.4) (2026-01-22)
 
 
