@@ -67,6 +67,8 @@ Example Usage: start the daemon `skeen start`
 |`backup`|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
 |`restore`|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
 |`reset`|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.conf` to defaults, performing a `backup` beforehand|
+|`check`| Checks Sing-box configuration in `/opt/etc/skeen/config/` for syntax and logical errors |
+|`format`| Formats Sing-box configuration in `/opt/etc/skeen/config/` without changing its behavior |
 
 ### ⚙️ Settigs
 

@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.4.8"
+SKEEN_VERSION="3.5.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1706,7 +1706,7 @@ start() {
 
   echomsg "Starting ${SINGBOX_NAME}..."
 
-  $SINGBOX_PROC check -C $CONFIG_DIR || press_any_key_to_menu
+  check_config
 
   prepare_firewall
 
@@ -1981,6 +1981,7 @@ fw_test_chain() {
   fi
 }
 
+
 test_firewall() {
   if ! is_running; then
     echoerr "Testing are available only when $SINGBOX_NAME is running"
@@ -2120,6 +2121,29 @@ reset_config(){
 }
 
 
+check_config(){
+  echomsg "Checking Sing-box configuration..."
+
+  if $SINGBOX_PROC check -C $CONFIG_DIR; then
+    echook "Configuration is valid"
+  else
+    echoerr "Configuration check failed"
+    press_any_key_to_menu
+  fi
+}
+
+
+format_config(){
+  echomsg "Formatting Sing-box configuration..."
+
+  if $SINGBOX_PROC format -C $CONFIG_DIR > /dev/null 2>&1; then
+    echook "Configuration formatted successfully"
+  else
+    echoerr "Configuration formatting failed"
+  fi
+}
+
+
 show_menu(){
   show_header
 
@@ -2198,6 +2222,31 @@ show_menu(){
  }
 
 
+show_help() {
+
+    cat <<EOF
+
+$SKEEN_NAME CLI Commands (use: help for this list):
+
+  start   - Starts $SINGBOX_NAME. Checks configuration and will not start again if already running
+  stop    - Stops $SINGBOX_NAME. If the process is not found, reports that the daemon is already stopped
+  restart - Stops and then starts $SINGBOX_NAME again
+  status  - Shows the current status of the $SINGBOX_NAME process
+  kill    - Forcefully terminates the $SINGBOX_NAME process (kill -9)
+  version - Displays the current application version
+  update  - Checks for updates of $SINGBOX_NAME core and $SKEEN_NAME script, and allows updating
+  test    - Checks whether iptables rules are correctly applied (requires $SINGBOX_NAME running and mode ≠ none)
+  deps    - Checks if all dependencies are installed (installs missing ones)
+  backup  - Creates a backup of $WORK_DIR and places it in $ENTWARE_DIR
+  restore - Restores a backup of $WORK_DIR by archive name from $ENTWARE_DIR
+  reset   - Resets $CONFIG_DIR and skeen.conf to defaults, performing a backup first
+  check   - Checks $SINGBOX_NAME configuration in $CONFIG_DIR for syntax and logical errors
+  format  - Formats $SINGBOX_NAME configuration in $CONFIG_DIR without changing its behavior
+
+EOF
+}
+
+
 if [ -f "$SKEEN_SCRIPT" ]; then
   case "$ACTION" in
     start)   start ;;
@@ -2215,9 +2264,11 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     backup) backup_config ;;
     restore) restore_config ;;
     reset) reset_config ;;
+    check) check_config ;;
+    format) format_config ;;
     apply_firewall) apply_firewall ;;
     "") show_menu ;;
-    *) echomsg "Usage: skeen (start|stop|restart|status|kill|version|update|test|deps|backup|restore|reset)" ;;
+    help|*) show_help ;;
   esac
 else
   install
