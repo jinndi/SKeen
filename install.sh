@@ -1415,25 +1415,20 @@ add_output_rules() {
   table="$2"
 
   case "$SKEEN_FIREWALL_MODE" in
-    tproxy)
-      set -- OUTPUT \
-          -m owner ! --gid-owner "$SINGBOX_PROC" \
-          -m conntrack ! --ctstate INVALID \
-          ! -p icmp \
-          -j "$CHAIN_OUTPUT"
-    ;;
-    hybrid)
-      set -- OUTPUT \
-          -m owner ! --gid-owner "$SINGBOX_PROC" \
-          -m conntrack ! --ctstate INVALID \
-          -p udp \
-          -j "$CHAIN_OUTPUT"
-    ;;
+    tproxy) proto='! -p icmp' ;;
+    hybrid) proto='-p udp' ;;
     *) return 0 ;;
   esac
 
-  if ! $iptables -t "$table" -C "$@" >/dev/null 2>&1; then
-    $iptables -t "$table" -A "$@" >/dev/null 2>&1
+  rule="OUTPUT \
+    -m owner ! --gid-owner $SINGBOX_PROC \
+    -m conntrack ! --ctstate INVALID \
+    $proto \
+    -j $CHAIN_OUTPUT"
+
+  # shellcheck disable=SC2086
+  if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
+    $iptables -t "$table" -A $rule >/dev/null 2>&1
   fi
 }
 
