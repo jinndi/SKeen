@@ -154,7 +154,7 @@ loading_config(){
   . "$SKEEN_CONFIG"
 }
 
-loading_config
+[ "$ACTION" != "apply_firewall" ] && loading_config
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -1603,8 +1603,6 @@ apply_firewall(){
       [ -n "${FIREWALL_HOOK_FILE:-}" ] && \
       sed -i "/SKEEN_EXCLUDE_v${IP_VERSION}/c\export SKEEN_EXCLUDE_v${IP_VERSION}_ADDRESSES=\"$EXCLUDE_ADDRESSES\"" "$FIREWALL_HOOK_FILE"
     fi
-
-
 
     if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
       for table in "$TABLE_TPROXY" "$TABLE_REDIRECT"; do
