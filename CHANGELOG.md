@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.5.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.7...SKeen-v3.5.0) (2026-01-22)
+
+
+### 🚀 Feat
+
+* **cli:** add check, format, help commands ([a16dc10](https://github.com/jinndi/SKeen/commit/a16dc100b7520a95f7ae13e5ef030231ed770df9))
+
+
+### 🐛 Fix
+
+* **menu:** prevent stuck cursor and repeated input after Ctrl+C ([1e17855](https://github.com/jinndi/SKeen/commit/1e178557b96232ea93b43c60974082448cfb8ab7))
+
+
+### 🧰 Chore
+
+* fix typos and grammatical errors ([3d5c33b](https://github.com/jinndi/SKeen/commit/3d5c33b98b41cbbfe040ad57917e097716f4f689))
+
 ## [3.4.7](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.6...SKeen-v3.4.7) (2026-01-22)
 
 
