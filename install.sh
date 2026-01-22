@@ -43,7 +43,7 @@ SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
 SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
 SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 
-FIREWALL_HOOK_FILE="${NETFILTER_DIR}/firewall_${SKEEN_PROC}.sh"
+FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
 WAIT_IPV4_DEF_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_ipv4_dafault_route"
 WAIT_IPV6_DEF_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_ipv6_dafault_route"
 CHAIN_PREROUTING="skeen"
@@ -140,11 +140,11 @@ create_skeen_config(){
     echo "# List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000"
     echo "INTERCEPT_PORTS=\"\""
     echo
-    echo "# Ports to excluded redirect via TProxy/Redirect"
+    echo "# Ports to be excluded from redirect via TProxy/Redirect"
     echo "# List: port and port ranges use colon e.g. 8080,1443,1300:2300 or 8080 1443 1300:2300"
     echo "EXCLUDE_PORTS=\"\""
     echo
-    echo "# Excluded ip addreses for traffic redirection"
+    echo "# Excluded ip addresses for traffic redirection"
     echo "# List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ..."
     echo "EXCLUDE_IPV4_ADDRESES=\"\""
     echo "EXCLUDE_IPV6_ADDRESES=\"\""
@@ -298,7 +298,7 @@ install_dependencies() {
     fi
 
     if opkg install "$pkg_name" >/dev/null 2>&1; then
-      echook "OK"
+      echook "Installed"
     else
       echoerr "FAILED"
       pkg_missing="${pkg_missing:+$pkg_missing }$pkg_name"
@@ -915,7 +915,7 @@ check_router_port() {
 
   if [ "$port_ssl" = "443" ]; then
     echoerr "Port 443 is occupied by router services"
-    echoerr "Free it on the 'Users and Access'"
+    echoerr "Free the port on the 'Users and Access'"
     logger_error "Port 443 must be freed"
     press_any_key_to_menu
     exit 1
@@ -2036,7 +2036,7 @@ test_firewall() {
 
 backup_config(){
   if [ -d "$WORK_DIR" ] && [ "$(ls -A "$WORK_DIR")" ]; then
-    echomsg "Creating an backup of the current configuration..."
+    echomsg "Creating a backup of the current configuration..."
     archive_path="${ENTWARE_DIR}/skeen_$(date '+%Y-%m-%d_%H%M%S').tar"
     parent_dir=$(dirname "$WORK_DIR")
     folder_name=$(basename "$WORK_DIR")
@@ -2093,7 +2093,7 @@ reset_config(){
   while :; do
     printf "A full configuration reset will be performed,\n"
     printf "with a backup of the current configuration created\n"
-    printf "Continue? [y/n] : " > /dev/tty
+    printf "Continue? [y/n]: " > /dev/tty
     read -r option < /dev/tty
 
     [ -z "$option" ] && option="n"
