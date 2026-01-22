@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.4...SKeen-v3.4.5) (2026-01-22)
+
+
+### 🐛 Fix
+
+* release-please-action ([8d4460e](https://github.com/jinndi/SKeen/commit/8d4460eeb192ae8a186c379b2bdde2062a769f12))
+
 ## [3.4.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.3...SKeen-v3.4.4) (2026-01-22)
 
 
