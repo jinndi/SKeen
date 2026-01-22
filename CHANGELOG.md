@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.6](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.5...SKeen-v3.4.6) (2026-01-22)
+
+
+### 🐛 Fix
+
+* bump version ([0c4332f](https://github.com/jinndi/SKeen/commit/0c4332f40e24399f821f15673415e684e99bf6b6))
+
 ## [3.4.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.4...SKeen-v3.4.5) (2026-01-22)
 
 
