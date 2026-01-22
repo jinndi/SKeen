@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.0...SKeen-v4.0.1) (2026-01-22)
+
+
+### 🐛 Fix
+
+* test ([e3810bf](https://github.com/jinndi/SKeen/commit/e3810bf38c272088ff308c5242460363de3f0165))
+
 ## [4.0.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.4...SKeen-v4.0.0) (2026-01-22)
 
 
