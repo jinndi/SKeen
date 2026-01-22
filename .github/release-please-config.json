@@ -1,9 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "last-release-sha": "2dd31b86b8a5fc5629cff6e3a20fe0dd5b378169",
   "packages": {
     ".": {
       "release-type": "simple",
       "package-name": "SKeen",
+      "tag-prefix": "SKeen-v",
       "changelog-path": "CHANGELOG.md"
     }
   },
