@@ -108,6 +108,7 @@ DELIMETER="------------------------------------------------"
 
 create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
+  [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
   {
     echo "# Sing-box autostart on router reboot"
@@ -147,9 +148,13 @@ create_skeen_config(){
   create_autostart_script > /dev/null 2>&1
 }
 
-[ -f "$SKEEN_CONFIG" ] || create_skeen_config
-# shellcheck disable=SC1090
-. "$SKEEN_CONFIG"
+loading_config(){
+  [ -f "$SKEEN_CONFIG" ] || create_skeen_config
+  # shellcheck disable=SC1090
+  . "$SKEEN_CONFIG"
+}
+
+loading_config
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -775,7 +780,7 @@ accept_uninstall(){
 }
 
 
-update_conf_var(){
+update_config_var(){
   KEY=$1
   VALUE=$2
 
@@ -787,8 +792,7 @@ update_conf_var(){
     echo "$KEY=$VALUE" >> "$SKEEN_CONFIG"
   fi
 
-  # shellcheck disable=SC1090
-  . "$SKEEN_CONFIG"
+  loading_config
 }
 
 
@@ -1773,17 +1777,19 @@ switch_state(){
 
 
 restart() {
-  stop; start
+  stop
+  [ "$CALLER" = "menu" ] && loading_config
+  start
   press_any_key_to_menu
 }
 
 
 switch_autostart(){
   if [ "$AUTO_START" = "1" ]; then
-    update_conf_var "AUTO_START" "0"
+    update_config_var "AUTO_START" "0"
     echook "Autostart disabled"
   else
-    update_conf_var "AUTO_START" "1"
+    update_config_var "AUTO_START" "1"
     echook "Autostart enabled"
   fi
 
