@@ -337,7 +337,7 @@ install_singbox(){
   mkdir -p "$tmp_unpack_dir"
   cd "$tmp_unpack_dir" || exit
 
-  if tar -xf "../${PKG_NAME}" && tar -xzf data.tar.gz; then
+  if tar -xzf "../${PKG_NAME}" && tar -xzf data.tar.gz; then
     echook "Extraction completed."
   else
     rm -rf "$tmp_unpack_dir"
