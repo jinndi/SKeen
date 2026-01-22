@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.4.7](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.6...SKeen-v3.4.7) (2026-01-22)
+
+
+### 🐛 Fix
+
+* **firewall:** do not reload config when applying firewall rules ([8f024a7](https://github.com/jinndi/SKeen/commit/8f024a729fb9be9040625f2e4d5259cdcce4ce97))
+* load configuration on restart from menu ([3b89a53](https://github.com/jinndi/SKeen/commit/3b89a537da2e132fb3d8baae0eafaef46fec4d1e))
+* restore terminal echo on script exit to prevent input visibility loss ([8064bd0](https://github.com/jinndi/SKeen/commit/8064bd0e58330e830fa560ef6afdd829c00ed3cf))
+* **shell:** make script safe with set -e -u ([4ae7cf7](https://github.com/jinndi/SKeen/commit/4ae7cf77a2b3d073d34c5b403326b2d6a65751f6))
+* **shell:** validate IPv4 and IPv6 addresses and subnets safely ([051a4ca](https://github.com/jinndi/SKeen/commit/051a4ca965bf3f6948bd403a31e6b3d5cde3c182))
+
+
+### 🛠 Refactor
+
+* deduplicate add_output_rules ([afb6f90](https://github.com/jinndi/SKeen/commit/afb6f9021b5a15a80cb417c6d457d7c879c52bd8))
+
 ## [3.4.6](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.5...SKeen-v3.4.6) (2026-01-22)
 
 
