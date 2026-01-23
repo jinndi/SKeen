@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.1...SKeen-v3.5.2) (2026-01-23)
+
+
+### 🐛 Fix
+
+* improve SINGBOX start/stop handling and rename config variables ([d092eb3](https://github.com/jinndi/SKeen/commit/d092eb3d785272c0a45484bc9720b748ac8eeef6))
+
 ## [3.5.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.0...SKeen-v3.5.1) (2026-01-23)
 
 
