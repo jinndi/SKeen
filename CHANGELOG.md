@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.0...SKeen-v3.5.1) (2026-01-23)
+
+
+### 🐛 Fix
+
+* apply firewall rules after router reboot ([8edac10](https://github.com/jinndi/SKeen/commit/8edac10428ea081e2f0d63ba7e90b3bee585c3df))
+
 ## [3.5.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.4.7...SKeen-v3.5.0) (2026-01-22)
 
 
