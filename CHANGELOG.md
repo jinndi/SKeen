@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.3...SKeen-v3.5.4) (2026-01-23)
+
+
+### 🐛 Fix
+
+* fix config saving when formatting with built-in sing-box command ([6f49348](https://github.com/jinndi/SKeen/commit/6f49348ff43636b1d493b906fa78c557b89345da))
+
 ## [3.5.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.2...SKeen-v3.5.3) (2026-01-23)
 
 
