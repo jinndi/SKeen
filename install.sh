@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.5.1"
+SKEEN_VERSION="3.5.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -54,8 +54,10 @@ TABLE_MARK="0x112"
 TABLE_ID="112"
 DNS_PORT=53
 
-SYS_IPV4_TEST_HOSTS="1.1.1.1 77.88.8.8 223.5.5.5"
-SYS_IPV6_TEST_HOSTS="2606:4700:4700::1111 2a02:6b8::feed:0ff 2400:3200::1"
+SYS_INET_TEST_IPV4_HOSTS="1.1.1.1 77.88.8.8 223.5.5.5"
+SYS_INET_TEST_IPV6_HOSTS="2606:4700:4700::1111 2a02:6b8::feed:0ff 2400:3200::1"
+SYS_HIJACK_DNS_IPV4_SUBNET="192.168.0.0/16"
+SYS_HIJACK_DNS_IPV6_SUBNET="fe80::/10"
 
 # IETF/IANA IPv4 Special-Purpose Address Registry
 # https://www.iana.org/assignments/iana-ipv4-special-registry/
@@ -130,8 +132,12 @@ create_skeen_config(){
     echo
     echo "# Domains or IPs for testing the internet connection (no more than 3)"
     echo "# List: ya.ru,77.88.8.8,... or ya.ru 77.88.8.8"
-    echo "IPV4_TEST_HOSTS=\"$SYS_IPV4_TEST_HOSTS\""
-    echo "IPV6_TEST_HOSTS=\"$SYS_IPV6_TEST_HOSTS\""
+    echo "INET_TEST_IPV4_HOSTS=\"$SYS_INET_TEST_IPV4_HOSTS\""
+    echo "INET_TEST_IPV6_HOSTS=\"$SYS_INET_TEST_IPV4_HOSTS\""
+    echo
+    echo "# Subnet for intercepting DNS queries (maximum one per IP version)"
+    echo "HIJACK_DNS_IPV4_SUBNET=\"$SYS_HIJACK_DNS_IPV4_SUBNET\""
+    echo "HIJACK_DNS_IPV6_SUBNET=\"$SYS_HIJACK_DNS_IPV6_SUBNET\""
     echo
     echo "# Router policy name for $SKEEN_NAME traffic"
     echo "POLICY_NAME=\"${SKEEN_NAME}\""
@@ -244,7 +250,7 @@ get_os_release(){
 get_architecture() {
   case "$(uname -m | tr '[:upper:]' '[:lower:]')" in
     # ARM64
-    *aarch64* | *arm64* | *armv8*)
+    *aarch64*|*arm64*|*armv8*)
       ARCH="aarch64"
       case "$(grep -i 'cpu part' /proc/cpuinfo | sed -e 's/.*: //' | tr '[:upper:]' '[:lower:]' | head -n1)" in
         *0xd03*) PKG_ARCH="${ARCH}_cortex-a53" ;;
@@ -258,7 +264,7 @@ get_architecture() {
     *mipsel*|*mipsle*) ARCH="mipsel" ;;
     *mips*)            ARCH="mips" ;;
 
-    *) exiterr "Unsupported CPU architecture" ;;
+    *) exiterr "Unsupported CPU architecture?" ;;
   esac
 
   [ -n "$PKG_ARCH" ] && return
@@ -314,55 +320,46 @@ install_dependencies() {
 
 
 download_singbox(){
-  download_version="$1"
+  version="${1:-}"
 
-  if [ -z "$download_version" ]; then
+  if [ -z "$version" ]; then
     echomsg "Fetching the latest version number..."
-    download_version="$(get_latest_version "$SINGBOX_API_URL")" || exit 1
-    echook "Latest version is $download_version"
+    version="$(get_latest_version "$SINGBOX_API_URL")" || exit 1
+    echook "Latest version is $version"
   fi
 
-  PKG_NAME="sing-box_${download_version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
-  pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${download_version}/${PKG_NAME}"
+  PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
+  pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${version}/${PKG_NAME}"
 
-  echomsg "Downloading $PKG_NAME ..."
+  echomsg "Downloading ${PKG_NAME}..."
 
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR" || exit
 
-  curl --fail --connect-timeout 5 --max-time 90 -Lo "$PKG_NAME" "$pkg_url"
-  curl_exit_status=$?
-
-  if [ $curl_exit_status -ne 0 ]; then
-    if [ -n "$download_version" ]; then
-      echoerr "Failed to download $PKG_NAME"
-      return 1
-    else
-      exiterr "Failed to download $PKG_NAME"
-    fi
+  if curl --fail --connect-timeout 5 --max-time 90 -Lo "$PKG_NAME" "$pkg_url"; then
+    echook "Downloaded $PKG_NAME successfully"
+  else
+    echoerr "Failed to download $PKG_NAME"
+    [ -n "$version" ] && return 1 || exit 1
   fi
-
-  echook "Downloaded $PKG_NAME successfully."
 }
 
 
 install_singbox(){
   tmp_unpack_dir="${TMP_DIR}/sing-box-unpack"
 
-  if [ -d "$tmp_unpack_dir" ]; then
-    rm -rf "$tmp_unpack_dir"
-  fi
+  [ -d "$tmp_unpack_dir" ] && rm -rf "$tmp_unpack_dir"
 
   echomsg "Extracting $PKG_NAME"
   mkdir -p "$tmp_unpack_dir"
-  cd "$tmp_unpack_dir" || exit
+  cd "$tmp_unpack_dir" || exit 1
 
   if tar -xzf "../${PKG_NAME}" && tar -xzf data.tar.gz; then
-    echook "Extraction completed."
+    echook "Extraction completed"
   else
     rm -rf "$tmp_unpack_dir"
     rm -f "${TMP_DIR}/${PKG_NAME}"
-    exiterr "Error extracting archive"
+    exiterr "Error extracting $PKG_NAME"
   fi
 
   echomsg "Installing $SINGBOX_NAME binary to $SINGBOX_BIN"
@@ -370,12 +367,11 @@ install_singbox(){
   mv ./usr/bin/sing-box "$SINGBOX_BIN"
   chmod 755 "$SINGBOX_BIN"
   chmod +x "$SINGBOX_BIN"
-  echook "$SINGBOX_NAME binary installed successfully."
 
-  echomsg "Cleaning up temporary files..."
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${PKG_NAME}"
-  echook "Cleanup completed."
+
+  echook "$SINGBOX_NAME binary installed successfully"
 }
 
 
@@ -385,7 +381,7 @@ create_singbox_config(){
   if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] && \
     ls "$CONFIG_DIR"/*.json >/dev/null 2>&1;
   then
-    echomsg "Configuration files already exist in $CONFIG_DIR, skipping creation."
+    echomsg "Configuration files already exist in ${CONFIG_DIR}, skipping creation"
     return
   fi
 
@@ -394,253 +390,32 @@ create_singbox_config(){
   mkdir -p "$CONFIG_DIR"
 
   cat <<EOF > "$CONFIG_DIR/log.json"
-{
-  "log": {
-    "disabled": false,
-    "level": "debug",
-    "timestamp": true
-  }
-}
+{"log":{"disabled":false,"level":"debug","timestamp":true}}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/dns.json"
-{
-  "dns": {
-    "servers": [
-      {
-        "tag": "dns-proxy",
-        "type": "tls",
-        "server": "one.one.one.one",
-        "domain_resolver": "dns-resolver",
-        "detour": "selector"
-      },
-      {
-        "tag": "dns-direct",
-        "type": "https",
-        "server": "common.dot.dns.yandex.net",
-        "domain_resolver": "dns-resolver"
-      },
-      {
-        "tag": "fakeip",
-        "type": "fakeip",
-        "inet4_range": "198.18.0.0/15",
-        "inet6_range": "fc00::/18"
-      },
-      {
-        "tag": "dns-resolver",
-        "type": "udp",
-        "server": "77.88.8.8"
-      }
-    ],
-    "rules": [
-      {
-        "rule_set": "adguard",
-        "action": "reject"
-      },
-      {
-        "type": "logical",
-        "mode": "or",
-        "rules": [
-          {
-            "clash_mode": "direct"
-          },
-          {
-            "rule_set": "geosite-cheburnet"
-          }
-        ],
-        "server": "dns-direct"
-      },
-      {
-        "query_type": [
-          "A",
-          "AAAA"
-        ],
-        "server": "fakeip"
-      }
-    ],
-    "final": "dns-proxy",
-    "strategy": "prefer_ipv4",
-    "independent_cache": true
-  }
-}
+{"dns":{"servers":[{"tag":"dns-proxy","type":"tls","server":"one.one.one.one","domain_resolver":"dns-resolver","detour":"selector"},{"tag":"dns-direct","type":"https","server":"common.dot.dns.yandex.net","domain_resolver":"dns-resolver"},{"tag":"fakeip","type":"fakeip","inet4_range":"198.18.0.0/15","inet6_range":"fc00::/18"},{"tag":"dns-resolver","type":"udp","server":"77.88.8.8"}],"rules":[{"rule_set":"adguard","action":"reject"},{"type":"logical","mode":"or","rules":[{"clash_mode":"direct"},{"rule_set":"geosite-cheburnet"}],"server":"dns-direct"},{"query_type":["A","AAAA"],"server":"fakeip"}],"final":"dns-proxy","strategy":"prefer_ipv4","independent_cache":true}}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/inbounds.json"
-{
-  "inbounds": [
-    {
-      "type": "redirect",
-      "listen": "::",
-      "listen_port": 2081,
-      "tcp_fast_open": true,
-      "tcp_multi_path": true
-    },
-    {
-      "type": "tproxy",
-      "listen": "::",
-      "listen_port": 2082,
-      "network": "udp",
-      "udp_fragment": true,
-      "udp_timeout": "5m"
-    }
-  ]
-}
+{"inbounds":[{"type":"redirect","listen":"::","listen_port":2081,"tcp_fast_open":true,"tcp_multi_path":true},{"type":"tproxy","listen":"::","listen_port":2082,"network":"udp","udp_fragment":true,"udp_timeout":"5m"}]}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/outbounds.json"
-{
-  "outbounds": [
-    {
-      "tag": "selector",
-      "type": "selector",
-      "default": "auto",
-      "interrupt_exist_connections": false,
-      "outbounds": [
-        "auto",
-        "VLESS",
-        "direct"
-      ]
-    },
-    {
-      "tag": "auto",
-      "type": "urltest",
-      "url": "http://www.gstatic.com/generate_204",
-      "interval": "5m",
-      "tolerance": 50,
-      "idle_timeout": "30m",
-      "interrupt_exist_connections": false,
-      "outbounds": [
-        "VLESS"
-      ]
-    },
-    {
-      "tag": "direct",
-      "type": "direct"
-    },
-    {
-      "tag": "VLESS",
-      "type": "vless",
-      "uuid": "00000000-0000-0000-0000-00000000000",
-      "flow": "xtls-rprx-vision",
-      "packet_encoding": "xudp",
-      "server": "example.com",
-      "server_port": 443,
-      "tls": {
-        "enabled": true,
-        "alpn": ["http/1.1", "h2"],
-        "server_name": "example.com",
-        "utls": {
-          "enabled": true,
-          "fingerprint": "firefox"
-        }
-      }
-    }
-  ]
-}
+{"outbounds":[{"tag":"selector","type":"selector","default":"auto","interrupt_exist_connections":false,"outbounds":["auto","VLESS","direct"]},{"tag":"auto","type":"urltest","url":"http://www.gstatic.com/generate_204","interval":"5m","tolerance":50,"idle_timeout":"30m","interrupt_exist_connections":false,"outbounds":["VLESS"]},{"tag":"direct","type":"direct"},{"tag":"VLESS","type":"vless","uuid":"00000000-0000-0000-0000-00000000000","flow":"xtls-rprx-vision","packet_encoding":"xudp","server":"example.com","server_port":443,"tls":{"enabled":true,"alpn":["http/1.1","h2"],"server_name":"example.com","utls":{"enabled":true,"fingerprint":"firefox"}}}]}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/route.json"
-{
-  "route": {
-    "default_domain_resolver": "dns-resolver",
-    "auto_detect_interface": true,
-    "final": "selector",
-    "rules": [
-      {
-        "action": "sniff",
-        "timeout": "500ms"
-      },
-      {
-        "type": "logical",
-        "mode": "or",
-        "rules": [
-          {
-            "protocol": "dns"
-          },
-          {
-            "port": 53
-          }
-        ],
-        "action": "hijack-dns"
-      },
-      {
-        "ip_is_private": true,
-        "outbound": "direct"
-      },
-      {
-        "type": "logical",
-        "mode": "or",
-        "rules": [
-          {
-            "network": "udp",
-            "port": 443
-          },
-          {
-            "protocol": "stun"
-          },
-          {
-            "rule_set": "adguard"
-          }
-        ],
-        "action": "reject"
-      },
-      {
-        "type": "logical",
-        "mode": "or",
-        "rules": [
-          {
-            "clash_mode": "direct",
-          },
-          {
-            "rule_set": "geosite-cheburnet",
-          }
-        ],
-        "outbound": "direct"
-      }
-    ],
-    "rule_set": [
-      {
-        "type": "remote",
-        "tag": "adguard",
-        "format": "binary",
-        "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs",
-        "download_detour": "direct",
-        "update_interval": "24h0m0s"
-      },
-      {
-        "type": "remote",
-        "tag": "geosite-cheburnet",
-        "format": "binary",
-        "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs",
-        "download_detour": "direct",
-        "update_interval": "24h0m0s"
-      }
-    ]
-  }
-}
+{"route":{"default_domain_resolver":"dns-resolver","auto_detect_interface":true,"final":"selector","rules":[{"action":"sniff","timeout":"500ms"},{"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},{"ip_is_private":true,"outbound":"direct"},{"type":"logical","mode":"or","rules":[{"network":"udp","port":443},{"protocol":"stun"},{"rule_set":"adguard"}],"action":"reject"},{"type":"logical","mode":"or","rules":[{"clash_mode":"direct"},{"rule_set":"geosite-cheburnet"}],"outbound":"direct"}],"rule_set":[{"type":"remote","tag":"adguard","format":"binary","url":"https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs","download_detour":"direct","update_interval":"24h0m0s"},{"type":"remote","tag":"geosite-cheburnet","format":"binary","url":"https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs","download_detour":"direct","update_interval":"24h0m0s"}]}}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/experimental.json"
-{
-  "experimental": {
-    "clash_api": {
-      "external_controller": "0.0.0.0:9090",
-      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/archive/gh-pages.zip",
-      "external_ui": "zashboard",
-      "external_ui_download_detour": "direct",
-      "default_mode": "rule"
-    },
-    "cache_file": {
-      "enabled": true,
-      "path": "cache.db",
-      "store_fakeip": true,
-      "store_rdrc": true
-    }
-  }
-}
+{"experimental":{"clash_api":{"external_controller":"0.0.0.0:9090","external_ui_download_url":"https://github.com/Zephyruso/zashboard/archive/gh-pages.zip","external_ui":"zashboard","external_ui_download_detour":"direct","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","store_fakeip":true,"store_rdrc":true}}}
 EOF
 
-  echook "Configuration file created successfully."
+  $SINGBOX_PROC format -C $CONFIG_DIR > /dev/null 2>&1 || true
+
+  echook "Configuration file created successfully"
 }
 
 
@@ -648,6 +423,8 @@ create_autostart_script(){
   echomsg "Create $SKEEN_NAME autostart script at $SKEEN_AUTOSTART_SCRIPT"
 
   [ -f "$SKEEN_AUTOSTART_SCRIPT" ] && rm -f "$SKEEN_AUTOSTART_SCRIPT"
+
+  mkdir -p "$(dirname "$SKEEN_AUTOSTART_SCRIPT")"
 
   {
     echo "#!/bin/sh"
@@ -658,7 +435,7 @@ create_autostart_script(){
   chmod 755 "$SKEEN_AUTOSTART_SCRIPT"
   chmod +x "$SKEEN_AUTOSTART_SCRIPT"
 
-  echook "Autostart script created successfully."
+  echook "Autostart script created successfully"
 }
 
 
@@ -670,10 +447,7 @@ download_skeen_script(){
 
   [ -f "$SKEEN_SCRIPT" ] && mv "$SKEEN_SCRIPT" "$backup_script"
 
-  curl --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"
-  curl_exit_status=$?
-
-  if [ $curl_exit_status -ne 0 ]; then
+  if ! curl --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
     [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
     mv "$backup_script" "$SKEEN_SCRIPT"
     echoerr "Failed to download $SKEEN_NAME script"
@@ -755,9 +529,11 @@ uninstall(){
   echomsg "Removing $SKEEN_NAME script..."
   rm -f "$SKEEN_SCRIPT"
 
-  echomsg "Configuration directory $WORK_DIR is retained."
-  echomsg "If you want to remove it manually, run: rm -rf '$WORK_DIR'"
-  echook "${SKEEN_NAME} has been uninstalled successfully."
+  if [ -d "$WORK_DIR" ]; then
+    echomsg "Configuration directory $WORK_DIR is retained"
+    echomsg "If you want to remove it manually, run: rm -rf $WORK_DIR"
+  fi
+  echook "${SKEEN_NAME} has been uninstalled successfully"
   exit 0
 }
 
@@ -773,16 +549,9 @@ accept_uninstall(){
     [ -z "$option" ] && option="n"
 
     case "$option" in
-      y|Y)
-        uninstall
-      ;;
-      n|N)
-        break
-      ;;
-      *)
-        echoerr "Incorrect option"
-        attempt=$((attempt+1))
-      ;;
+      y|Y) uninstall ;;
+      n|N) break ;;
+      *) echoerr "Incorrect option"; attempt=$((attempt+1)) ;;
     esac
   done
 
@@ -791,15 +560,15 @@ accept_uninstall(){
 
 
 update_config_var(){
-  KEY=$1
-  VALUE=$2
+  key="${1:-}"
+  val="${2:-}"
 
   [ -f "$SKEEN_CONFIG" ] || create_skeen_config
 
-  if grep -q "^[[:space:]]*${KEY}[[:space:]]*=" "$SKEEN_CONFIG"; then
-    sed -i "s|^[[:space:]]*${KEY}[[:space:]]*=.*|$KEY=$VALUE|" "$SKEEN_CONFIG"
+  if grep -q "^[[:space:]]*${key}[[:space:]]*=" "$SKEEN_CONFIG"; then
+    sed -i "s|^[[:space:]]*${key}[[:space:]]*=.*|$key=$val|" "$SKEEN_CONFIG"
   else
-    echo "$KEY=$VALUE" >> "$SKEEN_CONFIG"
+    echo "$key=$val" >> "$SKEEN_CONFIG"
   fi
 
   loading_config
@@ -807,17 +576,17 @@ update_config_var(){
 
 
 get_inet_tests_hosts() {
-  ipv="$1"
+  ipv="${1:-}"
   hosts=""
   sys_hosts=""
   max="3"
 
   if [ "$ipv" = "4" ]; then
-    hosts="$IPV4_TEST_HOSTS"
-    sys_hosts="$SYS_IPV4_TEST_HOSTS"
+    hosts="$INET_TEST_IPV4_HOSTS"
+    sys_hosts="$SYS_INET_TEST_IPV4_HOSTS"
   else
-    hosts="$IPV6_TEST_HOSTS"
-    sys_hosts="$SYS_IPV6_TEST_HOSTS"
+    hosts="$INET_TEST_IPV6_HOSTS"
+    sys_hosts="$SYS_INET_TEST_IPV6_HOSTS"
   fi
 
   if [ -z "$hosts" ]; then
@@ -826,7 +595,8 @@ get_inet_tests_hosts() {
     hosts="$(echo "$hosts" | \
       tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
 
-    set -- "$hosts"
+    # shellcheck disable=SC2086
+    set -- $hosts
 
     count=0
     result=""
@@ -906,6 +676,7 @@ has_dns_servers() {
       return 0
     fi
   done
+
   return 1
 }
 
@@ -1001,8 +772,9 @@ loading_modules() {
 
   if [ "$error" -ne 0 ]; then
     echoerr "The '$SKEEN_FIREWALL_MODE' mode requires kernel modules"
-    echoerr "Install router component: Netfilter Subsystem Kernel Modules"
-    logger_error "Missing Netfilter kernel modules"
+    echoerr "Install router component: Kernel modules for Netfilter"
+
+    logger_error "Missing Kernel modules for Netfilter"
     press_any_key_to_menu
     exit 1
   fi
@@ -1012,7 +784,7 @@ loading_modules() {
 
 
 get_wait_ipv_file() {
-  ip_version="$1"
+  ip_version="${1:-}"
 
   var_name="WAIT_IPV${ip_version}_DEF_ROUTE_FILE"
 
@@ -1083,10 +855,10 @@ set_route_rules() {
     fi
   }
 
+  wait_ipv_file="$(get_wait_ipv_file "$IP_VERSION")"
+
   i=0
   until check_default_route; do
-    wait_ipv_file="$(get_wait_ipv_file "$IP_VERSION")"
-
     [ -n "$wait_ipv_file" ] && [ ! -f "$wait_ipv_file" ] && touch "$wait_ipv_file"
 
     msg="Waiting for default route in table '$source_table' (IPv$IP_VERSION), attempt $((i+1))/10"
@@ -1127,51 +899,80 @@ set_route_rules() {
 }
 
 
+is_valid_ipv4() {
+  addr="${1:-}"
+  ip="${addr%%/*}"
+  cidr="${addr#*/}"
+  IFS=. read -r o1 o2 o3 o4 <<EOF
+$ip
+EOF
+
+  [ "$o1" ] && [ "$o2" ] && [ "$o3" ] && [ "$o4" ] || return 1
+
+  for o in $o1 $o2 $o3 $o4; do
+    [ "$o" -ge 0 ] 2>/dev/null || return 1;
+    [ "$o" -le 255 ] 2>/dev/null || return 1;
+  done
+
+  if [ "$ip" != "$addr" ]; then
+    case "$cidr" in ''|[0-9]|[1-2][0-9]|3[0-2]) ;; *) return 1 ;; esac
+  fi
+}
+
+
+is_valid_ipv6() {
+  addr="${1:-}"
+  ip_only="${addr%%/*}"
+  cidr="${addr#*/}"
+
+  ip -6 route get "$ip_only" >/dev/null 2>&1 || return 1
+
+  if [ "$ip_only" != "$addr" ]; then
+    case "$cidr" in
+      ''|[0-9]|[1-9][0-9]|1[0-2][0-8]) ;;
+      *) return 1 ;;
+    esac
+  fi
+}
+
+
+get_hijack_dns_subnet() {
+  ipv="${1:-}"
+  subnet=""
+  sys_subnet=""
+
+  case "$ipv" in
+    4)
+      validator=is_valid_ipv4
+      subnet="$HIJACK_DNS_IPV4_SUBNET"
+      sys_subnet="$SYS_HIJACK_DNS_IPV4_SUBNET"
+    ;;
+    6)
+      validator=is_valid_ipv6
+      subnet="$HIJACK_DNS_IPV6_SUBNET"
+      sys_subnet="$SYS_HIJACK_DNS_IPV6_SUBNET"
+    ;;
+  esac
+
+  if $validator "$subnet"; then
+    echo "$subnet"
+  else
+    echowarn "HIJACK_DNS is using the default subnet: $sys_subnet"
+    echo "$sys_subnet"
+  fi
+}
+
+
 get_exclude_addresses() {
-  ip_v="$1"
+  ip_v="${1:-}"
   eth_subnet=""
   reserved_subnets=""
   user_exclude=""
 
   [ "$ip_v" = "4" ] && prefix_length_default="32" || prefix_length_default="128"
 
-  is_valid_ipv4() {
-      addr="$1"
-      ip="${addr%%/*}"
-      cidr="${addr#*/}"
-      IFS=. read -r o1 o2 o3 o4 <<EOF
-  $ip
-EOF
-
-    [ "$o1" ] && [ "$o2" ] && [ "$o3" ] && [ "$o4" ] || return 1
-
-    for o in $o1 $o2 $o3 $o4; do
-      [ "$o" -ge 0 ] 2>/dev/null || return 1;
-      [ "$o" -le 255 ] 2>/dev/null || return 1;
-    done
-
-    if [ "$ip" != "$addr" ]; then
-      case "$cidr" in ''|[0-9]|[1-2][0-9]|3[0-2]) ;; *) return 1 ;; esac
-    fi
-  }
-
-  is_valid_ipv6() {
-    addr="$1"
-    ip_only="${addr%%/*}"
-    cidr="${addr#*/}"
-
-    ip -6 route get "$ip_only" >/dev/null 2>&1 || return 1
-
-    if [ "$ip_only" != "$addr" ]; then
-      case "$cidr" in
-        ''|[0-9]|[1-9][0-9]|1[0-2][0-8]) ;;
-        *) return 1 ;;
-      esac
-    fi
-  }
-
   get_eth_subnet() {
-    _ip_v="$1"
+    _ip_v="${1:-}"
     addresses="$(get_inet_tests_hosts "$_ip_v")"
     prefix_length="32"
     [ "$_ip_v" = "6" ] && prefix_length="128"
@@ -1210,24 +1011,18 @@ $reserved_subnets
 EOF
 
   for addr in $user_exclude; do
+    [ "${addr#*/}" = "$addr" ] && addr="$addr/$prefix_length_default"
+
     case "$ip_v" in
-      4)
-        [ "${addr#*/}" = "$addr" ] && addr="${addr}/${prefix_length_default}"
-        if is_valid_ipv4 "$addr"; then
-          all_list="$all_list $addr"
-        else
-          echowarn "Invalid IPv4 exclude address: $addr"
-        fi
-      ;;
-      6)
-        [ "${addr#*/}" = "$addr" ] && addr="${addr}/${prefix_length_default}"
-        if is_valid_ipv6 "$addr"; then
-          all_list="$all_list $addr"
-        else
-          echowarn "Invalid IPv6 exclude address: $addr"
-        fi
-      ;;
+      4) validator=is_valid_ipv4 ;;
+      6) validator=is_valid_ipv6 ;;
     esac
+
+    if $validator "$addr"; then
+      all_list="$all_list $addr"
+    else
+      echowarn "Invalid IPv$ip_v exclude address: $addr"
+    fi
   done
 
   echo "$all_list" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
@@ -1235,45 +1030,39 @@ EOF
 
 
 set_exclude_rules() {
-  iptables="$1"
-  table="$2"
-  chain="$3"
+  iptables="${1:-}"
+  table="${2:-}"
+  chain="${3:-}"
 
-  use_dns=0
-  if [ "$chain" != "$CHAIN_OUTPUT" ] && [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
-    use_dns=1
-  fi
-
-  is_local_net() {
-    case "$1" in
-      192.168.0.0/16|fe80::/10) return 0 ;;
-      *) return 1 ;;
-    esac
-  }
-
-  ipt() {
+  set_ipt() {
     $iptables -w -t "$table" -A "$chain" -d "$exclude" "$@" -j RETURN >/dev/null 2>&1
   }
 
+  if [ "$chain" != "$CHAIN_OUTPUT" ] && \
+    [ "$SKEEN_DNS_SUPPORTED" = "1" ] && \
+    [ -n "$HIJACK_DNS_SUBNET" ];
+  then
+    exclude="$HIJACK_DNS_SUBNET"
+
+    case "$SKEEN_FIREWALL_MODE:$table" in
+      hybrid:mangle)
+        set_ipt -p tcp --dport "$DNS_PORT"
+        set_ipt -p udp ! --dport "$DNS_PORT"
+      ;;
+      hybrid:nat)
+        set_ipt -p tcp ! --dport "$DNS_PORT"
+        set_ipt -p udp --dport "$DNS_PORT"
+      ;;
+      tproxy:mangle)
+        set_ipt -p tcp ! --dport "$DNS_PORT"
+        set_ipt -p udp ! --dport "$DNS_PORT"
+      ;;
+    esac
+  fi
+
   for exclude in $EXCLUDE_ADDRESSES; do
-    if is_local_net "$exclude" && [ "$use_dns" -eq 1 ]; then
-      case "$SKEEN_FIREWALL_MODE:$table" in
-        hybrid:mangle)
-          ipt -p tcp --dport "$DNS_PORT"
-          ipt -p udp ! --dport "$DNS_PORT"
-        ;;
-        hybrid:nat)
-          ipt -p tcp ! --dport "$DNS_PORT"
-          ipt -p udp --dport "$DNS_PORT"
-        ;;
-        tproxy:mangle)
-          ipt -p tcp ! --dport "$DNS_PORT"
-          ipt -p udp ! --dport "$DNS_PORT"
-        ;;
-      esac
-    else
-      ipt
-    fi
+    [ "$HIJACK_DNS_SUBNET" = "$exclude" ] && continue
+    set_ipt
   done
 }
 
@@ -1534,16 +1323,20 @@ prepare_firewall(){
 
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 
-  SKEEN_EXCLUDE_v4_ADDRESSES=""
+  SKEEN_EXCLUDE_IPV4_ADDRESSES=""
+  SKEEN_HIJACK_DNS_IPV4_SUBNET=""
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
     ip_v4=1
-    SKEEN_EXCLUDE_v4_ADDRESSES="$(get_exclude_addresses "4")"
+    SKEEN_EXCLUDE_IPV4_ADDRESSES="$(get_exclude_addresses "4")"
+    SKEEN_HIJACK_DNS_IPV4_SUBNET="$(get_hijack_dns_subnet "4")"
   fi
 
-  SKEEN_EXCLUDE_v6_ADDRESSES=""
+  SKEEN_EXCLUDE_IPV6_ADDRESSES=""
+  SKEEN_HIJACK_DNS_IPV6_SUBNET=""
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
     ip_v6=1
-    SKEEN_EXCLUDE_v6_ADDRESSES="$(get_exclude_addresses "6")"
+    SKEEN_EXCLUDE_IPV6_ADDRESSES="$(get_exclude_addresses "6")"
+    SKEEN_HIJACK_DNS_IPV6_SUBNET="$(get_hijack_dns_subnet "6")"
   fi
 
   [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
@@ -1564,10 +1357,13 @@ prepare_firewall(){
     echo "export SKEEN_FIREWALL_NETWORK=\"$SKEEN_FIREWALL_NETWORK\""
     echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
-    [ $ip_v4 -eq 1 ] && echo "export SKEEN_EXCLUDE_v4_ADDRESSES=\"$SKEEN_EXCLUDE_v4_ADDRESSES\""
-    [ $ip_v6 -eq 1 ] && echo "export SKEEN_EXCLUDE_v6_ADDRESSES=\"$SKEEN_EXCLUDE_v6_ADDRESSES\""
+    [ $ip_v4 -eq 1 ] && echo "export SKEEN_EXCLUDE_IPV4_ADDRESSES=\"$SKEEN_EXCLUDE_IPV4_ADDRESSES\""
+    [ $ip_v6 -eq 1 ] && echo "export SKEEN_EXCLUDE_IPV6_ADDRESSES=\"$SKEEN_EXCLUDE_IPV6_ADDRESSES\""
     echo "export SKEEN_DNS_SUPPORTED=\"$SKEEN_DNS_SUPPORTED\""
-
+    if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
+      [ $ip_v4 -eq 1 ] && echo "export SKEEN_HIJACK_DNS_IPV4_SUBNET=\"$SKEEN_HIJACK_DNS_IPV4_SUBNET\""
+      [ $ip_v6 -eq 1 ] && echo "export SKEEN_HIJACK_DNS_IPV6_SUBNET=\"$SKEEN_HIJACK_DNS_IPV6_SUBNET\""
+    fi
     echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
     echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
     [ "$SKEEN_FIREWALL_NETWORK" = "redirect" ] && echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
@@ -1595,11 +1391,13 @@ apply_firewall(){
     if [ "$iptables" = "iptables" ]; then
       IP_VERSION="4"
       PROXY_IP="127.0.0.1"
-      EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_v4_ADDRESSES:-}"
+      EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_IPV4_ADDRESSES:-}"
+      HIJACK_DNS_SUBNET="${SKEEN_HIJACK_DNS_IPV4_SUBNET:-}"
     elif [ "$iptables" = "ip6tables" ]; then
       IP_VERSION="6"
       PROXY_IP="::1"
-      EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_v6_ADDRESSES:-}"
+      EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_IPV6_ADDRESSES:-}"
+      HIJACK_DNS_SUBNET="${SKEEN_HIJACK_DNS_IPV6_SUBNET:-}"
     else
       exiterr "Unknown iptables: $iptables"
     fi
@@ -1685,6 +1483,8 @@ clean_firewall(){
 
 
 start() {
+  timeout=10
+
   if [ "$CALLER" = "init" ]; then
     if [ "$AUTO_START" = "0" ]; then
       return 0
@@ -1704,36 +1504,55 @@ start() {
     return 0
   fi
 
-  echomsg "Starting ${SINGBOX_NAME}..."
-
   check_config
+  echo "$DELIMETER"
 
   prepare_firewall
+  echo "$DELIMETER"
 
   if ! id "$SINGBOX_PROC" >/dev/null 2>&1; then
     adduser -D -H -u 3228 "$SINGBOX_PROC"
     sed -i "/^${SINGBOX_PROC}:/c\\${SINGBOX_PROC}:x:0:3228:::" /opt/etc/passwd
   fi
 
+  echomsg "Starting ${SINGBOX_NAME}..."
   # shellcheck disable=SC2086
   start-stop-daemon -S -b -x $SINGBOX_PROC -c $SINGBOX_PROC -- $SINGBOX_ARGS
   status_start=$?
 
-  if [ $status_start -eq 0 ]; then
-    [ "$SKEEN_FIREWALL_MODE" != "none" ] && apply_firewall
-    echook "$SINGBOX_NAME started."
-    logger_notice "$SINGBOX_NAME started"
-    return 0
+  if [ $status_start -ne 0 ]; then
+    msg="Failed to start $SINGBOX_NAME"
+    echoerr "$msg"
+    logger_error "$msg"
+    return 1
   fi
 
-  [ "$SKEEN_FIREWALL_MODE" != "none" ] && clean_firewall
-  echoerr "Failed to start $SINGBOX_NAME"
-  logger_error "$SINGBOX_NAME failed to start"
-  return 1
+  while ! is_running && [ $timeout -gt 0 ]; do
+    sleep 1
+    timeout=$((timeout - 1))
+  done
+
+  if ! is_running; then
+    msg="$SINGBOX_NAME did not start in time"
+    echoerr "$msg"
+    logger_error "$msg"
+    return 1
+  fi
+
+  echo "$DELIMETER"
+  echook "$SINGBOX_NAME started"
+  logger_notice "$SINGBOX_NAME started"
+
+  [ "$SKEEN_FIREWALL_MODE" != "none" ] && \
+  echo "$DELIMETER" && apply_firewall
+
+  return 0
 }
 
 
 stop(){
+  timeout=10
+
   echomsg "Stopping ${SINGBOX_NAME}..."
 
   clean_firewall
@@ -1746,17 +1565,30 @@ stop(){
   start-stop-daemon -K -x $SINGBOX_PROC >/dev/null
   status_stop=$?
 
-  sleep 1
-
-  if [ $status_stop -eq 0 ]; then
-    echook "$SINGBOX_NAME stopped."
-    logger_notice "$SINGBOX_NAME stopped."
-    return 0
-  else
-    echoerr "Failed to stop $SINGBOX_NAME"
-    logger_error "Failed to stop $SINGBOX_NAME"
+  if [ $status_stop -ne 0 ]; then
+    msg="Failed to send stop signal to $SINGBOX_NAME"
+    echoerr "$msg"
+    logger_error "$msg"
     return 1
   fi
+
+  while is_running && [ $timeout -gt 0 ]; do
+    sleep 1
+    timeout=$((timeout - 1))
+  done
+
+  if is_running; then
+    msg="$SINGBOX_NAME did not stop in time"
+    echoerr "$msg"
+    logger_error "$msg"
+    return 1
+  fi
+
+  msg="$SINGBOX_NAME stopped"
+  echook "$msg"
+  logger_notice "$msg"
+  echo "$DELIMETER"
+  return 0
 }
 
 
