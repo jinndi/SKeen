@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.2...SKeen-v3.5.3) (2026-01-23)
+
+
+### 🧰 Chore
+
+* Fixes and improvements ([93f5b45](https://github.com/jinndi/SKeen/commit/93f5b450e80e445739389bec95cfc37f76bfc463))
+* logging stdout ([40a27ac](https://github.com/jinndi/SKeen/commit/40a27ac8881a5cd258148a462d98fcb43221fca6))
+
 ## [3.5.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.1...SKeen-v3.5.2) (2026-01-23)
 
 
