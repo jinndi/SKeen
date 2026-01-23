@@ -1610,7 +1610,7 @@ stop(){
   msg="$SINGBOX_NAME stopped"
   echook "$msg"
   logger_notice "$msg"
-  echo "$DELIMETER"
+  [ "$on_restart" = "1" ] && echo "$DELIMETER"
   return 0
 }
 
@@ -1638,9 +1638,11 @@ switch_state(){
 
 
 restart() {
+  on_restart=1
   stop
   [ "$CALLER" = "menu" ] && loading_config
   start
+  on_restart=0
   press_any_key_to_menu
 }
 
