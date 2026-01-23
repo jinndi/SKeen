@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.5.2"
+SKEEN_VERSION="3.5.3"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1082,36 +1082,42 @@ set_iptables_rules() {
     case "$SKEEN_FIREWALL_MODE" in
       hybrid)
         if [ "$table" = "$TABLE_REDIRECT" ]; then
-          set -- -p tcp -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
-          $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+          rule="-p tcp -j REDIRECT --to-port $SKEEN_REDIRECT_PORT"
+          # shellcheck disable=SC2086
+          $iptables -w -t "$table" -A "$chain" $rule >/dev/null 2>&1
         else
-          set -- -p udp -m socket --transparent \
-                -j MARK --set-mark "$TABLE_MARK"
-          $iptables -w -t "$table" -I "$chain" "$@" >/dev/null 2>&1
+          rule="-p udp -m socket --transparent \
+                -j MARK --set-mark $TABLE_MARK"
+          # shellcheck disable=SC2086
+          $iptables -w -t "$table" -I "$chain" $rule >/dev/null 2>&1
 
-          set -- -p udp -j TPROXY \
-                --on-ip "$PROXY_IP" \
-                --on-port "$SKEEN_TPROXY_PORT" \
-                --tproxy-mark "$TABLE_MARK"
-          $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+          rule="-p udp -j TPROXY \
+                --on-ip $PROXY_IP \
+                --on-port $SKEEN_TPROXY_PORT \
+                --tproxy-mark $TABLE_MARK"
+          # shellcheck disable=SC2086
+          $iptables -w -t "$table" -A "$chain" $rule >/dev/null 2>&1
         fi
       ;;
       tproxy)
         for net in $SKEEN_TPROXY_NETWORK; do
-          set -- -p "$net" -m socket --transparent \
-                  -j MARK --set-mark "$TABLE_MARK"
-          $iptables -w -t "$table" -I "$chain" "$@" >/dev/null 2>&1
-
-          set -- -p "$net" -j TPROXY \
-                --on-ip "$PROXY_IP" \
-                --on-port "$SKEEN_TPROXY_PORT" \
-                --tproxy-mark "$TABLE_MARK"
-          $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+          rule="-p $net -m socket --transparent \
+                  -j MARK --set-mark $TABLE_MARK"
+          # shellcheck disable=SC2086
+          $iptables -w -t "$table" -I "$chain" $rule >/dev/null 2>&1
+          # shellcheck disable=SC2086
+          rule="-p $net -j TPROXY \
+                --on-ip $PROXY_IP \
+                --on-port $SKEEN_TPROXY_PORT \
+                --tproxy-mark $TABLE_MARK"
+          # shellcheck disable=SC2086
+          $iptables -w -t "$table" -A "$chain" $rule >/dev/null 2>&1
         done
       ;;
       redirect)
-        set -- -p tcp -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
-        $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+        rule="-p tcp -j REDIRECT --to-port $SKEEN_REDIRECT_PORT"
+        # shellcheck disable=SC2086
+        $iptables -w -t "$table" -A "$chain" $rule >/dev/null 2>&1
       ;;
       *) return 0 ;;
     esac
@@ -1125,8 +1131,9 @@ set_iptables_rules() {
     set_exclude_rules "$iptables" "$table" "$chain"
 
     for net in $SKEEN_TPROXY_NETWORK; do
-      set -- -p "$net" -j CONNMARK --set-mark "$TABLE_MARK"
-      $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
+      rule="-p $net -j CONNMARK --set-mark $TABLE_MARK"
+      # shellcheck disable=SC2086
+      $iptables -w -t "$table" -A "$chain" $rule >/dev/null 2>&1
     done
   fi
 }
@@ -1136,6 +1143,16 @@ set_prerouting_rules() {
   iptables="$1"
   base_table="$2"
   connmark_option=""
+
+  case "$SKEEN_FIREWALL_MODE:$base_table" in
+    hybrid:mangle|tproxy:mangle)
+      rule="-j CONNMARK --restore-mark"
+      # shellcheck disable=SC2086
+      if ! $iptables -t "$base_table" -C PREROUTING $rule >/dev/null 2>&1; then
+        $iptables -t "$base_table" -I PREROUTING 1 $rule >/dev/null 2>&1
+      fi
+    ;;
+  esac
 
   for net in $SKEEN_FIREWALL_NETWORK; do
     table="$base_table"
@@ -1169,15 +1186,15 @@ set_prerouting_rules() {
     fi
 
     if [ -z "$ports" ]; then
-      # shellcheck disable=SC2086
-      set -- PREROUTING \
+      rule="PREROUTING \
         $connmark_option \
         -m conntrack ! --ctstate INVALID \
         $proto_arg \
-        -j "$CHAIN_PREROUTING"
+        -j $CHAIN_PREROUTING"
 
-      if ! $iptables -t "$table" -C "$@" >/dev/null 2>&1; then
-        $iptables -t "$table" -A "$@" >/dev/null 2>&1
+      # shellcheck disable=SC2086
+      if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
+        $iptables -t "$table" -A $rule >/dev/null 2>&1
       fi
       continue
     fi
@@ -1224,16 +1241,16 @@ set_prerouting_rules() {
 
       [ -z "$chunk" ] && break
 
-      # shellcheck disable=SC2086
-      set -- PREROUTING \
+      rule="PREROUTING \
         $connmark_option \
         -m conntrack ! --ctstate INVALID \
         $proto_arg \
-        -m multiport $dports_op "$chunk" \
-        -j "$CHAIN_PREROUTING"
+        -m multiport $dports_op $chunk \
+        -j $CHAIN_PREROUTING"
 
-      if ! $iptables -t "$table" -C "$@" >/dev/null 2>&1; then
-        $iptables -t "$table" -A "$@" >/dev/null 2>&1
+      # shellcheck disable=SC2086
+      if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
+        $iptables -t "$table" -A $rule >/dev/null 2>&1
       fi
 
       i=$((i + 7))
@@ -1460,6 +1477,12 @@ clean_firewall(){
       [ -z "$rule_num" ] && break
       $iptables -w -t "$table" -D "$parent" "$rule_num" >/dev/null 2>&1
     done
+
+    if [ "$table" = "mangle" ] && [ "$parent" = "PREROUTING" ]; then
+      while $iptables -w -t "$table" -D "$parent" -j CONNMARK --restore-mark >/dev/null 2>&1; do
+        :
+      done
+    fi
 
     $iptables -w -t "$table" -X "$chain" >/dev/null 2>&1
   }
@@ -1794,7 +1817,11 @@ fw_test_chain() {
   fw_test "$1" "$2" "$content" "$test_exclude_address" "Exclude addresses rule"
 
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
-    fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK rule"
+    fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK set rule"
+  fi
+
+  if [ "$1" = "mangle" ]; then
+    fw_test "$1" "$2" "$($3 -t "$1" -nvL PREROUTING 2>/dev/null)" "CONNMARK restore" "CONNMARK restore rule"
   fi
 
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
