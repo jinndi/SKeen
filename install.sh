@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.5.3"
+SKEEN_VERSION="3.5.4"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -413,7 +413,7 @@ EOF
 {"experimental":{"clash_api":{"external_controller":"0.0.0.0:9090","external_ui_download_url":"https://github.com/Zephyruso/zashboard/archive/gh-pages.zip","external_ui":"zashboard","external_ui_download_detour":"direct","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","store_fakeip":true,"store_rdrc":true}}}
 EOF
 
-  $SINGBOX_PROC format -C $CONFIG_DIR > /dev/null 2>&1 || true
+  $SINGBOX_PROC format -w -C $CONFIG_DIR
 
   echook "Configuration file created successfully"
 }
@@ -1562,7 +1562,6 @@ start() {
     return 1
   fi
 
-  echo "$DELIMETER"
   echook "$SINGBOX_NAME started"
   logger_notice "$SINGBOX_NAME started"
 
@@ -1995,7 +1994,7 @@ check_config(){
 format_config(){
   echomsg "Formatting Sing-box configuration..."
 
-  if $SINGBOX_PROC format -C $CONFIG_DIR > /dev/null 2>&1; then
+  if $SINGBOX_PROC format -w -C $CONFIG_DIR; then
     echook "Configuration formatted successfully"
   else
     echoerr "Configuration formatting failed"
