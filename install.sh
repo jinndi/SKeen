@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.5.0"
+SKEEN_VERSION="3.5.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1631,9 +1631,9 @@ apply_firewall(){
       set_iptables_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_OUTPUT"
       add_output_rules "$iptables" "$TABLE_TPROXY"
     fi
-  done
 
-  [ -n "$wait_ipv_file" ] && [ -f "$wait_ipv_file" ] && rm -f "$wait_ipv_file"
+    [ -n "$wait_ipv_file" ] && [ -f "$wait_ipv_file" ] && rm -f "$wait_ipv_file"
+  done
 
   echook "Firewall rules applied successfully."
 }
@@ -1718,8 +1718,6 @@ start() {
   # shellcheck disable=SC2086
   start-stop-daemon -S -b -x $SINGBOX_PROC -c $SINGBOX_PROC -- $SINGBOX_ARGS
   status_start=$?
-
-  sleep 1
 
   if [ $status_start -eq 0 ]; then
     [ "$SKEEN_FIREWALL_MODE" != "none" ] && apply_firewall
