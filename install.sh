@@ -252,7 +252,7 @@ get_architecture() {
     # ARM64
     *aarch64*|*arm64*|*armv8*)
       ARCH="aarch64"
-      case "$(grep -i 'cpu part' /proc/cpuinfo | sed -e 's/.*: //' | tr '[:upper:]' '[:lower:]' | head -n1)" in
+      case "$(grep -i 'cpu part' /proc/cpuinfo | tr '[:upper:]' '[:lower:]' | head -n1)" in
         *0xd03*) PKG_ARCH="${ARCH}_cortex-a53" ;;
         *0xd08*) PKG_ARCH="${ARCH}_cortex-a72" ;;
         *0xd0b*) PKG_ARCH="${ARCH}_cortex-a76" ;;
@@ -270,12 +270,13 @@ get_architecture() {
   [ -n "$PKG_ARCH" ] && return
 
   # MIPS core
-  case "$(grep -i 'cpu model' /proc/cpuinfo | sed -e 's/.*: //i' | tr '[:upper:]' '[:lower:]')" in
-    *74k*|*34k*)    PKG_ARCH="${ARCH}_74kc" ;;
-    *24kf*|*24k*f*) PKG_ARCH="${ARCH}_24kc_24kf" ;;
-    *24k*|*1004*)   PKG_ARCH="${ARCH}_24kc" ;;
-    *4kec*)         PKG_ARCH="${ARCH}_4kec" ;;
-    *)              PKG_ARCH="${ARCH}_mips32" ;;
+  case "$(tr '[:upper:]' '[:lower:]' </proc/cpuinfo)" in
+    *74k*)         PKG_ARCH="${ARCH}_74kc" ;;
+    *24kf*)        PKG_ARCH="${ARCH}_24kc_24kf" ;;
+    *24k*)         PKG_ARCH="${ARCH}_24kc" ;;
+    *4kec*)        PKG_ARCH="${ARCH}_4kec" ;;
+    *1004*|*34k*)  PKG_ARCH="${ARCH}_mips32" ;;
+    *)             PKG_ARCH="${ARCH}_mips32" ;;
   esac
 }
 
