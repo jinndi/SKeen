@@ -290,7 +290,7 @@ get_architecture() {
         *) PKG_ARCH="${ARCH}_mips32" ;; # fallback ...
       esac
     ;;
-    mips64el|mips64le)
+    mips64el)
       PKG_ARCH="${ARCH}_mips64r2"
     ;;
     mips64)
