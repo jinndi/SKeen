@@ -284,7 +284,6 @@ get_architecture() {
     ;;
     mips)
       case "$cpu_info" in
-        *24kf*)  PKG_ARCH="${ARCH}_24kc_24kf" ;;
         *24k*)   PKG_ARCH="${ARCH}_24kc" ;;
         *4kec*)  PKG_ARCH="${ARCH}_4kec" ;;
         *) PKG_ARCH="${ARCH}_mips32" ;; # fallback ...
