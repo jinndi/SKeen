@@ -14,11 +14,12 @@ Installation script for sing-box on Keenetic/Netcraze routers
 <img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/SKeen">
 <img alt="License" src="https://img.shields.io/github/license/jinndi/SKeen">
 <img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FXSKeen&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
-
 </p>
 
 > [!WARNING]
 > Tested on the aarch64 (arm64) CPU architecture. Please report any issues.
+
+### 📘 [DeepWiki](https://deepwiki.com/jinndi/SKeen)
 
 ### 🚀 Features
 - TProxy/Redirect/Hybrid modes ✓
@@ -87,3 +88,4 @@ The file `/opt/etc/skeen/skeen.conf` has the following settings:
 |`EXCLUDE_PORTS`|Ports to excluded redirect via TProxy/Redirect (Not working if ports are set in `INTERCEPT_PORTS`). List: port and port ranges use colon e.g. 8080,1443,1300:2300 or 8080 1443 1300:2300|
 |`EXCLUDE_IPV4_ADDRESES`, `EXCLUDE_IPV6_ADDRESES`|Excluded ip addreses for traffic redirection. List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ...|
 |`EXCLUDE_IPV4_SUBNETS`, `EXCLUDE_IPV6_SUBNETS`|Excluded subnets for traffic redirection. List: 192.155.1.1/24,192.200.1.1/24,... or 192.155.1.1/24 192.200.1.1/24 ...|
+
