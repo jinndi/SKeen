@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.1...SKeen-v3.6.2) (2026-01-24)
+
+
+### 🐛 Fix
+
+* remove 24kc_24kf cpu from mips arch ([87c7e66](https://github.com/jinndi/SKeen/commit/87c7e6681ff1bb1c7120e7ab1a69ffaea3829155))
+
 ## [3.6.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.0...SKeen-v3.6.1) (2026-01-24)
 
 
