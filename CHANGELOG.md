@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.4...SKeen-v3.6.0) (2026-01-24)
+
+
+### 🚀 Feat
+
+* support 64-bit MIPS and CPU-specific PKG_ARCH detection ([e978afd](https://github.com/jinndi/SKeen/commit/e978afde70b00f6f9f3b6557bebb5af69aa20246))
+
 ## [3.5.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.3...SKeen-v3.5.4) (2026-01-23)
 
 
