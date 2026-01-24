@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.4...SKeen-v3.5.5) (2026-01-24)
+
+
+### 🐛 Fix
+
+* MIPS core detect (map to available sing-box builds) ([fc16cce](https://github.com/jinndi/SKeen/commit/fc16cced3b4f6e41a85e4d1d222c492bd1eeec07))
+
 ## [3.5.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.3...SKeen-v3.5.4) (2026-01-23)
 
 
