@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.5.4"
+SKEEN_VERSION="3.5.5"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -248,35 +248,61 @@ get_os_release(){
 
 
 get_architecture() {
-  case "$(uname -m | tr '[:upper:]' '[:lower:]')" in
-    # ARM64
-    *aarch64*|*arm64*|*armv8*)
-      ARCH="aarch64"
-      case "$(grep -i 'cpu part' /proc/cpuinfo | sed -e 's/.*: //' | tr '[:upper:]' '[:lower:]' | head -n1)" in
+  opkg_arch=$(opkg print-architecture 2>/dev/null | \
+    grep -E 'mipsel|mips64el|mips64|mips|aarch64' | \
+    head -n1 | awk '{print $2}' | tr '[:upper:]' '[:lower:]')
+
+  case "$opkg_arch" in
+    *aarch64*)  ARCH="aarch64" ;;
+    *mipsel*)   ARCH="mipsel" ;;
+    *mips64el*) ARCH="mips64el" ;;
+    *mips64*)   ARCH="mips64" ;;
+    *mips*)     ARCH="mips" ;;
+    *)          ARCH="" ;;
+  esac
+
+  [ -z "$ARCH" ] && exiterr "Unsupported CPU architecture"
+
+  cpu_info=$(tr '[:upper:]' '[:lower:]' </proc/cpuinfo)
+
+  case "$ARCH" in
+    aarch64)
+      case "$(echo "$cpu_info" | grep -m1 'cpu part')" in
         *0xd03*) PKG_ARCH="${ARCH}_cortex-a53" ;;
         *0xd08*) PKG_ARCH="${ARCH}_cortex-a72" ;;
         *0xd0b*) PKG_ARCH="${ARCH}_cortex-a76" ;;
         *)       PKG_ARCH="${ARCH}_generic" ;;
       esac
     ;;
-
-    # MIPS endian
-    *mipsel*|*mipsle*) ARCH="mipsel" ;;
-    *mips*)            ARCH="mips" ;;
-
-    *) exiterr "Unsupported CPU architecture?" ;;
+    mipsel|mips)
+      case "$cpu_info" in
+        *74k*)   PKG_ARCH="${ARCH}_74kc" ;;
+        *24kf*)  PKG_ARCH="${ARCH}_24kc_24kf" ;;
+        *24k*)   PKG_ARCH="${ARCH}_24kc" ;;
+        *4kec*)
+          if [ "$ARCH" = "mipsel" ]; then
+            PKG_ARCH="${ARCH}_mips32"
+          else
+            PKG_ARCH="${ARCH}_4kec"
+          fi
+        ;;
+        *) PKG_ARCH="${ARCH}_mips32" ;; # fallback 1004, 34k, ...
+      esac
+    ;;
+    mips64el)
+      PKG_ARCH="mips64el_mips64r2"
+    ;;
+    mips64)
+      if echo "$cpu_info" | grep -qi octeon; then
+        PKG_ARCH="mips64_octeonplus"
+      else
+        PKG_ARCH="mips64_mips64r2"
+      fi
+    ;;
   esac
 
-  [ -n "$PKG_ARCH" ] && return
-
-  # MIPS core
-  case "$(grep -i 'cpu model' /proc/cpuinfo | sed -e 's/.*: //i' | tr '[:upper:]' '[:lower:]')" in
-    *74k*|*34k*)    PKG_ARCH="${ARCH}_74kc" ;;
-    *24kf*|*24k*f*) PKG_ARCH="${ARCH}_24kc_24kf" ;;
-    *24k*|*1004*)   PKG_ARCH="${ARCH}_24kc" ;;
-    *4kec*)         PKG_ARCH="${ARCH}_4kec" ;;
-    *)              PKG_ARCH="${ARCH}_mips32" ;;
-  esac
+  cpu_model=$(echo "$cpu_info" | grep -m1 -E 'cpu model|system type|model name')
+  echook "Detected CPU: $cpu_model ($ARCH)"
 }
 
 
