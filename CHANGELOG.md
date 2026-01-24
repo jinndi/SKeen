@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.6.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.0...SKeen-v3.6.1) (2026-01-24)
+
+
+### 🐛 Fix
+
+* case remove mips64le ([60d8fd6](https://github.com/jinndi/SKeen/commit/60d8fd61cb0bf9c9f0b006b7b75fa40ca1751a36))
+* detect mipsel/mipsle/mips  architecture + CPU ([550430b](https://github.com/jinndi/SKeen/commit/550430ba9f8fd1881ed7b2dd785ffbc0caff8366))
+
 ## [3.6.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.5.4...SKeen-v3.6.0) (2026-01-24)
 
 
