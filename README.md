@@ -51,6 +51,32 @@ Access the web interface at the router's IP (usually 192.168.1.1) on http://192.
 
 Manage the package further using the `skeen` command.
 
+After successful installation:
+
+```
+/opt/
+├── bin/
+│   ├── skeen              # SKeen management script
+│   └── skeen-box          # sing-box binary
+├── etc/
+│   ├── init.d/
+│   │   └── S99SKeen       # Autostart script
+│   ├── ndm/
+│   │   └── netfilter.d/
+│   │       └── skeen_firewall.sh  # Created on start
+│   └── skeen/
+│       ├── skeen.conf     # SKeen configuration
+│       └── config/
+│           ├── log.json
+│           ├── dns.json
+│           ├── inbounds.json
+│           ├── outbounds.json
+│           ├── route.json
+│           └── experimental.json
+└── tmp/
+    └── (temporary download files)
+```
+
 ### ⚡ Commands
 
 Example Usage: start the daemon `skeen start`
