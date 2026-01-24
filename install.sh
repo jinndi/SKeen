@@ -249,16 +249,16 @@ get_os_release(){
 
 get_architecture() {
   opkg_arch=$(opkg print-architecture 2>/dev/null | \
-    grep -E 'mipsel|mips64el|mips64|mips|aarch64' | \
+    grep -E 'mipsel|mipsle|mips64el|mips64le|mips64|mips|aarch64|arm64|armv8' | \
     head -n1 | awk '{print $2}' | tr '[:upper:]' '[:lower:]')
 
   case "$opkg_arch" in
-    *aarch64*)  ARCH="aarch64" ;;
-    *mipsel*)   ARCH="mipsel" ;;
-    *mips64el*) ARCH="mips64el" ;;
-    *mips64*)   ARCH="mips64" ;;
-    *mips*)     ARCH="mips" ;;
-    *)          ARCH="" ;;
+    *aarch64*|*arm64*|*armv8*) ARCH="aarch64" ;;
+    *mipsel*|*mipsle*)         ARCH="mipsel" ;;
+    *mips64el*|*mips64le*)     ARCH="mips64el" ;;
+    *mips64*)                  ARCH="mips64" ;;
+    *mips*)                    ARCH="mips" ;;
+    *)                         ARCH="" ;;
   esac
 
   [ -z "$ARCH" ] && exiterr "Unsupported CPU architecture"
@@ -271,38 +271,38 @@ get_architecture() {
         *0xd03*) PKG_ARCH="${ARCH}_cortex-a53" ;;
         *0xd08*) PKG_ARCH="${ARCH}_cortex-a72" ;;
         *0xd0b*) PKG_ARCH="${ARCH}_cortex-a76" ;;
-        *)       PKG_ARCH="${ARCH}_generic" ;;
+        *)       PKG_ARCH="${ARCH}_generic" ;; # fallback
       esac
     ;;
-    mipsel|mips)
+    mipsel)
       case "$cpu_info" in
         *74k*)   PKG_ARCH="${ARCH}_74kc" ;;
         *24kf*)  PKG_ARCH="${ARCH}_24kc_24kf" ;;
         *24k*)   PKG_ARCH="${ARCH}_24kc" ;;
-        *4kec*)
-          if [ "$ARCH" = "mipsel" ]; then
-            PKG_ARCH="${ARCH}_mips32"
-          else
-            PKG_ARCH="${ARCH}_4kec"
-          fi
-        ;;
         *) PKG_ARCH="${ARCH}_mips32" ;; # fallback 1004, 34k, ...
       esac
     ;;
-    mips64el)
-      PKG_ARCH="mips64el_mips64r2"
+    mips)
+      case "$cpu_info" in
+        *24kf*)  PKG_ARCH="${ARCH}_24kc_24kf" ;;
+        *24k*)   PKG_ARCH="${ARCH}_24kc" ;;
+        *4kec*)  PKG_ARCH="${ARCH}_4kec" ;;
+        *) PKG_ARCH="${ARCH}_mips32" ;; # fallback ...
+      esac
+    ;;
+    mips64el|mips64le)
+      PKG_ARCH="${ARCH}_mips64r2"
     ;;
     mips64)
       if echo "$cpu_info" | grep -qi octeon; then
-        PKG_ARCH="mips64_octeonplus"
+        PKG_ARCH="${ARCH}_octeonplus"
       else
-        PKG_ARCH="mips64_mips64r2"
+        PKG_ARCH="${ARCH}_mips64r2"
       fi
     ;;
   esac
 
-  cpu_model=$(echo "$cpu_info" | grep -m1 -E 'cpu model|system type|model name')
-  echook "Detected CPU: $cpu_model ($ARCH)"
+  echook "Detected PKG ARCH: $PKG_ARCH"
 }
 
 
