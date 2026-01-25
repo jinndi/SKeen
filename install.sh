@@ -133,7 +133,7 @@ create_skeen_config(){
     echo "# Domains or IPs for testing the internet connection (no more than 3)"
     echo "# List: ya.ru,77.88.8.8,... or ya.ru 77.88.8.8"
     echo "INET_TEST_IPV4_HOSTS=\"$SYS_INET_TEST_IPV4_HOSTS\""
-    echo "INET_TEST_IPV6_HOSTS=\"$SYS_INET_TEST_IPV4_HOSTS\""
+    echo "INET_TEST_IPV6_HOSTS=\"$SYS_INET_TEST_IPV6_HOSTS\""
     echo
     echo "# Subnet for intercepting DNS queries (maximum one per IP version)"
     echo "HIJACK_DNS_IPV4_SUBNET=\"$SYS_HIJACK_DNS_IPV4_SUBNET\""
@@ -1454,7 +1454,7 @@ apply_firewall(){
     if [ -n "$wait_ipv_file" ] && [ -f "$wait_ipv_file" ]; then
       EXCLUDE_ADDRESSES="$(get_exclude_addresses "$IP_VERSION")"
       [ -n "${FIREWALL_HOOK_FILE:-}" ] && \
-      sed -i "/SKEEN_EXCLUDE_v${IP_VERSION}/c\export SKEEN_EXCLUDE_v${IP_VERSION}_ADDRESSES=\"$EXCLUDE_ADDRESSES\"" "$FIREWALL_HOOK_FILE"
+      sed -i "/SKEEN_EXCLUDE_IPV${IP_VERSION}/c\export SKEEN_EXCLUDE_IPV${IP_VERSION}_ADDRESSES=\"$EXCLUDE_ADDRESSES\"" "$FIREWALL_HOOK_FILE"
     fi
 
     if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
