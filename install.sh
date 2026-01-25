@@ -413,7 +413,7 @@ create_singbox_config(){
 EOF
 
   cat <<EOF > "$CONFIG_DIR/dns.json"
-{"dns":{"servers":[{"tag":"dns-proxy","type":"tls","server":"one.one.one.one","domain_resolver":"dns-resolver","detour":"selector"},{"tag":"dns-direct","type":"https","server":"common.dot.dns.yandex.net","domain_resolver":"dns-resolver"},{"tag":"fakeip","type":"fakeip","inet4_range":"198.18.0.0/15","inet6_range":"fc00::/18"},{"tag":"dns-resolver","type":"udp","server":"77.88.8.8"}],"rules":[{"rule_set":"adguard","action":"reject"},{"type":"logical","mode":"or","rules":[{"clash_mode":"direct"},{"rule_set":"geosite-cheburnet"}],"server":"dns-direct"},{"query_type":["A","AAAA"],"server":"fakeip"}],"final":"dns-proxy","strategy":"prefer_ipv4","independent_cache":true}}
+{"dns":{"servers":[{"type":"tls","tag":"dns-proxy","detour":"proxy","domain_resolver":"dns-resolver","server":"one.one.one.one"},{"type":"https","tag":"dns-direct","domain_resolver":"dns-resolver","server":"common.dot.dns.yandex.net"},{"type":"fakeip","tag":"fakeip","inet4_range":"198.18.0.0/15","inet6_range":"fc00::/18"},{"type":"udp","tag":"dns-resolver","server":"77.88.8.8"}],"rules":[{"rule_set":"adguard","action":"reject"},{"clash_mode":"Direct","server":"dns-direct"},{"rule_set":"geosite-cheburnet","server":"dns-direct"},{"query_type":["A","AAAA"],"disable_cache":true,"server":"fakeip"},{"clash_mode":"Global","server":"dns-proxy"}],"final":"dns-proxy","strategy":"prefer_ipv4","independent_cache":true}}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/inbounds.json"
@@ -421,15 +421,15 @@ EOF
 EOF
 
   cat <<EOF > "$CONFIG_DIR/outbounds.json"
-{"outbounds":[{"tag":"selector","type":"selector","default":"auto","interrupt_exist_connections":false,"outbounds":["auto","VLESS","direct"]},{"tag":"auto","type":"urltest","url":"http://www.gstatic.com/generate_204","interval":"5m","tolerance":50,"idle_timeout":"30m","interrupt_exist_connections":false,"outbounds":["VLESS"]},{"tag":"direct","type":"direct"},{"tag":"VLESS","type":"vless","uuid":"00000000-0000-0000-0000-00000000000","flow":"xtls-rprx-vision","packet_encoding":"xudp","server":"example.com","server_port":443,"tls":{"enabled":true,"alpn":["http/1.1","h2"],"server_name":"example.com","utls":{"enabled":true,"fingerprint":"firefox"}}}]}
+{"outbounds":[{"tag":"proxy","type":"selector","default":"auto","interrupt_exist_connections":false,"outbounds":["auto","VLESS","direct"]},{"tag":"auto","type":"urltest","url":"http://www.gstatic.com/generate_204","interval":"5m","tolerance":50,"idle_timeout":"30m","interrupt_exist_connections":false,"outbounds":["VLESS"]},{"tag":"direct","type":"direct"},{"tag":"VLESS","type":"vless","uuid":"00000000-0000-0000-0000-00000000000","flow":"xtls-rprx-vision","packet_encoding":"xudp","server":"example.com","server_port":443,"tls":{"enabled":true,"alpn":["http/1.1","h2"],"server_name":"example.com","utls":{"enabled":true,"fingerprint":"firefox"}}}]}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/route.json"
-{"route":{"default_domain_resolver":"dns-resolver","auto_detect_interface":true,"final":"selector","rules":[{"action":"sniff","timeout":"500ms"},{"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},{"ip_is_private":true,"outbound":"direct"},{"type":"logical","mode":"or","rules":[{"network":"udp","port":443},{"protocol":"stun"},{"rule_set":"adguard"}],"action":"reject"},{"type":"logical","mode":"or","rules":[{"clash_mode":"direct"},{"rule_set":"geosite-cheburnet"}],"outbound":"direct"}],"rule_set":[{"type":"remote","tag":"adguard","format":"binary","url":"https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs","download_detour":"direct","update_interval":"24h0m0s"},{"type":"remote","tag":"geosite-cheburnet","format":"binary","url":"https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs","download_detour":"direct","update_interval":"24h0m0s"}]}}
+{"route":{"rules":[{"action":"sniff","timeout":"500ms"},{"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},{"clash_mode":"Direct","outbound":"direct"},{"ip_is_private":true,"outbound":"direct"},{"type":"logical","mode":"or","rules":[{"network":"udp","port":443},{"protocol":"stun"}],"action":"reject"},{"clash_mode":"Global","outbound":"proxy"},{"rule_set":"geosite-cheburnet","outbound":"direct"}],"rule_set":[{"type":"remote","tag":"geosite-cheburnet","url":"https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs","download_detour":"direct","update_interval":"24h0m0s"},{"type":"remote","tag":"adguard","url":"https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs","download_detour":"direct","update_interval":"24h0m0s"}],"final":"proxy","default_domain_resolver":"dns-resolver"}}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/experimental.json"
-{"experimental":{"clash_api":{"external_controller":"0.0.0.0:9090","external_ui_download_url":"https://github.com/Zephyruso/zashboard/archive/gh-pages.zip","external_ui":"zashboard","external_ui_download_detour":"direct","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","store_fakeip":true,"store_rdrc":true}}}
+{"experimental":{"cache_file":{"enabled":true,"path":"cache.db","store_fakeip":true,"store_rdrc":true},"clash_api":{"external_controller":"0.0.0.0:9090","external_ui":"zashboard","external_ui_download_url":"https://github.com/Zephyruso/zashboard/archive/gh-pages.zip","external_ui_download_detour":"direct","default_mode":"rule"}}}
 EOF
 
   $SINGBOX_PROC format -w -C $CONFIG_DIR
@@ -1762,16 +1762,9 @@ check_updates(){
         [ -z "$option" ] && option="n"
 
         case "$option" in
-          y|Y)
-            update_core
-            break
-          ;;
-          n|N)
-            break
-          ;;
-          *)
-            echoerr "Incorrect option"
-          ;;
+          y|Y) update_core; break ;;
+          n|N) break ;;
+          *) echoerr "Incorrect option" ;;
         esac
       done
     else
