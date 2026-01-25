@@ -87,6 +87,7 @@ Example Usage: start the daemon `skeen start`
 |`start`|Starts Sing-box. Checks configuration and will not start again if the process is already running|
 |`stop`|Stops Sing-box. If the process is not found, reports that the daemon is already stopped|
 |`restart`|Stops and then starts Sing-box again|
+|`reload`|Reload sing-box (full restart, not a hot reload) without touching firewall rules|
 |`status`|Shows the current status of the process Sing-box|
 |`kill`|Forcefully terminates the Sing-box process (`kill -9`)|
 |`version`|Displays the current application version|

@@ -464,6 +464,24 @@ create_autostart_script(){
 }
 
 
+create_singbox_user(){
+  if ! id "$SINGBOX_PROC" >/dev/null 2>&1; then
+    echomsg "Create $SINGBOX_PROC user..."
+
+    adduser -D -H -u 3228 "$SINGBOX_PROC"
+    sed -i "/^${SINGBOX_PROC}:/c\\${SINGBOX_PROC}:x:0:3228:::" /opt/etc/passwd
+
+    if id "$SINGBOX_PROC" >/dev/null 2>&1; then
+      echook "$SINGBOX_PROC user created successfully"
+    else
+      exiterr "Failed to create $SINGBOX_PROC user"
+    fi
+
+    echook "Autostart script created successfully"
+  fi
+}
+
+
 download_skeen_script(){
   action="${1:-}"
   backup_script="${SKEEN_SCRIPT}.backup"
@@ -529,6 +547,7 @@ install(){
   install_singbox
   create_singbox_config
   create_autostart_script
+  create_singbox_user
   download_skeen_script
 
   echook "Installation completed, $SINGBOX_NAME version:"
@@ -1537,38 +1556,8 @@ clean_firewall(){
 }
 
 
-start() {
+start_singbox(){
   timeout=10
-
-  if [ "$CALLER" = "init" ]; then
-    if [ "$AUTO_START" = "0" ]; then
-      return 0
-    else
-      if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null; then
-        sleep "$AUTO_START_DELAY"
-        check_internet
-      else
-        sleep 5
-        check_internet
-      fi
-    fi
-  fi
-
-  if is_running; then
-    echook "$SINGBOX_NAME already started"
-    return 0
-  fi
-
-  check_config
-  echo "$DELIMETER"
-
-  prepare_firewall
-  echo "$DELIMETER"
-
-  if ! id "$SINGBOX_PROC" >/dev/null 2>&1; then
-    adduser -D -H -u 3228 "$SINGBOX_PROC"
-    sed -i "/^${SINGBOX_PROC}:/c\\${SINGBOX_PROC}:x:0:3228:::" /opt/etc/passwd
-  fi
 
   echomsg "Starting ${SINGBOX_NAME}..."
   # shellcheck disable=SC2086
@@ -1596,6 +1585,34 @@ start() {
 
   echook "$SINGBOX_NAME started"
   logger_notice "$SINGBOX_NAME started"
+}
+
+
+start() {
+  if [ "$CALLER" = "init" ]; then
+    if [ "$AUTO_START" = "0" ]; then
+      return 0
+    else
+      if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null; then
+        sleep "$AUTO_START_DELAY"
+        check_internet
+      else
+        sleep 5
+        check_internet
+      fi
+    fi
+  fi
+
+  if is_running; then
+    echook "$SINGBOX_NAME already started"
+    return 0
+  fi
+
+  check_config && echo "$DELIMETER"
+
+  prepare_firewall && echo "$DELIMETER"
+
+  start_singbox
 
   [ "$SKEEN_FIREWALL_MODE" != "none" ] && \
   echo "$DELIMETER" && apply_firewall
@@ -1604,9 +1621,8 @@ start() {
 }
 
 
-stop(){
+stop_singbox(){
   timeout=10
-
   echomsg "Stopping ${SINGBOX_NAME}..."
 
   if ! is_running; then
@@ -1637,13 +1653,15 @@ stop(){
     return 1
   fi
 
-  clean_firewall
-
   msg="$SINGBOX_NAME stopped"
   echook "$msg"
   logger_notice "$msg"
-  [ "$on_restart" = "1" ] && echo "$DELIMETER"
   return 0
+}
+
+stop(){
+  stop_singbox && clean_firewall
+  [ "$on_restart" = "1" ] && echo "$DELIMETER"
 }
 
 
@@ -1676,6 +1694,12 @@ restart() {
   start
   on_restart=0
   press_any_key_to_menu
+}
+
+
+reload(){
+  check_config && echo "$DELIMETER"
+  stop_singbox && start_singbox
 }
 
 
@@ -2138,6 +2162,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     start)   start ;;
     stop)    stop ;;
     restart) restart ;;
+    reload)  reload ;;
     status)  if is_running; then green "running"; else red "stopped"; fi ;;
     kill)    kill_proc ;;
     version)
