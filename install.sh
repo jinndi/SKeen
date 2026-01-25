@@ -656,7 +656,7 @@ check_internet() {
         logger_warning "Internet is not available (${host}), attempt ${attempt}/${max_attempts}..."
       fi
       attempt=$((attempt + 1))
-      sleep 8
+      sleep 10
     done
   done
 
@@ -904,7 +904,7 @@ set_route_rules() {
       logger_error "$msg"
       exiterr "$msg"
     fi
-    sleep 8
+    sleep 10
   done
 
   [ "$i" -eq 0 ] || {
@@ -2020,8 +2020,14 @@ check_config(){
   if $SINGBOX_PROC check -C $CONFIG_DIR; then
     echook "Configuration is valid"
   else
-    echoerr "Configuration check failed"
-    press_any_key_to_menu
+    msg="Configuration check failed"
+    echoerr "$msg"
+    if [ "$CALLER" = "menu" ]; then
+      press_any_key_to_menu
+    else
+      logger_error "$msg"
+      exit 1
+    fi
   fi
 }
 
