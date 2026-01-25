@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.6.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.2...SKeen-v3.6.3) (2026-01-25)
+
+
+### 🐛 Fix
+
+* do not continue script execution when started from CLI if the configuration is invalid ([a2562e1](https://github.com/jinndi/SKeen/commit/a2562e12e4db257202f0860e8827e4bed5d10d2a))
+* typo in sed command and INET_TEST_IPV ([551e28b](https://github.com/jinndi/SKeen/commit/551e28bc3d1977684b0425b989542953ad04e6fd))
+
+
+### 🧰 Chore
+
+* add `reload` CLI option to restart sing-box without touching firewall rules ([26f4e0c](https://github.com/jinndi/SKeen/commit/26f4e0cfee65e5bd15192d482aa43223f2a69fcb))
+* improved behavior of the press_any_key_to_menu function and removed redundant code along with it ([f280242](https://github.com/jinndi/SKeen/commit/f2802424922c89dfea2cfb25102a8bbf6d66ce2d))
+* remove firewall hook file and sing-box user on uninstall ([d3c4512](https://github.com/jinndi/SKeen/commit/d3c4512beed79542536b55f591b86df9bbcd5d21))
+
 ## [3.6.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.1...SKeen-v3.6.2) (2026-01-24)
 
 
