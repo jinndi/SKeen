@@ -531,7 +531,6 @@ install(){
   create_autostart_script
   download_skeen_script
 
-  printf "\n"
   echook "Installation completed, $SINGBOX_NAME version:"
   "$SINGBOX_BIN" version
   echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
@@ -551,8 +550,14 @@ uninstall(){
   echomsg "Removing auto-start script..."
   rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
+  echomsg "Removing firewall hook script..."
+  rm -f "$FIREWALL_HOOK_FILE"
+
   echomsg "Removing $SKEEN_NAME script..."
   rm -f "$SKEEN_SCRIPT"
+
+  echomsg "Delete user ${SINGBOX_PROC}..."
+  deluser "$SINGBOX_PROC"
 
   if [ -d "$WORK_DIR" ]; then
     echomsg "Configuration directory $WORK_DIR is retained"
@@ -1475,11 +1480,13 @@ apply_firewall(){
     [ -n "$wait_ipv_file" ] && [ -f "$wait_ipv_file" ] && rm -f "$wait_ipv_file"
   done
 
-  echook "Firewall rules applied successfully."
+  echook "Firewall rules applied successfully"
 }
 
 
 clean_firewall(){
+  echomsg "Cleaning firewall rules..."
+
   [ -f "$FIREWALL_HOOK_FILE" ] && : > "$FIREWALL_HOOK_FILE"
 
   clean_chain() {
@@ -1527,6 +1534,8 @@ clean_firewall(){
       fi
     done
   fi
+
+  echook "Firewall cleanup completed"
 }
 
 
@@ -1602,9 +1611,8 @@ stop(){
 
   echomsg "Stopping ${SINGBOX_NAME}..."
 
-  clean_firewall
-
   if ! is_running; then
+    clean_firewall
     echook "$SINGBOX_NAME already stopped"
     return 0
   fi
@@ -1630,6 +1638,8 @@ stop(){
     logger_error "$msg"
     return 1
   fi
+
+  clean_firewall
 
   msg="$SINGBOX_NAME stopped"
   echook "$msg"
