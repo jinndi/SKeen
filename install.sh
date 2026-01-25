@@ -2127,26 +2127,35 @@ show_menu(){
  }
 
 
-show_help() {
-
-    cat <<EOF
+show_help(){
+cat <<EOF
 
 $SKEEN_NAME CLI Commands (use: help for this list):
 
+Service Control:
   start   - Starts $SINGBOX_NAME. Checks configuration and will not start again if already running
   stop    - Stops $SINGBOX_NAME. If the process is not found, reports that the daemon is already stopped
   restart - Stops and then starts $SINGBOX_NAME again
-  status  - Shows the current status of the $SINGBOX_NAME process
+  reload  - Reload $SINGBOX_NAME (full restart, not a hot reload) without touching firewall rules
   kill    - Forcefully terminates the $SINGBOX_NAME process (kill -9)
+  status  - Shows the current status of the $SINGBOX_NAME process
+
+Information & Updates:
   version - Displays the current application version
   update  - Checks for updates of $SINGBOX_NAME core and $SKEEN_NAME script, and allows updating
+
+Checks & Testing:
   test    - Checks whether iptables rules are correctly applied (requires $SINGBOX_NAME running and mode ≠ none)
   deps    - Checks if all dependencies are installed (installs missing ones)
-  backup  - Creates a backup of $WORK_DIR and places it in $ENTWARE_DIR
-  restore - Restores a backup of $WORK_DIR by archive name from $ENTWARE_DIR
-  reset   - Resets $CONFIG_DIR and skeen.conf to defaults, performing a backup first
   check   - Checks $SINGBOX_NAME configuration in $CONFIG_DIR for syntax and logical errors
   format  - Formats $SINGBOX_NAME configuration in $CONFIG_DIR without changing its behavior
+
+Backup & Restore:
+  backup  - Creates a backup of $WORK_DIR and places it in $ENTWARE_DIR
+  restore - Restores a backup of $WORK_DIR by archive name from $ENTWARE_DIR
+
+Reset Configuration:
+  reset   - Resets $CONFIG_DIR and skeen.conf to defaults, performing a backup first
 
 EOF
 }

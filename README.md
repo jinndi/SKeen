@@ -80,7 +80,7 @@ After successful installation:
 ### ⚡ Commands
 
 Example Usage: start the daemon `skeen start`
-(`skeen` without parameters launches the management menu)
+(`skeen` without parameters launches the management menu, use `help` for help)
 
 | Command | Description |
 | ------------ | -------------------------------------------------------------- |
@@ -88,17 +88,17 @@ Example Usage: start the daemon `skeen start`
 |`stop`|Stops Sing-box. If the process is not found, reports that the daemon is already stopped|
 |`restart`|Stops and then starts Sing-box again|
 |`reload`|Reload sing-box (full restart, not a hot reload) without touching firewall rules|
-|`status`|Shows the current status of the process Sing-box|
 |`kill`|Forcefully terminates the Sing-box process (`kill -9`)|
+|`status`|Shows the current status of the process Sing-box|
 |`version`|Displays the current application version|
 |`update`|Checks for available updates of the sing-box core and the SKeen script, and allows updating|
 |`test`|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
 |`deps`|Check if all dependencies are installed (installs missing ones)|
+|`check`| Checks Sing-box configuration in `/opt/etc/skeen/config/` for syntax and logical errors |
+|`format`| Formats Sing-box configuration in `/opt/etc/skeen/config/` without changing its behavior |
 |`backup`|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
 |`restore`|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
 |`reset`|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.conf` to defaults, performing a `backup` beforehand|
-|`check`| Checks Sing-box configuration in `/opt/etc/skeen/config/` for syntax and logical errors |
-|`format`| Formats Sing-box configuration in `/opt/etc/skeen/config/` without changing its behavior |
 
 ### ⚙️ Settigs
 
