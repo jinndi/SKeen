@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.6.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.3...SKeen-v3.6.4) (2026-01-25)
+
+
+### 🐛 Fix
+
+* stop the script installation on the first missing dependency ([9fcf618](https://github.com/jinndi/SKeen/commit/9fcf61861aad2830d2d95fba58fb49ce379f1009))
+
+
+### 🎨 Style
+
+* organize CLI help output into categories for better readability ([50e919e](https://github.com/jinndi/SKeen/commit/50e919e5ab78c6c512c740402e04790f53553fef))
+
 ## [3.6.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.2...SKeen-v3.6.3) (2026-01-25)
 
 
