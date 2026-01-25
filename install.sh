@@ -315,13 +315,12 @@ wait_input(){
 
 
 install_dependencies() {
-  pkg_missing=""
-
   echomsg "Checking dependencies"
+
   opkg update >/dev/null 2>&1
 
   for pkg_name in $DEPENDENCIES; do
-    printf "Installing %s ... " "$pkg_name"
+    printf "%s ... " "$pkg_name"
 
     if command -v "$pkg_name" >/dev/null 2>&1; then
       echook "Already installed"
@@ -331,14 +330,9 @@ install_dependencies() {
     if opkg install "$pkg_name" >/dev/null 2>&1; then
       echook "Installed"
     else
-      echoerr "FAILED"
-      pkg_missing="${pkg_missing:+$pkg_missing }$pkg_name"
+      exiterr "Installation error"
     fi
   done
-
-  if [ -n "$pkg_missing" ]; then
-    exiterr "Missing dependencies: $pkg_missing"
-  fi
 
   echook "All dependencies are installed"
 }
