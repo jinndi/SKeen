@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.4...SKeen-v3.6.5) (2026-01-25)
+
+
+### 🧰 Chore
+
+* adjust default sing-box configs (Clash mode rules, tag name selector) ([a7d2f23](https://github.com/jinndi/SKeen/commit/a7d2f23260807ffd2f60edd22689525867e3e357))
+
 ## [3.6.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.3...SKeen-v3.6.4) (2026-01-25)
 
 
