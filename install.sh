@@ -491,7 +491,7 @@ download_skeen_script(){
 
 
 press_any_key_to_menu(){
-  [ "$CALLER" != "menu" ] && return 0
+  [ "$CALLER" != "menu" ] && exit 1
 
   action="${1:-}"
 
@@ -719,7 +719,6 @@ check_router_port() {
     echoerr "Free the port on the 'Users and Access'"
     logger_error "Port 443 must be freed"
     press_any_key_to_menu
-    exit 1
   fi
 }
 
@@ -806,7 +805,6 @@ loading_modules() {
 
     logger_error "Missing Kernel modules for Netfilter"
     press_any_key_to_menu
-    exit 1
   fi
 
   return 0
@@ -1786,16 +1784,9 @@ check_updates(){
         [ -z "$option" ] && option="n"
 
         case "$option" in
-          y|Y)
-            update_skeen
-            break
-          ;;
-          n|N)
-            break
-          ;;
-          *)
-            echoerr "Incorrect option"
-          ;;
+          y|Y) update_skeen; break ;;
+          n|N) break ;;
+          *) echoerr "Incorrect option" ;;
         esac
       done
     else
@@ -1879,7 +1870,6 @@ test_firewall() {
   if ! is_running; then
     echoerr "Testing are available only when $SINGBOX_NAME is running"
     press_any_key_to_menu
-    exit 1
   else
     import_firewall_vars
   fi
@@ -1888,13 +1878,11 @@ test_firewall() {
     echoerr "The file at path $FIREWALL_HOOK_FILE is missing!"
     echomsg "Please reboot $SINGBOX_NAME"
     press_any_key_to_menu
-    exit 1
   fi
 
   if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
     echowarn "Testing is available in redirect, tproxy, and hybrid modes"
     press_any_key_to_menu
-    exit 1
   elif [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
     tables="nat mangle"
   elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
@@ -1906,7 +1894,6 @@ test_firewall() {
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
     echoerr "iptables utility is not installed"
     press_any_key_to_menu
-    exit 1
   fi
 
   for iptables in $SKEEN_IPTABLES_LIST; do
@@ -1954,7 +1941,7 @@ restore_config(){
     printf "for example %s: " "$(cyan "skeen.tar")" > /dev/tty
     read -r tarname < /dev/tty
 
-    [ -z "$tarname" ] && press_any_key_to_menu && exit 1
+    [ -z "$tarname" ] && press_any_key_to_menu
 
     archive_path="/opt/${tarname}"
 
