@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.7](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.6...SKeen-v3.6.7) (2026-01-26)
+
+
+### 🐛 Fix
+
+* ndm Opkg::Manager error: /opt/etc/ndm/netfilter.d/skeen_firewall.sh timed out. When the internet is inactive, the hook now simply skips applying firewall rules. ([aca67b4](https://github.com/jinndi/SKeen/commit/aca67b448650064b3b00459f5b9d47c0024cf639))
+
 ## [3.6.6](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.5...SKeen-v3.6.6) (2026-01-26)
 
 
