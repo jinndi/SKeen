@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.6.6"
+SKEEN_VERSION="3.6.7"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -44,8 +44,7 @@ SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
 SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 
 FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
-WAIT_IPV4_DEF_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_ipv4_dafault_route"
-WAIT_IPV6_DEF_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_ipv6_dafault_route"
+WAIT_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_route"
 CHAIN_PREROUTING="skeen"
 CHAIN_OUTPUT="skeen_mask"
 TABLE_REDIRECT="nat"
@@ -824,15 +823,6 @@ loading_modules() {
 }
 
 
-get_wait_ipv_file() {
-  ip_version="${1:-}"
-
-  var_name="WAIT_IPV${ip_version}_DEF_ROUTE_FILE"
-
-  eval "echo \"\${$var_name:-}\""
-}
-
-
 get_iptables_list(){
   ipt4="$(ip -4 addr show | grep -q "inet " && \
     command -v iptables >/dev/null 2>&1 && echo iptables)"
@@ -896,33 +886,24 @@ set_route_rules() {
     fi
   }
 
-  wait_ipv_file="$(get_wait_ipv_file "$IP_VERSION")"
+  if ! check_default_route; then
+    [ -f "$WAIT_ROUTE_FILE" ] || touch "$WAIT_ROUTE_FILE"
 
-  i=0
-  until check_default_route; do
-    [ -n "$wait_ipv_file" ] && [ ! -f "$wait_ipv_file" ] && touch "$wait_ipv_file"
+    msg="Default route in table '$source_table' (IPv$IP_VERSION) not found"
 
-    msg="Waiting for default route in table '$source_table' (IPv$IP_VERSION), attempt $((i+1))/10"
+    msg2="Check your internet connection"
+    if [ -n "$SKEEN_MARK_POLICY" ]; then
+      msg2="$msg2 for policy ${POLICY_NAME:-unknown}"
+    fi
+
     echowarn "$msg"
+    echowarn "$msg2"
     logger_warning "$msg"
 
-    i=$((i+1))
-    if [ "$i" -ge 10 ]; then
-      msg="Check your internet connection"
-      if [ -n "$SKEEN_MARK_POLICY" ]; then
-        msg="$msg for policy ${POLICY_NAME:-unknown}"
-      fi
-      logger_error "$msg"
-      exiterr "$msg"
-    fi
-    sleep 10
-  done
+    [ "$CALLER" != "menu" ] && exit 0
 
-  [ "$i" -eq 0 ] || {
-    msg="Default route found in table '$source_table' (IPv$IP_VERSION)"
-    echook "$msg"
-    logger_notice "$msg"
-  }
+    press_any_key_to_menu
+  fi
 
   ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
   ip -"$IP_VERSION" route flush table "$TABLE_ID" >/dev/null 2>&1 || true
@@ -1405,9 +1386,6 @@ prepare_firewall(){
 
     echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
 
-    echo "[ -f \"$WAIT_IPV4_DEF_ROUTE_FILE\" ] && exit 0"
-    echo "[ -f \"$WAIT_IPV6_DEF_ROUTE_FILE\" ] && exit 0"
-
     echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
     echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
     echo "export SKEEN_TPROXY_NETWORK=\"$SKEEN_TPROXY_NETWORK\""
@@ -1462,9 +1440,7 @@ apply_firewall(){
 
     set_route_rules
 
-    wait_ipv_file="$(get_wait_ipv_file "$IP_VERSION")"
-
-    if [ -n "$wait_ipv_file" ] && [ -f "$wait_ipv_file" ]; then
+    if [ -f "$WAIT_ROUTE_FILE" ]; then
       EXCLUDE_ADDRESSES="$(get_exclude_addresses "$IP_VERSION")"
       [ -n "${FIREWALL_HOOK_FILE:-}" ] && \
       sed -i "/SKEEN_EXCLUDE_IPV${IP_VERSION}/c\export SKEEN_EXCLUDE_IPV${IP_VERSION}_ADDRESSES=\"$EXCLUDE_ADDRESSES\"" "$FIREWALL_HOOK_FILE"
@@ -1487,9 +1463,9 @@ apply_firewall(){
       set_iptables_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_OUTPUT"
       add_output_rules "$iptables" "$TABLE_TPROXY"
     fi
-
-    [ -n "$wait_ipv_file" ] && [ -f "$wait_ipv_file" ] && rm -f "$wait_ipv_file"
   done
+
+  [ -f "$WAIT_ROUTE_FILE" ] && rm -f "$WAIT_ROUTE_FILE"
 
   echook "Firewall rules applied successfully"
 }
