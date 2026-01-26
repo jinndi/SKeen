@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.6](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.5...SKeen-v3.6.6) (2026-01-26)
+
+
+### 📦 Deps
+
+* add ca-bundle for TLS verification ([27c1891](https://github.com/jinndi/SKeen/commit/27c1891c95efe13a132b7e442db944b3f2c82de1))
+
 ## [3.6.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.4...SKeen-v3.6.5) (2026-01-25)
 
 
