@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.6.8](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.7...SKeen-v3.6.8) (2026-01-27)
+
+
+### 🐛 Fix
+
+* fixed loading of the xt_owner.ko module on firmware version 5.0.4 of the router ([ba9ed8d](https://github.com/jinndi/SKeen/commit/ba9ed8db7832d8a95b8fd47ed5c77b9511d74d3c))
+
+
+### ↩️ Revert
+
+* ca-bundle dependency rollback not needed ([f43cc85](https://github.com/jinndi/SKeen/commit/f43cc85c300cf4a36b510f3a098eadcb529aaa27))
+
 ## [3.6.7](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.6...SKeen-v3.6.7) (2026-01-26)
 
 
