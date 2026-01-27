@@ -780,8 +780,7 @@ load_module() {
 
 
 loading_modules() {
-  error=0
-  modules="xt_TPROXY.ko xt_socket.ko xt_owner.ko xt_multiport.ko"
+  modules="xt_TPROXY.ko xt_socket.ko xt_multiport.ko"
 
   case "$SKEEN_FIREWALL_MODE" in
     tproxy|hybrid)
@@ -793,17 +792,10 @@ loading_modules() {
     echomsg "Loading modules: xt_multiport.ko"
   fi
 
-  if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
+  if [ "$SKEEN_DNS_SUPPORTED" = "1" ] && ! is_owner_module_working; then
     echomsg "Loading modules: xt_owner.ko"
-  fi
+    load_module "xt_owner.ko"
 
-  modules="$(echo "$modules" | tr ' ' '\n' | sort -u)"
-
-  for module in $modules; do
-    load_module "$module" || error=1
-  done
-
-  if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
     if ! is_owner_module_working; then
       SKEEN_DNS_SUPPORTED=0
       echowarn "iptables owner module is not working"
@@ -811,13 +803,16 @@ loading_modules() {
     fi
   fi
 
-  if [ "$error" -ne 0 ]; then
-    echoerr "The '$SKEEN_FIREWALL_MODE' mode requires kernel modules"
-    echoerr "Install router component: Kernel modules for Netfilter"
+  modules="$(echo "$modules" | tr ' ' '\n' | sort -u)"
 
-    logger_error "Missing Kernel modules for Netfilter"
-    press_any_key_to_menu
-  fi
+  for module in $modules; do
+    if ! load_module "$module"; then
+      echoerr "The '$SKEEN_FIREWALL_MODE' mode requires kernel modules"
+      echoerr "Install router component: Kernel modules for Netfilter"
+      logger_error "Missing Kernel modules for Netfilter"
+      press_any_key_to_menu
+    fi
+  done
 
   return 0
 }
