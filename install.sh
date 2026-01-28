@@ -724,12 +724,14 @@ has_dns_servers() {
 
 
 check_router_port() {
-  port_ssl=$(curl -kfsS "127.0.0.1:79/rci/ip/http/ssl" 2>/dev/null | jsonfilter -e '@.port')
+  host="${1:-127.0.0.1}"
+  port="${2:-443}"
 
-  if [ "$port_ssl" = "443" ]; then
-    echoerr "Port 443 is occupied by router services"
-    echoerr "Free the port on the 'Users and Access'"
-    logger_error "Port 443 must be freed"
+  if (echo quit | telnet "$host" "$port" 2>/dev/null | grep -q "Connected"); then
+    msg_err="Port 443 must be freed"
+    echoerr "$msg_err"
+    echoerr "Free it and try running again"
+    logger_error "$msg_err"
     press_any_key_to_menu
   fi
 }
