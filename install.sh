@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.6.9"
+SKEEN_VERSION="3.6.10"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1527,6 +1527,18 @@ start_singbox(){
   timeout=10
 
   echomsg "Starting ${SINGBOX_NAME}..."
+
+  if [ -r /proc/sys/fs/file-max ]; then
+    file_max=$(cat /proc/sys/fs/file-max)
+    ulimit_n=$((file_max / 2))
+  else
+    # shellcheck disable=SC3045
+    ulimit_n=$(ulimit -Hn)
+  fi
+  [ "$ulimit_n" -lt 4096 ] && ulimit_n=4096
+  # shellcheck disable=SC3045
+  ulimit -n "$ulimit_n" || exiterr "Failed to set ulimit -n"
+
   # shellcheck disable=SC2086
   start-stop-daemon -S -b -x $SINGBOX_PROC -c $SINGBOX_PROC -- $SINGBOX_ARGS
   status_start=$?
