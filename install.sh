@@ -728,7 +728,7 @@ check_router_port() {
   port="${2:-443}"
 
   if (echo quit | telnet "$host" "$port" 2>/dev/null | grep -q "Connected"); then
-    msg_err="Port 443 must be freed"
+    msg_err="Port $port must be freed"
     echoerr "$msg_err"
     echoerr "Free it and try running again"
     logger_error "$msg_err"
@@ -2040,7 +2040,7 @@ show_menu(){
   printf "\n %s %s" "$SINGBOX_NAME version:" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
   printf "\n %s %s" "$SINGBOX_NAME state:" "$running_status"
   printf "\n %s %s" "Start automatically:" "$autostart_status"
-  if [ "$running_text" = "Stop" ]; then
+  if [ "$running_text" = "Stop" ] && [ "$SKEEN_FIREWALL_MODE" != "none" ]; then
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
@@ -2052,6 +2052,8 @@ show_menu(){
     printf "\n %s %s" "Firewall mode:" "$(cyan "$SKEEN_FIREWALL_MODE")"
     printf "\n %s %s" "Firewall network:" "$(cyan "$SKEEN_FIREWALL_NETWORK")"
     printf "\n %s %s" "Firewall IP ver.:" "$ipv4 $ipv6"
+  elif [ "$running_text" = "Stop" ] && [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
+    printf "\n %s %s" "Firewall mode:" "$(cyan "none")"
   fi
 
   printf "\n\n%s\n" "$(cyan "Select option:")"
