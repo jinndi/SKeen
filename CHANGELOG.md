@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.10](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.9...SKeen-v3.6.10) (2026-01-28)
+
+
+### 🧰 Chore
+
+* make sing-box ulimit calculation safer on BusyBox ([a299327](https://github.com/jinndi/SKeen/commit/a29932710d6dcf7642d29dc64e9467155b5527f1))
+
 ## [3.6.9](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.8...SKeen-v3.6.9) (2026-01-28)
 
 
