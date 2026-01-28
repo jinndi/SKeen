@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.6.9](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.8...SKeen-v3.6.9) (2026-01-28)
+
+
+### 🐛 Fix
+
+* check if port 443 is in use via telnet ([8bf24ac](https://github.com/jinndi/SKeen/commit/8bf24ac4c8ac1986fd62902de4917026351f0273))
+
+
+### 🎨 Style
+
+* do not display information about IP versions, network types, or DNS operations if the firewall mode is set to 'none' ([4e1fbfd](https://github.com/jinndi/SKeen/commit/4e1fbfd8a898d668a22d1317bf30f150698d54c7))
+
 ## [3.6.8](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.7...SKeen-v3.6.8) (2026-01-27)
 
 
