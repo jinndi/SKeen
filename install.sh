@@ -913,8 +913,8 @@ set_route_rules() {
   ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
   ip -"$IP_VERSION" route flush table "$TABLE_ID" >/dev/null 2>&1 || true
 
-  ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
   ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID"
+  ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
 
   ip -"$IP_VERSION" route show table "$source_table" 2>/dev/null |
   while read -r r; do
@@ -1580,6 +1580,8 @@ start_singbox(){
     logger_error "$msg"
     return 1
   fi
+
+  sysctl -w net.ipv4.ip_forward=1 > /dev/null
 
   echook "$SINGBOX_NAME started"
   logger_notice "$SINGBOX_NAME started"
