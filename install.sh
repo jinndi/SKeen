@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.6.10"
+SKEEN_VERSION="3.7.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -326,10 +326,14 @@ install_dependencies() {
       continue
     fi
 
-    if opkg install "$pkg_name" >/dev/null 2>&1; then
-      echook "Installed"
+    if opkg list | awk '{print $1}' | grep -qx "$pkg_name"; then
+      if opkg install "$pkg_name" >/dev/null 2>&1; then
+        echook "Installed"
+      else
+        exiterr "Installation error"
+      fi
     else
-      exiterr "Installation error"
+      exiterr "Package not found in opkg repositories"
     fi
   done
 
