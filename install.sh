@@ -25,7 +25,7 @@ WORK_DIR="${ENTWARE_DIR}/etc/skeen"
 CONFIG_DIR="${WORK_DIR}/config"
 TMP_DIR="${ENTWARE_DIR}/tmp"
 NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
-MODULES_OS_DIR="/lib/modules"
+MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
@@ -763,17 +763,22 @@ load_module() {
     return 0
   fi
 
+  path_os="${MODULES_OS_DIR}/${module}"
   path_entware="${MODULES_ENTWARE_DIR}/${module}"
-  path_os="${MODULES_OS_DIR}/$(uname -r)/${module}"
+
+  if [ -f "$path_os" ]; then
+    insmod "$path_os" >/dev/null 2>&1
+
+    if [ ! -f "$path_entware" ]; then
+      mkdir -p "$MODULES_ENTWARE_DIR"
+      cp "$path_os" "$path_entware" 2>/dev/null
+    fi
+
+    return 0
+  fi
 
   if [ -f "$path_entware" ]; then
     insmod "$path_entware" >/dev/null 2>&1 && return 0
-  fi
-
-  if [ -f "$path_os" ]; then
-    mkdir -p "$MODULES_ENTWARE_DIR"
-    cp "$path_os" "$path_entware" 2>/dev/null
-    insmod "$path_os" >/dev/null 2>&1 && return 0
   fi
 
   echoerr "Module '$module' not found"
@@ -1605,7 +1610,6 @@ stop_singbox(){
   echomsg "Stopping ${SINGBOX_NAME}..."
 
   if ! is_running; then
-    clean_firewall
     echook "$SINGBOX_NAME already stopped"
     return 0
   fi
