@@ -988,6 +988,42 @@ get_hijack_dns_subnet() {
   fi
 }
 
+get_validate_ports() {
+  label="${1:-}"
+  input="${2:-}"
+
+  msg_err="Invalid ${label} port:"
+  valid_ports=""
+  invalid_ports=""
+
+  ports="$(printf '%s\n' "$input" | tr ', ' '\n' | sed '/^$/d')"
+
+  for p in $ports; do
+    case "$p" in
+      *:*) start="${p%%:*}"; end="${p##*:}" ;;
+      *) start="$p"; end="$p" ;;
+    esac
+
+    case "$start$end" in
+      *[!0-9]*|'')
+        invalid_ports="${invalid_ports:+$invalid_ports }$p"
+        continue
+      ;;
+    esac
+
+    if [ "$start" -lt 1 ] || [ "$end" -gt 65535 ] || [ "$start" -gt "$end" ]; then
+      invalid_ports="${invalid_ports:+$invalid_ports }$p"
+      continue
+    fi
+
+    valid_ports="${valid_ports:+$valid_ports }$p"
+  done
+
+  [ -n "$invalid_ports" ] && logger_warning "$msg_err $invalid_ports" && echowarn "$msg_err $invalid_ports"
+
+  printf '%s' "$valid_ports"
+}
+
 
 get_exclude_addresses() {
   ip_v="${1:-}"
@@ -1036,6 +1072,9 @@ get_exclude_addresses() {
 $reserved_subnets
 EOF
 
+
+  invalid_list=""
+
   for addr in $user_exclude; do
     [ "${addr#*/}" = "$addr" ] && addr="$addr/$prefix_length_default"
 
@@ -1047,9 +1086,14 @@ EOF
     if $validator "$addr"; then
       all_list="$all_list $addr"
     else
-      echowarn "Invalid IPv$ip_v exclude address: $addr"
+      invalid_list="$invalid_list $addr"
     fi
   done
+
+  [ -n "$invalid_list" ] && {
+    echowarn "Invalid IPv$ip_v exclude:$invalid_list"
+    logger_warning "Invalid IPv$ip_v exclude:$invalid_list"
+  }
 
   echo "$all_list" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
@@ -1166,8 +1210,8 @@ set_iptables_rules() {
 
 
 set_prerouting_rules() {
-  iptables="$1"
-  base_table="$2"
+  iptables="${1:-}"
+  base_table="${2:-}"
   connmark_option=""
 
   case "$SKEEN_FIREWALL_MODE:$base_table" in
@@ -1203,11 +1247,11 @@ set_prerouting_rules() {
     ports=""
     dports_op=""
 
-    if [ -n "$INTERCEPT_PORTS" ]; then
-      ports="$INTERCEPT_PORTS"
+    if [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
+      ports="$SKEEN_INTERCEPT_PORTS"
       dports_op="--dports"
-    elif [ -n "$EXCLUDE_PORTS" ]; then
-      ports="$EXCLUDE_PORTS"
+    elif [ -n "$SKEEN_EXCLUDE_PORTS" ]; then
+      ports="$SKEEN_EXCLUDE_PORTS"
       dports_op="! --dports"
     fi
 
@@ -1225,42 +1269,15 @@ set_prerouting_rules() {
       continue
     fi
 
-    validate_ports() {
-      for p in $(echo "$1" | tr ', ' '\n' | sed '/^$/d'); do
-        case "$p" in
-          *:*)
-            start="${p%%:*}"
-            end="${p##*:}"
-          ;;
-          *)
-            start="$p"
-            end="$p"
-          ;;
-        esac
-
-        case "$start$end" in
-          *[!0-9]*|'') return 1 ;;
-        esac
-
-        [ "$start" -ge 1 ] && [ "$end" -le 65535 ] && [ "$start" -le "$end" ] || return 1
-      done
-      return 0
-    }
-
-    if ! validate_ports "$ports"; then
-      stop
-      exiterr "Invalid ports definition: $ports"
-    fi
-
-    ports_list="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
+    ports="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
 
     # shellcheck disable=SC2086
-    set -- $ports_list
+    set -- $ports
     total=$#
     i=1
 
     while [ "$i" -le "$total" ]; do
-      chunk="$(printf '%s\n' "$ports_list" |
+      chunk="$(printf '%s\n' "$ports" |
               sed -n "${i},$((i+6))p" |
               tr '\n' ',' |
               sed 's/,$//')"
@@ -1366,6 +1383,14 @@ prepare_firewall(){
 
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 
+  SKEEN_INTERCEPT_PORTS=""
+  SKEEN_EXCLUDE_PORTS=""
+  if [ -n "$INTERCEPT_PORTS" ]; then
+    SKEEN_INTERCEPT_PORTS="$(get_validate_ports "intercept" "$INTERCEPT_PORTS")"
+  elif [ -n "$EXCLUDE_PORTS" ]; then
+    SKEEN_EXCLUDE_PORTS="$(get_validate_ports "exclude" "$EXCLUDE_PORTS")"
+  fi
+
   SKEEN_EXCLUDE_IPV4_ADDRESSES=""
   SKEEN_HIJACK_DNS_IPV4_SUBNET=""
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
@@ -1397,6 +1422,8 @@ prepare_firewall(){
     echo "export SKEEN_FIREWALL_NETWORK=\"$SKEEN_FIREWALL_NETWORK\""
     echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
+    echo "export SKEEN_INTERCEPT_PORTS=\"$SKEEN_INTERCEPT_PORTS\""
+    echo "export SKEEN_EXCLUDE_PORTS=\"$SKEEN_EXCLUDE_PORTS\""
 
     [ $ip_v4 -eq 1 ] && echo "export SKEEN_EXCLUDE_IPV4_ADDRESSES=\"$SKEEN_EXCLUDE_IPV4_ADDRESSES\""
     [ $ip_v6 -eq 1 ] && echo "export SKEEN_EXCLUDE_IPV6_ADDRESSES=\"$SKEEN_EXCLUDE_IPV6_ADDRESSES\""
