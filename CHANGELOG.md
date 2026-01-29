@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.7.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.10...SKeen-v3.7.0) (2026-01-29)
+
+
+### 🚀 Feat
+
+* now higher priority for module loading is given to modules located in the OS kernel ([90c0be6](https://github.com/jinndi/SKeen/commit/90c0be6130995bbab91abf1547acc02259b6e457))
+
+
+### 🛠 Refactor
+
+* simplified the style of the function that checks the owner module functionality ([74d239b](https://github.com/jinndi/SKeen/commit/74d239b0e31c16f4678c5ef27e573feb6f4ac0bb))
+
+
+### 🧰 Chore
+
+* check package availability before opkg install ([d7541ba](https://github.com/jinndi/SKeen/commit/d7541ba46d4dd30dee5eb66d1c7f75f80e622b39))
+* do not trigger firewall rule application for the nat table in hybrid mode, since it will be applied via mangle as well ([fade749](https://github.com/jinndi/SKeen/commit/fade7494dbedcbbcc9ad0511f79c0f57bf74cc43))
+* small improvements and fixes ([2009805](https://github.com/jinndi/SKeen/commit/20098052b9d0ef5ed4db18203b155aeabb6320fc))
+
 ## [3.6.10](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.9...SKeen-v3.6.10) (2026-01-28)
 
 
