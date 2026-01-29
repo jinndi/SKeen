@@ -746,16 +746,13 @@ check_router_port() {
 is_owner_module_working() {
   chain="TEST_OWNER_CHAIN"
 
-  iptables -w -t mangle -N "$chain" >/dev/null 2>&1 || return 1
+  iptables -w -t mangle -N "$chain" >/dev/null 2>&1 || true
 
-  if iptables -w -t mangle -A "$chain" -m owner --gid-owner 65534 -j RETURN >/dev/null 2>&1; then
-    result=0
-  else
-    result=1
-  fi
+  iptables -w -t mangle -A "$chain" -m owner --gid-owner 65534 -j RETURN >/dev/null 2>&1
+  result=$?
 
-  iptables -w -t mangle -F "$chain" >/dev/null 2>&1
-  iptables -w -t mangle -X "$chain" >/dev/null 2>&1
+  iptables -w -t mangle -F "$chain" >/dev/null 2>&1 || true
+  iptables -w -t mangle -X "$chain" >/dev/null 2>&1 || true
 
   return "$result"
 }
