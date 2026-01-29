@@ -147,7 +147,7 @@ create_skeen_config(){
     echo
     echo "# Ports to be excluded from redirect via TProxy/Redirect"
     echo "# List: port and port ranges use colon e.g. 8080,1443,1300:2300 or 8080 1443 1300:2300"
-    echo "EXCLUDE_PORTS=\"137, 138, 139, 445\""
+    echo "EXCLUDE_PORTS=\"123, 137, 138, 139, 445\""
     echo
     echo "# Excluded ip addresses for traffic redirection"
     echo "# List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ..."
