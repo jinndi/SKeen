@@ -1399,17 +1399,26 @@ prepare_firewall(){
     echo "export SKEEN_FIREWALL_NETWORK=\"$SKEEN_FIREWALL_NETWORK\""
     echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
+
     [ $ip_v4 -eq 1 ] && echo "export SKEEN_EXCLUDE_IPV4_ADDRESSES=\"$SKEEN_EXCLUDE_IPV4_ADDRESSES\""
     [ $ip_v6 -eq 1 ] && echo "export SKEEN_EXCLUDE_IPV6_ADDRESSES=\"$SKEEN_EXCLUDE_IPV6_ADDRESSES\""
+
     echo "export SKEEN_DNS_SUPPORTED=\"$SKEEN_DNS_SUPPORTED\""
+
     if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
       [ $ip_v4 -eq 1 ] && echo "export SKEEN_HIJACK_DNS_IPV4_SUBNET=\"$SKEEN_HIJACK_DNS_IPV4_SUBNET\""
       [ $ip_v6 -eq 1 ] && echo "export SKEEN_HIJACK_DNS_IPV6_SUBNET=\"$SKEEN_HIJACK_DNS_IPV6_SUBNET\""
     fi
+
     echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
+
     echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
-    [ "$SKEEN_FIREWALL_NETWORK" = "redirect" ] && echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
-    [ "$SKEEN_FIREWALL_NETWORK" = "tproxy" ] && echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0"
+
+    case "$SKEEN_FIREWALL_MODE" in
+      tproxy|hybrid) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0" ;;
+      redirect) echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
+      *) echo "exit 0" ;;
+    esac
 
     echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table\""
 
