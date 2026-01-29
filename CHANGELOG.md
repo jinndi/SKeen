@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.7.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.0...SKeen-v3.7.1) (2026-01-29)
+
+
+### 🐛 Fix
+
+* **iptables:** ensure socket --transparent MARK and TPROXY are applied after exclude rules ([1a7c776](https://github.com/jinndi/SKeen/commit/1a7c776a9caf5d85ea6bf1a945d876684053f115))
+* port validation to collect invalid ports and log them as a single list + registration of ports for firewall hook to ensure proper interception + IP exclude validation to collect invalid addresses and log them once ([f82d117](https://github.com/jinndi/SKeen/commit/f82d1174e40f3219cbbda0b1a2be2627dd7faa58))
+
+
+### 🧰 Chore
+
+* add default ports to bypass NTP ([e4726a9](https://github.com/jinndi/SKeen/commit/e4726a97cfdd4d3ce3225897f53a320f5b0799b3))
+* add default ports to bypass SMB traffic ([cf4a8fc](https://github.com/jinndi/SKeen/commit/cf4a8fce0581f0c2c6757468fe56eac798cf60cd))
+* enable net.ipv4.ip_forward=1 after sing-box start ([221af7e](https://github.com/jinndi/SKeen/commit/221af7e56eea5ab2e709ae49cf03faa3b87ddb57))
+
 ## [3.7.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.6.10...SKeen-v3.7.0) (2026-01-29)
 
 
