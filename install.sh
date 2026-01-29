@@ -1115,7 +1115,7 @@ set_iptables_rules() {
           rule="-p udp -m socket --transparent \
                 -j MARK --set-mark $TABLE_MARK"
           # shellcheck disable=SC2086
-          $iptables -w -t "$table" -I "$chain" $rule >/dev/null 2>&1
+          $iptables -w -t "$table" -A "$chain" $rule >/dev/null 2>&1
 
           rule="-p udp -j TPROXY \
                 --on-ip $PROXY_IP \
@@ -1130,7 +1130,7 @@ set_iptables_rules() {
           rule="-p $net -m socket --transparent \
                   -j MARK --set-mark $TABLE_MARK"
           # shellcheck disable=SC2086
-          $iptables -w -t "$table" -I "$chain" $rule >/dev/null 2>&1
+          $iptables -w -t "$table" -A "$chain" $rule >/dev/null 2>&1
           # shellcheck disable=SC2086
           rule="-p $net -j TPROXY \
                 --on-ip $PROXY_IP \
