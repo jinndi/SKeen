@@ -188,7 +188,9 @@ logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
 
 get_current_version() {
-  case "$1" in
+  proc="${1:-}"
+
+  case "$proc" in
     "$SINGBOX_PROC")
       if [ -f "$SINGBOX_BIN" ]; then
         $SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs
@@ -206,7 +208,7 @@ get_current_version() {
 
 
 get_latest_version() {
-  api_url=$1
+  api_url="${1:-}"
 
   latest_release="$(curl --connect-timeout 5 --max-time 90 -s "$api_url")"
   curl_exit_status=$?
@@ -903,7 +905,7 @@ set_route_rules() {
     fi
 
     echowarn "$msg"
-    echowarn "$msg2"
+    echoerr"$msg2"
     logger_warning "$msg"
 
     [ "$CALLER" != "menu" ] && exit 0
@@ -925,7 +927,6 @@ set_route_rules() {
     ip -"$IP_VERSION" route add table "$TABLE_ID" "$r" 2>/dev/null || true
   done
 }
-
 
 is_valid_ipv4() {
   addr="${1:-}"
@@ -1450,7 +1451,10 @@ apply_firewall(){
       EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_IPV6_ADDRESSES:-}"
       HIJACK_DNS_SUBNET="${SKEEN_HIJACK_DNS_IPV6_SUBNET:-}"
     else
-      exiterr "Unknown iptables: $iptables"
+      msg_err="Unknown iptables: $iptables"
+      logger_error "$msg_err"
+      echoerr "$msg_err"
+      press_any_key_to_menu
     fi
 
     set_route_rules
