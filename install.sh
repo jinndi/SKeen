@@ -1804,7 +1804,7 @@ update_core(){
   is_running && stop && is_stopped=1
   get_os_release
   get_architecture
-  download_singbox "$latest_sb_ver" || return 1
+  download_singbox "$latest" || return 1
   install_singbox
   echook "The $SINGBOX_NAME core has been successfully updated"
 }
@@ -1820,89 +1820,65 @@ update_skeen(){
 }
 
 
-check_updates(){
-  echomsg "Checking $SINGBOX_NAME for updates..."
+ask_and_update() {
+  name="${1:-}"
+  proc="${2:-}"
+  api="${3:-}"
+  update_fn="${4:-}"
+  releases="${5:-}"
 
-  current_sb_ver="$(get_current_version "$SINGBOX_PROC")"
-  latest_sb_ver="$(get_latest_version "$SINGBOX_API_URL")"
+  echomsg "Checking $name for updates..."
 
-  if [ -z "$current_sb_ver" ]; then
-    if [ -f "$SINGBOX_BIN" ]; then
-      echoerr "Failed to get $SINGBOX_NAME version"
-    else
-      update_core
-      current_sb_ver="$(get_current_version "$SINGBOX_PROC")"
-      latest_sb_ver="$current_sb_ver"
-    fi
+  current=$(get_current_version "$proc")
+  latest=$(get_latest_version "$api")
+
+  { [ -z "$current" ] || [ -z "$latest" ]; } && return 1
+
+  if [ "$latest" != "$current" ]; then
+    printf '%s %s\n' "$(cyan "New version of $name is available:")" "$(green "$latest")"
+    printf '%s %s\n' "$(cyan "Current installed version:")" "$(red "$current")"
+    printf '%s %s\n' "$(cyan "More details:")" "$(green "$releases")"
+
+    while :; do
+      printf 'Perform the update? [y/n] (default: n): ' > /dev/tty
+      read -r opt < /dev/tty
+      [ -z "$opt" ] && opt=n
+
+      case $opt in
+        y|Y) "$update_fn" ;;
+        n|N) return 0 ;;
+        *) echoerr "Incorrect option" ;;
+      esac
+    done
+  else
+    echook "The latest $name version $latest is already installed"
   fi
 
+  return 0
+}
+
+
+check_updates() {
   is_stopped=0
-
-  if [ -n "$latest_sb_ver" ] && [ -n "$current_sb_ver" ]; then
-    if [ "$latest_sb_ver" != "$current_sb_ver" ]; then
-      printf "%s %s\n" "$(cyan "New version of the $SINGBOX_NAME core is available:")" "$(green "$latest_sb_ver")"
-      printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$current_sb_ver")"
-      printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/SagerNet/sing-box/releases")"
-
-      while :; do
-        printf "Perform the update? [y/n] (default: n): " > /dev/tty
-        read -r option < /dev/tty
-
-        [ -z "$option" ] && option="n"
-
-        case "$option" in
-          y|Y) update_core; break ;;
-          n|N) break ;;
-          *) echoerr "Incorrect option" ;;
-        esac
-      done
-    else
-      echook "The latest $SINGBOX_NAME version $latest_sb_ver is already installed"
-    fi
-  fi
-
-  echomsg "Checking $SKEEN_NAME for updates..."
-
-  current_sk_ver="$(get_current_version "$SKEEN_PROC")"
-  latest_sk_ver="$(get_latest_version "$SKEEN_API_URL")"
-
-  if [ -z "$current_sk_ver" ]; then
-    echoerr "Failed to get $SKEEN_NAME version"
-  fi
-
   is_update_skeen=0
 
-  if [ -n "$latest_sk_ver" ] && [ -n "$current_sk_ver" ]; then
-    if [ "$latest_sk_ver" != "$current_sk_ver" ]; then
-      printf "%s %s\n" "$(cyan "New version $SKEEN_NAME script is available:")" "$(green "$latest_sk_ver")"
-      printf "%s %s\n" "$(cyan "Current installed version:")" "$(red "$current_sk_ver")"
-      printf "%s %s\n" "$(cyan "More details:")" "$(green "https://github.com/jinndi/SKeen/releases")"
+  # sing-box
+  ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
+    update_core "https://github.com/SagerNet/sing-box/releases"
+  [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ] && update_core
 
-      while :; do
-        printf "Perform the update? [y/n] (default: n): " > /dev/tty
-        read -r option < /dev/tty
+  # skeen
+  ask_and_update "$SKEEN_NAME" "$SKEEN_PROC" "$SKEEN_API_URL" \
+    update_skeen "https://github.com/jinndi/SKeen/releases"
+  [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest" ] && update_skeen
 
-        [ -z "$option" ] && option="n"
+  [ "$is_stopped" -eq 1 ] && start
+  [ "$CALLER" = cli ] && exit 0
 
-        case "$option" in
-          y|Y) update_skeen; break ;;
-          n|N) break ;;
-          *) echoerr "Incorrect option" ;;
-        esac
-      done
-    else
-      echook "The latest $SKEEN_NAME version $latest_sk_ver is already installed"
-    fi
-  fi
-
-  [ "$is_stopped" = "1" ] && start
-
-  [ "$CALLER" = "cli" ] && exit 0
-
-  if [ $is_update_skeen -eq 1 ]; then
+  if [ "$is_update_skeen" -eq 1 ]; then
     exec sh "$SKEEN_SCRIPT" deps menu
   else
-    press_any_key_to_menu "reload"
+    press_any_key_to_menu reload
   fi
 }
 
