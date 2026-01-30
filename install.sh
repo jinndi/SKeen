@@ -1608,8 +1608,9 @@ start_singbox(){
     return 1
   fi
 
-  sysctl -w net.ipv4.ip_forward=1 > /dev/null
-  sysctl -w net.ipv4.conf.lo.route_localnet=1  > /dev/null
+  sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
+  sysctl -w net.ipv6.conf.all.forwarding=1 >/dev/null 2>&1
+  sysctl -w net.ipv4.conf.lo.route_localnet=1  >/dev/null 2>&1
 
   echook "$SINGBOX_NAME started"
   logger_notice "$SINGBOX_NAME started"
