@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.4...SKeen-v3.7.5) (2026-01-30)
+
+
+### 🐛 Fix
+
+* path /etc/group ([6192f88](https://github.com/jinndi/SKeen/commit/6192f8804adc27d66fcff4bc5aa756b613a6d09d))
+
 ## [3.7.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.3...SKeen-v3.7.4) (2026-01-30)
 
 
