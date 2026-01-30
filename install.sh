@@ -72,7 +72,6 @@ RESERVED_IPV4="
 192.31.196.0/24    # AS112-v4 (RFC7535)
 192.52.193.0/24    # AMT (RFC7450)
 192.88.99.0/24     # 6to4 Relay Anycast (RFC 3068, deprecated)
-192.88.99.2/32     # 6a44-relay anycast (RFC6751)
 192.168.0.0/16     # Private-Use (RFC 1918)
 # 198.18.0.0/15      # Benchmarking (RFC 2544) + sing-box fakeip
 198.51.100.0/24    # Documentation (TEST-NET-2) (RFC 5737)
