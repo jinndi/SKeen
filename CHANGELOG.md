@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.7.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.3...SKeen-v3.7.4) (2026-01-30)
+
+
+### 🛠 Refactor
+
+* replace SKeen user creation with group-only creation ([9995144](https://github.com/jinndi/SKeen/commit/999514474367cad6e0768380b331197b7922c7d3))
+* simplify is_running implementation ([8e87525](https://github.com/jinndi/SKeen/commit/8e87525e49a49b4893e50ab8bab819cda0f39b50))
+* unify update prompts and version checks ([d794d22](https://github.com/jinndi/SKeen/commit/d794d22bc247f7822d4b6751794bbd083c14ad7d))
+
+
+### 🧰 Chore
+
+* add check for skeen group existence before starting sing-box ([64a496d](https://github.com/jinndi/SKeen/commit/64a496db8532cada27970e8ca13d8dd5cbd6264e))
+
 ## [3.7.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.2...SKeen-v3.7.3) (2026-01-30)
 
 
