@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.7.4"
+SKEEN_VERSION="3.7.5"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -482,7 +482,7 @@ get_free_gid() {
 create_skeen_group() {
   name="$SKEEN_PROC"
 
-  if ! grep -q "^${name}:" /etc/group 2>/dev/null; then
+  if ! grep -q "^${name}:" "${ENTWARE_DIR}/etc/group" 2>/dev/null; then
     gid_num=$(get_free_gid 1000)
 
     echomsg "Creating group $name with GID ${gid_num}..."
@@ -1707,7 +1707,7 @@ start() {
 
   prepare_firewall && echo "$DELIMETER"
 
-  if ! grep -q "^${SKEEN_PROC}:" /etc/group 2>/dev/null; then
+  if ! grep -q "^${SKEEN_PROC}:" "${ENTWARE_DIR}/etc/group" 2>/dev/null; then
     create_skeen_group && echo "$DELIMETER"
   fi
 
