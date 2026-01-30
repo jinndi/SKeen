@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.7.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.2...SKeen-v3.7.3) (2026-01-30)
+
+
+### 🐛 Fix
+
+* **network:** remove redundant 192.88.99.2/32 subnet ([7c5771b](https://github.com/jinndi/SKeen/commit/7c5771b9eac23b8050070ba94d68dea1a70e383c))
+
+
+### 🛠 Refactor
+
+* **network:** wrap sysctl commands in a block with &gt;/dev/null 2&gt;&1 ([ff5cc5a](https://github.com/jinndi/SKeen/commit/ff5cc5aef946bfef7a4ac9ed4990332eadf456c4))
+
 ## [3.7.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.1...SKeen-v3.7.2) (2026-01-30)
 
 
