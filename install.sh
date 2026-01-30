@@ -524,12 +524,8 @@ press_any_key_to_menu(){
 }
 
 
-is_running(){
-  if [ -n "$(pidof "$SINGBOX_PROC")" ]; then
-    return 0
-  else
-    return 1
-  fi
+is_running() {
+  pidof "$SINGBOX_PROC" >/dev/null 2>&1
 }
 
 
