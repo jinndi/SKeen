@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.3...SKeen-v3.7.4) (2026-01-30)
+
+
+### 🛠 Refactor
+
+* unify update prompts and version checks ([1079146](https://github.com/jinndi/SKeen/commit/1079146fd0b852e1fc34dc0fd4fd5d11a043ad60))
+
 ## [3.7.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.2...SKeen-v3.7.3) (2026-01-30)
 
 
