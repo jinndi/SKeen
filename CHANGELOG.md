@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.7.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.1...SKeen-v3.7.2) (2026-01-30)
+
+
+### 🧰 Chore
+
+* enable IPv6 forwarding for TPROXY and policy routing ([6df00f9](https://github.com/jinndi/SKeen/commit/6df00f92261e0cbdbeff2deacb280e8dc39b6f07))
+* enable route_localnet on loopback for TPROXY ([a666b2b](https://github.com/jinndi/SKeen/commit/a666b2b19289b969fe0ed4aea1f0b9527caaa869))
+
 ## [3.7.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.0...SKeen-v3.7.1) (2026-01-29)
 
 
