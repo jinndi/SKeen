@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.7.1"
+SKEEN_VERSION="3.7.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
