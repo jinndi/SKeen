@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.1...SKeen-v3.7.2) (2026-01-30)
+
+
+### ⚡ Perf
+
+* **net:** add apply_sysctl_network_tuning() for network stack tuning ([9137bd6](https://github.com/jinndi/SKeen/commit/9137bd639d4f9f2dd6bbd0a743adf285cdbe2df2))
+
 ## [3.7.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.0...SKeen-v3.7.1) (2026-01-29)
 
 
