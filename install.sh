@@ -462,20 +462,35 @@ create_autostart_script(){
 }
 
 
-create_singbox_user(){
-  if ! id "$SINGBOX_PROC" >/dev/null 2>&1; then
-    echomsg "Create $SINGBOX_PROC user..."
+get_free_gid() {
+  start=${1:-1000}
+  max=65535
 
-    adduser -D -H -u 3228 "$SINGBOX_PROC"
-    sed -i "/^${SINGBOX_PROC}:/c\\${SINGBOX_PROC}:x:0:3228:::" /opt/etc/passwd
-
-    if id "$SINGBOX_PROC" >/dev/null 2>&1; then
-      echook "$SINGBOX_PROC user created successfully"
-    else
-      exiterr "Failed to create $SINGBOX_PROC user"
+  gid=$start
+  while [ "$gid" -le "$max" ]; do
+    if ! grep -q ":$gid:" /etc/group 2>/dev/null; then
+      echo "$gid"
+      return 0
     fi
+    gid=$((gid + 1))
+  done
 
-    echook "Autostart script created successfully"
+  exiterr "No free GID available"
+}
+
+
+create_skeen_group() {
+  name="$SKEEN_PROC"
+
+  if ! grep -q "^${name}:" /etc/group 2>/dev/null; then
+    gid_num=$(get_free_gid 1000)
+
+    echomsg "Creating group $name with GID ${gid_num}..."
+    addgroup -g "$gid_num" "$name" >/dev/null 2>&1 \
+      || exiterr "Failed to create group $name"
+    echook "Group $name created successfully"
+  else
+    echomsg "Group $name already exists"
   fi
 }
 
@@ -541,7 +556,7 @@ install(){
   install_singbox
   create_singbox_config
   create_autostart_script
-  create_singbox_user
+  create_skeen_group
   download_skeen_script
 
   echook "Installation completed, $SINGBOX_NAME version:"
@@ -569,8 +584,8 @@ uninstall(){
   echomsg "Removing $SKEEN_NAME script..."
   rm -f "$SKEEN_SCRIPT"
 
-  echomsg "Delete user ${SINGBOX_PROC}..."
-  deluser "$SINGBOX_PROC"
+  echomsg "Delete group ${SKEEN_PROC}..."
+  delgroup "$SKEEN_PROC"
 
   if [ -d "$WORK_DIR" ]; then
     echomsg "Configuration directory $WORK_DIR is retained"
@@ -1308,7 +1323,7 @@ add_output_rules() {
   esac
 
   rule="OUTPUT \
-    -m owner ! --gid-owner $SINGBOX_PROC \
+    -m owner ! --gid-owner $SKEEN_PROC \
     -m conntrack ! --ctstate INVALID \
     $proto \
     -j $CHAIN_OUTPUT"
@@ -1641,7 +1656,7 @@ start_singbox(){
   ulimit -n "$ulimit_n" || exiterr "Failed to set ulimit -n"
 
   # shellcheck disable=SC2086
-  start-stop-daemon -S -b -x $SINGBOX_PROC -c $SINGBOX_PROC -- $SINGBOX_ARGS
+  start-stop-daemon -S -b -x $SINGBOX_PROC -c root:$SKEEN_PROC -- $SINGBOX_ARGS
   status_start=$?
 
   if [ $status_start -ne 0 ]; then
