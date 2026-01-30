@@ -1707,6 +1707,10 @@ start() {
 
   prepare_firewall && echo "$DELIMETER"
 
+  if ! grep -q "^${SKEEN_PROC}:" /etc/group 2>/dev/null; then
+    create_skeen_group && echo "$DELIMETER"
+  fi
+
   start_singbox
 
   [ "$SKEEN_FIREWALL_MODE" != "none" ] && \
