@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.8.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.5...SKeen-v3.8.0) (2026-01-31)
+
+
+### 🚀 Feat
+
+* **firewall:** migrate bypass networks to ipset ([135e37f](https://github.com/jinndi/SKeen/commit/135e37f7338abfc32a80f8865b74d3ec73f0b57a))
+
+
+### ⚡ Perf
+
+* **iptables:** optimize CONNMARK efficiency using conntrack state ([e880d73](https://github.com/jinndi/SKeen/commit/e880d7386070f67a9875ad825cd7a8689bf5cec3))
+
 ## [3.7.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.4...SKeen-v3.7.5) (2026-01-30)
 
 
