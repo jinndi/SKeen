@@ -1,5 +1,150 @@
 # Changelog
 
+## [3.9.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.0...SKeen-v3.9.0) (2026-01-31)
+
+
+### 🚀 Feat
+
+* **cli:** add check, format, help commands ([a16dc10](https://github.com/jinndi/SKeen/commit/a16dc100b7520a95f7ae13e5ef030231ed770df9))
+* **firewall:** migrate bypass networks to ipset ([135e37f](https://github.com/jinndi/SKeen/commit/135e37f7338abfc32a80f8865b74d3ec73f0b57a))
+* now higher priority for module loading is given to modules located in the OS kernel ([90c0be6](https://github.com/jinndi/SKeen/commit/90c0be6130995bbab91abf1547acc02259b6e457))
+* support 64-bit MIPS and CPU-specific PKG_ARCH detection ([e978afd](https://github.com/jinndi/SKeen/commit/e978afde70b00f6f9f3b6557bebb5af69aa20246))
+
+
+### 🐛 Fix
+
+* apply firewall rules after router reboot ([8edac10](https://github.com/jinndi/SKeen/commit/8edac10428ea081e2f0d63ba7e90b3bee585c3df))
+* bump version ([0c4332f](https://github.com/jinndi/SKeen/commit/0c4332f40e24399f821f15673415e684e99bf6b6))
+* case remove mips64le ([60d8fd6](https://github.com/jinndi/SKeen/commit/60d8fd61cb0bf9c9f0b006b7b75fa40ca1751a36))
+* check if port 443 is in use via telnet ([8bf24ac](https://github.com/jinndi/SKeen/commit/8bf24ac4c8ac1986fd62902de4917026351f0273))
+* detect mipsel/mipsle/mips  architecture + CPU ([550430b](https://github.com/jinndi/SKeen/commit/550430ba9f8fd1881ed7b2dd785ffbc0caff8366))
+* do not continue script execution when started from CLI if the configuration is invalid ([a2562e1](https://github.com/jinndi/SKeen/commit/a2562e12e4db257202f0860e8827e4bed5d10d2a))
+* **firewall:** do not reload config when applying firewall rules ([8f024a7](https://github.com/jinndi/SKeen/commit/8f024a729fb9be9040625f2e4d5259cdcce4ce97))
+* fix config saving when formatting with built-in sing-box command ([6f49348](https://github.com/jinndi/SKeen/commit/6f49348ff43636b1d493b906fa78c557b89345da))
+* fixed loading of the xt_owner.ko module on firmware version 5.0.4 of the router ([ba9ed8d](https://github.com/jinndi/SKeen/commit/ba9ed8db7832d8a95b8fd47ed5c77b9511d74d3c))
+* improve SINGBOX start/stop handling and rename config variables ([d092eb3](https://github.com/jinndi/SKeen/commit/d092eb3d785272c0a45484bc9720b748ac8eeef6))
+* **iptables:** ensure socket --transparent MARK and TPROXY are applied after exclude rules ([1a7c776](https://github.com/jinndi/SKeen/commit/1a7c776a9caf5d85ea6bf1a945d876684053f115))
+* load configuration on restart from menu ([3b89a53](https://github.com/jinndi/SKeen/commit/3b89a537da2e132fb3d8baae0eafaef46fec4d1e))
+* **menu:** prevent stuck cursor and repeated input after Ctrl+C ([1e17855](https://github.com/jinndi/SKeen/commit/1e178557b96232ea93b43c60974082448cfb8ab7))
+* ndm Opkg::Manager error: /opt/etc/ndm/netfilter.d/skeen_firewall.sh timed out. When the internet is inactive, the hook now simply skips applying firewall rules. ([aca67b4](https://github.com/jinndi/SKeen/commit/aca67b448650064b3b00459f5b9d47c0024cf639))
+* **network:** remove redundant 192.88.99.2/32 subnet ([7c5771b](https://github.com/jinndi/SKeen/commit/7c5771b9eac23b8050070ba94d68dea1a70e383c))
+* path /etc/group ([6192f88](https://github.com/jinndi/SKeen/commit/6192f8804adc27d66fcff4bc5aa756b613a6d09d))
+* port validation to collect invalid ports and log them as a single list + registration of ports for firewall hook to ensure proper interception + IP exclude validation to collect invalid addresses and log them once ([f82d117](https://github.com/jinndi/SKeen/commit/f82d1174e40f3219cbbda0b1a2be2627dd7faa58))
+* remove 24kc_24kf cpu from mips arch ([87c7e66](https://github.com/jinndi/SKeen/commit/87c7e6681ff1bb1c7120e7ab1a69ffaea3829155))
+* restore terminal echo on script exit to prevent input visibility loss ([8064bd0](https://github.com/jinndi/SKeen/commit/8064bd0e58330e830fa560ef6afdd829c00ed3cf))
+* **shell:** make script safe with set -e -u ([4ae7cf7](https://github.com/jinndi/SKeen/commit/4ae7cf77a2b3d073d34c5b403326b2d6a65751f6))
+* **shell:** validate IPv4 and IPv6 addresses and subnets safely ([051a4ca](https://github.com/jinndi/SKeen/commit/051a4ca965bf3f6948bd403a31e6b3d5cde3c182))
+* stop the script installation on the first missing dependency ([9fcf618](https://github.com/jinndi/SKeen/commit/9fcf61861aad2830d2d95fba58fb49ce379f1009))
+* typo in sed command and INET_TEST_IPV ([551e28b](https://github.com/jinndi/SKeen/commit/551e28bc3d1977684b0425b989542953ad04e6fd))
+
+
+### 🎨 Style
+
+* do not display information about IP versions, network types, or DNS operations if the firewall mode is set to 'none' ([4e1fbfd](https://github.com/jinndi/SKeen/commit/4e1fbfd8a898d668a22d1317bf30f150698d54c7))
+* organize CLI help output into categories for better readability ([50e919e](https://github.com/jinndi/SKeen/commit/50e919e5ab78c6c512c740402e04790f53553fef))
+
+
+### 🛠 Refactor
+
+* deduplicate add_output_rules ([afb6f90](https://github.com/jinndi/SKeen/commit/afb6f9021b5a15a80cb417c6d457d7c879c52bd8))
+* **network:** wrap sysctl commands in a block with &gt;/dev/null 2&gt;&1 ([ff5cc5a](https://github.com/jinndi/SKeen/commit/ff5cc5aef946bfef7a4ac9ed4990332eadf456c4))
+* replace SKeen user creation with group-only creation ([9995144](https://github.com/jinndi/SKeen/commit/999514474367cad6e0768380b331197b7922c7d3))
+* simplified the style of the function that checks the owner module functionality ([74d239b](https://github.com/jinndi/SKeen/commit/74d239b0e31c16f4678c5ef27e573feb6f4ac0bb))
+* simplify is_running implementation ([8e87525](https://github.com/jinndi/SKeen/commit/8e87525e49a49b4893e50ab8bab819cda0f39b50))
+* unify update prompts and version checks ([d794d22](https://github.com/jinndi/SKeen/commit/d794d22bc247f7822d4b6751794bbd083c14ad7d))
+
+
+### ⚡ Perf
+
+* **iptables:** optimize CONNMARK efficiency using conntrack state ([e880d73](https://github.com/jinndi/SKeen/commit/e880d7386070f67a9875ad825cd7a8689bf5cec3))
+* **net:** add apply_sysctl_network_tuning() for network stack tuning ([9137bd6](https://github.com/jinndi/SKeen/commit/9137bd639d4f9f2dd6bbd0a743adf285cdbe2df2))
+
+
+### 📦 Build
+
+* add minified skeen to release assets ([dcf670d](https://github.com/jinndi/SKeen/commit/dcf670d30634c55100978a882e0c5de6866d1074))
+
+
+### ↩️ Revert
+
+* ca-bundle dependency rollback not needed ([f43cc85](https://github.com/jinndi/SKeen/commit/f43cc85c300cf4a36b510f3a098eadcb529aaa27))
+
+
+### 📦 Deps
+
+* add ca-bundle for TLS verification ([27c1891](https://github.com/jinndi/SKeen/commit/27c1891c95efe13a132b7e442db944b3f2c82de1))
+
+
+### 🧰 Chore
+
+* add `reload` CLI option to restart sing-box without touching firewall rules ([26f4e0c](https://github.com/jinndi/SKeen/commit/26f4e0cfee65e5bd15192d482aa43223f2a69fcb))
+* add check for skeen group existence before starting sing-box ([64a496d](https://github.com/jinndi/SKeen/commit/64a496db8532cada27970e8ca13d8dd5cbd6264e))
+* add default ports to bypass NTP ([e4726a9](https://github.com/jinndi/SKeen/commit/e4726a97cfdd4d3ce3225897f53a320f5b0799b3))
+* add default ports to bypass SMB traffic ([cf4a8fc](https://github.com/jinndi/SKeen/commit/cf4a8fce0581f0c2c6757468fe56eac798cf60cd))
+* adjust default sing-box configs (Clash mode rules, tag name selector) ([a7d2f23](https://github.com/jinndi/SKeen/commit/a7d2f23260807ffd2f60edd22689525867e3e357))
+* check package availability before opkg install ([d7541ba](https://github.com/jinndi/SKeen/commit/d7541ba46d4dd30dee5eb66d1c7f75f80e622b39))
+* do not trigger firewall rule application for the nat table in hybrid mode, since it will be applied via mangle as well ([fade749](https://github.com/jinndi/SKeen/commit/fade7494dbedcbbcc9ad0511f79c0f57bf74cc43))
+* enable net.ipv4.ip_forward=1 after sing-box start ([221af7e](https://github.com/jinndi/SKeen/commit/221af7e56eea5ab2e709ae49cf03faa3b87ddb57))
+* fix typos and grammatical errors ([3d5c33b](https://github.com/jinndi/SKeen/commit/3d5c33b98b41cbbfe040ad57917e097716f4f689))
+* Fixes and improvements ([93f5b45](https://github.com/jinndi/SKeen/commit/93f5b450e80e445739389bec95cfc37f76bfc463))
+* improved behavior of the press_any_key_to_menu function and removed redundant code along with it ([f280242](https://github.com/jinndi/SKeen/commit/f2802424922c89dfea2cfb25102a8bbf6d66ce2d))
+* logging stdout ([40a27ac](https://github.com/jinndi/SKeen/commit/40a27ac8881a5cd258148a462d98fcb43221fca6))
+* **main:** release SKeen 3.4.5 ([95b4404](https://github.com/jinndi/SKeen/commit/95b4404fd778c46b33e6038bae5c6672cc064d66))
+* **main:** release SKeen 3.4.5 ([102ae16](https://github.com/jinndi/SKeen/commit/102ae16a3842fe7e0ef69c5ae1b77696b7928c3b))
+* **main:** release SKeen 3.4.6 ([9893813](https://github.com/jinndi/SKeen/commit/9893813562fbf3f60f23191d1210a125d34652ae))
+* **main:** release SKeen 3.4.6 ([72c2681](https://github.com/jinndi/SKeen/commit/72c26818d3d6b00e9a99474736c0e69a22ecc79d))
+* **main:** release SKeen 3.4.7 ([38f7fa7](https://github.com/jinndi/SKeen/commit/38f7fa71e31a22037362dab41f4d15a1377bb100))
+* **main:** release SKeen 3.4.7 ([3d06fa5](https://github.com/jinndi/SKeen/commit/3d06fa54c3384cf81485430a3fbe00c2174ed803))
+* **main:** release SKeen 3.5.0 ([2e676ff](https://github.com/jinndi/SKeen/commit/2e676ffae06663a69a4b89e98d1e43f65d6257ca))
+* **main:** release SKeen 3.5.0 ([caefe06](https://github.com/jinndi/SKeen/commit/caefe06d2033565b95727eddc1be7bee9ac4615a))
+* **main:** release SKeen 3.5.1 ([31053cb](https://github.com/jinndi/SKeen/commit/31053cb78a9b754974c478da546ed09e17902cc8))
+* **main:** release SKeen 3.5.1 ([dca1f49](https://github.com/jinndi/SKeen/commit/dca1f49416dc975abab11d581c69161e33a80723))
+* **main:** release SKeen 3.5.2 ([b753fe5](https://github.com/jinndi/SKeen/commit/b753fe50fcbfcb11f904dd839f0fe15a8cbd29e2))
+* **main:** release SKeen 3.5.2 ([9b878c5](https://github.com/jinndi/SKeen/commit/9b878c548659d1359f4aa5f27d116843af1c1f36))
+* **main:** release SKeen 3.5.3 ([f896a78](https://github.com/jinndi/SKeen/commit/f896a787539ad6729b1579baf1a6fa22eb7cc695))
+* **main:** release SKeen 3.5.3 ([1bb9632](https://github.com/jinndi/SKeen/commit/1bb963272656ec222c21e7844630c8f6e825ee44))
+* **main:** release SKeen 3.5.4 ([224b481](https://github.com/jinndi/SKeen/commit/224b481bc48cb3594d7d759690c65fa4aaaafcf9))
+* **main:** release SKeen 3.5.4 ([1bff32b](https://github.com/jinndi/SKeen/commit/1bff32b981cb502161be4503d2788ce837e24d7f))
+* **main:** release SKeen 3.6.0 ([6e72de6](https://github.com/jinndi/SKeen/commit/6e72de65edfe977dcd3065b5f832f3d0f5ef3e74))
+* **main:** release SKeen 3.6.0 ([7ad6b6e](https://github.com/jinndi/SKeen/commit/7ad6b6ebe47d8db1c45443990fe8dbe3e53850e1))
+* **main:** release SKeen 3.6.1 ([c8e9c45](https://github.com/jinndi/SKeen/commit/c8e9c45a5f0ea61ced36ae64a3aac174407d420a))
+* **main:** release SKeen 3.6.1 ([eee7437](https://github.com/jinndi/SKeen/commit/eee7437c30b036ab99eaf4186798aae1c2e3c741))
+* **main:** release SKeen 3.6.10 ([04c8aed](https://github.com/jinndi/SKeen/commit/04c8aed7d5711a2408aa80181a67260472282d8a))
+* **main:** release SKeen 3.6.10 ([9271cb0](https://github.com/jinndi/SKeen/commit/9271cb0c00b37d9ee9473247089afd2d7ab13349))
+* **main:** release SKeen 3.6.2 ([8f917b5](https://github.com/jinndi/SKeen/commit/8f917b50c66cb8acc076901a580d8cd3aa6d74b5))
+* **main:** release SKeen 3.6.2 ([27180c6](https://github.com/jinndi/SKeen/commit/27180c68e7e08c576908afd887959e32185c309a))
+* **main:** release SKeen 3.6.3 ([f0e6b77](https://github.com/jinndi/SKeen/commit/f0e6b7713679631c48024560ea956a9d23b6969e))
+* **main:** release SKeen 3.6.3 ([563255d](https://github.com/jinndi/SKeen/commit/563255d234c4265a49bb7ea416fe6aaad234a570))
+* **main:** release SKeen 3.6.4 ([2e516ab](https://github.com/jinndi/SKeen/commit/2e516ab7e9b3a3b6fc0f121ddfcca3da72cb7f54))
+* **main:** release SKeen 3.6.4 ([a4a6d0f](https://github.com/jinndi/SKeen/commit/a4a6d0f188af4b17d9eb85abdf91868d2d3be80d))
+* **main:** release SKeen 3.6.5 ([46067aa](https://github.com/jinndi/SKeen/commit/46067aaa92771c86722792b12ccd3242cf21d3e0))
+* **main:** release SKeen 3.6.5 ([d60a059](https://github.com/jinndi/SKeen/commit/d60a059087bb280e2709a0ec8d133d9eb621e1e7))
+* **main:** release SKeen 3.6.6 ([c737bf8](https://github.com/jinndi/SKeen/commit/c737bf8c0b5acd1585fcb7b85aff44ed8b576c2f))
+* **main:** release SKeen 3.6.6 ([d372a60](https://github.com/jinndi/SKeen/commit/d372a605902ee509dd4fb619fe84ca85a2d599f8))
+* **main:** release SKeen 3.6.7 ([560817d](https://github.com/jinndi/SKeen/commit/560817d734abb2f05f58e12a0a678ef37cec9ebc))
+* **main:** release SKeen 3.6.7 ([3450e7c](https://github.com/jinndi/SKeen/commit/3450e7c25094c09a221a582b8f831148d97b405e))
+* **main:** release SKeen 3.6.8 ([ab2f096](https://github.com/jinndi/SKeen/commit/ab2f096aa990e7dd1e0e132b79d712ae02f540fa))
+* **main:** release SKeen 3.6.8 ([8447009](https://github.com/jinndi/SKeen/commit/844700995ee4f2a017f852320b2b7095467394ad))
+* **main:** release SKeen 3.6.9 ([eecf8eb](https://github.com/jinndi/SKeen/commit/eecf8eb3156772fa1574b946e1991d9c771ec494))
+* **main:** release SKeen 3.6.9 ([ed99741](https://github.com/jinndi/SKeen/commit/ed997416b98167c8ac85ca4b949587eeec052092))
+* **main:** release SKeen 3.7.0 ([df74934](https://github.com/jinndi/SKeen/commit/df749341fc88efca4aabe12b2fa2f2d3d7c5011b))
+* **main:** release SKeen 3.7.0 ([912a8ae](https://github.com/jinndi/SKeen/commit/912a8ae016a71e1899e423cadeb6c20aa358e8e6))
+* **main:** release SKeen 3.7.1 ([cded060](https://github.com/jinndi/SKeen/commit/cded060877d13e19e9ff6e1df3a379dc02b8cb0c))
+* **main:** release SKeen 3.7.1 ([233e653](https://github.com/jinndi/SKeen/commit/233e653ddf618d2e14ec249f30ad5c6e58c71194))
+* **main:** release SKeen 3.7.2 ([72e42c8](https://github.com/jinndi/SKeen/commit/72e42c82ac663b52a8abaf2c62582eaeee8ddee3))
+* **main:** release SKeen 3.7.2 ([3baa80b](https://github.com/jinndi/SKeen/commit/3baa80b858e2e98d788d53725af1031d46f1f2b8))
+* **main:** release SKeen 3.7.3 ([b5d1df0](https://github.com/jinndi/SKeen/commit/b5d1df09c6bbcb3f9d03dab1d45afd127ec37ad5))
+* **main:** release SKeen 3.7.3 ([1ba7147](https://github.com/jinndi/SKeen/commit/1ba7147cc9b70a487b3f75ade0e293e6836b6b49))
+* **main:** release SKeen 3.7.4 ([f57f53f](https://github.com/jinndi/SKeen/commit/f57f53f4b86644d3e8612468ed060d95f62aa743))
+* **main:** release SKeen 3.7.4 ([a379188](https://github.com/jinndi/SKeen/commit/a3791882dbcdb35926590d6e4a0e069efa1a1773))
+* **main:** release SKeen 3.7.5 ([a090b16](https://github.com/jinndi/SKeen/commit/a090b162def54b7c963140e3b7c0f3fb9794249b))
+* **main:** release SKeen 3.7.5 ([9b9724d](https://github.com/jinndi/SKeen/commit/9b9724db23d343fa1785f6c3503cc61bb1ada97f))
+* **main:** release SKeen 3.8.0 ([0445d21](https://github.com/jinndi/SKeen/commit/0445d211b124b439d93e093f3b7ba8abc46b111c))
+* **main:** release SKeen 3.8.0 ([cad3920](https://github.com/jinndi/SKeen/commit/cad39206170cbfd03ae46b8d5f15dedf7bacfb2c))
+* make sing-box ulimit calculation safer on BusyBox ([a299327](https://github.com/jinndi/SKeen/commit/a29932710d6dcf7642d29dc64e9467155b5527f1))
+* remove firewall hook file and sing-box user on uninstall ([d3c4512](https://github.com/jinndi/SKeen/commit/d3c4512beed79542536b55f591b86df9bbcd5d21))
+* small improvements and fixes ([2009805](https://github.com/jinndi/SKeen/commit/20098052b9d0ef5ed4db18203b155aeabb6320fc))
+
 ## [3.8.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.5...SKeen-v3.8.0) (2026-01-31)
 
 
