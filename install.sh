@@ -18,7 +18,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-DEPENDENCIES="ndmc start-stop-daemon iptables curl tar jsonfilter logger"
+DEPENDENCIES="ndmc start-stop-daemon iptables ipset curl tar jsonfilter logger"
 
 ENTWARE_DIR="/opt"
 WORK_DIR="${ENTWARE_DIR}/etc/skeen"
@@ -45,6 +45,7 @@ SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 
 FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
 WAIT_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_route"
+BYPASS_NET_SET="skeen_bypass_net"
 CHAIN_PREROUTING="skeen"
 CHAIN_OUTPUT="skeen_mask"
 TABLE_REDIRECT="nat"
@@ -1034,6 +1035,18 @@ get_validate_ports() {
   printf '%s' "$valid_ports"
 }
 
+get_eth_subnet() {
+  _ip_v="${1:-}"
+  addresses="$(get_inet_tests_hosts "$_ip_v")"
+  prefix_length="32"
+  [ "$_ip_v" = "6" ] && prefix_length="128"
+
+  for address in $addresses; do
+    eth_ip="$(ip -"$_ip_v" route get "$address" 2>/dev/null |
+              awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
+    [ -n "$eth_ip" ] && echo "${eth_ip}/${prefix_length}" && break
+  done
+}
 
 get_exclude_addresses() {
   ip_v="${1:-}"
@@ -1042,19 +1055,6 @@ get_exclude_addresses() {
   user_exclude=""
 
   [ "$ip_v" = "4" ] && prefix_length_default="32" || prefix_length_default="128"
-
-  get_eth_subnet() {
-    _ip_v="${1:-}"
-    addresses="$(get_inet_tests_hosts "$_ip_v")"
-    prefix_length="32"
-    [ "$_ip_v" = "6" ] && prefix_length="128"
-
-    for address in $addresses; do
-      eth_ip="$(ip -"$_ip_v" route get "$address" 2>/dev/null |
-                awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
-      [ -n "$eth_ip" ] && echo "${eth_ip}/${prefix_length}" && break
-    done
-  }
 
   if [ "$ip_v" = "4" ]; then
     eth_subnet="$(get_eth_subnet "$ip_v")"
@@ -1109,7 +1109,7 @@ EOF
 }
 
 
-set_exclude_rules() {
+set_dns_rules() {
   iptables="${1:-}"
   table="${2:-}"
   chain="${3:-}"
@@ -1139,11 +1139,6 @@ set_exclude_rules() {
       ;;
     esac
   fi
-
-  for exclude in $EXCLUDE_ADDRESSES; do
-    [ "$HIJACK_DNS_SUBNET" = "$exclude" ] && continue
-    set_ipt
-  done
 }
 
 
@@ -1182,8 +1177,12 @@ add_tproxy_rules() {
 }
 
 
-add_redirect_rules() {
-  add_rule "${1:-}" "${2:-}" "${3:-}" \
+add_redirect_rules(){
+  iptables=${1:-}
+  table=${2:-}
+  chain=${3:-}
+
+  add_rule "$iptables" "$table" "$chain" \
     -p tcp -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
 }
 
@@ -1198,7 +1197,10 @@ set_iptables_rules() {
 
     $iptables -t "$table" -N "$chain" || return 0
 
-    set_exclude_rules "$iptables" "$table" "$chain"
+    set_dns_rules "$iptables" "$table" "$chain"
+
+    add_rule "$iptables" "$table" "$chain" \
+      -m set --match-set "${BYPASS_NET_SET}${IP_VERSION}" dst -j RETURN
 
     case "$SKEEN_FIREWALL_MODE" in
       hybrid)
@@ -1208,17 +1210,14 @@ set_iptables_rules() {
           add_tproxy_rules "$iptables" "$table" "$chain" udp
         fi
       ;;
-
       tproxy)
         for net in $SKEEN_TPROXY_NETWORK; do
           add_tproxy_rules "$iptables" "$table" "$chain" "$net"
         done
       ;;
-
       redirect)
         add_redirect_rules "$iptables" "$table" "$chain"
       ;;
-
       *) return 0 ;;
     esac
   fi
@@ -1228,7 +1227,8 @@ set_iptables_rules() {
 
     $iptables -t "$table" -N "$chain" || return 0
 
-    set_exclude_rules "$iptables" "$table" "$chain"
+    add_rule "$iptables" "$table" "$chain" \
+      -m set --match-set "${BYPASS_NET_SET}${IP_VERSION}" dst -j RETURN
 
     for net in $SKEEN_TPROXY_NETWORK; do
       add_rule "$iptables" "$table" "$chain" \
@@ -1418,20 +1418,36 @@ prepare_firewall(){
     SKEEN_EXCLUDE_PORTS="$(get_validate_ports "exclude" "$EXCLUDE_PORTS")"
   fi
 
-  SKEEN_EXCLUDE_IPV4_ADDRESSES=""
+  setup_bypass_ipset() {
+    ipver="$1"
+    family="$2"
+    hijack_subnet="$3"
+
+    name_set="${BYPASS_NET_SET}${ipver}"
+
+    ipset create "$name_set" hash:net family "$family" -exist
+    ipset flush "$name_set"
+
+    for exclude in $(get_exclude_addresses "$ipver"); do
+      [ "$hijack_subnet" = "$exclude" ] && continue
+      ipset add "$name_set" "$exclude" -exist
+    done
+  }
+
   SKEEN_HIJACK_DNS_IPV4_SUBNET=""
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
     ip_v4=1
-    SKEEN_EXCLUDE_IPV4_ADDRESSES="$(get_exclude_addresses "4")"
-    SKEEN_HIJACK_DNS_IPV4_SUBNET="$(get_hijack_dns_subnet "4")"
+    SKEEN_HIJACK_DNS_IPV4_SUBNET="$(get_hijack_dns_subnet 4)"
+
+    setup_bypass_ipset 4 inet "$SKEEN_HIJACK_DNS_IPV4_SUBNET"
   fi
 
-  SKEEN_EXCLUDE_IPV6_ADDRESSES=""
   SKEEN_HIJACK_DNS_IPV6_SUBNET=""
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
     ip_v6=1
-    SKEEN_EXCLUDE_IPV6_ADDRESSES="$(get_exclude_addresses "6")"
-    SKEEN_HIJACK_DNS_IPV6_SUBNET="$(get_hijack_dns_subnet "6")"
+    SKEEN_HIJACK_DNS_IPV6_SUBNET="$(get_hijack_dns_subnet 6)"
+
+    setup_bypass_ipset 6 inet6 "$SKEEN_HIJACK_DNS_IPV6_SUBNET"
   fi
 
   [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
@@ -1451,10 +1467,6 @@ prepare_firewall(){
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
     echo "export SKEEN_INTERCEPT_PORTS=\"$SKEEN_INTERCEPT_PORTS\""
     echo "export SKEEN_EXCLUDE_PORTS=\"$SKEEN_EXCLUDE_PORTS\""
-
-    [ $ip_v4 -eq 1 ] && echo "export SKEEN_EXCLUDE_IPV4_ADDRESSES=\"$SKEEN_EXCLUDE_IPV4_ADDRESSES\""
-    [ $ip_v6 -eq 1 ] && echo "export SKEEN_EXCLUDE_IPV6_ADDRESSES=\"$SKEEN_EXCLUDE_IPV6_ADDRESSES\""
-
     echo "export SKEEN_DNS_SUPPORTED=\"$SKEEN_DNS_SUPPORTED\""
 
     if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
@@ -1494,12 +1506,10 @@ apply_firewall(){
     if [ "$iptables" = "iptables" ]; then
       IP_VERSION="4"
       PROXY_IP="127.0.0.1"
-      EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_IPV4_ADDRESSES:-}"
       HIJACK_DNS_SUBNET="${SKEEN_HIJACK_DNS_IPV4_SUBNET:-}"
     elif [ "$iptables" = "ip6tables" ]; then
       IP_VERSION="6"
       PROXY_IP="::1"
-      EXCLUDE_ADDRESSES="${SKEEN_EXCLUDE_IPV6_ADDRESSES:-}"
       HIJACK_DNS_SUBNET="${SKEEN_HIJACK_DNS_IPV6_SUBNET:-}"
     else
       msg_err="Unknown iptables: $iptables"
@@ -1511,9 +1521,8 @@ apply_firewall(){
     set_route_rules
 
     if [ -f "$WAIT_ROUTE_FILE" ]; then
-      EXCLUDE_ADDRESSES="$(get_exclude_addresses "$IP_VERSION")"
-      [ -n "${FIREWALL_HOOK_FILE:-}" ] && \
-      sed -i "/SKEEN_EXCLUDE_IPV${IP_VERSION}/c\export SKEEN_EXCLUDE_IPV${IP_VERSION}_ADDRESSES=\"$EXCLUDE_ADDRESSES\"" "$FIREWALL_HOOK_FILE"
+      eth_subnet="$(get_eth_subnet "$IP_VERSION")"
+      ipset add "$set_name" "$eth_subnet" -exist
     fi
 
     if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
@@ -1589,6 +1598,10 @@ clean_firewall(){
         ip -"$ip_ver" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
         ip -"$ip_ver" route flush table "$TABLE_ID" >/dev/null 2>&1
       fi
+
+      set_name="skeen_bypass_net${ip_ver}"
+      ipset list "$set_name" >/dev/null 2>&1 && \
+        ipset flush "$set_name" && ipset destroy "$set_name"
     done
   fi
 
@@ -1833,7 +1846,7 @@ switch_autostart(){
 
 
 update_core(){
-  is_running && stop && is_stopped=1
+  is_running && stop
   get_os_release
   get_architecture
   download_singbox "$latest" || return 1
@@ -1843,6 +1856,7 @@ update_core(){
 
 
 update_skeen(){
+  is_running && stop
   if download_skeen_script "update"; then
     echook "The $SKEEN_NAME has been successfully updated"
     is_update_skeen=1
@@ -1891,7 +1905,6 @@ ask_and_update() {
 
 
 check_updates() {
-  is_stopped=0
   is_update_skeen=0
 
   # sing-box
@@ -1904,7 +1917,6 @@ check_updates() {
     update_skeen "https://github.com/jinndi/SKeen/releases"
   [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest" ] && update_skeen
 
-  [ "$is_stopped" -eq 1 ] && start
   [ "$CALLER" = cli ] && exit 0
 
   if [ "$is_update_skeen" -eq 1 ]; then
@@ -1950,7 +1962,7 @@ fw_test_chain() {
 
   fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Chain reference"
 
-  fw_test "$1" "$2" "$content" "$test_exclude_address" "Exclude addresses rule"
+  fw_test "$1" "$2" "$content" "$BYPASS_NET_SET" "Exclude addresses rule"
 
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
     fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK set rule"
@@ -2006,12 +2018,7 @@ test_firewall() {
   fi
 
   for iptables in $SKEEN_IPTABLES_LIST; do
-    if [ "$iptables" = "ip6tables" ]; then
-      echo "$DELIMETER"
-      test_exclude_address="2002::/16"
-    elif [ "$iptables" = "iptables" ]; then
-      test_exclude_address="0.0.0.0/8"
-    fi
+    [ "$iptables" = "ip6tables" ] && echo "$DELIMETER"
 
     for table in $tables; do
       fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
