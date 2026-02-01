@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.1...SKeen-v3.8.2) (2026-02-01)
+
+
+### 🐛 Fix
+
+* ask_and_update func ([b2158a7](https://github.com/jinndi/SKeen/commit/b2158a78db244388a9a430b51dd0cffabc64c95b))
+
 ## [3.8.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.0...SKeen-v3.8.1) (2026-02-01)
 
 
