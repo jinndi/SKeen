@@ -807,12 +807,12 @@ loading_modules() {
     echomsg "Loading modules: xt_multiport.ko"
   fi
 
-  if [ "$SKEEN_DNS_SUPPORTED" = "1" ] && ! is_owner_module_working; then
+  if [ "$SKEEN_DNS_ENABLED" = "1" ] && ! is_owner_module_working; then
     echomsg "Loading modules: xt_owner.ko"
     load_module "xt_owner.ko"
 
     if ! is_owner_module_working; then
-      SKEEN_DNS_SUPPORTED=0
+      SKEEN_DNS_ENABLED=0
       echowarn "iptables owner module is not working"
       echowarn "$SINGBOX_NAME DNS functionality will be disabled"
     fi
@@ -1135,19 +1135,16 @@ set_iptables_rules() {
 
     $iptables -t "$table" -N "$chain" || return 0
 
-    case "$SKEEN_FIREWALL_MODE:$table" in
+    case_mode="${SKEEN_FIREWALL_MODE}:${table}"
+    [ "$SKEEN_DNS_ENABLED" != "1" ] && case_mode="not_set"
+
+    case "$case_mode" in
       hybrid:nat)
         # shellcheck disable=SC2086
         add_rule "$iptables" "$table" "$chain" \
           -p tcp ! --dport "$DNS_PORT" $bp_rule_set
-        # shellcheck disable=SC2086
-        add_rule "$iptables" "$table" "$chain" \
-          -p udp --dport "$DNS_PORT" $bp_rule_set
       ;;
       hybrid:mangle)
-        # shellcheck disable=SC2086
-        add_rule "$iptables" "$table" "$chain" \
-          -p tcp --dport "$DNS_PORT" $bp_rule_set
         # shellcheck disable=SC2086
         add_rule "$iptables" "$table" "$chain" \
           -p udp ! --dport "$DNS_PORT" $bp_rule_set
@@ -1345,12 +1342,12 @@ prepare_firewall(){
     return 0
   fi
 
-  SKEEN_DNS_SUPPORTED="0"
+  SKEEN_DNS_ENABLED="0"
   if has_dns_servers; then
     echomsg "Detected use of DNS configuration"
 
     case "$SKEEN_FIREWALL_MODE" in
-      tproxy|hybrid) SKEEN_DNS_SUPPORTED="1" ;;
+      tproxy|hybrid) SKEEN_DNS_ENABLED="1" ;;
       *) echowarn "In redirect mode, the DNS configuration is not used" ;;
     esac
   fi
@@ -1418,7 +1415,7 @@ prepare_firewall(){
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
     echo "export SKEEN_INTERCEPT_PORTS=\"$SKEEN_INTERCEPT_PORTS\""
     echo "export SKEEN_EXCLUDE_PORTS=\"$SKEEN_EXCLUDE_PORTS\""
-    echo "export SKEEN_DNS_SUPPORTED=\"$SKEEN_DNS_SUPPORTED\""
+    echo "export SKEEN_DNS_ENABLED=\"$SKEEN_DNS_ENABLED\""
 
     echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
     echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
@@ -1919,7 +1916,7 @@ fw_test_chain() {
 
   fw_test "$1" "$2" "$content" "redir|redirect" "Redirect rule"
 
-  if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
+  if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
     fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS port ${DNS_PORT} rule"
   fi
 
@@ -2118,7 +2115,7 @@ show_menu(){
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
-    [ "$SKEEN_DNS_SUPPORTED" = "1" ] && \
+    [ "$SKEEN_DNS_ENABLED" = "1" ] && \
       sb_dns_work_text="$(green "yes")" || \
       sb_dns_work_text="$(red "no")"
 
