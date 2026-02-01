@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.2...SKeen-v3.8.3) (2026-02-01)
+
+
+### 🐛 Fix
+
+* **iptables:** remove unused DNS rules ([c87dcad](https://github.com/jinndi/SKeen/commit/c87dcadcb3d32823e47a08c081d07dcb082aff5c))
+
 ## [3.8.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.1...SKeen-v3.8.2) (2026-02-01)
 
 
