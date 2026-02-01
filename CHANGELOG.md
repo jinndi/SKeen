@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.0...SKeen-v3.8.1) (2026-02-01)
+
+
+### ⚡ Perf
+
+* **dns:** Optimized mangle/nat rules for DNS handling in hybrid/tproxy modes ([ee814ec](https://github.com/jinndi/SKeen/commit/ee814ecc3e716f211251e6a8db5d45f70d2d2361))
+
 ## [3.8.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.7.5...SKeen-v3.8.0) (2026-01-31)
 
 
