@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.3...SKeen-v3.8.4) (2026-02-01)
+
+
+### 🐛 Fix
+
+* **config:** correct typo in ADDRESSES variable ([ea1bc35](https://github.com/jinndi/SKeen/commit/ea1bc35ed0f3113ddb2c2e70b51780a20c5f801f))
+
 ## [3.8.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.2...SKeen-v3.8.3) (2026-02-01)
 
 
