@@ -26,6 +26,7 @@ Installation script for sing-box on Keenetic/Netcraze routers
 - Sing-box DNS module working ✓
 - Sing-box fakeip working ✓
 - Zashboard via Clash API configured ✓
+- Network settings optimization ✓
 
 ### 📋 Requirements
 - Entware installed and configured
@@ -114,3 +115,6 @@ The file `/opt/etc/skeen/skeen.conf` has the following settings:
 |`EXCLUDE_IPV4_ADDRESSES`, `EXCLUDE_IPV6_ADDRESSES`|Excluded ip addresses for traffic redirection. List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ...|
 |`EXCLUDE_IPV4_SUBNETS`, `EXCLUDE_IPV6_SUBNETS`|Excluded subnets for traffic redirection. List: 192.155.1.1/24,192.200.1.1/24,... or 192.155.1.1/24 192.200.1.1/24 ...|
 
+### 🔗 Useful links
+- Proxy setup guide: [https://proxy-tutorials.dustinwin.us.kg/](https://proxy-tutorials.dustinwin.us.kg/)
+- Outbound server block generator: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
