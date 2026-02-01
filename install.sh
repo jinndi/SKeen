@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.8.1"
+SKEEN_VERSION="3.8.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1834,8 +1834,8 @@ ask_and_update() {
       [ -z "$opt" ] && opt=n
 
       case $opt in
-        y|Y) "$update_fn" ;;
-        n|N) return 0 ;;
+        y|Y) "$update_fn" || return 1; break ;;
+        n|N) break ;;
         *) echoerr "Incorrect option" ;;
       esac
     done
