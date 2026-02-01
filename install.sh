@@ -56,8 +56,6 @@ DNS_PORT=53
 
 SYS_INET_TEST_IPV4_HOSTS="1.1.1.1 77.88.8.8 223.5.5.5"
 SYS_INET_TEST_IPV6_HOSTS="2606:4700:4700::1111 2a02:6b8::feed:0ff 2400:3200::1"
-SYS_HIJACK_DNS_IPV4_SUBNET="192.168.0.0/16"
-SYS_HIJACK_DNS_IPV6_SUBNET="fe80::/10"
 
 # IETF/IANA IPv4 Special-Purpose Address Registry
 # https://www.iana.org/assignments/iana-ipv4-special-registry/
@@ -133,10 +131,6 @@ create_skeen_config(){
     echo "# List: ya.ru,77.88.8.8,... or ya.ru 77.88.8.8"
     echo "INET_TEST_IPV4_HOSTS=\"$SYS_INET_TEST_IPV4_HOSTS\""
     echo "INET_TEST_IPV6_HOSTS=\"$SYS_INET_TEST_IPV6_HOSTS\""
-    echo
-    echo "# Subnet for intercepting DNS queries (maximum one per IP version)"
-    echo "HIJACK_DNS_IPV4_SUBNET=\"$SYS_HIJACK_DNS_IPV4_SUBNET\""
-    echo "HIJACK_DNS_IPV6_SUBNET=\"$SYS_HIJACK_DNS_IPV6_SUBNET\""
     echo
     echo "# Router policy name for $SKEEN_NAME traffic"
     echo "POLICY_NAME=\"${SKEEN_NAME}\""
@@ -973,32 +967,6 @@ is_valid_ipv6() {
 }
 
 
-get_hijack_dns_subnet() {
-  ipv="${1:-}"
-  subnet=""
-  sys_subnet=""
-
-  case "$ipv" in
-    4)
-      validator=is_valid_ipv4
-      subnet="$HIJACK_DNS_IPV4_SUBNET"
-      sys_subnet="$SYS_HIJACK_DNS_IPV4_SUBNET"
-    ;;
-    6)
-      validator=is_valid_ipv6
-      subnet="$HIJACK_DNS_IPV6_SUBNET"
-      sys_subnet="$SYS_HIJACK_DNS_IPV6_SUBNET"
-    ;;
-  esac
-
-  if $validator "$subnet"; then
-    echo "$subnet"
-  else
-    echowarn "HIJACK_DNS is using the default subnet: $sys_subnet"
-    echo "$sys_subnet"
-  fi
-}
-
 get_validate_ports() {
   label="${1:-}"
   input="${2:-}"
@@ -1109,39 +1077,6 @@ EOF
 }
 
 
-set_dns_rules() {
-  iptables="${1:-}"
-  table="${2:-}"
-  chain="${3:-}"
-
-  set_ipt() {
-    $iptables -w -t "$table" -A "$chain" -d "$exclude" "$@" -j RETURN >/dev/null 2>&1
-  }
-
-  if [ "$chain" != "$CHAIN_OUTPUT" ] && \
-    [ "$SKEEN_DNS_SUPPORTED" = "1" ] && \
-    [ -n "$HIJACK_DNS_SUBNET" ];
-  then
-    exclude="$HIJACK_DNS_SUBNET"
-
-    case "$SKEEN_FIREWALL_MODE:$table" in
-      hybrid:mangle)
-        set_ipt -p tcp --dport "$DNS_PORT"
-        set_ipt -p udp ! --dport "$DNS_PORT"
-      ;;
-      hybrid:nat)
-        set_ipt -p tcp ! --dport "$DNS_PORT"
-        set_ipt -p udp --dport "$DNS_PORT"
-      ;;
-      tproxy:mangle)
-        set_ipt -p tcp ! --dport "$DNS_PORT"
-        set_ipt -p udp ! --dport "$DNS_PORT"
-      ;;
-    esac
-  fi
-}
-
-
 add_rule() {
   iptables="${1:-}"
   table="${2:-}"
@@ -1192,15 +1127,44 @@ set_iptables_rules() {
   table="${2:-}"
   chain="${3:-}"
 
+  set_name="${BYPASS_NET_SET}${IP_VERSION}"
+  bp_rule_set="-m set --match-set $set_name dst -j RETURN"
+
   if [ "$chain" = "$CHAIN_PREROUTING" ] && \
      ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
 
     $iptables -t "$table" -N "$chain" || return 0
 
-    set_dns_rules "$iptables" "$table" "$chain"
-
-    add_rule "$iptables" "$table" "$chain" \
-      -m set --match-set "${BYPASS_NET_SET}${IP_VERSION}" dst -j RETURN
+    case "$SKEEN_FIREWALL_MODE:$table" in
+      hybrid:nat)
+        # shellcheck disable=SC2086
+        add_rule "$iptables" "$table" "$chain" \
+          -p tcp ! --dport "$DNS_PORT" $bp_rule_set
+        # shellcheck disable=SC2086
+        add_rule "$iptables" "$table" "$chain" \
+          -p udp --dport "$DNS_PORT" $bp_rule_set
+      ;;
+      hybrid:mangle)
+        # shellcheck disable=SC2086
+        add_rule "$iptables" "$table" "$chain" \
+          -p tcp --dport "$DNS_PORT" $bp_rule_set
+        # shellcheck disable=SC2086
+        add_rule "$iptables" "$table" "$chain" \
+          -p udp ! --dport "$DNS_PORT" $bp_rule_set
+      ;;
+      tproxy:mangle)
+        # shellcheck disable=SC2086
+        add_rule "$iptables" "$table" "$chain" \
+          -p tcp ! --dport "$DNS_PORT" $bp_rule_set
+        # shellcheck disable=SC2086
+        add_rule "$iptables" "$table" "$chain" \
+          -p udp ! --dport "$DNS_PORT" $bp_rule_set
+      ;;
+      *)
+        # shellcheck disable=SC2086
+        add_rule "$iptables" "$table" "$chain" $bp_rule_set
+      ;;
+    esac
 
     case "$SKEEN_FIREWALL_MODE" in
       hybrid)
@@ -1227,8 +1191,8 @@ set_iptables_rules() {
 
     $iptables -t "$table" -N "$chain" || return 0
 
-    add_rule "$iptables" "$table" "$chain" \
-      -m set --match-set "${BYPASS_NET_SET}${IP_VERSION}" dst -j RETURN
+    # shellcheck disable=SC2086
+    add_rule "$iptables" "$table" "$chain" $bp_rule_set
 
     for net in $SKEEN_TPROXY_NETWORK; do
       add_rule "$iptables" "$table" "$chain" \
@@ -1353,9 +1317,6 @@ add_output_rules() {
 
 
 prepare_firewall(){
-  ip_v4=0
-  ip_v6=0
-
   echomsg "Preparing a firewall..."
 
   complete_msg="Firewall preparation is complete"
@@ -1421,7 +1382,6 @@ prepare_firewall(){
   setup_bypass_ipset() {
     ipver="$1"
     family="$2"
-    hijack_subnet="$3"
 
     name_set="${BYPASS_NET_SET}${ipver}"
 
@@ -1429,25 +1389,16 @@ prepare_firewall(){
     ipset flush "$name_set"
 
     for exclude in $(get_exclude_addresses "$ipver"); do
-      [ "$hijack_subnet" = "$exclude" ] && continue
       ipset add "$name_set" "$exclude" -exist
     done
   }
 
-  SKEEN_HIJACK_DNS_IPV4_SUBNET=""
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
-    ip_v4=1
-    SKEEN_HIJACK_DNS_IPV4_SUBNET="$(get_hijack_dns_subnet 4)"
-
-    setup_bypass_ipset 4 inet "$SKEEN_HIJACK_DNS_IPV4_SUBNET"
+    setup_bypass_ipset 4 inet
   fi
 
-  SKEEN_HIJACK_DNS_IPV6_SUBNET=""
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
-    ip_v6=1
-    SKEEN_HIJACK_DNS_IPV6_SUBNET="$(get_hijack_dns_subnet 6)"
-
-    setup_bypass_ipset 6 inet6 "$SKEEN_HIJACK_DNS_IPV6_SUBNET"
+    setup_bypass_ipset 6 inet6
   fi
 
   [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
@@ -1469,13 +1420,7 @@ prepare_firewall(){
     echo "export SKEEN_EXCLUDE_PORTS=\"$SKEEN_EXCLUDE_PORTS\""
     echo "export SKEEN_DNS_SUPPORTED=\"$SKEEN_DNS_SUPPORTED\""
 
-    if [ "$SKEEN_DNS_SUPPORTED" = "1" ]; then
-      [ $ip_v4 -eq 1 ] && echo "export SKEEN_HIJACK_DNS_IPV4_SUBNET=\"$SKEEN_HIJACK_DNS_IPV4_SUBNET\""
-      [ $ip_v6 -eq 1 ] && echo "export SKEEN_HIJACK_DNS_IPV6_SUBNET=\"$SKEEN_HIJACK_DNS_IPV6_SUBNET\""
-    fi
-
     echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
-
     echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
 
     case "$SKEEN_FIREWALL_MODE" in
@@ -1506,11 +1451,9 @@ apply_firewall(){
     if [ "$iptables" = "iptables" ]; then
       IP_VERSION="4"
       PROXY_IP="127.0.0.1"
-      HIJACK_DNS_SUBNET="${SKEEN_HIJACK_DNS_IPV4_SUBNET:-}"
     elif [ "$iptables" = "ip6tables" ]; then
       IP_VERSION="6"
       PROXY_IP="::1"
-      HIJACK_DNS_SUBNET="${SKEEN_HIJACK_DNS_IPV6_SUBNET:-}"
     else
       msg_err="Unknown iptables: $iptables"
       logger_error "$msg_err"
@@ -1599,7 +1542,7 @@ clean_firewall(){
         ip -"$ip_ver" route flush table "$TABLE_ID" >/dev/null 2>&1
       fi
 
-      set_name="skeen_bypass_net${ip_ver}"
+      set_name="${BYPASS_NET_SET}${ip_ver}"
       ipset list "$set_name" >/dev/null 2>&1 && \
         ipset flush "$set_name" && ipset destroy "$set_name"
     done
