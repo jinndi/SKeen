@@ -145,8 +145,8 @@ create_skeen_config(){
     echo
     echo "# Excluded ip addresses for traffic redirection"
     echo "# List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ..."
-    echo "EXCLUDE_IPV4_ADDRESES=\"\""
-    echo "EXCLUDE_IPV6_ADDRESES=\"\""
+    echo "EXCLUDE_IPV4_ADDRESSES=\"\""
+    echo "EXCLUDE_IPV6_ADDRESSES=\"\""
     echo
     echo "# Excluded subnets for traffic redirection"
     echo "# List: 192.155.1.1/24,192.200.1.1/24,... or 192.155.1.1/24 192.200.1.1/24 ..."
@@ -1027,11 +1027,11 @@ get_exclude_addresses() {
   if [ "$ip_v" = "4" ]; then
     eth_subnet="$(get_eth_subnet "$ip_v")"
     reserved_subnets="$RESERVED_IPV4"
-    user_exclude="${EXCLUDE_IPV4_ADDRESES},${EXCLUDE_IPV4_SUBNETS}"
+    user_exclude="${EXCLUDE_IPV4_ADDRESSES},${EXCLUDE_IPV4_SUBNETS}"
   else
     eth_subnet="$(get_eth_subnet "$ip_v")"
     reserved_subnets="$RESERVED_IPV6"
-    user_exclude="${EXCLUDE_IPV6_ADDRESES},${EXCLUDE_IPV6_SUBNETS}"
+    user_exclude="${EXCLUDE_IPV6_ADDRESSES},${EXCLUDE_IPV6_SUBNETS}"
   fi
 
   user_exclude="$(echo "$user_exclude" | \
