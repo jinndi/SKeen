@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.9.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.4...SKeen-v3.9.0) (2026-02-02)
+
+
+### 🚀 Feat
+
+* add port availability check before start ([284ce92](https://github.com/jinndi/SKeen/commit/284ce92b32bac7687ee26be7fa6e4ad8945a508a))
+* add UDP conntrack timeout settings for TProxy mode ([70b217c](https://github.com/jinndi/SKeen/commit/70b217c22fc5f8dfef1d761b5ded4328c3267344))
+* improve status command (Show memory in MB with peak value and thread count) ([893f687](https://github.com/jinndi/SKeen/commit/893f68719f6328f8e4fd5ab43cdfd5dd3035427f))
+* optimize connection tracking settings ([008e25f](https://github.com/jinndi/SKeen/commit/008e25f8a385be569199b5dd4fbe4bfd0a257096))
+* optimize network tuning for better proxy performance ([4b3de43](https://github.com/jinndi/SKeen/commit/4b3de437f866fbcb4af93c0ff6d908840bb1316e))
+* Optimize TCP and socket buffers for VPN/Proxy ([509ad4d](https://github.com/jinndi/SKeen/commit/509ad4da01f8dec105683b1667c946d159e60bcb))
+
+
+### 🐛 Fix
+
+* improve backup restore logic in download_skeen_script ([fdfb39a](https://github.com/jinndi/SKeen/commit/fdfb39a0390db4cda20aa5455a84326677a701fd))
+
 ## [3.8.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.3...SKeen-v3.8.4) (2026-02-01)
 
 
