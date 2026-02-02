@@ -1779,6 +1779,26 @@ reload(){
 }
 
 
+status(){
+  if is_running; then
+    echo "Status: $(green "running")"
+    pid=$(pidof $SINGBOX_PROC)
+    echo "PID: $pid"
+
+    [ -f "/proc/$pid/status" ] && {
+      mem_rss=$(grep VmRSS "/proc/$pid/status" | awk '{print $2}')
+      mem_hwm=$(grep VmHWM "/proc/$pid/status" | awk '{print $2}')
+      threads=$(grep Threads "/proc/$pid/status" | awk '{print $2}')
+
+      echo "Memory: $((mem_rss / 1024)) MB (peak: $((mem_hwm / 1024)) MB)"
+      echo "Threads: $threads"
+    }
+  else
+    echo "Status: $(red "stopped")"
+  fi
+}
+
+
 switch_autostart(){
   if [ "$AUTO_START" = "1" ]; then
     update_config_var "AUTO_START" "0"
@@ -2213,7 +2233,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     stop)    stop ;;
     restart) restart ;;
     reload)  reload ;;
-    status)  if is_running; then green "running"; else red "stopped"; fi ;;
+    status)  status ;;
     kill)    kill_proc ;;
     version)
       printf "${SKEEN_NAME}: %s\n" "$(cyan "v$(get_current_version "$SKEEN_PROC")")";
