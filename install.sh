@@ -1573,6 +1573,7 @@ apply_sysctl_network_tuning(){
     sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=600   # TCP established timeout
     sysctl -w net.netfilter.nf_conntrack_udp_timeout=60                # UDP timeout without data
     sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=180        # UDP timeout with data
+    sysctl -w net.netfilter.nf_conntrack_checksum=0                    # Skip checksum validation
 
     # TCP/UDP Memory & Buffers
     sysctl -w net.ipv4.tcp_mem="8192 16384 32768"      # TCP memory thresholds
