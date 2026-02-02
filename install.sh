@@ -499,8 +499,8 @@ download_skeen_script(){
   [ -f "$SKEEN_SCRIPT" ] && mv "$SKEEN_SCRIPT" "$backup_script"
 
   if ! curl --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
-    [ -f "$SKEEN_SCRIPT" ] && rm -f "$SKEEN_SCRIPT"
-    mv "$backup_script" "$SKEEN_SCRIPT"
+    rm -f "$SKEEN_SCRIPT"
+    [ -f "$backup_script" ] && mv "$backup_script" "$SKEEN_SCRIPT"
     echoerr "Failed to download $SKEEN_NAME script"
     [ "$action" != "update" ] && exit 1
     return 1
