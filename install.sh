@@ -1569,7 +1569,7 @@ apply_sysctl_network_tuning(){
     sysctl -w net.ipv4.conf.default.send_redirects=0   # Disable ICMP redirects by default
 
     # Connection Tracking
-    sysctl -w net.netfilter.nf_conntrack_max=40960                     # Max tracked connections
+    sysctl -w net.netfilter.nf_conntrack_max=50000                     # Max tracked connections
     sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=600   # TCP established timeout
     sysctl -w net.netfilter.nf_conntrack_udp_timeout=60                # UDP timeout without data
     sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=180        # UDP timeout with data
@@ -1586,7 +1586,7 @@ apply_sysctl_network_tuning(){
     # TCP Behavior / Optimizations
     sysctl -w net.ipv4.tcp_syncookies=1          # Enable SYN cookies (SYN flood protection)
     sysctl -w net.ipv4.tcp_tw_reuse=1            # Allow reuse of TIME_WAIT sockets
-    sysctl -w net.ipv4.tcp_fin_timeout=30        # Shorten FIN timeout
+    sysctl -w net.ipv4.tcp_fin_timeout=15        # Shorten FIN timeout
     sysctl -w net.ipv4.tcp_keepalive_time=600    # TCP keepalive interval
     sysctl -w net.ipv4.tcp_keepalive_probes=5    # Keepalive probes count
     sysctl -w net.ipv4.tcp_keepalive_intvl=10    # Keepalive interval between probes
