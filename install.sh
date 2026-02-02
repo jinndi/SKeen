@@ -734,9 +734,9 @@ has_dns_servers() {
 }
 
 
-check_router_port() {
-  host="${1:-127.0.0.1}"
-  port="${2:-443}"
+check_port() {
+  port="${1:-443}"
+  host="${2:-127.0.0.1}"
 
   if (echo quit | telnet "$host" "$port" 2>/dev/null | grep -q "Connected"); then
     msg_err="Port $port must be freed"
@@ -1357,7 +1357,7 @@ prepare_firewall(){
   else
     SKEEN_FIREWALL_NETWORK="tcp udp"
 
-    check_router_port
+    check_port 443
   fi
 
   loading_modules
@@ -1678,6 +1678,10 @@ start() {
   check_config && echo "$DELIMETER"
 
   prepare_firewall && echo "$DELIMETER"
+
+  for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do
+    check_port "$port"
+  done
 
   if ! grep -q "^${SKEEN_PROC}:" "${ENTWARE_DIR}/etc/group" 2>/dev/null; then
     create_skeen_group && echo "$DELIMETER"
