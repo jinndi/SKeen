@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.9.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.0...SKeen-v3.9.1) (2026-02-02)
+
+
+### 🧰 Chore
+
+* **main:** release SKeen 3.9.0 ([5eeff7d](https://github.com/jinndi/SKeen/commit/5eeff7df76cdcd0a115fa31773d4eacc908ea950))
+* **main:** release SKeen 3.9.0 ([a73744e](https://github.com/jinndi/SKeen/commit/a73744e2e0c7f7b728a929cb12da0ba047b29124))
+
 ## [3.9.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.4...SKeen-v3.9.0) (2026-02-02)
 
 
