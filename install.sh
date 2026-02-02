@@ -1552,14 +1552,14 @@ clean_firewall(){
 apply_sysctl_network_tuning(){
   {
     # Network Buffers (TCP/UDP)
-    sysctl -w net.core.rmem_max=2097152     # Max TCP/UDP receive buffer
-    sysctl -w net.core.wmem_max=2097152     # Max TCP/UDP send buffer
+    sysctl -w net.core.rmem_max=6291456     # Max TCP/UDP receive buffer
+    sysctl -w net.core.wmem_max=6291456     # Max TCP/UDP send buffer
     sysctl -w net.core.rmem_default=229376  # Default receive buffer
     sysctl -w net.core.wmem_default=229376  # Default send buffer
 
     # Interface Queues
-    sysctl -w net.core.netdev_max_backlog=2048   # Max packets queued on interface
-    sysctl -w net.core.somaxconn=256             # Max pending TCP connections
+    sysctl -w net.core.netdev_max_backlog=4096   # Max packets queued on interface
+    sysctl -w net.core.somaxconn=512             # Max pending TCP connections
 
     # IPv4 Forwarding & TProxy Support
     sysctl -w net.ipv4.ip_forward=1                    # Enable IPv4 routing
@@ -1576,10 +1576,11 @@ apply_sysctl_network_tuning(){
     sysctl -w net.netfilter.nf_conntrack_checksum=0                    # Skip checksum validation
 
     # TCP/UDP Memory & Buffers
+    sysctl -w net.ipv4.tcp_moderate_rcvbuf=1           # autotuning
     sysctl -w net.ipv4.tcp_mem="8192 16384 32768"      # TCP memory thresholds
     sysctl -w net.ipv4.udp_mem="8192 16384 32768"      # UDP memory thresholds
-    sysctl -w net.ipv4.tcp_rmem="4096 87380 4194304"   # TCP per-socket read buffer min/def/max
-    sysctl -w net.ipv4.tcp_wmem="4096 65536 4194304"   # TCP per-socket write buffer min/def/max
+    sysctl -w net.ipv4.tcp_rmem="4096 87380 6291456"   # TCP per-socket read buffer min/def/max
+    sysctl -w net.ipv4.tcp_wmem="4096 65536 6291456"   # TCP per-socket write buffer min/def/max
     sysctl -w net.ipv4.udp_rmem_min=16384              # Min UDP receive buffer
     sysctl -w net.ipv4.udp_wmem_min=16384              # Min UDP send buffer
     sysctl -w net.ipv4.tcp_limit_output_bytes=262144   # Limit per-socket output burst
