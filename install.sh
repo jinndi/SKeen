@@ -907,7 +907,7 @@ set_route_rules() {
     fi
 
     echowarn "$msg"
-    echoerr"$msg2"
+    echoerr "$msg2"
     logger_warning "$msg"
 
     [ "$CALLER" != "menu" ] && exit 0
