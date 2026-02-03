@@ -1385,8 +1385,9 @@ prepare_firewall(){
     ipset create "$name_set" hash:net family "$family" -exist
     ipset flush "$name_set"
 
-    for exclude in $(get_exclude_addresses "$ipver"); do
-      ipset add "$name_set" "$exclude" -exist
+    get_exclude_addresses "$ipver" | tr ' ' '\n' | while read -r addr; do
+      [ -z "$addr" ] && continue
+      ipset add "$name_set" "$addr" -exist
     done
   }
 
