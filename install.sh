@@ -1356,8 +1356,6 @@ prepare_firewall(){
     SKEEN_FIREWALL_NETWORK="tcp"
   else
     SKEEN_FIREWALL_NETWORK="tcp udp"
-
-    check_port 443
   fi
 
   loading_modules
