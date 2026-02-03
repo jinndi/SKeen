@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.9.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.0...SKeen-v3.9.1) (2026-02-03)
+
+
+### 🐛 Fix
+
+* typo in the error log message "Check your internet connection" ([88ae7b1](https://github.com/jinndi/SKeen/commit/88ae7b153e7be2c589c5ddba807f4d6e22ea6b7c))
+
+
+### 🧰 Chore
+
+* don't require port 443 to be free for TProxy/Mixed modes 1 ([679e4a6](https://github.com/jinndi/SKeen/commit/679e4a6535fde79ece60477c547ed6f6eb055d4b))
+* **shell:** make setup_bypass_ipset safer and more reliable ([9a40b9b](https://github.com/jinndi/SKeen/commit/9a40b9b609d9bb33f03eb75986e28983b11977e8))
+
 ## [3.9.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.8.4...SKeen-v3.9.0) (2026-02-02)
 
 
