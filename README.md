@@ -125,7 +125,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "1.1.1.1",
       "77.88.8.8",
       "223.5.5.5"
-    ]               // Domains or IPs for connectivity tests (max 3)
+    ]               // Domains or IPs V4 for connectivity tests (max 3)
   },
   "firewall": {
     "intercept": {
