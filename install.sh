@@ -1616,13 +1616,7 @@ apply_sysctl_network_tuning(){
 }
 
 
-start_singbox(){
-  timeout=10
-
-  echomsg "Starting ${SINGBOX_NAME}..."
-
-  apply_sysctl_network_tuning
-
+get_ulimit_n(){
   if [ -r /proc/sys/fs/file-max ]; then
     file_max=$(cat /proc/sys/fs/file-max)
     ulimit_n=$((file_max / 2))
@@ -1630,9 +1624,22 @@ start_singbox(){
     # shellcheck disable=SC3045
     ulimit_n=$(ulimit -Hn)
   fi
+
   [ "$ulimit_n" -lt 4096 ] && ulimit_n=4096
+
+  echo "$ulimit_n"
+}
+
+
+start_singbox(){
+  timeout=10
+
+  echomsg "Starting ${SINGBOX_NAME}..."
+
+  apply_sysctl_network_tuning
+
   # shellcheck disable=SC3045
-  ulimit -n "$ulimit_n" || exiterr "Failed to set ulimit -n"
+  ulimit -n "$(get_ulimit_n)" || exiterr "Failed to set ulimit -n"
 
   # shellcheck disable=SC2086
   start-stop-daemon -S -b -x $SINGBOX_PROC -c root:$SKEEN_PROC -- $SINGBOX_ARGS
