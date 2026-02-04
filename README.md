@@ -102,6 +102,9 @@ Example Usage: start the daemon `skeen start`
 
 ### ⚙️ Settigs
 
+> [!NOTE]
+> After making changes to the file, a restart via `skeen restart` or through the menu is required
+
 The file `/opt/etc/skeen/skeen.conf` has the following settings:
 
 | Variable | Description |
@@ -110,6 +113,7 @@ The file `/opt/etc/skeen/skeen.conf` has the following settings:
 |`AUTO_START_DELAY`|Auto-start delay in seconds (Default 0)|
 |`INET_TEST_IPV4_HOSTS`, `INET_TEST_IPV6_HOSTS` |Domains or IPs for testing the internet connection (no more than 3). List: ya.ru,77.88.8.8,... or ya.ru 77.88.8.8|
 |`POLICY_NAME`|Router policy name for SKeen traffic (Default `SKeen`)|
+|`NETWORK_TUNING`|Enable network settings optimization via sysctl (0 - off, 1 - on, Default 0) * If you disable this option, the sysctl settings will be reset to their default values after the router is restarted|
 |`INTERCEPT_PORTS`|Ports to intercept and redirect via TProxy/Redirect (all ports if not specified). List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000|
 |`EXCLUDE_PORTS`|Ports to excluded redirect via TProxy/Redirect (Not working if ports are set in `INTERCEPT_PORTS`). List: port and port ranges use colon e.g. 8080,1443,1300:2300 or 8080 1443 1300:2300|
 |`EXCLUDE_IPV4_ADDRESSES`, `EXCLUDE_IPV6_ADDRESSES`|Excluded ip addresses for traffic redirection. List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ...|

@@ -135,6 +135,9 @@ create_skeen_config(){
     echo "# Router policy name for $SKEEN_NAME traffic"
     echo "POLICY_NAME=\"${SKEEN_NAME}\""
     echo
+    echo "Enable network settings optimization via sysctl (0 - off, 1 - on)"
+    echo "NETWORK_TUNING=\"0\""
+    echo
     echo "# Ports to intercept and redirect via TProxy/Redirect (all ports if not specified)"
     echo "# List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000"
     echo "INTERCEPT_PORTS=\"\""
@@ -1366,7 +1369,7 @@ prepare_firewall(){
 
   echomsg "Detected firewall networks: $SKEEN_FIREWALL_NETWORK"
 
-  loading_config
+  [ "$CALLER" != "init" ] && loading_config
 
   SKEEN_MARK_POLICY="$(get_mark_policy)"
 
@@ -1556,6 +1559,21 @@ clean_firewall(){
 
 apply_sysctl_network_tuning(){
   {
+    # IPv4 Forwarding & TProxy Support
+    sysctl -w net.ipv4.ip_forward=1                    # Enable IPv4 routing
+    sysctl -w net.ipv4.conf.all.src_valid_mark=0       # Accept TProxy marked packets
+    sysctl -w net.ipv4.conf.lo.route_localnet=1        # Allow lo local routing (TProxy)
+    sysctl -w net.ipv4.conf.all.send_redirects=0       # Disable ICMP redirects globally
+    sysctl -w net.ipv4.conf.default.send_redirects=0   # Disable ICMP redirects by default
+
+    # IPv6 Forwarding
+    [ -f /proc/net/if_inet6 ] && {
+      sysctl -w net.ipv6.conf.all.forwarding=1
+      sysctl -w net.ipv6.conf.default.forwarding=1
+    }
+
+    [ "$NETWORK_TUNING" != "1" ] && return 0
+
     # Network Buffers (TCP/UDP)
     sysctl -w net.core.rmem_max=6291456     # Max TCP/UDP receive buffer
     sysctl -w net.core.wmem_max=6291456     # Max TCP/UDP send buffer
@@ -1565,13 +1583,6 @@ apply_sysctl_network_tuning(){
     # Interface Queues
     sysctl -w net.core.netdev_max_backlog=4096   # Max packets queued on interface
     sysctl -w net.core.somaxconn=512             # Max pending TCP connections
-
-    # IPv4 Forwarding & TProxy Support
-    sysctl -w net.ipv4.ip_forward=1                    # Enable IPv4 routing
-    sysctl -w net.ipv4.conf.all.src_valid_mark=0       # Accept TProxy marked packets
-    sysctl -w net.ipv4.conf.lo.route_localnet=1        # Allow lo local routing (TProxy)
-    sysctl -w net.ipv4.conf.all.send_redirects=0       # Disable ICMP redirects globally
-    sysctl -w net.ipv4.conf.default.send_redirects=0   # Disable ICMP redirects by default
 
     # Connection Tracking
     sysctl -w net.netfilter.nf_conntrack_max=50000                     # Max tracked connections
@@ -1606,12 +1617,6 @@ apply_sysctl_network_tuning(){
 
     # Local Ports
     sysctl -w net.ipv4.ip_local_port_range="10000 60001"  # Set ephemeral port range
-
-    # IPv6 Forwarding
-    [ -f /proc/net/if_inet6 ] && {
-      sysctl -w net.ipv6.conf.all.forwarding=1
-      sysctl -w net.ipv6.conf.default.forwarding=1
-    }
   } >/dev/null 2>&1
 }
 
