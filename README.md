@@ -9,10 +9,10 @@ Installation script for sing-box on Keenetic/Netcraze routers
 </h3>
 
 <p align="center">
-<img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen">
-<img alt="sing-box" src="https://repology.org/badge/version-for-repo/homebrew/sing-box.svg?header=sing-box-latest-version">
+<a href="https://github.com/jinndi/SKeen"><img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen"></a>
+<a href="https://github.com/SagerNet/sing-box"><img alt="sing-box" src="https://repology.org/badge/version-for-repo/homebrew/sing-box.svg?header=sing-box-latest-version"></a>
 <img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/SKeen">
-<img alt="License" src="https://img.shields.io/github/license/jinndi/SKeen">
+<a href="https://github.com/jinndi/SKeen/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/jinndi/SKeen"></a>
 <img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FXSKeen&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
 <a href="https://deepwiki.com/jinndi/SKeen"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
@@ -43,7 +43,7 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 
 Configure the sing-box JSON configuration files located in the `/opt/etc/skeen/config/` directory, where example configuration files are provided.
 
-The SKeen settings are located in the file at `/opt/etc/skeen/skeen.conf`.
+The SKeen settings are located in the file at `/opt/etc/skeen/skeen.json`.
 
 `/opt/etc/skeen` directory is not removed during program uninstallation and must be deleted manually if required. It is also not overwritten during reinstallation if it already exists.
 
@@ -98,7 +98,7 @@ Example Usage: start the daemon `skeen start`
 |`format`| Formats Sing-box configuration in `/opt/etc/skeen/config/` without changing its behavior |
 |`backup`|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
 |`restore`|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
-|`reset`|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.conf` to defaults, performing a `backup` beforehand|
+|`reset`|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.json` to defaults, performing a `backup` beforehand|
 
 ### ⚙️ Settigs
 
