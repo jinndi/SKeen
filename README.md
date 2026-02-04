@@ -94,7 +94,7 @@ Example Usage: start the daemon `skeen start`
 |`update`|Checks for available updates of the sing-box core and the SKeen script, and allows updating|
 |`test`|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
 |`deps`|Check if all dependencies are installed (installs missing ones)|
-|`check`| Checks Sing-box configuration in `/opt/etc/skeen/config/` for syntax and logical errors |
+|`check`| Checks Sing-box configuration in `/opt/etc/skeen/config/` for syntax and logical errors + `/opt/etc/skeen/skeen.json` for syntax error |
 |`format`| Formats Sing-box configuration in `/opt/etc/skeen/config/` without changing its behavior |
 |`backup`|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
 |`restore`|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
@@ -105,19 +105,50 @@ Example Usage: start the daemon `skeen start`
 > [!NOTE]
 > After making changes to the file, a restart via `skeen restart` or through the menu is required
 
-The file `/opt/etc/skeen/skeen.conf` has the following settings:
+The file `/opt/etc/skeen/skeen.json` has the following settings:
 
-| Variable | Description |
-| ------------ | -------------------------------------------------------------- |
-|`AUTO_START`|Sing-box autostart on router reboot (0 - disabled, 1 - enabled)|
-|`AUTO_START_DELAY`|Auto-start delay in seconds (Default 0)|
-|`INET_TEST_IPV4_HOSTS`, `INET_TEST_IPV6_HOSTS` |Domains or IPs for testing the internet connection (no more than 3). List: ya.ru,77.88.8.8,... or ya.ru 77.88.8.8|
-|`POLICY_NAME`|Router policy name for SKeen traffic (Default `SKeen`)|
-|`NETWORK_TUNING`|Enable network settings optimization via sysctl (0 - off, 1 - on, Default 0) * If you disable this option, the sysctl settings will be reset to their default values after the router is restarted|
-|`INTERCEPT_PORTS`|Ports to intercept and redirect via TProxy/Redirect (all ports if not specified). List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000|
-|`EXCLUDE_PORTS`|Ports to excluded redirect via TProxy/Redirect (Not working if ports are set in `INTERCEPT_PORTS`). List: port and port ranges use colon e.g. 8080,1443,1300:2300 or 8080 1443 1300:2300|
-|`EXCLUDE_IPV4_ADDRESSES`, `EXCLUDE_IPV6_ADDRESSES`|Excluded ip addresses for traffic redirection. List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ...|
-|`EXCLUDE_IPV4_SUBNETS`, `EXCLUDE_IPV6_SUBNETS`|Excluded subnets for traffic redirection. List: 192.155.1.1/24,192.200.1.1/24,... or 192.155.1.1/24 192.200.1.1/24 ...|
+```
+{
+  "auto_start": {
+    "enable": 1,    // SKeen autostart on router reboot (0 = disabled)
+    "delay": 0      // Auto-start delay in seconds (default: 0)
+  },
+  "policy": {
+    "enable": 1,    // Enable policy-based routing (0 = disabled)
+    "name": "SKeen" // Router policy name (default: "SKeen")
+  },
+  "network": {
+    "ipv6": 1,      // Enable IPv6 support (0 = disabled)
+    "tuning": 0,    // Enable sysctl network optimization (1 = on).
+                    // If disabled, sysctl settings reset after reboot.
+    "check": [
+      "1.1.1.1",
+      "77.88.8.8",
+      "223.5.5.5"
+    ]               // Domains or IPs for connectivity tests (max 3)
+  },
+  "firewall": {
+    "intercept": {
+      "dns": 1,     // Intercept DNS via TProxy/Redirect (0 = disabled)
+      "port": []    // Ports to intercept (all if empty).
+                    // Example: [ 80, 443, "1000:2000", "1500:5555" ]
+    },
+    "exclude": {
+      "port": [
+        123, 137,
+        138, 139,
+        445         // Ports excluded from redirect
+                    // (ignored if `intercept.port` is set)
+      ],
+      "ipv4_cidr": [], // Excluded IPv4 subnets for redirection.
+                       // Example: [ "192.87.1.0/24", "192.12.1.1" ]
+      "ipv6_cidr": []  // Excluded IPv6 subnets for redirection.
+                       // Example: [ "2001:db8::/32", "2001:db8::1" ]
+    }
+  }
+}
+
+```
 
 ### 🔗 Useful links
 - Proxy setup guide: [https://proxy-tutorials.dustinwin.us.kg/](https://proxy-tutorials.dustinwin.us.kg/)

@@ -29,12 +29,12 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.9.2"
+SKEEN_VERSION="3.9.3"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
 SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
-SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.conf"
+SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 
 SINGBOX_NAME="Sing-box"
@@ -53,9 +53,6 @@ TABLE_TPROXY="mangle"
 TABLE_MARK="0x112"
 TABLE_ID="112"
 DNS_PORT=53
-
-SYS_INET_TEST_IPV4_HOSTS="1.1.1.1 77.88.8.8 223.5.5.5"
-SYS_INET_TEST_IPV6_HOSTS="2606:4700:4700::1111 2a02:6b8::feed:0ff 2400:3200::1"
 
 # IETF/IANA IPv4 Special-Purpose Address Registry
 # https://www.iana.org/assignments/iana-ipv4-special-registry/
@@ -119,55 +116,69 @@ create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
   [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
-  {
-    echo "# Sing-box autostart on router reboot"
-    echo "# 0 - disabled, 1 - enabled"
-    echo "AUTO_START=1"
-    echo
-    echo "# Auto-start delay in seconds"
-    echo "AUTO_START_DELAY=0"
-    echo
-    echo "# Domains or IPs for testing the internet connection (no more than 3)"
-    echo "# List: ya.ru,77.88.8.8,... or ya.ru 77.88.8.8"
-    echo "INET_TEST_IPV4_HOSTS=\"$SYS_INET_TEST_IPV4_HOSTS\""
-    echo "INET_TEST_IPV6_HOSTS=\"$SYS_INET_TEST_IPV6_HOSTS\""
-    echo
-    echo "# Router policy name for $SKEEN_NAME traffic"
-    echo "POLICY_NAME=\"${SKEEN_NAME}\""
-    echo
-    echo "Enable network settings optimization via sysctl (0 - off, 1 - on)"
-    echo "NETWORK_TUNING=\"0\""
-    echo
-    echo "# Ports to intercept and redirect via TProxy/Redirect (all ports if not specified)"
-    echo "# List: port and port ranges use colon e.g. 80,443,1000:2000 or 80 443 1000:2000"
-    echo "INTERCEPT_PORTS=\"\""
-    echo
-    echo "# Ports to be excluded from redirect via TProxy/Redirect"
-    echo "# List: port and port ranges use colon e.g. 8080,1443,1300:2300 or 8080 1443 1300:2300"
-    echo "EXCLUDE_PORTS=\"123, 137, 138, 139, 445\""
-    echo
-    echo "# Excluded ip addresses for traffic redirection"
-    echo "# List: 192.155.1.1,192.200.1.1,... or 192.155.1.1 192.200.1.1 ..."
-    echo "EXCLUDE_IPV4_ADDRESSES=\"\""
-    echo "EXCLUDE_IPV6_ADDRESSES=\"\""
-    echo
-    echo "# Excluded subnets for traffic redirection"
-    echo "# List: 192.155.1.1/24,192.200.1.1/24,... or 192.155.1.1/24 192.200.1.1/24 ..."
-    echo "EXCLUDE_IPV4_SUBNETS=\"\""
-    echo "EXCLUDE_IPV6_SUBNETS=\"\""
-  } > "$SKEEN_CONFIG"
+  cat <<EOF > "$SKEEN_CONFIG"
+// https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs
+{
+  "auto_start": {
+    "enable": 1,
+    "delay": 0
+  },
+  "policy": {
+    "enable": 1,
+    "name": "SKeen"
+  },
+  "network": {
+    "ipv6": 1,
+    "tuning": 0,
+    "check": ["1.1.1.1", "ya.ru", "223.5.5.5"],
+  },
+  "firewall": {
+    "intercept": {
+      "dns": 1,
+      "port": []
+    },
+    "exclude": {
+      "port": [123, 137, 138, 139, 445],
+      "ipv4_cidr": [],
+      "ipv6_cidr": []
+    }
+  }
+}
+EOF
 
   create_autostart_script > /dev/null 2>&1
 }
 
+
+json_get_array() {
+  path="${1:-}"
+
+  arr="$(jsonfilter -i "$SKEEN_CONFIG" -e "${path}[*]")"
+
+  if [ -n "$arr" ]; then
+    echo "$arr"
+    return
+  fi
+
+  jsonfilter -i "$SKEEN_CONFIG" -e "$path" | tr -d '[],"'
+}
+
+
 loading_config(){
   if [ ! -f "$SKEEN_CONFIG" ]; then
     create_skeen_config
-    echowarn "Configuration file 'skeen.conf' not found, a new one has been created"
+    echowarn "Configuration file 'skeen.json' not found, a new one has been created"
   fi
 
-  # shellcheck disable=SC1090
-  . "$SKEEN_CONFIG"
+  eval "$(jsonfilter -i "$SKEEN_CONFIG" \
+    -e AUTO_START_ENABLE='@.auto_start.enable' \
+    -e AUTO_START_DELAY='@.auto_start.delay' \
+    -e POLICY_ENABLE='@.policy.enable' \
+    -e POLICY_NAME='@.policy.name' \
+    -e NETWORK_IPV6='@.network.ipv6' \
+    -e NETWORK_TUNING='@.network.tuning' \
+    -e FIREWALL_DNS='@.firewall.intercept.dns' \
+  )"
 }
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
@@ -617,39 +628,24 @@ accept_uninstall(){
 }
 
 
-update_config_var(){
-  key="${1:-}"
-  val="${2:-}"
-
-  [ -f "$SKEEN_CONFIG" ] || create_skeen_config
-
-  if grep -q "^[[:space:]]*${key}[[:space:]]*=" "$SKEEN_CONFIG"; then
-    sed -i "s|^[[:space:]]*${key}[[:space:]]*=.*|$key=$val|" "$SKEEN_CONFIG"
-  else
-    echo "$key=$val" >> "$SKEEN_CONFIG"
-  fi
-}
-
-
-get_inet_tests_hosts() {
+get_net_check_hosts() {
   ipv="${1:-}"
   hosts=""
   sys_hosts=""
   max="3"
 
   if [ "$ipv" = "4" ]; then
-    hosts="$INET_TEST_IPV4_HOSTS"
-    sys_hosts="$SYS_INET_TEST_IPV4_HOSTS"
+    sys_hosts="1.1.1.1 77.88.8.8 223.5.5.5"
+    hosts="$(json_get_array '@.network.check') $sys_hosts"
   else
-    hosts="$INET_TEST_IPV6_HOSTS"
-    sys_hosts="$SYS_INET_TEST_IPV6_HOSTS"
+    sys_hosts="2606:4700:4700::1111 2a02:6b8::feed:0ff 2400:3200::1"
   fi
 
   if [ -z "$hosts" ]; then
     echo "$sys_hosts"
   else
     hosts="$(echo "$hosts" | \
-      tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
+      tr ',\t\n' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
 
     # shellcheck disable=SC2086
     set -- $hosts
@@ -669,7 +665,7 @@ get_inet_tests_hosts() {
 
 
 check_internet() {
-  hosts="$(get_inet_tests_hosts "4")"
+  hosts="$(get_net_check_hosts "4")"
   max_attempts=3
 
   for host in $hosts; do
@@ -853,13 +849,15 @@ get_iptables_list(){
 
 
 get_mark_policy(){
-  [ -n "$POLICY_NAME" ] && \
+  [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_NAME" ] && \
   mark=$(ndmc -c show ip policy | awk -v d="$(printf '%s' "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')" '
     /description =/ { f = (tolower($0) ~ "description = " d) }
     f && /mark:/ { print $2; exit }')
 
-  if [ -z "$POLICY_NAME" ]; then
-    echowarn "Policy name (POLICY_NAME var) not set"
+  if [ "$POLICY_ENABLE" != "1" ]; then
+    echomsg "Policy disabled on skeen.json"
+  elif [ -z "$POLICY_NAME" ]; then
+    echowarn "Policy name not set"
   elif [ -z "$mark" ]; then
     echowarn "Policy $POLICY_NAME not found"
   else
@@ -1008,7 +1006,7 @@ get_validate_ports() {
 
 get_eth_subnet() {
   _ip_v="${1:-}"
-  addresses="$(get_inet_tests_hosts "$_ip_v")"
+  addresses="$(get_net_check_hosts "$_ip_v")"
   prefix_length="32"
   [ "$_ip_v" = "6" ] && prefix_length="128"
 
@@ -1028,19 +1026,14 @@ get_exclude_addresses() {
   [ "$ip_v" = "4" ] && prefix_length_default="32" || prefix_length_default="128"
 
   if [ "$ip_v" = "4" ]; then
-    eth_subnet="$(get_eth_subnet "$ip_v")"
     reserved_subnets="$RESERVED_IPV4"
-    user_exclude="${EXCLUDE_IPV4_ADDRESSES},${EXCLUDE_IPV4_SUBNETS}"
+    user_exclude="$(json_get_array '@.firewall.exclude.ipv4_cidr')"
   else
-    eth_subnet="$(get_eth_subnet "$ip_v")"
     reserved_subnets="$RESERVED_IPV6"
-    user_exclude="${EXCLUDE_IPV6_ADDRESSES},${EXCLUDE_IPV6_SUBNETS}"
+    user_exclude="$(json_get_array '@.firewall.exclude.ipv6_cidr')"
   fi
 
-  user_exclude="$(echo "$user_exclude" | \
-    tr ',\t' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
-
-  all_list="$eth_subnet"
+  all_list="$(get_eth_subnet "$ip_v")"
 
   while IFS= read -r line; do
     [ -z "$line" ] && continue
@@ -1057,6 +1050,7 @@ EOF
   invalid_list=""
 
   for addr in $user_exclude; do
+    [ -z "$addr" ] && continue
     [ "${addr#*/}" = "$addr" ] && addr="$addr/$prefix_length_default"
 
     case "$ip_v" in
@@ -1072,8 +1066,8 @@ EOF
   done
 
   [ -n "$invalid_list" ] && {
-    echowarn "Invalid IPv$ip_v exclude:$invalid_list"
-    logger_warning "Invalid IPv$ip_v exclude:$invalid_list"
+    echowarn "Invalid IPv$ip_v exclude: $invalid_list"
+    logger_warning "Invalid IPv$ip_v exclude: $invalid_list"
   }
 
   echo "$all_list" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
@@ -1340,7 +1334,7 @@ prepare_firewall(){
   fi
 
   SKEEN_DNS_ENABLED="0"
-  if has_dns_servers; then
+  if [ "$FIREWALL_DNS" = "1" ] && has_dns_servers; then
     echomsg "Detected use of DNS configuration"
 
     warn_msg="the DNS configuration is not used"
@@ -1369,8 +1363,6 @@ prepare_firewall(){
 
   echomsg "Detected firewall networks: $SKEEN_FIREWALL_NETWORK"
 
-  [ "$CALLER" != "init" ] && loading_config
-
   SKEEN_MARK_POLICY="$(get_mark_policy)"
 
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
@@ -1378,9 +1370,9 @@ prepare_firewall(){
   SKEEN_INTERCEPT_PORTS=""
   SKEEN_EXCLUDE_PORTS=""
   if [ -n "$INTERCEPT_PORTS" ]; then
-    SKEEN_INTERCEPT_PORTS="$(get_validate_ports "intercept" "$INTERCEPT_PORTS")"
+    SKEEN_INTERCEPT_PORTS="$(get_validate_ports "intercept" "$(json_get_array '@.firewall.intercept.port')")"
   elif [ -n "$EXCLUDE_PORTS" ]; then
-    SKEEN_EXCLUDE_PORTS="$(get_validate_ports "exclude" "$EXCLUDE_PORTS")"
+    SKEEN_EXCLUDE_PORTS="$(get_validate_ports "exclude" "$(json_get_array '@.firewall.exclude.port')")"
   fi
 
   setup_bypass_ipset() {
@@ -1566,11 +1558,21 @@ apply_sysctl_network_tuning(){
     sysctl -w net.ipv4.conf.all.send_redirects=0       # Disable ICMP redirects globally
     sysctl -w net.ipv4.conf.default.send_redirects=0   # Disable ICMP redirects by default
 
-    # IPv6 Forwarding
-    [ -f /proc/net/if_inet6 ] && {
-      sysctl -w net.ipv6.conf.all.forwarding=1
-      sysctl -w net.ipv6.conf.default.forwarding=1
-    }
+    # IPv6 support
+    if [ -f /proc/net/if_inet6 ]; then
+      if [ "$NETWORK_IPV6" = "0" ]; then
+        sysctl -w net.ipv6.conf.all.disable_ipv6=1
+        sysctl -w net.ipv6.conf.default.disable_ipv6=1
+        sysctl -w net.ipv6.conf.lo.disable_ipv6=1
+      else
+        sysctl -w net.ipv6.conf.all.disable_ipv6=0
+        sysctl -w net.ipv6.conf.default.disable_ipv6=0
+        sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+        # Forwarding
+        sysctl -w net.ipv6.conf.all.forwarding=1
+        sysctl -w net.ipv6.conf.default.forwarding=1
+      fi
+    fi
 
     [ "$NETWORK_TUNING" != "1" ] && return 0
 
@@ -1641,8 +1643,6 @@ start_singbox(){
 
   echomsg "Starting ${SINGBOX_NAME}..."
 
-  apply_sysctl_network_tuning
-
   # shellcheck disable=SC3045
   ulimit -n "$(get_ulimit_n)" || exiterr "Failed to set ulimit -n"
 
@@ -1677,7 +1677,7 @@ start_singbox(){
 start() {
   if [ "$CALLER" = "init" ]; then
     loading_config
-    if [ "$AUTO_START" = "0" ]; then
+    if [ "$AUTO_START_ENABLE" = "0" ]; then
       return 0
     else
       if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null; then
@@ -1696,6 +1696,10 @@ start() {
   fi
 
   check_config && echo "$DELIMETER"
+
+  [ "$CALLER" != "init" ] && loading_config
+
+  apply_sysctl_network_tuning
 
   prepare_firewall && echo "$DELIMETER"
 
@@ -1784,8 +1788,7 @@ switch_state(){
 
 restart() {
   on_restart=1
-  stop
-  start
+  stop; start
   on_restart=0
   press_any_key_to_menu
 }
@@ -1814,19 +1817,6 @@ status(){
   else
     echo "Status: $(red "stopped")"
   fi
-}
-
-
-switch_autostart(){
-  if [ "$AUTO_START" = "1" ]; then
-    update_config_var "AUTO_START" "0"
-    echook "Autostart disabled"
-  else
-    update_config_var "AUTO_START" "1"
-    echook "Autostart enabled"
-  fi
-
-  press_any_key_to_menu
 }
 
 
@@ -1965,7 +1955,7 @@ fw_test_chain() {
     fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS port ${DNS_PORT} rule"
   fi
 
-  if [ -n "$INTERCEPT_PORTS" ] || [ -n "$EXCLUDE_PORTS" ]; then
+  if [ -n "$SKEEN_INTERCEPT_PORTS" ] || [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
     # shellcheck disable=SC2015
     fw_test "$1" "$2" "$($3 -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport rule"
   fi
@@ -2103,19 +2093,28 @@ reset_config(){
 
 
 check_config(){
-  echomsg "Checking Sing-box configuration..."
+  echomsg "Checking $SINGBOX_NAME configuration..."
+
+  msg_err="Configuration check failed"
+  is_error=0
 
   if $SINGBOX_PROC check -C $CONFIG_DIR; then
-    echook "Configuration is valid"
+    echook "$SINGBOX_NAME configuration is valid"
   else
-    msg="Configuration check failed"
-    echoerr "$msg"
-    if [ "$CALLER" = "menu" ]; then
-      press_any_key_to_menu
-    else
-      logger_error "$msg"
-      exit 1
-    fi
+    is_error=1; echoerr "$msg_err"
+  fi
+
+  echomsg "Checking $SKEEN_NAME configuration..."
+  if jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall' >/dev/null 2>&1; then
+    echook "$SKEEN_NAME JSON valid"
+  else
+    is_error=1; echoerr "$msg_err"
+  fi
+
+  if [ $is_error -eq 1 ] && [ "$CALLER" = "menu" ]; then
+    press_any_key_to_menu
+  elif [ $is_error -eq 1 ]; then
+    logger_error "$msg"; exit 1
   fi
 }
 
@@ -2132,16 +2131,15 @@ format_config(){
 
 
 show_menu(){
-  show_header
-
+  loading_config
   import_firewall_vars
 
-  if [ "$AUTO_START" = "1" ]; then
+  show_header
+
+  if [ "$AUTO_START_ENABLE" = "1" ]; then
     autostart_status="$(green "yes")"
-    autostart_text="Disable"
   else
     autostart_status="$(red "no")"
-    autostart_text="Enable"
   fi
 
   if is_running; then
@@ -2156,6 +2154,7 @@ show_menu(){
   printf "\n %s %s" "$SINGBOX_NAME version:" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
   printf "\n %s %s" "$SINGBOX_NAME state:" "$running_status"
   printf "\n %s %s" "Start automatically:" "$autostart_status"
+  ipv4=""; ipv6=""
   if [ "$running_text" = "Stop" ] && [ "$SKEEN_FIREWALL_MODE" != "none" ]; then
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
@@ -2175,33 +2174,31 @@ show_menu(){
   printf "\n\n%s\n" "$(cyan "Select option:")"
   printf "  %s $running_text ${SINGBOX_NAME}\n" "$(green "1.")"
   printf "  %s Restart ${SINGBOX_NAME}\n" "$(green "2.")"
-  printf "  %s $autostart_text Autostart\n" "$(green "3.")"
-  printf "  %s Check Updates\n" "$(green "4.")"
-  printf "  %s Test Firewall\n" "$(green "5.")"
-  printf "  %s Uninstall ${SKEEN_NAME}\n" "$(green "6.")"
-  printf "  %s Exit\n" "$(green "7.")"
+  printf "  %s Check Updates\n" "$(green "3.")"
+  printf "  %s Test Firewall\n" "$(green "4.")"
+  printf "  %s Uninstall ${SKEEN_NAME}\n" "$(green "5.")"
+  printf "  %s Exit\n" "$(green "6.")"
 
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    printf "\nEnter your selection [1-7]: " > /dev/tty
+    printf "\nEnter your selection [1-6]: " > /dev/tty
     read -r option < /dev/tty
 
     printf "\n"
 
-    if echo "$option" | grep -Eq '^[1-6]$'; then
+    if echo "$option" | grep -Eq '^[1-5]$'; then
       echo "$DELIMETER"
 
       case "$option" in
         1) switch_state ;;
         2) restart ;;
-        3) switch_autostart ;;
-        4) check_updates ;;
-        5) test_firewall ;;
-        6) accept_uninstall ;;
+        3) check_updates ;;
+        4) test_firewall ;;
+        5) accept_uninstall ;;
       esac
     else
-      [ "$option" = 7 ] && exit 0
+      [ "$option" = 6 ] && exit 0
       echoerr "Incorrect option"
       attempt=$((attempt+1))
     fi
@@ -2266,7 +2263,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     check) check_config ;;
     format) format_config ;;
     apply_firewall) apply_firewall ;;
-    "") loading_config; show_menu ;;
+    "") show_menu ;;
     help|*) show_help ;;
   esac
 else
