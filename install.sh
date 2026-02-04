@@ -158,12 +158,14 @@ create_skeen_config(){
 }
 
 loading_config(){
-  [ -f "$SKEEN_CONFIG" ] || create_skeen_config
+  if [ ! -f "$SKEEN_CONFIG" ]; then
+    create_skeen_config
+    echowarn "Configuration file 'skeen.conf' not found, a new one has been created"
+  fi
+
   # shellcheck disable=SC1090
   . "$SKEEN_CONFIG"
 }
-
-[ "$ACTION" != "apply_firewall" ] && loading_config
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -623,8 +625,6 @@ update_config_var(){
   else
     echo "$key=$val" >> "$SKEEN_CONFIG"
   fi
-
-  loading_config
 }
 
 
@@ -1335,21 +1335,25 @@ prepare_firewall(){
   else
     SKEEN_FIREWALL_MODE="none"
   fi
-  echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
-
-  if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
-    echook "$complete_msg"
-    return 0
-  fi
 
   SKEEN_DNS_ENABLED="0"
   if has_dns_servers; then
     echomsg "Detected use of DNS configuration"
 
+    warn_msg="the DNS configuration is not used"
+
     case "$SKEEN_FIREWALL_MODE" in
       tproxy|hybrid) SKEEN_DNS_ENABLED="1" ;;
-      *) echowarn "In redirect mode, the DNS configuration is not used" ;;
+      redirect) echowarn "In 'redirect' mode, $warn_msg" ;;
+      none) echowarn "In 'none' mode, $warn_msg" ;;
     esac
+  fi
+
+  echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
+
+  if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
+    echook "$complete_msg"
+    return 0
   fi
 
   if [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
@@ -1361,6 +1365,8 @@ prepare_firewall(){
   loading_modules
 
   echomsg "Detected firewall networks: $SKEEN_FIREWALL_NETWORK"
+
+  loading_config
 
   SKEEN_MARK_POLICY="$(get_mark_policy)"
 
@@ -1658,6 +1664,7 @@ start_singbox(){
 
 start() {
   if [ "$CALLER" = "init" ]; then
+    loading_config
     if [ "$AUTO_START" = "0" ]; then
       return 0
     else
@@ -1766,7 +1773,6 @@ switch_state(){
 restart() {
   on_restart=1
   stop
-  [ "$CALLER" = "menu" ] && loading_config
   start
   on_restart=0
   press_any_key_to_menu
@@ -2116,6 +2122,7 @@ format_config(){
 show_menu(){
   show_header
 
+  loading_config
   import_firewall_vars
 
   if [ "$AUTO_START" = "1" ]; then
