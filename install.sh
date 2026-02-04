@@ -2122,7 +2122,6 @@ format_config(){
 show_menu(){
   show_header
 
-  loading_config
   import_firewall_vars
 
   if [ "$AUTO_START" = "1" ]; then
@@ -2255,7 +2254,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     check) check_config ;;
     format) format_config ;;
     apply_firewall) apply_firewall ;;
-    "") show_menu ;;
+    "") loading_config; show_menu ;;
     help|*) show_help ;;
   esac
 else
