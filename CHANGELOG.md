@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.2...SKeen-v3.9.3) (2026-02-04)
+
+
+### ⚙️ Config
+
+* The old SKeen configuration format is no longer used. A new JSON-format configuration file will be created alongside the old one. Additional settings have also been added - see the README for details. https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs ([ac25950](https://github.com/jinndi/SKeen/commit/ac259500ea5e45c32abc09ad0f97ca9284608ba2))
+
 ## [3.9.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.1...SKeen-v3.9.2) (2026-02-04)
 
 
