@@ -110,35 +110,35 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 ```
 {
   "auto_start": {
-    "enable": 1,    // SKeen autostart on router reboot (0 = disabled)
-    "delay": 0      // Auto-start delay in seconds (default: 0)
+    "enable": 1,       // SKeen autostart on router reboot (0 = disabled)
+    "delay": 0         // Auto-start delay in seconds (default: 0)
   },
   "policy": {
-    "enable": 1,    // Enable policy-based routing (0 = disabled)
-    "name": "SKeen" // Router policy name (default: "SKeen")
+    "enable": 1,       // Enable policy-based routing (0 = disabled)
+    "name": "SKeen"    // Router policy name (default: "SKeen")
   },
   "network": {
-    "ipv6": 1,      // Enable IPv6 support (0 = disabled)
-    "tuning": 0,    // Enable sysctl network optimization (1 = on).
-                    // If disabled, sysctl settings reset after reboot.
+    "ipv6": 1,         // Enable IPv6 support (0 = disabled)
+    "tuning": 0,       // Enable sysctl network optimization (1 = on).
+                       // If disabled, sysctl settings reset after reboot.
     "check": [
       "1.1.1.1",
       "77.88.8.8",
       "223.5.5.5"
-    ]               // Domains or IPs V4 for connectivity tests (max 3)
+    ]                  // Domains or IPs V4 for connectivity tests (max 3)
   },
   "firewall": {
     "intercept": {
-      "dns": 1,     // Intercept DNS via TProxy/Redirect (0 = disabled)
-      "port": []    // Ports to intercept (all if empty).
-                    // Example: [ 80, 443, "1000:2000", "1500:5555" ]
+      "dns": 1,        // Intercept DNS via TProxy/Redirect (0 = disabled)
+      "port": []       // Ports to intercept (all if empty).
+                       // Example: [ 80, 443, "1000:2000", "1500:5555" ]
     },
     "exclude": {
       "port": [
         123, 137,
         138, 139,
-        445         // Ports excluded from redirect
-                    // (ignored if `intercept.port` is set)
+        445            // Ports excluded from redirect
+                       // (ignored if `intercept.port` is set)
       ],
       "ipv4_cidr": [], // Excluded IPv4 subnets for redirection.
                        // Example: [ "192.87.1.0/24", "192.12.1.1" ]
