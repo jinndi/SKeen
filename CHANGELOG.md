@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.9.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.1...SKeen-v3.9.2) (2026-02-04)
+
+
+### 🐛 Fix
+
+* do not reload user config on every menu invocation ([08e44e0](https://github.com/jinndi/SKeen/commit/08e44e008355ead3f635b6bf54300f2535d83660))
+
+
+### ⚡ Perf
+
+* added Skeen NETWORK_TUNING configuration option, see README ([3e4e5ab](https://github.com/jinndi/SKeen/commit/3e4e5ab77cfd641090a9ddf4ecc1e63cdcbc746a))
+
+
+### 🧰 Chore
+
+* extracted the file descriptor count retrieval into a separate function ([291ef38](https://github.com/jinndi/SKeen/commit/291ef38e2fe608a76077504f861da86db635e9b2))
+* reworked the logic for loading skeen.conf configuration ([aa48913](https://github.com/jinndi/SKeen/commit/aa48913bc3333a80d36a228085615fa0e356e445))
+
 ## [3.9.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.0...SKeen-v3.9.1) (2026-02-03)
 
 
