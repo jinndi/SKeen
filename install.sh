@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.9.3"
+SKEEN_VERSION="3.9.4"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -2177,12 +2177,12 @@ show_menu(){
   printf "  %s Check Updates\n" "$(green "3.")"
   printf "  %s Test Firewall\n" "$(green "4.")"
   printf "  %s Uninstall ${SKEEN_NAME}\n" "$(green "5.")"
-  printf "  %s Exit\n" "$(green "6.")"
+  printf "  %s Exit\n" "$(green "0.")"
 
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    printf "\nEnter your selection [1-6]: " > /dev/tty
+    printf "\nEnter your selection [0-5]: " > /dev/tty
     read -r option < /dev/tty
 
     printf "\n"
@@ -2198,7 +2198,7 @@ show_menu(){
         5) accept_uninstall ;;
       esac
     else
-      [ "$option" = 6 ] && exit 0
+      [ "$option" = 0 ] && exit 0
       echoerr "Incorrect option"
       attempt=$((attempt+1))
     fi
