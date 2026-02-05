@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.3...SKeen-v3.9.4) (2026-02-05)
+
+
+### 🛠 Refactor
+
+* **menu:** move exit option from position 6 to 0 ([1ab1fc9](https://github.com/jinndi/SKeen/commit/1ab1fc9c466fd2f2f6e10c8b5321d0d13ccc00af))
+
 ## [3.9.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.2...SKeen-v3.9.3) (2026-02-04)
 
 
