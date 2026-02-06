@@ -1,0 +1,20 @@
+// Hybrid (TCP Redirect + UDP TProxy)
+{
+  "inbounds": [
+    {
+      "type": "redirect",
+      "tag": "redirect-in",
+      "listen": "::",
+      "listen_port": 2081,
+      "tcp_fast_open": true
+    },
+    {
+      "type": "tproxy",
+      "tag": "tproxy-in",
+      "listen": "::",
+      "listen_port": 2082,
+      "udp_timeout": "3m0s",
+      "network": "udp"
+    }
+  ]
+}

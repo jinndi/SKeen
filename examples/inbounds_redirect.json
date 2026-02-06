@@ -1,0 +1,12 @@
+// Redirect (TCP only, not recommended, sing-box DNS not working!)
+{
+  "inbounds": [
+    {
+      "type": "redirect",
+      "tag": "redirect-in",
+      "listen": "::",
+      "listen_port": 2081,
+      "tcp_fast_open": true
+    }
+  ]
+}

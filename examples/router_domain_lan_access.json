@@ -1,0 +1,28 @@
+// Use these sing-box settings to access the router dashboard by domain on port 443 from LAN:
+{
+  "dns": {
+    "servers": [
+      {
+        "type": "hosts",
+        "tag": "hosts",
+        "predefined": {
+          "example.netcraze.pro": "192.168.1.1"
+        }
+      }
+    ],
+    "rules": [
+      {
+        "ip_accept_any": true,
+        "server": "hosts"
+      }
+    ]
+  },
+  "route": {
+    "rules": [
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      }
+    ]
+  }
+}

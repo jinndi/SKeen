@@ -1,0 +1,13 @@
+// TProxy only (TCP & UDP)
+{
+  "inbounds": [
+    {
+      "type": "tproxy",
+      "tag": "tproxy-in",
+      "listen": "::",
+      "listen_port": 2082,
+      "tcp_fast_open": true,
+      "udp_timeout": "3m0s"
+    }
+  ]
+}
