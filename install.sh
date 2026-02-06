@@ -2160,34 +2160,43 @@ show_menu(){
     running_text="Start"
   fi
 
-  printf "\n %s %s" "$SKEEN_NAME version:" "$(cyan "v$(get_current_version "$SKEEN_PROC")")"
-  printf "\n %s %s" "$SINGBOX_NAME version:" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
-  printf "\n %s %s" "$SINGBOX_NAME state:" "$running_status"
-  printf "\n %s %s" "Start automatically:" "$autostart_status"
+  output=""
+
+  output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
+  output="$output\n $SINGBOX_NAME version: $(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+  output="$output\n $SINGBOX_NAME state: $running_status"
+  output="$output\n Start automatically: $autostart_status"
+
   ipv4=""; ipv6=""
+
   if [ "$running_text" = "Stop" ] && [ "$SKEEN_FIREWALL_MODE" != "none" ]; then
-    echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
+    echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt"  && ipv4="$(cyan "4")"
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
-    [ "$SKEEN_DNS_ENABLED" = "1" ] && \
-      sb_dns_work_text="$(green "yes")" || \
-      sb_dns_work_text="$(red "no")"
+    if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
+      sb_dns_work_text="$(green yes)"
+    else
+      sb_dns_work_text="$(red no)"
+    fi
 
-    printf "\n %s %s" "${SINGBOX_NAME} DNS working:" "$sb_dns_work_text"
-    printf "\n %s %s" "Firewall mode:" "$(cyan "$SKEEN_FIREWALL_MODE")"
-    printf "\n %s %s" "Firewall network:" "$(cyan "$SKEEN_FIREWALL_NETWORK")"
-    printf "\n %s %s" "Firewall IP ver.:" "$ipv4 $ipv6"
+    output="$output\n ${SINGBOX_NAME} DNS working: $sb_dns_work_text"
+    output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
+    output="$output\n Firewall network: $(cyan "$SKEEN_FIREWALL_NETWORK")"
+    output="$output\n Firewall IP ver.: $ipv4 $ipv6"
+
   elif [ "$running_text" = "Stop" ] && [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
-    printf "\n %s %s" "Firewall mode:" "$(cyan "none")"
+    output="$output\n Firewall mode: $(cyan none)"
   fi
 
-  printf "\n\n%s\n" "$(cyan "Select option:")"
-  printf "  %s $running_text ${SINGBOX_NAME}\n" "$(green "1.")"
-  printf "  %s Restart ${SINGBOX_NAME}\n" "$(green "2.")"
-  printf "  %s Check Updates\n" "$(green "3.")"
-  printf "  %s Test Firewall\n" "$(green "4.")"
-  printf "  %s Uninstall ${SKEEN_NAME}\n" "$(green "5.")"
-  printf "  %s Exit\n" "$(green "0.")"
+  output="$output\n\n$(cyan "Select option:")"
+  output="$output\n  $(green "1.") $running_text $SINGBOX_NAME"
+  output="$output\n  $(green "2.") Restart $SINGBOX_NAME"
+  output="$output\n  $(green "3.") Check Updates"
+  output="$output\n  $(green "4.") Test Firewall"
+  output="$output\n  $(green "5.") Uninstall $SKEEN_NAME"
+  output="$output\n  $(green "0.") Exit\n"
+
+  printf "%b" "$output"
 
   max_attempts=3
   attempt=0
