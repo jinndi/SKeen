@@ -1776,6 +1776,16 @@ kill_proc(){
 }
 
 
+version(){
+  echo "$DELIMETER"
+  printf "${SKEEN_NAME}: %s\n" "$(cyan "v$(get_current_version "$SKEEN_PROC")")"
+  echo "$DELIMETER"
+  printf "${SINGBOX_NAME}: %s\n" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+  $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p'
+  echo "$DELIMETER"
+}
+
+
 switch_state(){
   if is_running; then
     stop
@@ -2250,10 +2260,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     reload)  reload ;;
     status)  status ;;
     kill)    kill_proc ;;
-    version)
-      printf "${SKEEN_NAME}: %s\n" "$(cyan "v$(get_current_version "$SKEEN_PROC")")";
-      printf "${SINGBOX_NAME}: %s\n" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")";
-    ;;
+    version) version ;;
     update) check_updates ;;
     test) test_firewall ;;
     deps) install_dependencies; press_any_key_to_menu ;;
