@@ -1,0 +1,27 @@
+// TUN (OpkgTun KeeneticOS v5+
+// NOT recommended, CPU usage is ~20% higher TProxy
+
+// Create OpkgTun8
+// ndmc -c interface OpkgTun0 &&
+// ndmc -c interface OpkgTun0 description SKeen-TUN &&
+// ndmc -c interface OpkgTun0 ip address 172.18.0.1 255.255.255.255 &&
+// ndmc -c interface OpkgTun0 ip global auto &&
+// ndmc -c interface OpkgTun0 up && ndmc -c system configuration save
+
+// Remove OpkgTun8
+// ndmc -c no interface OpkgTun8 && ndmc -c system configuration save
+
+{
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "opkgtun8",
+      "address": "172.18.0.1/30", // NOT use IP v6
+      "auto_route": false,
+      "mtu": 1500,                // IMPORTANT
+      "udp_timeout": "3m",
+      "stack": "mixed"            // NOT use gvisor !!!
+    }
+  ]
+}
