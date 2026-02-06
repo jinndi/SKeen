@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.9.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.4...SKeen-v3.9.5) (2026-02-06)
+
+
+### 🛠 Refactor
+
+* **cli:** extract version display to named function ([ca6d135](https://github.com/jinndi/SKeen/commit/ca6d13550615aa75089010bb51b34fecc735b139))
+* **show_menu:** refactor menu display to use accumulated output string ([a2b652e](https://github.com/jinndi/SKeen/commit/a2b652e26ae6a79af083f729c7ff9e859c733fb5))
+
+
+### ⚙️ Config
+
+* **examples:** add examples directory ([53f5d42](https://github.com/jinndi/SKeen/commit/53f5d426b5682c446ad5aa03c81337cbe4c21dcd))
+* **examples:** add inbounds_tun example ([ce17484](https://github.com/jinndi/SKeen/commit/ce17484a047faf7dc82be69199703dc30709ce07))
+* Reduce UDP timeout from 5m to 3m and remove tcp_multi_path option from redirect inbound configuration for improved connection handling efficiency. ([f465c23](https://github.com/jinndi/SKeen/commit/f465c23893df5406ae14955f1236899bb4e83ba2))
+* remove udp_fragment option from tproxy inbound ([f58da4f](https://github.com/jinndi/SKeen/commit/f58da4f53fd9f3b38df1879e2f809651189cd05d))
+
 ## [3.9.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.3...SKeen-v3.9.4) (2026-02-05)
 
 
