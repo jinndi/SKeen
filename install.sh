@@ -432,7 +432,7 @@ EOF
 EOF
 
   cat <<EOF > "$CONFIG_DIR/inbounds.json"
-{"inbounds":[{"type":"redirect","listen":"::","listen_port":2081,"tcp_fast_open":true,"tcp_multi_path":true},{"type":"tproxy","listen":"::","listen_port":2082,"network":"udp","udp_fragment":true,"udp_timeout":"5m"}]}
+{"inbounds":[{"type":"redirect","listen":"::","listen_port":2081,"tcp_fast_open":true},{"type":"tproxy","listen":"::","listen_port":2082,"network":"udp","udp_fragment":true,"udp_timeout":"3m"}]}
 EOF
 
   cat <<EOF > "$CONFIG_DIR/outbounds.json"
