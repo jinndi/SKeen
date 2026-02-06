@@ -65,7 +65,7 @@ After successful installation:
 │   │   └── netfilter.d/
 │   │       └── skeen_firewall.sh  # Created on start
 │   └── skeen/
-│       ├── skeen.conf     # SKeen configuration
+│       ├── skeen.json     # SKeen configuration
 │       └── config/
 │           ├── log.json
 │           ├── dns.json
