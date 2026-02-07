@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.2...SKeen-v3.10.3) (2026-02-07)
+
+
+### 🐛 Fix
+
+* **tun:** add IP address conflict detection in tunnel creation ([d2a17cf](https://github.com/jinndi/SKeen/commit/d2a17cf2213841ae1108945c041b96e01df81ff8))
+
 ## [3.10.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.1...SKeen-v3.10.2) (2026-02-07)
 
 
