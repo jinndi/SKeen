@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.9.5"
+SKEEN_VERSION="4.0.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -693,6 +693,17 @@ get_inbounds_data() {
 
   for file in $json_files; do
 
+    if [ "$type" = "tun" ]; then
+      has_opkgtun=$(jsonfilter -i "$file" \
+        -e '@.inbounds[@.type="'"$type"'"].interface_name' | grep ^opkgtun)
+
+      [ -z "$has_opkgtun" ] && continue
+
+      echo "opkgtun"
+
+      return 0
+    fi
+
     port=$(jsonfilter -i "$file" \
       -e '@.inbounds[@.type="'"$type"'"].listen_port' \
       | head -n1 2>/dev/null)
@@ -1310,6 +1321,124 @@ add_output_rules() {
 }
 
 
+release_version_ge5(){
+  major=$(ndmc -c show version | awk -F'[:.]' '/release:/ {gsub(/ /,"",$2); print $2}')
+  if [ "$major" -lt 5 ]; then
+    echoerr "Release version KeeneticOS is lower than 5" && return 1
+  fi
+}
+
+
+tun_create(){
+  opkgtun_ip="${1:-}"
+  opkgtun_desc="${2:-}"
+  opkgtun_id="0"
+  opkgtun_name="OpkgTun0"
+
+  if [ -z "$opkgtun_ip" ] || [ -z "$opkgtun_desc" ]; then
+    echoerr "Use the following format to create an OpkgTun interface:"
+    echomsg "skeen tun create <ipv4> <name>"
+    return
+  fi
+
+  if [ -z "$opkgtun_ip" ]; then
+    echoerr "Specify the IPv4 address for the interface"
+    return
+  fi
+
+  if ! is_valid_ipv4 "$opkgtun_ip"; then
+    echoerr "Invalid IPv4 address specified"
+    return
+  fi
+  opkgtun_ip="${opkgtun_ip%%/*}"
+
+  if [ -z "$opkgtun_desc" ]; then
+    echoerr "Please specify the name of the OpkgTun interface to delete"
+    return
+  fi
+
+  inface_list="$(ndmc -c show interface)"
+
+  if echo "$inface_list" \
+    | grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"
+  then
+    echoerr "Interface named \"$opkgtun_desc\" already exists"
+    return
+  fi
+
+  opkgtun_ids="$(echo "$inface_list" \
+    | grep 'id:[[:space:]]*OpkgTun' \
+    | awk -F'OpkgTun' '{print $2}')"
+
+  if [ -n "$opkgtun_ids" ]; then
+    opkgtun_id=$(
+      i=0
+      while :; do
+        echo "$opkgtun_ids" | grep -qx "$i" || { echo "$i"; break; }
+        i=$((i+1))
+      done
+    )
+    opkgtun_name="OpkgTun${opkgtun_id}"
+  fi
+
+  opkgtun_name_lower=$(echo "$opkgtun_name" | tr '[:upper:]' '[:lower:]')
+
+  ndmc -c interface "$opkgtun_name" || { echoerr "Failed to create the interface" && return; }
+  ndmc -c interface "$opkgtun_name" description "$opkgtun_desc" &&
+  ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" &&
+  ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name" &&
+  ndmc -c interface "$opkgtun_name" ip global auto &&
+  ifconfig "$opkgtun_name_lower" txqueuelen 1000 &&
+  ndmc -c interface "$opkgtun_name" up && ndmc -c system configuration save
+
+  echook "OpkgTun interface named \"$opkgtun_desc\" was created successfully"
+  echo "Use the name $(green "\"$opkgtun_name_lower\"") for the $(yellow "\"interface_name\"") field in the tun configuration"
+}
+
+
+tun_delete(){
+  opkgtun_desc="${1:-}"
+
+  if [ -z "$opkgtun_desc" ]; then
+    echoerr "Please specify the name of the OpkgTun interface to delete"
+    echomsg "skeen tun delete <name>"
+    return
+  fi
+
+  if ndmc -c show interface \
+    | grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"
+  then
+    opkgtun_name=$(ndmc -c show interface | awk -v d="$opkgtun_desc" '
+      /^[[:space:]]*interface-name:/ { iface=$0; sub(/.*: */, "", iface) }
+      /^[[:space:]]*description:/   { desc=$0; sub(/.*: */, "", desc); if(desc==d){print iface; exit} }')
+
+    case "$opkgtun_name" in
+      OpkgTun[0-9]*)
+        ndmc -c no interface "$opkgtun_name" || { echoerr "Failed to delete the interface" && return; }
+        ndmc -c system configuration save
+        echook "Interface \"$opkgtun_name\" has been successfully deleted"
+      ;;
+      *)
+        echoerr "Interface name: \"$opkgtun_name\" not OpkgTun"
+        echoerr "You can only delete an OpkgTun interface"
+      ;;
+    esac
+  else
+    echoerr "Interface named $opkgtun_desc does not exist"
+  fi
+}
+
+
+tun_list(){
+  opkgtun_list="$(
+    ndmc -c show interface | awk '/^Interface, name = "OpkgTun/ { print_block=1 }
+      print_block { print }
+      /^Interface, name =/ && $0 !~ /^Interface, name = "OpkgTun/ { print_block=0 }'
+  )"
+  [ -z "$opkgtun_list" ] && echomsg "No OpkgTun interfaces found" || echo "$opkgtun_list"
+}
+
+
 prepare_firewall(){
   echomsg "Preparing a firewall..."
 
@@ -1321,6 +1450,8 @@ prepare_firewall(){
   tproxy_data="$(get_inbounds_data "tproxy")"
   SKEEN_TPROXY_PORT="$(echo "$tproxy_data" | cut -d'|' -f1)"
   SKEEN_TPROXY_NETWORK="$(echo "$tproxy_data" | cut -d'|' -f2)"
+
+  has_opkgtun="$(get_inbounds_data "tun")"
 
   if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
     SKEEN_FIREWALL_MODE="tproxy"
@@ -1405,6 +1536,14 @@ prepare_firewall(){
     echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
     echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
+
+    if [ -n "$has_opkgtun" ]; then
+      echo "if ! iptables -C INPUT -i opkgtun+ -j ACCEPT 2>/dev/null; then"
+      echo "iptables -A INPUT -i opkgtun+ -j ACCEPT"
+      echo "iptables -A FORWARD -i opkgtun+ -j ACCEPT"
+      echo "iptables -A FORWARD -o opkgtun+ -j ACCEPT"
+      echo "fi"
+    fi
 
     echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
     echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
@@ -2257,6 +2396,10 @@ Backup & Restore:
 Reset Configuration:
   reset   - Resets $CONFIG_DIR and skeen.conf to defaults, performing a backup first
 
+OpkgTun manager (KeeneticOS v5+):
+  tun create <ipv4> <name> - Create interface with the specified IP and name
+  tun delete <name>        - Delete interface with the specified name
+  tun list                 - Shows all OpkgTun interfaces in the system
 EOF
 }
 
@@ -2267,17 +2410,29 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     stop)    stop ;;
     restart) restart ;;
     reload)  reload ;;
-    status)  status ;;
     kill)    kill_proc ;;
+    status)  status ;;
+
     version) version ;;
     update) check_updates ;;
+
     test) test_firewall ;;
     deps) install_dependencies; press_any_key_to_menu ;;
+    check) check_config ;;
+    format) format_config ;;
+
     backup) backup_config ;;
     restore) restore_config ;;
     reset) reset_config ;;
-    check) check_config ;;
-    format) format_config ;;
+    tun)
+      release_version_ge5 || exit 0
+      case "$2" in
+        create) tun_create "$3" "$4" ;;
+        delete) tun_delete "$3" ;;
+        list) tun_list ;;
+        *) show_help | awk '/OpkgTun / {flag=1} flag' ;;
+      esac
+    ;;
     apply_firewall) apply_firewall ;;
     "") show_menu ;;
     help|*) show_help ;;

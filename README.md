@@ -100,6 +100,12 @@ Example Usage: start the daemon `skeen start`
 |`restore`|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
 |`reset`|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.json` to defaults, performing a `backup` beforehand|
 
+| OpkgTun manager (KeeneticOS v5+) |
+| -------------------------------------------------------------------------- |
+|`skeen tun create <ipv4> <name>` - Create interface with the specified IP and name|
+|`skeen tun delete <name>` - Delete interface with the specified name|
+|`skeen tun list` - Shows all OpkgTun interfaces in the system|
+
 ### ⚙️ Settigs
 
 > [!NOTE]
