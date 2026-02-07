@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.2](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.1...SKeen-v3.10.2) (2026-02-07)
+
+
+### 🐛 Fix
+
+* **tun:** add error handling with cleanup on tunnel creation failures ([8064b4e](https://github.com/jinndi/SKeen/commit/8064b4eea3af62100a9cf1146184303d23cc2554))
+
 ## [3.10.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.0...SKeen-v3.10.1) (2026-02-07)
 
 
