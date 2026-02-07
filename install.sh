@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.10.2"
+SKEEN_VERSION="3.10.3"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1365,6 +1365,16 @@ tun_create(){
   then
     echoerr "Interface named \"$opkgtun_desc\" already exists"
     return
+  fi
+
+  if echo "$inface_list" |
+    awk -v ip="$opkgtun_ip" '/^[[:space:]]*address:/ {
+        sub(/.*: */, "", $0)
+        if ($0 == ip) found=1
+    }
+    END { exit !found }'
+  then
+    exiterr "IP address $opkgtun_ip is already in use"
   fi
 
   opkgtun_ids="$(echo "$inface_list" \
