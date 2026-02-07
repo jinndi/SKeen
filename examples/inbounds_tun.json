@@ -1,15 +1,24 @@
-// TUN (OpkgTun KeeneticOS v5+
+// TUN OpkgTun KeeneticOS v5+
 // NOT recommended, CPU usage is ~20% higher TProxy
 
 // Create OpkgTun8
 // ndmc -c interface OpkgTun8 &&
 // ndmc -c interface OpkgTun8 description SKeen-TUN &&
-// ndmc -c interface OpkgTun8 ip address 172.18.0.1 255.255.255.255 &&
+// ndmc -c interface OpkgTun8 ip address 172.18.0.1/32 &&
+// ndmc -c ip route default 172.18.0.1 OpkgTun8 &&
 // ndmc -c interface OpkgTun8 ip global auto &&
+// ifconfig opkgtun10 txqueuelen 1000 &&
 // ndmc -c interface OpkgTun8 up && ndmc -c system configuration save
 
 // Remove OpkgTun8
 // ndmc -c no interface OpkgTun8 && ndmc -c system configuration save
+
+// Netfilter script
+// #!/opt/bin/sh
+// iptables -A INPUT -i opkgtun+ -j ACCEPT
+// iptables -A FORWARD -i opkgtun+ -j ACCEPT
+// iptables -A FORWARD -o opkgtun+ -j ACCEPT
+
 
 {
   "inbounds": [
