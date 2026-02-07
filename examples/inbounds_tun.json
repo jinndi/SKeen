@@ -7,7 +7,7 @@
 // ndmc -c interface OpkgTun8 ip address 172.18.0.1/32 &&
 // ndmc -c ip route default 172.18.0.1 OpkgTun8 &&
 // ndmc -c interface OpkgTun8 ip global auto &&
-// ifconfig opkgtun10 txqueuelen 1000 &&
+// ifconfig opkgtun8 txqueuelen 1000 &&
 // ndmc -c interface OpkgTun8 up && ndmc -c system configuration save
 
 // Remove OpkgTun8
