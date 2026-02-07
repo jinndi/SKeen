@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.10.0"
+SKEEN_VERSION="3.10.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1341,10 +1341,11 @@ tun_create(){
     return
   fi
 
-  if [ -z "$opkgtun_ip" ]; then
-    echoerr "Specify the IPv4 address for the interface"
-    return
-  fi
+  case "$opkgtun_desc" in
+    [!A-Za-z0-9_-]*)
+      exiterr "Invalid name, allowed characters: A–Z, a–z, 0–9, _ and -"
+    ;;
+  esac
 
   if ! is_valid_ipv4 "$opkgtun_ip"; then
     echoerr "Invalid IPv4 address specified"

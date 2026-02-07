@@ -2,10 +2,10 @@
 // NOT recommended, CPU usage is ~20% higher TProxy
 
 // Create OpkgTun
-// skeen tun create 172.18.0.1 "SKeen TUN"
+// skeen tun create 172.18.0.1 "SKeenTUN"
 
 // Delete OpkgTun
-// skeen tun delete "SKeen TUN"
+// skeen tun delete "SKeenTUN"
 
 
 {
