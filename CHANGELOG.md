@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.1](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.0...SKeen-v3.10.1) (2026-02-07)
+
+
+### 🐛 Fix
+
+* **tun:** replace IP validation with name validation in tun_create ([a13dde3](https://github.com/jinndi/SKeen/commit/a13dde34561acc684ab4fa682f5bf97ccbaeb23f))
+
 ## [3.10.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.5...SKeen-v3.10.0) (2026-02-07)
 
 
