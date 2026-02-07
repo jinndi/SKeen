@@ -1384,12 +1384,17 @@ tun_create(){
 
   opkgtun_name_lower=$(echo "$opkgtun_name" | tr '[:upper:]' '[:lower:]')
 
+  tun_delete_msg(){
+    tun_delete "$opkgtun_desc"
+    exiterr "${1:-error_ndmc}"
+  }
+
   ndmc -c interface "$opkgtun_name" || { echoerr "Failed to create the interface" && return; }
-  ndmc -c interface "$opkgtun_name" description "$opkgtun_desc" &&
-  ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" &&
-  ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name" &&
-  ndmc -c interface "$opkgtun_name" ip global auto &&
-  ifconfig "$opkgtun_name_lower" txqueuelen 1000 &&
+  ndmc -c interface "$opkgtun_name" description "$opkgtun_desc"  || { tun_delete_msg "Failed to set description the interface"; }
+  ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" || { tun_delete_msg "Failed to set ip address the interface"; }
+  ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name"  || { tun_delete_msg "Failed to set 'ip route default' the interface"; }
+  ndmc -c interface "$opkgtun_name" ip global auto || { tun_delete_msg "Failed Global priority recalculated"; }
+  ifconfig "$opkgtun_name_lower" txqueuelen 1000  || { tun_delete_msg "Failed to set 'txqueuelen 1000'"; }
   ndmc -c interface "$opkgtun_name" up && ndmc -c system configuration save
 
   echook "OpkgTun interface named \"$opkgtun_desc\" was created successfully"
@@ -1398,7 +1403,7 @@ tun_create(){
 
 
 tun_delete(){
-  opkgtun_desc="${1:-}"
+  opkgtun_desc="${1:-8888}"
 
   if [ -z "$opkgtun_desc" ]; then
     echoerr "Please specify the name of the OpkgTun interface to delete"
