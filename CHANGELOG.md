@@ -1,5 +1,60 @@
 # Changelog
 
+## [3.11.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.0...SKeen-v3.11.0) (2026-02-07)
+
+
+### 🚀 Feat
+
+* **tun:** add OpkgTun manager commands for KeeneticOS v5+ ([006a0e0](https://github.com/jinndi/SKeen/commit/006a0e06fdcbc5468ee8a603cd09b2cc1aba2972))
+
+
+### 🐛 Fix
+
+* do not reload user config on every menu invocation ([08e44e0](https://github.com/jinndi/SKeen/commit/08e44e008355ead3f635b6bf54300f2535d83660))
+* typo in the error log message "Check your internet connection" ([88ae7b1](https://github.com/jinndi/SKeen/commit/88ae7b153e7be2c589c5ddba807f4d6e22ea6b7c))
+
+
+### 🛠 Refactor
+
+* **cli:** extract version display to named function ([ca6d135](https://github.com/jinndi/SKeen/commit/ca6d13550615aa75089010bb51b34fecc735b139))
+* **menu:** move exit option from position 6 to 0 ([1ab1fc9](https://github.com/jinndi/SKeen/commit/1ab1fc9c466fd2f2f6e10c8b5321d0d13ccc00af))
+* **show_menu:** refactor menu display to use accumulated output string ([a2b652e](https://github.com/jinndi/SKeen/commit/a2b652e26ae6a79af083f729c7ff9e859c733fb5))
+
+
+### ⚡ Perf
+
+* added Skeen NETWORK_TUNING configuration option, see README ([3e4e5ab](https://github.com/jinndi/SKeen/commit/3e4e5ab77cfd641090a9ddf4ecc1e63cdcbc746a))
+
+
+### ⚙️ Config
+
+* **examples:** add examples directory ([53f5d42](https://github.com/jinndi/SKeen/commit/53f5d426b5682c446ad5aa03c81337cbe4c21dcd))
+* **examples:** add inbounds_tun example ([ce17484](https://github.com/jinndi/SKeen/commit/ce17484a047faf7dc82be69199703dc30709ce07))
+* **examples:** update TUN interface example configuration ([2b11f45](https://github.com/jinndi/SKeen/commit/2b11f453b346dbe44c548e74ea3919cf987261c3))
+* Reduce UDP timeout from 5m to 3m and remove tcp_multi_path option from redirect inbound configuration for improved connection handling efficiency. ([f465c23](https://github.com/jinndi/SKeen/commit/f465c23893df5406ae14955f1236899bb4e83ba2))
+* remove udp_fragment option from tproxy inbound ([f58da4f](https://github.com/jinndi/SKeen/commit/f58da4f53fd9f3b38df1879e2f809651189cd05d))
+* The old SKeen configuration format is no longer used. A new JSON-format configuration file will be created alongside the old one. Additional settings have also been added - see the README for details. https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs ([ac25950](https://github.com/jinndi/SKeen/commit/ac259500ea5e45c32abc09ad0f97ca9284608ba2))
+
+
+### 🧰 Chore
+
+* don't require port 443 to be free for TProxy/Mixed modes 1 ([679e4a6](https://github.com/jinndi/SKeen/commit/679e4a6535fde79ece60477c547ed6f6eb055d4b))
+* extracted the file descriptor count retrieval into a separate function ([291ef38](https://github.com/jinndi/SKeen/commit/291ef38e2fe608a76077504f861da86db635e9b2))
+* **main:** release SKeen 3.10.0 ([57085f7](https://github.com/jinndi/SKeen/commit/57085f73b5009d5b5955d30ce4c6ae7095205b57))
+* **main:** release SKeen 3.10.0 ([8a1242b](https://github.com/jinndi/SKeen/commit/8a1242bda05205f23074ad732d942913ce5f175e))
+* **main:** release SKeen 3.9.1 ([b6259e0](https://github.com/jinndi/SKeen/commit/b6259e04697e597644895ca2944e8d41f535882a))
+* **main:** release SKeen 3.9.1 ([55c4c6e](https://github.com/jinndi/SKeen/commit/55c4c6eeff3b3972356f579717526f5af81b2edd))
+* **main:** release SKeen 3.9.2 ([70e2591](https://github.com/jinndi/SKeen/commit/70e25919acec4bee89d604206edf790b7be164d9))
+* **main:** release SKeen 3.9.2 ([f377354](https://github.com/jinndi/SKeen/commit/f377354a93477ca0c751bdc476f8d6941e286616))
+* **main:** release SKeen 3.9.3 ([732b8b3](https://github.com/jinndi/SKeen/commit/732b8b3ec7500e5706158635b3fd05788e1ac187))
+* **main:** release SKeen 3.9.3 ([16b1d65](https://github.com/jinndi/SKeen/commit/16b1d659b18eca2007d162b06c0b3f8b0a7ffda7))
+* **main:** release SKeen 3.9.4 ([4a72347](https://github.com/jinndi/SKeen/commit/4a72347ff78c985e0d4afd3d68feac8ebb93dde4))
+* **main:** release SKeen 3.9.4 ([e2c67f4](https://github.com/jinndi/SKeen/commit/e2c67f429276086fd1f884f1ffac1c35131ac6cd))
+* **main:** release SKeen 3.9.5 ([bf206aa](https://github.com/jinndi/SKeen/commit/bf206aa605e9d0d8bc72c5d0d7ad11e4b5783fc5))
+* **main:** release SKeen 3.9.5 ([7ede956](https://github.com/jinndi/SKeen/commit/7ede9563d2fba355b9c7155e768699e9d50e841c))
+* reworked the logic for loading skeen.conf configuration ([aa48913](https://github.com/jinndi/SKeen/commit/aa48913bc3333a80d36a228085615fa0e356e445))
+* **shell:** make setup_bypass_ipset safer and more reliable ([9a40b9b](https://github.com/jinndi/SKeen/commit/9a40b9b609d9bb33f03eb75986e28983b11977e8))
+
 ## [3.10.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.5...SKeen-v3.10.0) (2026-02-07)
 
 
