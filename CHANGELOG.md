@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.10.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.5...SKeen-v3.10.0) (2026-02-07)
+
+
+### 🚀 Feat
+
+* **tun:** add OpkgTun manager commands for KeeneticOS v5+ ([006a0e0](https://github.com/jinndi/SKeen/commit/006a0e06fdcbc5468ee8a603cd09b2cc1aba2972))
+
+
+### ⚙️ Config
+
+* **examples:** update TUN interface example configuration ([2b11f45](https://github.com/jinndi/SKeen/commit/2b11f453b346dbe44c548e74ea3919cf987261c3))
+
 ## [3.9.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.9.4...SKeen-v3.9.5) (2026-02-06)
 
 
