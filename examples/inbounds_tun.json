@@ -30,7 +30,7 @@
       "auto_route": false,
       "mtu": 1500,                // IMPORTANT
       "udp_timeout": "3m",
-      "stack": "mixed"            // NOT use gvisor !!!
+      "stack": "system"            // NOT use gvisor !!!
     }
   ]
 }
