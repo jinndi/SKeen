@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.3...SKeen-v3.10.4) (2026-02-08)
+
+
+### 🛠 Refactor
+
+* extract TUN interface rules into dedicated function and mode ([a29e81a](https://github.com/jinndi/SKeen/commit/a29e81a46e92a1e10879c18da162074c67bb255c))
+
 ## [3.10.3](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.2...SKeen-v3.10.3) (2026-02-07)
 
 
