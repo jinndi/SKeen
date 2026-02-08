@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.10.4"
+SKEEN_VERSION="3.10.5"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1209,91 +1209,71 @@ set_iptables_rules() {
 
 set_prerouting_rules() {
   iptables="${1:-}"
-  base_table="${2:-}"
+  table="${2:-}"
   connmark_option=""
 
-  if [ "$base_table" = "$TABLE_TPROXY" ]; then
+  if [ "$table" = "$TABLE_TPROXY" ]; then
     rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
     # shellcheck disable=SC2086
-    if ! $iptables -t "$base_table" -C PREROUTING $rule >/dev/null 2>&1; then
-      $iptables -t "$base_table" -I PREROUTING 1 $rule >/dev/null 2>&1
+    if ! $iptables -t "$table" -C PREROUTING $rule >/dev/null 2>&1; then
+      $iptables -t "$table" -I PREROUTING 1 $rule >/dev/null 2>&1
     fi
   fi
 
-  for net in $SKEEN_FIREWALL_NETWORK; do
-    table="$base_table"
+  [ -n "$SKEEN_MARK_POLICY" ] &&
+    connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
 
-    case "$net" in
-      tcp)
-        [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && \
-        table="$TABLE_TPROXY" || \
-        table="$TABLE_REDIRECT"
-        proto_arg="-p tcp"
-      ;;
-      udp)
-        table="$TABLE_TPROXY"
-        proto_arg="-p udp"
-      ;;
-      *) continue ;;
-    esac
+  ports=""
+  dports_op=""
 
-    [ -n "$SKEEN_MARK_POLICY" ] &&
-      connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
+  if [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
+    ports="$SKEEN_INTERCEPT_PORTS"
+    dports_op="--dports"
+  elif [ -n "$SKEEN_EXCLUDE_PORTS" ]; then
+    ports="$SKEEN_EXCLUDE_PORTS"
+    dports_op="! --dports"
+  fi
 
-    ports=""
-    dports_op=""
-
-    if [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
-      ports="$SKEEN_INTERCEPT_PORTS"
-      dports_op="--dports"
-    elif [ -n "$SKEEN_EXCLUDE_PORTS" ]; then
-      ports="$SKEEN_EXCLUDE_PORTS"
-      dports_op="! --dports"
-    fi
-
-    if [ -z "$ports" ]; then
-      rule="PREROUTING \
-        $connmark_option \
-        -m conntrack ! --ctstate INVALID \
-        $proto_arg \
-        -j $CHAIN_PREROUTING"
-
-      # shellcheck disable=SC2086
-      if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
-        $iptables -t "$table" -A $rule >/dev/null 2>&1
-      fi
-      continue
-    fi
-
-    ports="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
+  if [ -z "$ports" ]; then
+    rule="PREROUTING \
+      $connmark_option \
+      -m conntrack ! --ctstate INVALID \
+      -j $CHAIN_PREROUTING"
 
     # shellcheck disable=SC2086
-    set -- $ports
-    total=$#
-    i=1
+    if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
+      $iptables -t "$table" -A $rule >/dev/null 2>&1
+    fi
+    return
+  fi
 
-    while [ "$i" -le "$total" ]; do
-      chunk="$(printf '%s\n' "$ports" |
-              sed -n "${i},$((i+6))p" |
-              tr '\n' ',' |
-              sed 's/,$//')"
+  ports="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
 
-      [ -z "$chunk" ] && break
+  # shellcheck disable=SC2086
+  set -- $ports
+  total=$#
+  i=1
 
-      rule="PREROUTING \
-        $connmark_option \
-        -m conntrack ! --ctstate INVALID \
-        $proto_arg \
-        -m multiport $dports_op $chunk \
-        -j $CHAIN_PREROUTING"
+  while [ "$i" -le "$total" ]; do
+    chunk="$(printf '%s\n' "$ports" |
+            sed -n "${i},$((i+6))p" |
+            tr '\n' ',' |
+            sed 's/,$//')"
 
-      # shellcheck disable=SC2086
-      if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
-        $iptables -t "$table" -A $rule >/dev/null 2>&1
-      fi
+    [ -z "$chunk" ] && break
 
-      i=$((i + 7))
-    done
+    rule="PREROUTING \
+      $connmark_option \
+      -m conntrack ! --ctstate INVALID \
+      -m multiport $dports_op $chunk \
+      -j $CHAIN_PREROUTING"
+
+    # shellcheck disable=SC2086
+    if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
+      $iptables -t "$table" -A $rule >/dev/null 2>&1
+    fi
+
+    i=$((i + 7))
   done
 }
 
@@ -1396,15 +1376,14 @@ tun_create(){
 
   tun_delete_msg(){
     tun_delete "$opkgtun_desc"
-    exiterr "${1:-error_ndmc}"
+    exiterr "Failed to set ${1} the interface"
   }
 
   ndmc -c interface "$opkgtun_name" || { echoerr "Failed to create the interface" && return; }
-  ndmc -c interface "$opkgtun_name" description "$opkgtun_desc"  || { tun_delete_msg "Failed to set description the interface"; }
-  ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" || { tun_delete_msg "Failed to set ip address the interface"; }
-  ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name"  || { tun_delete_msg "Failed to set 'ip route default' the interface"; }
-  ndmc -c interface "$opkgtun_name" ip global auto || { tun_delete_msg "Failed Global priority recalculated"; }
-  ifconfig "$opkgtun_name_lower" txqueuelen 1000  || { tun_delete_msg "Failed to set 'txqueuelen 1000'"; }
+  ndmc -c interface "$opkgtun_name" description "$opkgtun_desc"  || tun_delete_msg "description"
+  ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" || tun_delete_msg "ip address"
+  ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name"  || tun_delete_msg "ip route default"
+  ndmc -c interface "$opkgtun_name" ip global auto || tun_delete_msg "ip global auto"
   ndmc -c interface "$opkgtun_name" up && ndmc -c system configuration save
 
   echook "OpkgTun interface named \"$opkgtun_desc\" was created successfully"
@@ -1740,6 +1719,7 @@ apply_sysctl_network_tuning(){
     sysctl -w net.ipv4.conf.lo.route_localnet=1        # Allow lo local routing (TProxy)
     sysctl -w net.ipv4.conf.all.send_redirects=0       # Disable ICMP redirects globally
     sysctl -w net.ipv4.conf.default.send_redirects=0   # Disable ICMP redirects by default
+    sysctl -w net.ipv4.conf.all.route_localnet=1       # Allow TPROXY to route packets via 127.0.0.1
 
     # IPv6 support
     if [ -f /proc/net/if_inet6 ]; then
