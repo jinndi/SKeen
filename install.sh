@@ -1455,6 +1455,18 @@ tun_list(){
 }
 
 
+get_tun_fw_rules(){
+  cat <<EOF
+if [ "\$type" = "iptables" ] && ! iptables -C INPUT -i opkgtun+ -j ACCEPT 2>/dev/null;
+then
+  iptables -A INPUT -i opkgtun+ -j ACCEPT
+  iptables -A FORWARD -i opkgtun+ -j ACCEPT
+  iptables -A FORWARD -o opkgtun+ -j ACCEPT
+fi
+EOF
+}
+
+
 prepare_firewall(){
   echomsg "Preparing a firewall..."
 
@@ -1476,9 +1488,13 @@ prepare_firewall(){
     SKEEN_FIREWALL_MODE="hybrid"
   elif [ -n "$SKEEN_REDIRECT_PORT" ]; then
     SKEEN_FIREWALL_MODE="redirect"
+  elif [ -n "$has_opkgtun" ]; then
+    SKEEN_FIREWALL_MODE="tun"
   else
     SKEEN_FIREWALL_MODE="none"
   fi
+
+  echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
 
   SKEEN_DNS_ENABLED="0"
   if [ "$FIREWALL_DNS" = "1" ] && has_dns_servers; then
@@ -1488,14 +1504,24 @@ prepare_firewall(){
 
     case "$SKEEN_FIREWALL_MODE" in
       tproxy|hybrid) SKEEN_DNS_ENABLED="1" ;;
-      redirect) echowarn "In 'redirect' mode, $warn_msg" ;;
-      none) echowarn "In 'none' mode, $warn_msg" ;;
+      *) echowarn "In '$SKEEN_FIREWALL_MODE' mode, $warn_msg" ;;
     esac
   fi
 
-  echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
+  if [ "$SKEEN_FIREWALL_MODE" = "tun" ]; then
+    {
+      echo "#!/bin/sh"
+      echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
+      echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
+      echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
+      echo "export SKEEN_DNS_ENABLED=\"$SKEEN_DNS_ENABLED\""
+      get_tun_fw_rules
+    } > "$FIREWALL_HOOK_FILE"
 
-  if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
+    chmod +x "$FIREWALL_HOOK_FILE"
+    echook "$complete_msg"
+    return 0
+  elif [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
     echook "$complete_msg"
     return 0
   fi
@@ -1553,13 +1579,7 @@ prepare_firewall(){
 
     echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
 
-    if [ -n "$has_opkgtun" ]; then
-      echo "if ! iptables -C INPUT -i opkgtun+ -j ACCEPT 2>/dev/null; then"
-      echo "iptables -A INPUT -i opkgtun+ -j ACCEPT"
-      echo "iptables -A FORWARD -i opkgtun+ -j ACCEPT"
-      echo "iptables -A FORWARD -o opkgtun+ -j ACCEPT"
-      echo "fi"
-    fi
+    [ -n "$has_opkgtun" ] && get_tun_fw_rules
 
     echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
     echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
@@ -1646,9 +1666,17 @@ apply_firewall(){
 
 
 clean_firewall(){
+  import_firewall_vars
+
+  [ -z "$SKEEN_FIREWALL_MODE" ] && return 0
+
   echomsg "Cleaning firewall rules..."
 
+  msg_ok="Firewall cleanup completed"
+
   [ -f "$FIREWALL_HOOK_FILE" ] && : > "$FIREWALL_HOOK_FILE"
+
+  [ "$SKEEN_FIREWALL_MODE" = "tun" ] && echook "$msg_ok" && return 0
 
   clean_chain() {
     iptables="$1"
@@ -1700,7 +1728,7 @@ clean_firewall(){
     done
   fi
 
-  echook "Firewall cleanup completed"
+  echook "$msg_ok"
 }
 
 
@@ -2324,7 +2352,8 @@ show_menu(){
 
   ipv4=""; ipv6=""
 
-  if [ "$running_text" = "Stop" ] && [ "$SKEEN_FIREWALL_MODE" != "none" ]; then
+  if [ "$running_text" = "Stop" ] && \
+      [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt"  && ipv4="$(cyan "4")"
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
@@ -2339,8 +2368,8 @@ show_menu(){
     output="$output\n Firewall network: $(cyan "$SKEEN_FIREWALL_NETWORK")"
     output="$output\n Firewall IP ver.: $ipv4 $ipv6"
 
-  elif [ "$running_text" = "Stop" ] && [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
-    output="$output\n Firewall mode: $(cyan none)"
+  elif [ "$running_text" = "Stop" ]; then
+    output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
   fi
 
   output="$output\n\n$(cyan "Select option:")"
