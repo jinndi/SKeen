@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.4...SKeen-v3.10.5) (2026-02-08)
+
+
+### 🐛 Fix
+
+* **tproxy:** Fix UDP handling and apply minor tweaks ([bc1a499](https://github.com/jinndi/SKeen/commit/bc1a499d3cba87d696dc36af51905fb945f09bee))
+
 ## [3.10.4](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.3...SKeen-v3.10.4) (2026-02-08)
 
 
