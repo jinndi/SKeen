@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.10.5"
+SKEEN_VERSION="3.10.6"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1099,24 +1099,18 @@ add_tproxy_rules() {
   iptables="${1:-}"
   table="${2:-}"
   chain="${3:-}"
-  proto="${4:-}"
 
-  if [ -n "$SKEEN_MARK_POLICY" ]; then
+  for net in $SKEEN_TPROXY_NETWORK; do
     add_rule "$iptables" "$table" "$chain" \
-      -p "$proto" -m connmark --mark "$SKEEN_MARK_POLICY" \
-      -m conntrack --ctstate NEW \
-      -j CONNMARK --save-mark
-  fi
+      -p "$net" -j MARK --set-mark "$TABLE_MARK"
 
-  add_rule "$iptables" "$table" "$chain" \
-    -p "$proto" -m socket --transparent \
-    -j MARK --set-mark "$TABLE_MARK"
+    add_rule "$iptables" "$table" "$chain" \
+      -p "$net" -j CONNMARK --save-mark
 
-  add_rule "$iptables" "$table" "$chain" \
-    -p "$proto" -j TPROXY \
-    --on-ip "$PROXY_IP" \
-    --on-port "$SKEEN_TPROXY_PORT" \
-    --tproxy-mark "$TABLE_MARK"
+    add_rule "$iptables" "$table" "$chain" \
+      -p "$net" -j TPROXY --on-ip "$PROXY_IP" \
+      --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
+  done
 }
 
 
@@ -1152,18 +1146,12 @@ set_iptables_rules() {
         add_rule "$iptables" "$table" "$chain" \
           -p tcp ! --dport "$DNS_PORT" $bp_rule_set
       ;;
-      hybrid:mangle)
-        # shellcheck disable=SC2086
-        add_rule "$iptables" "$table" "$chain" \
-          -p udp ! --dport "$DNS_PORT" $bp_rule_set
-      ;;
-      tproxy:mangle)
-        # shellcheck disable=SC2086
-        add_rule "$iptables" "$table" "$chain" \
-          -p tcp ! --dport "$DNS_PORT" $bp_rule_set
-        # shellcheck disable=SC2086
-        add_rule "$iptables" "$table" "$chain" \
-          -p udp ! --dport "$DNS_PORT" $bp_rule_set
+      hybrid:mangle|tproxy:mangle)
+        for net in $SKEEN_TPROXY_NETWORK; do
+          # shellcheck disable=SC2086
+          add_rule "$iptables" "$table" "$chain" \
+          -p "$net" ! --dport "$DNS_PORT" $bp_rule_set
+        done
       ;;
       *)
         # shellcheck disable=SC2086
@@ -1176,17 +1164,11 @@ set_iptables_rules() {
         if [ "$table" = "$TABLE_REDIRECT" ]; then
           add_redirect_rules "$iptables" "$table" "$chain"
         else
-          add_tproxy_rules "$iptables" "$table" "$chain" udp
+          add_tproxy_rules "$iptables" "$table" "$chain"
         fi
       ;;
-      tproxy)
-        for net in $SKEEN_TPROXY_NETWORK; do
-          add_tproxy_rules "$iptables" "$table" "$chain" "$net"
-        done
-      ;;
-      redirect)
-        add_redirect_rules "$iptables" "$table" "$chain"
-      ;;
+      tproxy) add_tproxy_rules "$iptables" "$table" "$chain" ;;
+      redirect) add_redirect_rules "$iptables" "$table" "$chain" ;;
       *) return 0 ;;
     esac
   fi
@@ -1288,15 +1270,14 @@ add_output_rules() {
     *) return 0 ;;
   esac
 
-  rule="OUTPUT \
-    -m owner ! --gid-owner $SKEEN_PROC \
+  rule="-m owner ! --gid-owner $SKEEN_PROC \
     -m conntrack ! --ctstate INVALID \
     $proto \
     -j $CHAIN_OUTPUT"
 
   # shellcheck disable=SC2086
-  if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
-    $iptables -t "$table" -A $rule >/dev/null 2>&1
+  if ! $iptables -t "$table" -C OUTPUT $rule >/dev/null 2>&1; then
+    $iptables -t "$table" -I OUTPUT $rule >/dev/null 2>&1
   fi
 }
 
@@ -1720,6 +1701,7 @@ apply_sysctl_network_tuning(){
     sysctl -w net.ipv4.conf.all.send_redirects=0       # Disable ICMP redirects globally
     sysctl -w net.ipv4.conf.default.send_redirects=0   # Disable ICMP redirects by default
     sysctl -w net.ipv4.conf.all.route_localnet=1       # Allow TPROXY to route packets via 127.0.0.1
+    sysctl -w net.ipv4.ip_nonlocal_bind=1              # Allow processes to bind to any IP
 
     # IPv6 support
     if [ -f /proc/net/if_inet6 ]; then
