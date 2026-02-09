@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.7](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.6...SKeen-v3.10.7) (2026-02-09)
+
+
+### 📦 Deps
+
+* **tproxy:** remove unused xt_socket module from loading ([80ee921](https://github.com/jinndi/SKeen/commit/80ee9217183959ac4304648d58879cf4e1c3b4f4))
+
 ## [3.10.6](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.5...SKeen-v3.10.6) (2026-02-09)
 
 
