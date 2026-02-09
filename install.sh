@@ -805,11 +805,11 @@ load_module() {
 
 
 loading_modules() {
-  modules="xt_TPROXY.ko xt_socket.ko xt_multiport.ko"
+  modules="xt_TPROXY.ko xt_multiport.ko"
 
   case "$SKEEN_FIREWALL_MODE" in
     tproxy|hybrid)
-      echomsg "Loading modules: xt_TPROXY.ko xt_socket.ko"
+      echomsg "Loading modules: xt_TPROXY.ko"
     ;;
   esac
 
