@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.6](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.5...SKeen-v3.10.6) (2026-02-09)
+
+
+### 🛠 Refactor
+
+* **tproxy:** simplify network rule handling with loop iteration ([12b3135](https://github.com/jinndi/SKeen/commit/12b31356c6bad5acb807daf8df11e9b9ae4fe109))
+
 ## [3.10.5](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.4...SKeen-v3.10.5) (2026-02-08)
 
 
