@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.0.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.7...SKeen-v4.0.0) (2026-02-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **firewall:** add firewall-only mode. See 'firewall.only' in README
+
+### 🚀 Feat
+
+* **firewall:** add firewall-only mode. See 'firewall.only' in README ([ccf3bc9](https://github.com/jinndi/SKeen/commit/ccf3bc91dfc624dabb6d696bfdf8c10390c6f66d))
+
+
+### 🛠 Refactor
+
+* **firewall:** move port validation to prepare_firewall function ([fdd7401](https://github.com/jinndi/SKeen/commit/fdd74010ecc3068c87c1bd3942084fb8b45cca66))
+* **start:** refactor group creation logic to use return codes for delimiter handling ([0f8eeac](https://github.com/jinndi/SKeen/commit/0f8eeac42d56b4f39cb8b876a57984305a33a489))
+
 ## [3.10.7](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.6...SKeen-v3.10.7) (2026-02-09)
 
 
