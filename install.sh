@@ -500,8 +500,9 @@ create_skeen_group() {
     addgroup -g "$gid_num" "$name" >/dev/null 2>&1 \
       || exiterr "Failed to create group $name"
     echook "Group $name created successfully"
+    return 2
   else
-    echomsg "Group $name already exists"
+    return 0
   fi
 }
 
@@ -1852,9 +1853,7 @@ start() {
     check_port "$port"
   done
 
-  if ! grep -q "^${SKEEN_PROC}:" "${ENTWARE_DIR}/etc/group" 2>/dev/null; then
-    create_skeen_group && echo "$DELIMETER"
-  fi
+  create_skeen_group; [ $? -eq 2 ] && echo "$DELIMETER"
 
   start_singbox
 
