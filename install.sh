@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="3.10.7"
+SKEEN_VERSION="4.0.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -116,6 +116,10 @@ create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
   [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
+  fw_only_enable=0;
+  [ -n "$FIREWALL_ONLY_ENABLE" ] && fw_only_enable=$FIREWALL_ONLY_ENABLE \
+  || [ "$install_mode" = "2" ] && fw_only_enable=1
+
   cat <<EOF > "$SKEEN_CONFIG"
 // https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs
 {
@@ -133,6 +137,13 @@ create_skeen_config(){
     "check": ["1.1.1.1", "ya.ru", "223.5.5.5"],
   },
   "firewall": {
+    "only": {
+      "enable": $fw_only_enable,
+      "process_name": "",
+      "redirect_port": "",
+      "tproxy_port": "",
+      "opkgtun_use": 0
+    },
     "intercept": {
       "dns": 1,
       "port": []
@@ -177,8 +188,30 @@ loading_config(){
     -e POLICY_NAME='@.policy.name' \
     -e NETWORK_IPV6='@.network.ipv6' \
     -e NETWORK_TUNING='@.network.tuning' \
-    -e FIREWALL_DNS='@.firewall.intercept.dns' \
+    -e FIREWALL_ONLY_ENABLE='@.firewall.only.enable' \
+    -e FIREWALL_ONLY_PROCESS_NAME='@.firewall.only.process_name' \
+    -e FIREWALL_ONLY_OPKGTUN_USE='@.firewall.only.opkgtun_use' \
+    -e FIREWALL_ONLY_REDIRECT_PORT='@.firewall.only.redirect_port' \
+    -e FIREWALL_ONLY_TPROXY_PORT='@.firewall.only.tproxy_port' \
+    -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
   )"
+
+  : "${AUTO_START_ENABLE:=1}"
+  : "${AUTO_START_DELAY:=0}"
+  : "${POLICY_ENABLE:=1}"
+  : "${POLICY_NAME:=SKeen}"
+  : "${NETWORK_IPV6:=1}"
+  : "${NETWORK_TUNING:=0}"
+  : "${FIREWALL_ONLY_ENABLE:=0}"
+  : "${FIREWALL_ONLY_PROCESS_NAME:=}"
+  : "${FIREWALL_ONLY_OPKGTUN_USE:=0}"
+  : "${FIREWALL_ONLY_REDIRECT_PORT:=}"
+  : "${FIREWALL_ONLY_TPROXY_PORT:=}"
+  : "${FIREWALL_INTERCEPT_DNS:=1}"
+
+  if [ "$FIREWALL_ONLY_ENABLE" = "1" ] && pidof "$SINGBOX_PROC" >/dev/null 2>&1; then
+    killall -9 "$SINGBOX_PROC" 2>/dev/null; clean_firewall
+  fi
 }
 
 cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
@@ -206,13 +239,8 @@ get_current_version() {
         $SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs
       fi
     ;;
-    "$SKEEN_PROC")
-      echo "$SKEEN_VERSION"
-    ;;
-    *)
-      echoerr "Unknown program: $1"
-      return 1
-    ;;
+    "$SKEEN_PROC") echo "$SKEEN_VERSION" ;;
+    *) echoerr "Unknown program: $1"; return 1 ;;
   esac
 }
 
@@ -247,13 +275,12 @@ show_header() {
 
 
 get_os_release(){
-  release_path=$(command -v opkg)
+  release_path="$(command -v opkg)"
 
   if [ "$release_path" != "/opt/bin/opkg" ]; then
     exiterr "Unsupported the system OS!"
   else
-    PKG_OS="openwrt"
-    PKG_SUFFIX=".ipk"
+    PKG_OS="openwrt"; PKG_SUFFIX=".ipk"
   fi
 }
 
@@ -312,7 +339,7 @@ get_architecture() {
     ;;
   esac
 
-  echook "Detected PKG ARCH: $PKG_ARCH"
+  echomsg "Detected Arch: $(green "$PKG_ARCH")"
 }
 
 
@@ -474,10 +501,9 @@ create_autostart_script(){
 
 
 get_free_gid() {
-  start=${1:-1000}
-  max=65535
-
+  start=${1:-1000}; max=65535
   gid=$start
+
   while [ "$gid" -le "$max" ]; do
     if ! grep -q ":$gid:" /etc/group 2>/dev/null; then
       echo "$gid"
@@ -552,28 +578,51 @@ press_any_key_to_menu(){
 
 
 is_running() {
-  pidof "$SINGBOX_PROC" >/dev/null 2>&1
+  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+    [ -f "$FIREWALL_HOOK_FILE" ] && [ -s "$FIREWALL_HOOK_FILE" ]
+  else
+    pidof "$SINGBOX_PROC" >/dev/null 2>&1
+  fi
 }
 
 
 install(){
-  echo "$DELIMETER"
-  printf "Press any key to start installation..." > /dev/tty
-  wait_input
+  install_mode="";
 
-  get_os_release
-  get_architecture
+  show_header
+
+  while true; do
+    output="";
+    output="$output\n$(cyan "Installation mode:")"
+    output="$output\n  $(green "1.") Full install"
+    output="$output\n  $(green "2.") Firewall only\n"
+    printf "%b" "$output"
+
+    printf "\nChoise [1-2]: " > /dev/tty
+    read -r option < /dev/tty
+
+    case "$option" in
+      1|2) install_mode="$option"; printf "\n"; output=""; break ;;
+      *) echoerr "Incorrect option" ;;
+    esac
+  done
+
+  get_os_release; get_architecture
   install_dependencies
-  download_singbox
-  install_singbox
-  create_singbox_config
-  create_autostart_script
-  create_skeen_group
+  if [ "$install_mode" = "1" ]; then
+    download_singbox; install_singbox; create_singbox_config
+  fi
+  create_autostart_script; create_skeen_group
   download_skeen_script
 
-  echook "Installation completed, $SINGBOX_NAME version:"
-  "$SINGBOX_BIN" version
-  echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
+  msg_ok="Installation completed"
+  if [ "$install_mode" = "1" ]; then
+    echook "${msg_ok}, $SINGBOX_NAME version:"
+    "$SINGBOX_BIN" version
+    echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
+  else
+    echook "${msg_ok}, configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
+  fi
 
   press_any_key_to_menu
 }
@@ -584,8 +633,10 @@ uninstall(){
 
   is_running && stop
 
-  echomsg "Removing $SINGBOX_NAME binary..."
-  rm -f "$SINGBOX_BIN"
+  [ -f "$SINGBOX_BIN" ] && {
+    echomsg "Removing $SINGBOX_NAME binary..."
+    rm -f "$SINGBOX_BIN"
+  }
 
   echomsg "Removing auto-start script..."
   rm -f "$SKEEN_AUTOSTART_SCRIPT"
@@ -609,8 +660,7 @@ uninstall(){
 
 
 accept_uninstall(){
-  max_attempts=3
-  attempt=0
+  max_attempts=3; attempt=0
 
   while [ $attempt -lt $max_attempts ]; do
     printf "Uninstall, %s? [y/n]: " "$SKEEN_NAME" > /dev/tty
@@ -630,10 +680,7 @@ accept_uninstall(){
 
 
 get_net_check_hosts() {
-  ipv="${1:-}"
-  hosts=""
-  sys_hosts=""
-  max="3"
+  ipv="${1:-}"; hosts=""; sys_hosts=""; max="3"
 
   if [ "$ipv" = "4" ]; then
     sys_hosts="1.1.1.1 77.88.8.8 223.5.5.5"
@@ -666,8 +713,7 @@ get_net_check_hosts() {
 
 
 check_internet() {
-  hosts="$(get_net_check_hosts "4")"
-  max_attempts=3
+  hosts="$(get_net_check_hosts "4")"; max_attempts=3
 
   for host in $hosts; do
     attempt=1
@@ -687,8 +733,23 @@ check_internet() {
 }
 
 
-get_inbounds_data() {
+get_fw_mode_data() {
   type="$1"
+
+  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+    case "$type" in
+      tun) [ "$FIREWALL_ONLY_OPKGTUN_USE" = "1" ] && echo "opkgtun" ;;
+      redirect) echo "${FIREWALL_ONLY_REDIRECT_PORT}|tcp" ;;
+      tproxy)
+        if [ -n "$FIREWALL_ONLY_REDIRECT_PORT" ] && [ -n "$FIREWALL_ONLY_TPROXY_PORT" ]; then
+          echo "${FIREWALL_ONLY_TPROXY_PORT}|udp"
+        elif [ -n "$FIREWALL_ONLY_TPROXY_PORT" ]; then
+          echo "${FIREWALL_ONLY_TPROXY_PORT}|tcpudp"
+        fi
+      ;;
+    esac
+    return 0
+  fi
 
   json_files="$(find "$CONFIG_DIR" -name '*.json')"
 
@@ -734,6 +795,8 @@ get_inbounds_data() {
 
 
 has_dns_servers() {
+  [ "$FIREWALL_ONLY_ENABLE" = "1" ] && return 0
+
   for file in "$CONFIG_DIR"/*.json; do
     [ -f "$file" ] || continue
     if jsonfilter -i "$file" -e '@.dns.servers[0]' >/dev/null 2>&1; then
@@ -746,8 +809,7 @@ has_dns_servers() {
 
 
 check_port() {
-  port="${1:-443}"
-  host="${2:-127.0.0.1}"
+  port="${1:-443}"; host="${2:-127.0.0.1}"
 
   if (echo quit | telnet "$host" "$port" 2>/dev/null | grep -q "Connected"); then
     msg_err="Port $port must be freed"
@@ -775,8 +837,7 @@ is_owner_module_working() {
 
 
 load_module() {
-  module="$1"
-  modname="${module%.ko}"
+  module="$1"; modname="${module%.ko}"
 
   if lsmod | grep -q "^$modname"; then
     return 0
@@ -936,17 +997,14 @@ set_route_rules() {
 
   ip -"$IP_VERSION" route show table "$source_table" 2>/dev/null |
   while read -r r; do
-    case "$r" in
-      default*|blackhole*|unreachable*) continue ;;
-    esac
+    case "$r" in default*|blackhole*|unreachable*) continue ;; esac
     ip -"$IP_VERSION" route add table "$TABLE_ID" "$r" 2>/dev/null || true
   done
 }
 
 is_valid_ipv4() {
-  addr="${1:-}"
-  ip="${addr%%/*}"
-  cidr="${addr#*/}"
+  addr="${1:-}"; ip="${addr%%/*}"; cidr="${addr#*/}"
+
   IFS=. read -r o1 o2 o3 o4 <<EOF
 $ip
 EOF
@@ -965,9 +1023,7 @@ EOF
 
 
 is_valid_ipv6() {
-  addr="${1:-}"
-  ip_only="${addr%%/*}"
-  cidr="${addr#*/}"
+  addr="${1:-}"; ip_only="${addr%%/*}"; cidr="${addr#*/}"
 
   ip -6 route get "$ip_only" >/dev/null 2>&1 || return 1
 
@@ -981,12 +1037,10 @@ is_valid_ipv6() {
 
 
 get_validate_ports() {
-  label="${1:-}"
-  input="${2:-}"
+  label="${1:-}"; input="${2:-}"
 
   msg_err="Invalid ${label} port:"
-  valid_ports=""
-  invalid_ports=""
+  valid_ports=""; invalid_ports=""
 
   ports="$(printf '%s\n' "$input" | tr ', ' '\n' | sed '/^$/d')"
 
@@ -998,14 +1052,12 @@ get_validate_ports() {
 
     case "$start$end" in
       *[!0-9]*|'')
-        invalid_ports="${invalid_ports:+$invalid_ports }$p"
-        continue
+        invalid_ports="${invalid_ports:+$invalid_ports }$p"; continue
       ;;
     esac
 
     if [ "$start" -lt 1 ] || [ "$end" -gt 65535 ] || [ "$start" -gt "$end" ]; then
-      invalid_ports="${invalid_ports:+$invalid_ports }$p"
-      continue
+      invalid_ports="${invalid_ports:+$invalid_ports }$p"; continue
     fi
 
     valid_ports="${valid_ports:+$valid_ports }$p"
@@ -1017,10 +1069,8 @@ get_validate_ports() {
 }
 
 get_eth_subnet() {
-  _ip_v="${1:-}"
-  addresses="$(get_net_check_hosts "$_ip_v")"
-  prefix_length="32"
-  [ "$_ip_v" = "6" ] && prefix_length="128"
+  _ip_v="${1:-}"; addresses="$(get_net_check_hosts "$_ip_v")"
+  prefix_length="32"; [ "$_ip_v" = "6" ] && prefix_length="128"
 
   for address in $addresses; do
     eth_ip="$(ip -"$_ip_v" route get "$address" 2>/dev/null |
@@ -1030,10 +1080,8 @@ get_eth_subnet() {
 }
 
 get_exclude_addresses() {
-  ip_v="${1:-}"
-  eth_subnet=""
-  reserved_subnets=""
-  user_exclude=""
+  ip_v="${1:-}"; eth_subnet=""
+  reserved_subnets=""; user_exclude=""
 
   [ "$ip_v" = "4" ] && prefix_length_default="32" || prefix_length_default="128"
 
@@ -1057,7 +1105,6 @@ get_exclude_addresses() {
   done <<EOF
 $reserved_subnets
 EOF
-
 
   invalid_list=""
 
@@ -1087,19 +1134,14 @@ EOF
 
 
 add_rule() {
-  iptables="${1:-}"
-  table="${2:-}"
-  chain="${3:-}"
-  shift 3
+  iptables="${1:-}"; table="${2:-}"; chain="${3:-}"; shift 3
   # shellcheck disable=SC2068
   $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
 }
 
 
 add_tproxy_rules() {
-  iptables="${1:-}"
-  table="${2:-}"
-  chain="${3:-}"
+  iptables="${1:-}"; table="${2:-}"; chain="${3:-}"
 
   for net in $SKEEN_TPROXY_NETWORK; do
     add_rule "$iptables" "$table" "$chain" \
@@ -1116,9 +1158,7 @@ add_tproxy_rules() {
 
 
 add_redirect_rules(){
-  iptables=${1:-}
-  table=${2:-}
-  chain=${3:-}
+  iptables=${1:-}; table=${2:-}; chain=${3:-}
 
   add_rule "$iptables" "$table" "$chain" \
     -p tcp -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
@@ -1126,9 +1166,7 @@ add_redirect_rules(){
 
 
 set_iptables_rules() {
-  iptables="${1:-}"
-  table="${2:-}"
-  chain="${3:-}"
+  iptables="${1:-}"; table="${2:-}"; chain="${3:-}"
 
   set_name="${BYPASS_NET_SET}${IP_VERSION}"
   bp_rule_set="-m set --match-set $set_name dst -j RETURN"
@@ -1151,7 +1189,7 @@ set_iptables_rules() {
         for net in $SKEEN_TPROXY_NETWORK; do
           # shellcheck disable=SC2086
           add_rule "$iptables" "$table" "$chain" \
-          -p "$net" ! --dport "$DNS_PORT" $bp_rule_set
+            -p "$net" ! --dport "$DNS_PORT" $bp_rule_set
         done
       ;;
       *)
@@ -1191,9 +1229,7 @@ set_iptables_rules() {
 
 
 set_prerouting_rules() {
-  iptables="${1:-}"
-  table="${2:-}"
-  connmark_option=""
+  iptables="${1:-}"; table="${2:-}"; connmark_option=""
 
   if [ "$table" = "$TABLE_TPROXY" ]; then
     rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
@@ -1206,8 +1242,7 @@ set_prerouting_rules() {
   [ -n "$SKEEN_MARK_POLICY" ] &&
     connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
 
-  ports=""
-  dports_op=""
+  ports=""; dports_op=""
 
   if [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
     ports="$SKEEN_INTERCEPT_PORTS"
@@ -1245,8 +1280,7 @@ set_prerouting_rules() {
 
     [ -z "$chunk" ] && break
 
-    rule="PREROUTING \
-      $connmark_option \
+    rule="PREROUTING $connmark_option \
       -m conntrack ! --ctstate INVALID \
       -m multiport $dports_op $chunk \
       -j $CHAIN_PREROUTING"
@@ -1262,8 +1296,7 @@ set_prerouting_rules() {
 
 
 add_output_rules() {
-  iptables="$1"
-  table="$2"
+  iptables="$1"; table="$2"
 
   case "$SKEEN_FIREWALL_MODE" in
     tproxy) proto='! -p icmp' ;;
@@ -1273,8 +1306,7 @@ add_output_rules() {
 
   rule="-m owner ! --gid-owner $SKEEN_PROC \
     -m conntrack ! --ctstate INVALID \
-    $proto \
-    -j $CHAIN_OUTPUT"
+    $proto -j $CHAIN_OUTPUT"
 
   # shellcheck disable=SC2086
   if ! $iptables -t "$table" -C OUTPUT $rule >/dev/null 2>&1; then
@@ -1292,10 +1324,8 @@ release_version_ge5(){
 
 
 tun_create(){
-  opkgtun_ip="${1:-}"
-  opkgtun_desc="${2:-}"
-  opkgtun_id="0"
-  opkgtun_name="OpkgTun0"
+  opkgtun_ip="${1:-}"; opkgtun_desc="${2:-}"
+  opkgtun_id="0"; opkgtun_name="OpkgTun0"
 
   if [ -z "$opkgtun_ip" ] || [ -z "$opkgtun_desc" ]; then
     echoerr "Use the following format to create an OpkgTun interface:"
@@ -1433,16 +1463,18 @@ prepare_firewall(){
 
   complete_msg="Firewall preparation is complete"
 
-  redirect_data="$(get_inbounds_data "redirect")"
+  redirect_data="$(get_fw_mode_data "redirect")"
   SKEEN_REDIRECT_PORT="$(echo "$redirect_data" | cut -d'|' -f1)"
 
-  tproxy_data="$(get_inbounds_data "tproxy")"
+  tproxy_data="$(get_fw_mode_data "tproxy")"
   SKEEN_TPROXY_PORT="$(echo "$tproxy_data" | cut -d'|' -f1)"
   SKEEN_TPROXY_NETWORK="$(echo "$tproxy_data" | cut -d'|' -f2)"
 
-  for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do check_port "$port"; done
+  if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
+    for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do check_port "$port"; done
+  fi
 
-  has_opkgtun="$(get_inbounds_data "tun")"
+  has_opkgtun="$(get_fw_mode_data "tun")"
 
   if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
     SKEEN_FIREWALL_MODE="tproxy"
@@ -1455,12 +1487,16 @@ prepare_firewall(){
     SKEEN_FIREWALL_MODE="tun"
   else
     SKEEN_FIREWALL_MODE="none"
+    if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+      echoerr "Redirect ports must be specified in firewall-only mode"
+      press_any_key_to_menu
+    fi
   fi
 
   echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
 
   SKEEN_DNS_ENABLED="0"
-  if [ "$FIREWALL_DNS" = "1" ] && has_dns_servers; then
+  if [ "$FIREWALL_INTERCEPT_DNS" = "1" ] && has_dns_servers; then
     echomsg "Detected use of DNS configuration"
 
     warn_msg="the DNS configuration is not used"
@@ -1503,8 +1539,7 @@ prepare_firewall(){
 
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 
-  SKEEN_INTERCEPT_PORTS=""
-  SKEEN_EXCLUDE_PORTS=""
+  SKEEN_INTERCEPT_PORTS=""; SKEEN_EXCLUDE_PORTS=""
   if [ -n "$INTERCEPT_PORTS" ]; then
     SKEEN_INTERCEPT_PORTS="$(get_validate_ports "intercept" "$(json_get_array '@.firewall.intercept.port')")"
   elif [ -n "$EXCLUDE_PORTS" ]; then
@@ -1512,9 +1547,7 @@ prepare_firewall(){
   fi
 
   setup_bypass_ipset() {
-    ipver="$1"
-    family="$2"
-
+    ipver="$1"; family="$2"
     name_set="${BYPASS_NET_SET}${ipver}"
 
     ipset create "$name_set" hash:net family "$family" -exist
@@ -1540,7 +1573,8 @@ prepare_firewall(){
     echo "#!/bin/sh"
     echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
-    echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
+    [ "$FIREWALL_ONLY_ENABLE" != "1" ] && \
+      echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
 
     [ -n "$has_opkgtun" ] && get_tun_fw_rules
 
@@ -1556,10 +1590,10 @@ prepare_firewall(){
     echo "export SKEEN_DNS_ENABLED=\"$SKEEN_DNS_ENABLED\""
 
     echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
-    echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0"
 
     case "$SKEEN_FIREWALL_MODE" in
-      tproxy|hybrid) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0" ;;
+      hybrid) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
+      tproxy) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0" ;;
       redirect) echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
       *) echo "exit 0" ;;
     esac
@@ -1576,8 +1610,6 @@ prepare_firewall(){
 
 
 apply_firewall(){
-  is_running || return 0
-
   [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
 
   echomsg "Applying firewall rules..."
@@ -1637,15 +1669,12 @@ clean_firewall(){
 
   msg_ok="Firewall cleanup completed"
 
-  [ -f "$FIREWALL_HOOK_FILE" ] && : > "$FIREWALL_HOOK_FILE"
+  [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
 
   [ "$SKEEN_FIREWALL_MODE" = "tun" ] && echook "$msg_ok" && return 0
 
   clean_chain() {
-    iptables="$1"
-    table="$2"
-    chain="$3"
-    parent="$4"
+    iptables="$1"; table="$2"; chain="$3"; parent="$4"
 
     if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
       return 0
@@ -1786,7 +1815,33 @@ get_ulimit_n(){
 }
 
 
+set_chgrp_fw_only(){
+  action="${1:-}"
+
+  [ "$FIREWALL_ONLY_ENABLE" != "1" ] && return 0
+
+  if [ -z "$FIREWALL_ONLY_PROCESS_NAME" ]; then
+    echoerr "'firewall.only.process_name' has not been set"
+    press_any_key_to_menu
+  fi
+
+  path_to_bin="$(command -v "$FIREWALL_ONLY_PROCESS_NAME")"
+
+  if [ ! -f "$path_to_bin" ]; then
+    echoerr "'firewall.only.process_name' is not pointing to an executable file"
+    press_any_key_to_menu
+  fi
+
+  case $action in
+    start) chgrp "$SKEEN_PROC" "$path_to_bin"; chmod g+s "$path_to_bin" ;;
+    stop) chgrp root "$path_to_bin"; chmod g-s "$path_to_bin" ;;
+  esac
+}
+
+
 start_singbox(){
+  [ "$FIREWALL_ONLY_ENABLE" = "1" ] && return 0
+
   timeout=10
 
   echomsg "Starting ${SINGBOX_NAME}..."
@@ -1800,25 +1855,19 @@ start_singbox(){
 
   if [ $status_start -ne 0 ]; then
     msg="Failed to start $SINGBOX_NAME"
-    echoerr "$msg"
-    logger_error "$msg"
-    return 1
+    echoerr "$msg"; logger_error "$msg"; return 1
   fi
 
   while ! is_running && [ $timeout -gt 0 ]; do
-    sleep 1
-    timeout=$((timeout - 1))
+    sleep 1; timeout=$((timeout - 1))
   done
 
   if ! is_running; then
     msg="$SINGBOX_NAME did not start in time"
-    echoerr "$msg"
-    logger_error "$msg"
-    return 1
+    echoerr "$msg"; logger_error "$msg"; return 1
   fi
 
-  echook "$SINGBOX_NAME started"
-  logger_notice "$SINGBOX_NAME started"
+  echook "$SINGBOX_NAME started"; logger_notice "$SINGBOX_NAME started"
 }
 
 
@@ -1829,46 +1878,48 @@ start() {
       return 0
     else
       if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null; then
-        sleep "$AUTO_START_DELAY"
-        check_internet
+        sleep "$AUTO_START_DELAY"; check_internet
       else
-        sleep 5
-        check_internet
+        sleep 5; check_internet
       fi
     fi
   fi
 
   if is_running; then
-    echook "$SINGBOX_NAME already started"
-    return 0
+    echook "Already started"; return 0
   fi
 
   check_config && echo "$DELIMETER"
 
   [ "$CALLER" != "init" ] && loading_config
 
+  create_skeen_group; [ $? -eq 2 ] && echo "$DELIMETER"
+
+  set_chgrp_fw_only "start"
+
   apply_sysctl_network_tuning
 
   prepare_firewall && echo "$DELIMETER"
 
-  create_skeen_group; [ $? -eq 2 ] && echo "$DELIMETER"
-
   start_singbox
 
-  [ "$SKEEN_FIREWALL_MODE" != "none" ] && \
-  echo "$DELIMETER" && apply_firewall
+  [ "$SKEEN_FIREWALL_MODE" != "none" ] \
+  && { [ "$FIREWALL_ONLY_ENABLE" != "1" ] && echo "$DELIMETER"; }
+  [ "$SKEEN_FIREWALL_MODE" != "none" ] && apply_firewall
 
   return 0
 }
 
 
 stop_singbox(){
+  [ "$FIREWALL_ONLY_ENABLE" = "1" ] && return 0
+
   timeout=10
+
   echomsg "Stopping ${SINGBOX_NAME}..."
 
   if ! is_running; then
-    echook "$SINGBOX_NAME already stopped"
-    return 0
+    echook "$SINGBOX_NAME already stopped"; return 0
   fi
 
   start-stop-daemon -K -x $SINGBOX_PROC >/dev/null
@@ -1876,40 +1927,36 @@ stop_singbox(){
 
   if [ $status_stop -ne 0 ]; then
     msg="Failed to send stop signal to $SINGBOX_NAME"
-    echoerr "$msg"
-    logger_error "$msg"
-    return 1
+    echoerr "$msg"; logger_error "$msg"; return 1
   fi
 
   while is_running && [ $timeout -gt 0 ]; do
-    sleep 1
-    timeout=$((timeout - 1))
+    sleep 1; timeout=$((timeout - 1))
   done
 
   if is_running; then
     msg="$SINGBOX_NAME did not stop in time"
-    echoerr "$msg"
-    logger_error "$msg"
-    return 1
+    echoerr "$msg"; logger_error "$msg"; return 1
   fi
 
   msg="$SINGBOX_NAME stopped"
-  echook "$msg"
-  logger_notice "$msg"
-  return 0
+  echook "$msg"; logger_notice "$msg"; return 0
 }
 
 
 stop(){
+  set_chgrp_fw_only "stop"
   stop_singbox && clean_firewall
   [ "$on_restart" = "1" ] && echo "$DELIMETER"
 }
 
 
 kill_proc(){
+  [ "$FIREWALL_ONLY_ENABLE" = "1" ] \
+    && exiterr "Only available when 'firewall.only' is disabled"
+
   if ! is_running; then
-    echook "$SINGBOX_NAME is not running"
-    return 0
+    echook "$SINGBOX_NAME is not running"; return 0
   fi
 
   echo "Killing ${SINGBOX_PROC}..."
@@ -1922,9 +1969,11 @@ version(){
   echo "$DELIMETER"
   printf "${SKEEN_NAME}: %s\n" "$(cyan "v$(get_current_version "$SKEEN_PROC")")"
   echo "$DELIMETER"
-  printf "${SINGBOX_NAME}: %s\n" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
-  $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p'
-  echo "$DELIMETER"
+
+  [ "$FIREWALL_ONLY_ENABLE" != "1" ] \
+  && printf "${SINGBOX_NAME}: %s\n" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")" \
+  && $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' \
+  && echo "$DELIMETER"
 }
 
 
@@ -1939,22 +1988,25 @@ switch_state(){
 
 
 restart() {
-  on_restart=1
-  stop; start
-  on_restart=0
+  on_restart=1; stop && start; on_restart=0
   press_any_key_to_menu
 }
 
 
 reload(){
   check_config && echo "$DELIMETER"
-  stop_singbox && start_singbox
+  if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
+    stop_singbox && start_singbox
+  else
+    stop && start
+  fi
 }
 
 
 status(){
   if is_running; then
     echo "Status: $(green "running")"
+    [ "$FIREWALL_ONLY_ENABLE" = "1" ] && return 0
     pid=$(pidof $SINGBOX_PROC)
     echo "PID: $pid"
 
@@ -1974,10 +2026,9 @@ status(){
 
 update_core(){
   is_running && stop
-  get_os_release
-  get_architecture
+  get_os_release; get_architecture
   download_singbox "$latest" || return 1
-  install_singbox
+  install_singbox; create_singbox_config
   echook "The $SINGBOX_NAME core has been successfully updated"
 }
 
@@ -1994,11 +2045,8 @@ update_skeen(){
 
 
 ask_and_update() {
-  name="${1:-}"
-  proc="${2:-}"
-  api="${3:-}"
-  update_fn="${4:-}"
-  releases="${5:-}"
+  name="${1:-}"; proc="${2:-}"; api="${3:-}"
+  update_fn="${4:-}"; releases="${5:-}"
 
   echomsg "Checking $name for updates..."
 
@@ -2035,9 +2083,23 @@ check_updates() {
   is_update_skeen=0
 
   # sing-box
-  ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
-    update_core "https://github.com/SagerNet/sing-box/releases"
-  [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ] && update_core
+  if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
+    ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
+      update_core "https://github.com/SagerNet/sing-box/releases"
+    if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ]; then
+      while :; do
+        printf "Download %s %s? [y/n] (default: n): " "$SINGBOX_NAME" "$latest" > /dev/tty
+        read -r optt < /dev/tty
+        [ -z "$optt" ] && optt=n
+
+        case $optt in
+          y|Y) update_core ;;
+          n|N) break ;;
+          *) echoerr "Incorrect option" ;;
+        esac
+      done
+    fi
+  fi
 
   # skeen
   ask_and_update "$SKEEN_NAME" "$SKEEN_PROC" "$SKEEN_API_URL" \
@@ -2116,7 +2178,7 @@ fw_test_chain() {
 
 test_firewall() {
   if ! is_running; then
-    echoerr "Testing are available only when $SINGBOX_NAME is running"
+    echoerr "Testing are available only when $SKEEN_NAME is started"
     press_any_key_to_menu
   else
     import_firewall_vars
@@ -2128,15 +2190,15 @@ test_firewall() {
     press_any_key_to_menu
   fi
 
-  if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
-    echowarn "Testing is available in redirect, tproxy, and hybrid modes"
-    press_any_key_to_menu
-  elif [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
+  if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
     tables="nat mangle"
   elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
     tables="mangle"
-  else
+  elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
     tables="nat"
+  else
+    echowarn "Testing is available in redirect, tproxy, and hybrid modes"
+    press_any_key_to_menu
   fi
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
@@ -2227,7 +2289,7 @@ reset_config(){
         if backup_config; then
           rm -rf "$WORK_DIR"
           mkdir -p "$WORK_DIR"
-          create_singbox_config "force"
+          [ "$FIREWALL_ONLY_ENABLE" != "1" ] && create_singbox_config "force"
           create_skeen_config
           echook "Configuration reset completed"
         else
@@ -2245,15 +2307,17 @@ reset_config(){
 
 
 check_config(){
-  echomsg "Checking $SINGBOX_NAME configuration..."
-
   msg_err="Configuration check failed"
   is_error=0
 
-  if $SINGBOX_PROC check -C $CONFIG_DIR; then
-    echook "$SINGBOX_NAME configuration is valid"
-  else
-    is_error=1; echoerr "$msg_err"
+  if [ "$FIREWALL_ONLY_ENABLE" != "1" ] && [ -f "$SINGBOX_BIN" ]; then
+    echomsg "Checking $SINGBOX_NAME configuration..."
+
+    if $SINGBOX_PROC check -C $CONFIG_DIR; then
+      echook "$SINGBOX_NAME configuration is valid"
+    else
+      is_error=1; echoerr "$msg_err"
+    fi
   fi
 
   echomsg "Checking $SKEEN_NAME configuration..."
@@ -2272,12 +2336,16 @@ check_config(){
 
 
 format_config(){
-  echomsg "Formatting Sing-box configuration..."
+  if [ -f "$SINGBOX_BIN" ] && [ -d "$CONFIG_DIR" ]; then
+    echomsg "Formatting Sing-box configuration..."
 
-  if $SINGBOX_PROC format -w -C $CONFIG_DIR; then
-    echook "Configuration formatted successfully"
+    if $SINGBOX_PROC format -w -C $CONFIG_DIR; then
+      echook "Configuration formatted successfully"
+    else
+      echoerr "Configuration formatting failed"
+    fi
   else
-    echoerr "Configuration formatting failed"
+    echoerr "The $SINGBOX_NAME executable is missing, or the configuration directory was not found"
   fi
 }
 
@@ -2287,6 +2355,10 @@ show_menu(){
   import_firewall_vars
 
   show_header
+
+  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+    SINGBOX_NAME="Firewall"
+  fi
 
   if [ "$AUTO_START_ENABLE" = "1" ]; then
     autostart_status="$(green "yes")"
@@ -2305,8 +2377,13 @@ show_menu(){
   output=""
 
   output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
-  output="$output\n $SINGBOX_NAME version: $(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+
+  if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
+    output="$output\n $SINGBOX_NAME version: $(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+  fi
+
   output="$output\n $SINGBOX_NAME state: $running_status"
+
   output="$output\n Start automatically: $autostart_status"
 
   ipv4=""; ipv6=""
@@ -2398,7 +2475,7 @@ Backup & Restore:
   restore - Restores a backup of $WORK_DIR by archive name from $ENTWARE_DIR
 
 Reset Configuration:
-  reset   - Resets $CONFIG_DIR and skeen.conf to defaults, performing a backup first
+  reset   - Resets $CONFIG_DIR and skeen.json to defaults, performing a backup first
 
 OpkgTun manager (KeeneticOS v5+):
   tun create <ipv4> <name> - Create interface with the specified IP and name

@@ -134,6 +134,14 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     ]                  // Domains or IPs V4 for connectivity tests (max 3)
   },
   "firewall": {
+    "only": {
+      "enable": 0,         // Enable firewall-only mode (1 = on)
+      "process_name": "",  // Name process (binary) with ports listening for TProxy/Redirect
+      "redirect_port": "", // Redirect port for TCP traffic
+      "tproxy_port": "",   // TProxy port for redirecting UDP traffic if 'redirect_port' is set,
+                           // otherwise both TCP and UDP traffic will go entirely through TProxy
+      "opkgtun_use": 0     // Whether opkgtun configuration is used (1 = on)
+    },
     "intercept": {
       "dns": 1,        // Intercept DNS via TProxy/Redirect (0 = disabled)
       "port": []       // Ports to intercept (all if empty).
