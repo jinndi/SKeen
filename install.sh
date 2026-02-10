@@ -1440,6 +1440,8 @@ prepare_firewall(){
   SKEEN_TPROXY_PORT="$(echo "$tproxy_data" | cut -d'|' -f1)"
   SKEEN_TPROXY_NETWORK="$(echo "$tproxy_data" | cut -d'|' -f2)"
 
+  for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do check_port "$port"; done
+
   has_opkgtun="$(get_inbounds_data "tun")"
 
   if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
@@ -1848,10 +1850,6 @@ start() {
   apply_sysctl_network_tuning
 
   prepare_firewall && echo "$DELIMETER"
-
-  for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do
-    check_port "$port"
-  done
 
   create_skeen_group; [ $? -eq 2 ] && echo "$DELIMETER"
 
