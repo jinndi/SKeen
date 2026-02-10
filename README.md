@@ -27,6 +27,7 @@ Installation script for sing-box on Keenetic/Netcraze routers
 - Sing-box fakeip working ✓
 - Zashboard via Clash API configured ✓
 - Network settings optimization ✓
+- Firewall-only mode ✓
 
 ### 📋 Requirements
 - Entware installed and configured
