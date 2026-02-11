@@ -57,7 +57,7 @@ After successful installation:
 /opt/
 ├── bin/
 │   ├── skeen              # SKeen management script
-│   └── skeen-box          # sing-box binary
+│   └── skeen-box          # sing-box binary (with a full installation)
 ├── etc/
 │   ├── init.d/
 │   │   └── S99SKeen       # Autostart script
@@ -66,7 +66,7 @@ After successful installation:
 │   │       └── skeen_firewall.sh  # Created on start
 │   └── skeen/
 │       ├── skeen.json     # SKeen configuration
-│       └── config/
+│       └── config/        # sing-box config dir (with a full installation)
 │           ├── log.json
 │           ├── dns.json
 │           ├── inbounds.json
