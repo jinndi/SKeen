@@ -5,7 +5,7 @@
   SKeen
 </h1>
 <h3 align="center">
-Installation script for sing-box on Keenetic/Netcraze routers
+Transparent proxying (TProxy) and Redirect on Keenetic/Netcraze routers with the sing-box core and any other core in firewall-only mode
 </h3>
 
 <p align="center">
