@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.0...SKeen-v4.0.1) (2026-02-11)
+
+
+### 🐛 Fix
+
+* **singbox:** fix update loop and add missing checks ([5d7bf35](https://github.com/jinndi/SKeen/commit/5d7bf3501aa83f51b4e58c9d258932e78d6d7ead))
+
 ## [4.0.0](https://github.com/jinndi/SKeen/compare/SKeen-v3.10.7...SKeen-v4.0.0) (2026-02-10)
 
 
