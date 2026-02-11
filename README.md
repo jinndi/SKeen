@@ -39,13 +39,15 @@ Installation script for sing-box on Keenetic/Netcraze routers
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 ```
 
-Configure the sing-box JSON configuration files located in the `/opt/etc/skeen/config/` directory, where example configuration files are provided.
+Before installation begins, you will be prompted to choose whether to install in full mode with sing-box, or to use it only as a firewall.
+
+After installation, if full mode was selected, configure the sing-box JSON configuration files located in the `/opt/etc/skeen/config/` directory, where example configuration files are provided.
 
 The SKeen settings are located in the file at `/opt/etc/skeen/skeen.json`.
 
 `/opt/etc/skeen` directory is not removed during program uninstallation and must be deleted manually if required. It is also not overwritten during reinstallation if it already exists.
 
-Access the web interface at the router's IP (usually 192.168.1.1) on http://192.168.1.1:9090
+Also, if the full installation was selected, the Zashboard panel is configured by default via the Clash API and can be accessed through the router’s IP address (usually 192.168.1.1) at `http://192.168.1.1:9090`
 
 Manage the package further using the `skeen` command.
 
