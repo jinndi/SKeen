@@ -17,9 +17,6 @@ Installation script for sing-box on Keenetic/Netcraze routers
 <a href="https://deepwiki.com/jinndi/SKeen"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
-> [!WARNING]
-> Tested on the aarch64 (arm64) CPU architecture. Please report any issues.
-
 ### 🚀 Features
 - TProxy/Redirect/Hybrid modes ✓
 - IPv4 and IPv6 supports ✓
