@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.0.0"
+SKEEN_VERSION="4.0.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1872,6 +1872,11 @@ start_singbox(){
 
 
 start() {
+  if [ "$FIREWALL_ONLY_ENABLE" != "1" ] && [ ! -f "$SINGBOX_BIN" ]; then
+    echoerr "$SINGBOX_NAME binary not found, please install it first"
+    press_any_key_to_menu
+  fi
+
   if [ "$CALLER" = "init" ]; then
     loading_config
     if [ "$AUTO_START_ENABLE" = "0" ]; then
@@ -2093,7 +2098,7 @@ check_updates() {
         [ -z "$optt" ] && optt=n
 
         case $optt in
-          y|Y) update_core ;;
+          y|Y) update_core; break;;
           n|N) break ;;
           *) echoerr "Incorrect option" ;;
         esac
@@ -2379,7 +2384,9 @@ show_menu(){
   output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
 
   if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
-    output="$output\n $SINGBOX_NAME version: $(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+    version="$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+    [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
+    output="$output\n $SINGBOX_NAME version: ${version}"
   fi
 
   output="$output\n $SINGBOX_NAME state: $running_status"
