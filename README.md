@@ -5,7 +5,7 @@
   SKeen
 </h1>
 <h3 align="center">
-Transparent proxying (TProxy) and Redirect on Keenetic/Netcraze routers with the sing-box core and any other core in firewall-only mode
+Keenetic/Netcraze TProxy & Redirect with sing-box (Firewall Mode)
 </h3>
 
 <p align="center">
