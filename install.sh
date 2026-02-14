@@ -18,7 +18,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-DEPENDENCIES="ndmc start-stop-daemon iptables ipset curl tar jsonfilter logger"
+DEPENDENCIES="ndmc start-stop-daemon iptables ipset net-tools curl tar jsonfilter logger"
 
 ENTWARE_DIR="/opt"
 WORK_DIR="${ENTWARE_DIR}/etc/skeen"
@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.0.1"
+SKEEN_VERSION="4.0.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -809,15 +809,23 @@ has_dns_servers() {
 
 
 check_port() {
-  port="${1:-443}"; host="${2:-127.0.0.1}"
+  port="${1:-}";
 
-  if (echo quit | telnet "$host" "$port" 2>/dev/null | grep -q "Connected"); then
-    msg_err="Port $port must be freed"
-    echoerr "$msg_err"
-    echoerr "Free it and try running again"
-    logger_error "$msg_err"
-    press_any_key_to_menu
+  if [ -z "$port" ] && iptables -t mangle -nvL INPUT --line-numbers | grep -q 'tcp dpt:443'; then
+    msg_err="HTTPS Port 443 is in use by Keenetic services."
+    echoerr "$msg_err"; logger_error "$msg_err"
+    echoerr "TProxy mode requires a free port to work."
+    echoerr "Please free it on the 'Users and Access' page of the router web interface"
+    press_any_key_to_menu; return 1
+  elif [ -n "$port" ]; then
+    if netstat -lnt 2>/dev/null | grep -q ":$port\s"; then
+      msg_err="Port $port is in use. Free it and try running again"
+      echoerr "$msg_err"; logger_error "$msg_err";
+      press_any_key_to_menu; return 1
+    fi
   fi
+
+  return 0
 }
 
 
@@ -1494,6 +1502,8 @@ prepare_firewall(){
   fi
 
   echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
+
+  [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && check_port
 
   SKEEN_DNS_ENABLED="0"
   if [ "$FIREWALL_INTERCEPT_DNS" = "1" ] && has_dns_servers; then
