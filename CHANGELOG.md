@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.1...SKeen-v4.0.2) (2026-02-14)
+
+
+### 🧰 Chore
+
+* Update dependencies and improve port occupancy check in installation script ([f3e7b77](https://github.com/jinndi/SKeen/commit/f3e7b77f891a7813d6742fed5e87e3ef91377a4b))
+
 ## [4.0.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.0...SKeen-v4.0.1) (2026-02-11)
 
 
