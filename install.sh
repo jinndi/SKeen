@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.0.2"
+SKEEN_VERSION="4.0.3"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -285,17 +285,28 @@ get_os_release(){
 }
 
 
+arch_elf() {
+  bin="/opt/bin/opkg"; base="mips"
+
+  B5=$(printf "%d" "'$(dd if="$bin" bs=1 skip=4 count=1 2>/dev/null | head -c1)'")
+  B6=$(printf "%d" "'$(dd if="$bin" bs=1 skip=5 count=1 2>/dev/null | head -c1)'")
+
+  [ -z "$B5" ] && echo "" && return
+  [ -z "$B6" ] && echo "" && return
+
+  case "$B5" in 2) base="${base}64" ;; esac
+  case "$B6" in 1) base="${base}el" ;; esac
+
+  echo "$base"
+}
+
+
 get_architecture() {
-  opkg_arch=$(opkg print-architecture 2>/dev/null | \
-    grep -E 'mipsel|mipsle|mips64el|mips64le|mips64|mips|aarch64|arm64|armv8' | \
-    head -n1 | awk '{print $2}' | tr '[:upper:]' '[:lower:]')
+  opkg_arch=$(opkg print-architecture 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
   case "$opkg_arch" in
     *aarch64*|*arm64*|*armv8*) ARCH="aarch64" ;;
-    *mipsel*|*mipsle*)         ARCH="mipsel" ;;
-    *mips64el*|*mips64le*)     ARCH="mips64el" ;;
-    *mips64*)                  ARCH="mips64" ;;
-    *mips*)                    ARCH="mips" ;;
+    *mips*)                    ARCH="$(arch_elf)" ;;
     *)                         ARCH="" ;;
   esac
 
