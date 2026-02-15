@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.2...SKeen-v4.0.3) (2026-02-15)
+
+
+### 🧰 Chore
+
+* add architecture detection for ELF binaries in install script ([2bc01e0](https://github.com/jinndi/SKeen/commit/2bc01e0547eea5b838e2280948a950ad6d21788b))
+
 ## [4.0.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.1...SKeen-v4.0.2) (2026-02-14)
 
 
