@@ -166,3 +166,5 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 ### 🔗 Useful links
 - Proxy setup guide: [https://proxy-tutorials.dustinwin.us.kg/](https://proxy-tutorials.dustinwin.us.kg/)
 - Outbound server block generator: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
+- Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
+- rule-sets for various services: [https://github.com/vernette/rulesets](https://github.com/vernette/rulesets)
