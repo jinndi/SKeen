@@ -25,6 +25,13 @@ Keenetic/Netcraze TProxy & Redirect with sing-box (Firewall Mode)
 - Network settings optimization ✓
 - Firewall-only mode ✓
 
+<details>
+  <summary>Soon?</summary>
+<img width="1530" height="734" alt="1" src="https://github.com/user-attachments/assets/ca2603f5-405d-4c11-8419-83b2d08e02ba" />
+
+</details>
+
+
 ### 📋 Requirements
 - Entware installed and configured
 - Netfilter Subsystem Kernel Module installed
