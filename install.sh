@@ -2032,21 +2032,37 @@ reload(){
 
 status(){
   if is_running; then
-    echo "Status: $(green "running")"
-    [ "$FIREWALL_ONLY_ENABLE" = "1" ] && return 0
+    if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+      if [ "$CALLER" = "api" ]; then
+        echo "{'running':false}"
+      else
+        echo "Status: $(green "running") (Firewall Only)"
+      fi
+      return 0
+    fi
     pid=$(pidof $SINGBOX_PROC)
-    echo "PID: $pid"
+    if [ -n "$pid" ]; then
+      proc_status="$(cat "/proc/${pid}/status")"
+      mem_rss=$(echo "$proc_status" | grep VmRSS | awk '{print $2}')
+      mem_hwm=$(echo "$proc_status" | grep VmHWM | awk '{print $2}')
+      threads=$(echo "$proc_status" | grep Threads | awk '{print $2}')
 
-    [ -f "/proc/$pid/status" ] && {
-      mem_rss=$(grep VmRSS "/proc/$pid/status" | awk '{print $2}')
-      mem_hwm=$(grep VmHWM "/proc/$pid/status" | awk '{print $2}')
-      threads=$(grep Threads "/proc/$pid/status" | awk '{print $2}')
-
-      echo "Memory: $((mem_rss / 1024)) MB (peak: $((mem_hwm / 1024)) MB)"
-      echo "Threads: $threads"
-    }
+      if [ "$CALLER" = "api" ]; then
+        start_time="$(date -d "$(stat "/proc/${pid}" | grep Change | cut -d'.' -f1 | cut -d' ' -f2-3)" +%s)"
+        echo "{'running':true,'start':${start_time},'mem':${mem_rss},'mem_peak':${mem_hwm},'threads':${threads}}"
+      else
+        echo "Status: $(green "running")"
+        echo "PID: $pid"
+        echo "Memory: $((mem_rss / 1024)) MB (peak: $((mem_hwm / 1024)) MB)"
+        echo "Threads: $threads"
+      fi
+    fi
   else
-    echo "Status: $(red "stopped")"
+    if [ "$CALLER" = "api" ]; then
+      echo "{'running':false}"
+    else
+      echo "Status: $(red "stopped")"
+    fi
   fi
 }
 
@@ -2544,6 +2560,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
       esac
     ;;
     apply_firewall) apply_firewall ;;
+    is_fw_only) [ "$(jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall.only.enable')" = "1" ] && exit 0 || exit 1 ;;
     "") show_menu ;;
     help|*) show_help ;;
   esac
