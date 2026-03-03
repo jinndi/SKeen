@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.0.3"
+SKEEN_VERSION="4.0.4"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -571,9 +571,10 @@ download_skeen_script(){
 
 
 press_any_key_to_menu(){
-  [ "$CALLER" != "menu" ] && exit 1
-
   action="${1:-}"
+  exit_code="${2:-0}"
+
+  [ "$CALLER" != "menu" ] && exit "$exit_code"
 
   echo "$DELIMETER"
 
@@ -916,7 +917,7 @@ loading_modules() {
       echoerr "The '$SKEEN_FIREWALL_MODE' mode requires kernel modules"
       echoerr "Install router component: Kernel modules for Netfilter"
       logger_error "Missing Kernel modules for Netfilter"
-      press_any_key_to_menu
+      press_any_key_to_menu "" 1
     fi
   done
 
@@ -1003,9 +1004,9 @@ set_route_rules() {
     echoerr "$msg2"
     logger_warning "$msg"
 
-    [ "$CALLER" != "menu" ] && exit 0
+    [ "$CALLER" = "netfilter" ] && exit 0
 
-    press_any_key_to_menu
+    press_any_key_to_menu "" 1
   fi
 
   ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
@@ -1508,7 +1509,7 @@ prepare_firewall(){
     SKEEN_FIREWALL_MODE="none"
     if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
       echoerr "Redirect ports must be specified in firewall-only mode"
-      press_any_key_to_menu
+      press_any_key_to_menu "" 1
     fi
   fi
 
@@ -1621,7 +1622,7 @@ prepare_firewall(){
 
     echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table\""
 
-    echo "$SKEEN_SCRIPT apply_firewall"
+    echo "$SKEEN_SCRIPT apply_firewall netfilter"
   } > "$FIREWALL_HOOK_FILE"
 
   chmod +x "$FIREWALL_HOOK_FILE"
@@ -1646,7 +1647,7 @@ apply_firewall(){
       msg_err="Unknown iptables: $iptables"
       logger_error "$msg_err"
       echoerr "$msg_err"
-      press_any_key_to_menu
+      press_any_key_to_menu "" 1
     fi
 
     set_route_rules
@@ -1843,14 +1844,14 @@ set_chgrp_fw_only(){
 
   if [ -z "$FIREWALL_ONLY_PROCESS_NAME" ]; then
     echoerr "'firewall.only.process_name' has not been set"
-    press_any_key_to_menu
+    press_any_key_to_menu  "" 1
   fi
 
   path_to_bin="$(command -v "$FIREWALL_ONLY_PROCESS_NAME")"
 
   if [ ! -f "$path_to_bin" ]; then
     echoerr "'firewall.only.process_name' is not pointing to an executable file"
-    press_any_key_to_menu
+    press_any_key_to_menu  "" 1
   fi
 
   case $action in
@@ -1895,7 +1896,7 @@ start_singbox(){
 start() {
   if [ "$FIREWALL_ONLY_ENABLE" != "1" ] && [ ! -f "$SINGBOX_BIN" ]; then
     echoerr "$SINGBOX_NAME binary not found, please install it first"
-    press_any_key_to_menu
+    press_any_key_to_menu  "" 1
   fi
 
   if [ "$CALLER" = "init" ]; then
@@ -2132,7 +2133,7 @@ check_updates() {
     update_skeen "https://github.com/jinndi/SKeen/releases"
   [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest" ] && update_skeen
 
-  [ "$CALLER" = cli ] && exit 0
+  [ "$CALLER" != "menu" ] && exit 0
 
   if [ "$is_update_skeen" -eq 1 ]; then
     exec sh "$SKEEN_SCRIPT" deps menu
@@ -2205,7 +2206,7 @@ fw_test_chain() {
 test_firewall() {
   if ! is_running; then
     echoerr "Testing are available only when $SKEEN_NAME is started"
-    press_any_key_to_menu
+    press_any_key_to_menu "" 1
   else
     import_firewall_vars
   fi
@@ -2213,7 +2214,7 @@ test_firewall() {
   if [ ! -f "$FIREWALL_HOOK_FILE" ]; then
     echoerr "The file at path $FIREWALL_HOOK_FILE is missing!"
     echomsg "Please reboot $SINGBOX_NAME"
-    press_any_key_to_menu
+    press_any_key_to_menu "" 1
   fi
 
   if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
@@ -2224,12 +2225,12 @@ test_firewall() {
     tables="nat"
   else
     echowarn "Testing is available in redirect, tproxy, and hybrid modes"
-    press_any_key_to_menu
+    press_any_key_to_menu "" 1
   fi
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
     echoerr "iptables utility is not installed"
-    press_any_key_to_menu
+    press_any_key_to_menu "" 1
   fi
 
   for iptables in $SKEEN_IPTABLES_LIST; do
@@ -2534,7 +2535,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     restore) restore_config ;;
     reset) reset_config ;;
     tun)
-      release_version_ge5 || exit 0
+      release_version_ge5 || exit 1
       case "$2" in
         create) tun_create "$3" "$4" ;;
         delete) tun_delete "$3" ;;
