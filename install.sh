@@ -2020,7 +2020,10 @@ switch_state(){
 
 
 restart() {
-  on_restart=1; stop && start; on_restart=0
+  on_restart=1;
+  stop || press_any_key_to_menu "" 1
+  start || press_any_key_to_menu "" 1
+  on_restart=0
   press_any_key_to_menu
 }
 
@@ -2028,9 +2031,9 @@ restart() {
 reload(){
   check_config && echo "$DELIMETER"
   if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
-    stop_singbox && start_singbox
+    stop_singbox && start_singbox || exit 1
   else
-    stop && start
+    stop && start || exit 1
   fi
 }
 
@@ -2073,7 +2076,9 @@ status(){
 
 
 update_core(){
-  is_running && stop
+  if is_running; then
+    stop || exit 1
+  fi
   get_os_release; get_architecture
   download_singbox "$latest" || return 1
   install_singbox; create_singbox_config
