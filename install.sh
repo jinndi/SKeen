@@ -2034,7 +2034,7 @@ status(){
   if is_running; then
     if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
       if [ "$CALLER" = "api" ]; then
-        echo "{'running':false}"
+        echo "{\"running\":false}"
       else
         echo "Status: $(green "running") (Firewall Only)"
       fi
@@ -2059,7 +2059,7 @@ status(){
     fi
   else
     if [ "$CALLER" = "api" ]; then
-      echo "{'running':false}"
+      echo "{\"running\":false}"
     else
       echo "Status: $(red "stopped")"
     fi
