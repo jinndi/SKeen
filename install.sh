@@ -1998,14 +1998,20 @@ kill_proc(){
 
 
 version(){
-  echo "$DELIMETER"
-  printf "${SKEEN_NAME}: %s\n" "$(cyan "v$(get_current_version "$SKEEN_PROC")")"
-  echo "$DELIMETER"
+  sk_version="$(get_current_version "$SKEEN_PROC")"
+  sb_version="$(get_current_version "$SINGBOX_PROC")"
+  if [ "$CALLER" = "cli" ]; then
+    echo "$DELIMETER"
+    printf "${SKEEN_NAME}: %s\n" "$(cyan "v${sk_version}")"
+    echo "$DELIMETER"
 
-  [ "$FIREWALL_ONLY_ENABLE" != "1" ] \
-  && printf "${SINGBOX_NAME}: %s\n" "$(cyan "v$(get_current_version "$SINGBOX_PROC")")" \
-  && $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' \
-  && echo "$DELIMETER"
+    [ "$FIREWALL_ONLY_ENABLE" != "1" ] \
+    && printf "${SINGBOX_NAME}: %s\n" "$(cyan "v${sb_version}")" \
+    && $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' \
+    && echo "$DELIMETER"
+  elif [ "$CALLER" = "api" ]; then
+    echo "{\"sk_version\": \"${sk_version}\", \"sb_version\": \"${sb_version}\"}"
+  fi
 }
 
 
