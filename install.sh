@@ -1973,9 +1973,12 @@ stop_singbox(){
 
 stop(){
   set_chgrp_fw_only "stop"
-  stop_singbox && clean_firewall
-  [ "$on_restart" = "1" ] && echo "$DELIMETER"
-  return 0
+  if stop_singbox && clean_firewall; then
+    [ "$on_restart" = "1" ] && echo "$DELIMETER"
+    return 0
+  else
+    return 1
+  fi
 }
 
 
