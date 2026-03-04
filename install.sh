@@ -2049,7 +2049,7 @@ status(){
 
       if [ "$CALLER" = "api" ]; then
         start_time="$(date -d "$(stat "/proc/${pid}" | grep Change | cut -d'.' -f1 | cut -d' ' -f2-3)" +%s)"
-        echo "{'running':true,'start':${start_time},'mem':${mem_rss},'mem_peak':${mem_hwm},'threads':${threads}}"
+        echo "{\"running\":true,\"start\":${start_time},\"mem\":${mem_rss},\"mem_peak\":${mem_hwm},\"threads\":${threads}}"
       else
         echo "Status: $(green "running")"
         echo "PID: $pid"
