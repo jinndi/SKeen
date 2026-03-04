@@ -828,12 +828,12 @@ check_port() {
     echoerr "$msg_err"; logger_error "$msg_err"
     echoerr "TProxy mode requires a free port to work."
     echoerr "Please free it on the 'Users and Access' page of the router web interface"
-    press_any_key_to_menu; return 1
+    press_any_key_to_menu "" 1
   elif [ -n "$port" ]; then
     if netstat -lnt 2>/dev/null | grep -q ":$port\s"; then
       msg_err="Port $port is in use. Free it and try running again"
       echoerr "$msg_err"; logger_error "$msg_err";
-      press_any_key_to_menu; return 1
+      press_any_key_to_menu "" 1
     fi
   fi
 
@@ -1890,6 +1890,7 @@ start_singbox(){
   fi
 
   echook "$SINGBOX_NAME started"; logger_notice "$SINGBOX_NAME started"
+  return 0
 }
 
 
@@ -1928,7 +1929,7 @@ start() {
 
   prepare_firewall && echo "$DELIMETER"
 
-  start_singbox
+  start_singbox || press_any_key_to_menu "" 1
 
   [ "$SKEEN_FIREWALL_MODE" != "none" ] \
   && { [ "$FIREWALL_ONLY_ENABLE" != "1" ] && echo "$DELIMETER"; }
