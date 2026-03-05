@@ -2057,17 +2057,56 @@ status(){
     pid=$(pidof $SINGBOX_PROC)
     if [ -n "$pid" ]; then
       proc_status="$(cat "/proc/${pid}/status")"
-      mem_rss=$(echo "$proc_status" | grep VmRSS | awk '{print $2}')
-      mem_hwm=$(echo "$proc_status" | grep VmHWM | awk '{print $2}')
+      mem_used=$(echo "$proc_status" | grep VmRSS | awk '{print $2}')
+      mem_peak=$(echo "$proc_status" | grep VmHWM | awk '{print $2}')
       threads=$(echo "$proc_status" | grep Threads | awk '{print $2}')
 
+      get_mb(){
+        awk -v kb="$1" 'BEGIN {printf "%d", (kb+512)/1024}'
+      }
+
       if [ "$CALLER" = "api" ]; then
+        STAT_FILE="/opt/tmp/.cpu_stat"
+
+        # shellcheck disable=SC2034
+        read -r cpu user nice system idle iowait irq softirq steal _ < /proc/stat
+        IDLE=$((idle + iowait))
+        TOTAL=$((user + nice + system + idle + iowait + irq + softirq + steal))
+
+        if [ -f "$STAT_FILE" ]; then
+          read -r PREV_IDLE PREV_TOTAL < "$STAT_FILE"
+
+          DIFF_IDLE=$((IDLE - PREV_IDLE))
+          DIFF_TOTAL=$((TOTAL - PREV_TOTAL))
+
+          [ "$DIFF_TOTAL" -gt 0 ] && \
+          CPU=$((100 * (DIFF_TOTAL - DIFF_IDLE) / DIFF_TOTAL)) || CPU=0
+
+          cpuload="$CPU"
+        else
+          cpuload=0
+        fi
+        echo "$IDLE $TOTAL" > "$STAT_FILE"
+
         start_time="$(date -d "$(stat "/proc/${pid}" | grep Change | cut -d'.' -f1 | cut -d' ' -f2-3)" +%s)"
-        echo "{\"running\":true,\"start\":${start_time},\"mem\":${mem_rss},\"mem_peak\":${mem_hwm},\"threads\":${threads}}"
+        #cpuload="$(top -n 1 | grep "^CPU:" | awk '{print $2}' | sed 's/%//')"
+        # shellcheck disable=SC2046
+        set -- $(free -m | awk '/Mem:/ {print $3, $2}')
+        memory_used=$1; memory_total=$2
+        # shellcheck disable=SC2046
+        set -- $(free -m | awk '/Swap:/ {print $3, $2}')
+        swap_used=$1; swap_total=$2
+        connections="$(netstat -tun 2>/dev/null | tail -n +3 | wc -l)"
+        cat <<EOF
+      {"singbox":{"running": true,"start_time": ${start_time},"memory_used":$(get_mb "$mem_used"),
+      "memory_peak": $(get_mb "$mem_peak"),"threads": ${threads}},"system":{"cpuload":${cpuload},
+      "memory_used":$(get_mb "$memory_used"),"memory_total":$(get_mb "$memory_total"),
+      "swap_used":$(get_mb "$swap_used"),"swap_total":$(get_mb "$swap_total"),"connections":${connections}}}
+EOF
       else
         echo "Status: $(green "running")"
         echo "PID: $pid"
-        echo "Memory: $((mem_rss / 1024)) MB (peak: $((mem_hwm / 1024)) MB)"
+        echo "Memory: $(get_mb "$mem_used") MB (peak: $(get_mb "$mem_peak") MB)"
         echo "Threads: $threads"
       fi
     fi
