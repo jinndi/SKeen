@@ -2044,78 +2044,105 @@ reload(){
 }
 
 
+get_cpuload(){
+  CPU_STAT_FILE="${TMP_DIR}/.skeen_cpu_stat"
+  # shellcheck disable=SC2034
+  read -r cpu user nice system idle iowait irq softirq steal _ < /proc/stat
+  IDLE=$((idle + iowait))
+  TOTAL=$((user + nice + system + idle + iowait + irq + softirq + steal))
+  if [ -f "$CPU_STAT_FILE" ]; then
+    read -r PREV_IDLE PREV_TOTAL < "$CPU_STAT_FILE"
+    DIFF_IDLE=$((IDLE - PREV_IDLE))
+    DIFF_TOTAL=$((TOTAL - PREV_TOTAL))
+    [ "$DIFF_TOTAL" -gt 0 ] && \
+    CPU=$((100 * (DIFF_TOTAL - DIFF_IDLE) / DIFF_TOTAL)) || CPU=0
+    cpuload="$CPU"
+  else
+    cpuload=0
+  fi
+  echo "$IDLE $TOTAL" > "$CPU_STAT_FILE"
+  echo "$cpuload"
+}
+
+get_rtx_speed(){
+  net_iface="${1:-br0}"
+  NET_STAT_FILE="${TMP_DIR}/.skeen_net_stat"
+  # shellcheck disable=SC2046
+  set -- $(awk -v iface="$net_iface" '$1 ~ iface":" {gsub(":","",$1); print $2, $10}' /proc/net/dev)
+  RX=$1; TX=$2
+  TIME_NOW=$(date +%s)
+  if [ -f "$NET_STAT_FILE" ]; then
+    read -r PREV_TIME PREV_RX PREV_TX < "$NET_STAT_FILE"
+    DT=$((TIME_NOW - PREV_TIME))
+    [ "$DT" -eq 0 ] && DT=1
+    rx_speed=$(( (RX - PREV_RX) / DT ))
+    tx_speed=$(( (TX - PREV_TX) / DT ))
+  else
+    rx_speed=0; tx_speed=0
+  fi
+  echo "$TIME_NOW $RX $TX" > "$NET_STAT_FILE"
+  echo "${rx_speed}|${tx_speed}"
+}
+
+
 status(){
-  if is_running; then
-    if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
-      if [ "$CALLER" = "api" ]; then
-        echo "{\"running\":false}"
-      else
+  singbox="{\"running\":false}"
+  fw_only="false"
+
+  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+    fw_only="true"
+    if [ "$CALLER" != "api" ]; then
+      if is_running; then
         echo "Status: $(green "running") (Firewall Only)"
+      else
+        echo "Status: $(red "stopped")"
       fi
       return 0
     fi
-    pid=$(pidof $SINGBOX_PROC)
-    if [ -n "$pid" ]; then
-      proc_status="$(cat "/proc/${pid}/status")"
-      mem_used=$(echo "$proc_status" | grep VmRSS | awk '{print $2}')
-      mem_peak=$(echo "$proc_status" | grep VmHWM | awk '{print $2}')
-      threads=$(echo "$proc_status" | grep Threads | awk '{print $2}')
+  fi
 
-      get_mb(){
-        awk -v kb="$1" 'BEGIN {printf "%d", (kb+512)/1024}'
-      }
+  get_mb(){
+    awk -v kb="$1" 'BEGIN {printf "%d", (kb+512)/1024}'
+  }
 
-      if [ "$CALLER" = "api" ]; then
-        STAT_FILE="/opt/tmp/.cpu_stat"
+  pid=$(pidof $SINGBOX_PROC)
+  if [ -n "$pid" ]; then
+    proc_status="$(cat "/proc/${pid}/status")"
+    mem_used=$(echo "$proc_status" | grep VmRSS | awk '{print $2}')
+    mem_peak=$(echo "$proc_status" | grep VmHWM | awk '{print $2}')
+    threads=$(echo "$proc_status" | grep Threads | awk '{print $2}')
 
-        # shellcheck disable=SC2034
-        read -r cpu user nice system idle iowait irq softirq steal _ < /proc/stat
-        IDLE=$((idle + iowait))
-        TOTAL=$((user + nice + system + idle + iowait + irq + softirq + steal))
-
-        if [ -f "$STAT_FILE" ]; then
-          read -r PREV_IDLE PREV_TOTAL < "$STAT_FILE"
-
-          DIFF_IDLE=$((IDLE - PREV_IDLE))
-          DIFF_TOTAL=$((TOTAL - PREV_TOTAL))
-
-          [ "$DIFF_TOTAL" -gt 0 ] && \
-          CPU=$((100 * (DIFF_TOTAL - DIFF_IDLE) / DIFF_TOTAL)) || CPU=0
-
-          cpuload="$CPU"
-        else
-          cpuload=0
-        fi
-        echo "$IDLE $TOTAL" > "$STAT_FILE"
-
-        start_time="$(date -d "$(stat "/proc/${pid}" | grep Change | cut -d'.' -f1 | cut -d' ' -f2-3)" +%s)"
-        #cpuload="$(top -n 1 | grep "^CPU:" | awk '{print $2}' | sed 's/%//')"
-        # shellcheck disable=SC2046
-        set -- $(free -m | awk '/Mem:/ {print $3, $2}')
-        memory_used=$1; memory_total=$2
-        # shellcheck disable=SC2046
-        set -- $(free -m | awk '/Swap:/ {print $3, $2}')
-        swap_used=$1; swap_total=$2
-        connections="$(netstat -tun 2>/dev/null | tail -n +3 | wc -l)"
-        cat <<EOF
-      {"singbox":{"running": true,"start_time": ${start_time},"memory_used":$(get_mb "$mem_used"),
-      "memory_peak": $(get_mb "$mem_peak"),"threads": ${threads}},"system":{"cpuload":${cpuload},
-      "memory_used":$(get_mb "$memory_used"),"memory_total":$(get_mb "$memory_total"),
-      "swap_used":$(get_mb "$swap_used"),"swap_total":$(get_mb "$swap_total"),"connections":${connections}}}
+    if [ "$CALLER" != "api" ]; then
+      echo "Status: $(green "running")"
+      echo "PID: $pid"
+      echo "Memory: $(get_mb "$mem_used") MB (peak: $(get_mb "$mem_peak") MB)"
+      echo "Threads: $threads"
+      return 0
+    fi
+    start_time="$(date -d "$(stat "/proc/${pid}" | grep Change | cut -d'.' -f1 | cut -d' ' -f2-3)" +%s)"
+    singbox="$(cat <<EOF
+{"running":true,"start_time":${start_time},"memory_used":$(get_mb "$mem_used"),"memory_peak":$(get_mb "$mem_peak"),"threads":${threads}}
 EOF
-      else
-        echo "Status: $(green "running")"
-        echo "PID: $pid"
-        echo "Memory: $(get_mb "$mem_used") MB (peak: $(get_mb "$mem_peak") MB)"
-        echo "Threads: $threads"
-      fi
-    fi
-  else
-    if [ "$CALLER" = "api" ]; then
-      echo "{\"running\":false}"
-    else
-      echo "Status: $(red "stopped")"
-    fi
+)"
+  fi
+
+  if [ "$CALLER" = "api" ]; then
+    cpuload="$(get_cpuload)"
+    net_iface=$(awk -F: 'NR>2 && $1 !~ /lo/ && $1 !~ /^ *$/ {gsub(/ /,"",$1); print $1; exit}' /proc/net/dev)
+    rtx_speed="$(get_rtx_speed "$net_iface")"
+    rx_speed="${rtx_speed%%|*}"
+    tx_speed="${rtx_speed#*|}"
+    # shellcheck disable=SC2046
+    set -- $(free -m | awk '/Mem:/ {print $3, $2}')
+    memory_used=$1; memory_total=$2
+    # shellcheck disable=SC2046
+    set -- $(free -m | awk '/Swap:/ {print $3, $2}')
+    swap_used=$1; swap_total=$2
+    connections="$(netstat -tun 2>/dev/null | tail -n +3 | wc -l)"
+
+      cat <<EOF
+{"fw_only":${fw_only},"singbox":${singbox},"system":{"cpuload":${cpuload},"memory_used":$(get_mb "$memory_used"),"memory_total":$(get_mb "$memory_total"),"swap_used":$(get_mb "$swap_used"),"swap_total":$(get_mb "$swap_total"),"net_iface":"$net_iface","rx_speed":${rx_speed},"tx_speed":${tx_speed},"connections":${connections}}}
+EOF
   fi
 }
 
