@@ -369,7 +369,7 @@ install_dependencies() {
   opkg update >/dev/null 2>&1
 
   for pkg_name in $DEPENDENCIES; do
-    printf "%s ... " "$pkg_name"
+    printf "[%s] " "$pkg_name" >&2
 
     if command -v "$pkg_name" >/dev/null 2>&1; then
       echook "Already installed"
@@ -2258,9 +2258,9 @@ fw_test() {
   # $5 — test name (human readable)
 
   if echo "$3" | grep -Eq "$4"; then
-    printf "[$1/$2] $5: %s\n" "$(green "exists")"
+    green "[OK($1/$2)] $5"
   else
-    printf "[$1/$2] $5: %s\n" "$(red "missing")"
+    red "[MISS($1/$2)] $5"
   fi
 }
 
@@ -2270,33 +2270,33 @@ fw_test_chain() {
   # $2 — chain
   # $3 — iptables
 
-  echomsg "Testing $3: $1 $2 chain"
+  echomsg "Test $3 $1 $2"
 
   content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
-  fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Chain reference"
+  fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
 
-  fw_test "$1" "$2" "$content" "$BYPASS_NET_SET" "Exclude addresses rule"
+  fw_test "$1" "$2" "$content" "$BYPASS_NET_SET" "Excludes"
 
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
-    fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK set rule"
+    fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK set"
   fi
 
   if [ "$1" = "mangle" ]; then
-    fw_test "$1" "$2" "$($3 -t "$1" -nvL PREROUTING 2>/dev/null)" "CONNMARK restore" "CONNMARK restore rule"
+    fw_test "$1" "$2" "$($3 -t "$1" -nvL PREROUTING 2>/dev/null)" "CONNMARK restore" "CONNMARK restore"
   fi
 
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
 
-  fw_test "$1" "$2" "$content" "redir|redirect" "Redirect rule"
+  fw_test "$1" "$2" "$content" "redir|redirect" "Redirect"
 
   if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
-    fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS port ${DNS_PORT} rule"
+    fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS intercept"
   fi
 
   if [ -n "$SKEEN_INTERCEPT_PORTS" ] || [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
     # shellcheck disable=SC2015
-    fw_test "$1" "$2" "$($3 -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport rule"
+    fw_test "$1" "$2" "$($3 -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport"
   fi
 }
 
