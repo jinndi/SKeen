@@ -2345,7 +2345,18 @@ test_firewall() {
 }
 
 
-backup_config(){
+backup_list(){
+  if [ "$CALLER" = "api" ]; then
+    files="$(for f in "${ENTWARE_DIR}"/skeen_*.tar; do [ -e "$f" ] && basename "$f"; done | \
+    awk 'BEGIN{print "["}{printf "%s\"%s\"",sep,$0;sep=","}END{print "]"}')"
+    echo "{\"dir\":\"${ENTWARE_DIR}\",\"files\":$files}"
+  else
+    find "$ENTWARE_DIR" -maxdepth 1 -type f -name "skeen_*.tar"
+  fi
+}
+
+
+backup_create(){
   if [ -d "$WORK_DIR" ] && [ "$(ls -A "$WORK_DIR")" ]; then
     echomsg "Creating a backup of the current configuration..."
     archive_path="${ENTWARE_DIR}/skeen_$(date '+%Y-%m-%d_%H%M%S').tar"
@@ -2355,52 +2366,57 @@ backup_config(){
       echook "Backup successfully created at $archive_path"
     else
       echoerr "Error creating backup!"
-      return 1
+      [ "$CALLER" = "api" ] && exit 1 || return 1
     fi
   else
     echowarn "No current configuration found, skipping backup"
   fi
-  return 0
+  [ "$CALLER" = "api" ] && exit 0 || return 0
 }
 
 
-restore_config(){
-  while :; do
-    printf "Enter the name of the backup archive file\n"
-    printf "located in the /opt root directory,\n"
-    printf "for example %s: " "$(cyan "skeen.tar")" > /dev/tty
-    read -r tarname < /dev/tty
+backup_restore(){
+  tarname="${1:-}"
 
-    [ -z "$tarname" ] && press_any_key_to_menu
-
-    archive_path="/opt/${tarname}"
+  restore(){
+    archive_path="${ENTWARE_DIR}/${1:-}"
 
     if [ -f "$archive_path" ] && tar -tf "$archive_path" | grep -q "^skeen/"; then
-      rm -rf "${ENTWARE_DIR}/skeen"
-
+      work_dir_backup="${ENTWARE_DIR}/skeen_backup"
+      mv "$WORK_DIR" "$work_dir_backup"
       echomsg "Extracting archive..."
-
-      if tar -xf "$archive_path" -C "$ENTWARE_DIR"; then
-        rm -rf "$WORK_DIR"
-        mv "${ENTWARE_DIR}/skeen" "$WORK_DIR"
-
+      if tar -xf "$archive_path" -C "$WORK_DIR"; then
+        rm -rf "$work_dir_backup"
         echook "Backup successfully restored"
       else
+        mv "$work_dir_backup" "$WORK_DIR"
         echoerr "Error extracting archive $archive_path"
+        return 1
       fi
     else
       echoerr "Archive missing or 'skeen' folder not found"
-      continue
+      return 1
     fi
 
-    break
-  done
+    return 0
+  }
 
-  press_any_key_to_menu
+  if [ "$CALLER" = "cli" ]; then
+    while :; do
+      printf "Enter the name of the backup archive file\n"
+      printf "located in the /opt root directory,\n"
+      printf "for example %s: " "$(cyan "skeen.tar")" > /dev/tty
+      read -r tarname < /dev/tty
+      [ -z "$tarname" ] && exit 1
+      restore "$tarname" && break
+    done
+  elif [ "$CALLER" = "api" ]; then
+    restore "$tarname"
+  fi
 }
 
 
-reset_config(){
+config_reset(){
   while :; do
     printf "A full configuration reset will be performed,\n"
     printf "with a backup of the current configuration created\n"
@@ -2411,7 +2427,7 @@ reset_config(){
 
     case "$option" in
       y|Y)
-        if backup_config; then
+        if backup_create; then
           rm -rf "$WORK_DIR"
           mkdir -p "$WORK_DIR"
           [ "$FIREWALL_ONLY_ENABLE" != "1" ] && create_singbox_config "force"
@@ -2599,6 +2615,7 @@ Checks & Testing:
 
 Backup & Restore:
   backup  - Creates a backup of $WORK_DIR and places it in $ENTWARE_DIR
+  backups - Show all created backup copies in the $WORK_DIR folder
   restore - Restores a backup of $WORK_DIR by archive name from $ENTWARE_DIR
 
 Reset Configuration:
@@ -2628,10 +2645,10 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     deps) install_dependencies; press_any_key_to_menu ;;
     check) check_config ;;
     format) format_config ;;
-
-    backup) backup_config ;;
-    restore) restore_config ;;
-    reset) reset_config ;;
+    backup) backup_create ;;
+    backups) backup_list ;;
+    restore) backup_restore "$3" ;;
+    reset) config_reset ;;
     tun)
       release_version_ge5 || exit 1
       case "$2" in
