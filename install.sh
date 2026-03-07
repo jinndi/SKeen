@@ -274,6 +274,13 @@ get_latest_version() {
 }
 
 
+get_latest_version_api(){
+  if version="$(get_latest_version "${1:-}" 2>/dev/null)" && [ -n "$version" ]; then
+    echo "{\"version\":\"$version\"}"
+  else exit 1; fi
+}
+
+
 show_header() {
   cyan "
 
@@ -415,7 +422,7 @@ download_singbox(){
   echomsg "Downloading ${PKG_NAME}..."
 
   mkdir -p "$TMP_DIR"
-  cd "$TMP_DIR" || exit
+  cd "$TMP_DIR" || exit 1
 
   if curl --fail --connect-timeout 5 --max-time 90 -Lo "$PKG_NAME" "$pkg_url"; then
     echook "Downloaded $PKG_NAME successfully"
@@ -2148,23 +2155,22 @@ EOF
 
 
 update_core(){
-  if is_running; then
-    stop || exit 1
-  fi
+  if is_running; then stop || exit 1; fi
   get_os_release; get_architecture
   download_singbox "$latest" || return 1
   install_singbox; create_singbox_config
-  echook "The $SINGBOX_NAME core has been successfully updated"
+  echook "$SINGBOX_NAME core has been successfully updated"
 }
 
 
 update_skeen(){
-  is_running && stop
+  if is_running; then stop || exit 1; fi
   if download_skeen_script "update"; then
-    echook "The $SKEEN_NAME has been successfully updated"
+    echook "$SKEEN_NAME has been successfully updated"
     is_update_skeen=1
   else
     echoerr "Failed to update $SKEEN_NAME"
+    [ "$CALLER" = "node" ] && exit 1
   fi
 }
 
@@ -2657,7 +2663,11 @@ if [ -f "$SKEEN_SCRIPT" ]; then
       esac
     ;;
     apply_firewall) apply_firewall ;;
-    is_fw_only) is_fw_only ;;
+    is-fw-only) is_fw_only ;;
+    latest-version-core) get_latest_version_api "$SINGBOX_API_URL" ;;
+    latest-version-skeen) get_latest_version_api "$SKEEN_API_URL" ;;
+    update-core) update_core ;;
+    update-skeen) update_skeen ;;
     "") show_menu ;;
     help|*) show_help ;;
   esac
