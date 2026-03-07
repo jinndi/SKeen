@@ -117,8 +117,7 @@ create_skeen_config(){
   [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
   fw_only_enable=0;
-  [ -n "$FIREWALL_ONLY_ENABLE" ] && fw_only_enable=$FIREWALL_ONLY_ENABLE \
-  || [ "$install_mode" = "2" ] && fw_only_enable=1
+  is_fw_only && fw_only_enable=1 || [ "$install_mode" = "2" ] && fw_only_enable=1
 
   cat <<EOF > "$SKEEN_CONFIG"
 // https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs
@@ -211,6 +210,16 @@ loading_config(){
 
   if [ "$FIREWALL_ONLY_ENABLE" = "1" ] && pidof "$SINGBOX_PROC" >/dev/null 2>&1; then
     killall -9 "$SINGBOX_PROC" 2>/dev/null; clean_firewall
+  fi
+}
+
+is_fw_only(){
+  [ "$CALLER" != "menu" ] && \
+  FIREWALL_ONLY_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall.only.enable')"
+  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+    [ "$CALLER" = "api" ] && exit 0 || return 0
+  else
+    [ "$CALLER" = "api" ] && exit 1 || return 1
   fi
 }
 
@@ -590,7 +599,7 @@ press_any_key_to_menu(){
 
 
 is_running() {
-  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+  if is_fw_only; then
     [ -f "$FIREWALL_HOOK_FILE" ] && [ -s "$FIREWALL_HOOK_FILE" ]
   else
     pidof "$SINGBOX_PROC" >/dev/null 2>&1
@@ -748,7 +757,7 @@ check_internet() {
 get_fw_mode_data() {
   type="$1"
 
-  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+  if is_fw_only; then
     case "$type" in
       tun) [ "$FIREWALL_ONLY_OPKGTUN_USE" = "1" ] && echo "opkgtun" ;;
       redirect) echo "${FIREWALL_ONLY_REDIRECT_PORT}|tcp" ;;
@@ -807,7 +816,7 @@ get_fw_mode_data() {
 
 
 has_dns_servers() {
-  [ "$FIREWALL_ONLY_ENABLE" = "1" ] && return 0
+  is_fw_only && return 0
 
   for file in "$CONFIG_DIR"/*.json; do
     [ -f "$file" ] || continue
@@ -1490,7 +1499,7 @@ prepare_firewall(){
   SKEEN_TPROXY_PORT="$(echo "$tproxy_data" | cut -d'|' -f1)"
   SKEEN_TPROXY_NETWORK="$(echo "$tproxy_data" | cut -d'|' -f2)"
 
-  if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
+  if ! is_fw_only; then
     for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do check_port "$port"; done
   fi
 
@@ -1507,7 +1516,7 @@ prepare_firewall(){
     SKEEN_FIREWALL_MODE="tun"
   else
     SKEEN_FIREWALL_MODE="none"
-    if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+    if is_fw_only; then
       echoerr "Redirect ports must be specified in firewall-only mode"
       press_any_key_to_menu "" 1
     fi
@@ -1595,8 +1604,7 @@ prepare_firewall(){
     echo "#!/bin/sh"
     echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
-    [ "$FIREWALL_ONLY_ENABLE" != "1" ] && \
-      echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
+    ! is_fw_only && echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
 
     [ -n "$has_opkgtun" ] && get_tun_fw_rules
 
@@ -1840,7 +1848,7 @@ get_ulimit_n(){
 set_chgrp_fw_only(){
   action="${1:-}"
 
-  [ "$FIREWALL_ONLY_ENABLE" != "1" ] && return 0
+  ! is_fw_only && return 0
 
   if [ -z "$FIREWALL_ONLY_PROCESS_NAME" ]; then
     echoerr "'firewall.only.process_name' has not been set"
@@ -1862,7 +1870,7 @@ set_chgrp_fw_only(){
 
 
 start_singbox(){
-  [ "$FIREWALL_ONLY_ENABLE" = "1" ] && return 0
+  is_fw_only && return 0
 
   timeout=10
 
@@ -1895,7 +1903,7 @@ start_singbox(){
 
 
 start() {
-  if [ "$FIREWALL_ONLY_ENABLE" != "1" ] && [ ! -f "$SINGBOX_BIN" ]; then
+  if ! is_fw_only && [ ! -f "$SINGBOX_BIN" ]; then
     echoerr "$SINGBOX_NAME binary not found, please install it first"
     press_any_key_to_menu  "" 1
   fi
@@ -1932,7 +1940,7 @@ start() {
   start_singbox || press_any_key_to_menu "" 1
 
   [ "$SKEEN_FIREWALL_MODE" != "none" ] \
-  && { [ "$FIREWALL_ONLY_ENABLE" != "1" ] && echo "$DELIMETER"; }
+  && { ! is_fw_only && echo "$DELIMETER"; }
   [ "$SKEEN_FIREWALL_MODE" != "none" ] && apply_firewall
 
   return 0
@@ -1940,7 +1948,7 @@ start() {
 
 
 stop_singbox(){
-  [ "$FIREWALL_ONLY_ENABLE" = "1" ] && return 0
+  is_fw_only && return 0
 
   timeout=10
 
@@ -1984,8 +1992,7 @@ stop(){
 
 
 kill_proc(){
-  [ "$FIREWALL_ONLY_ENABLE" = "1" ] \
-    && exiterr "Only available when 'firewall.only' is disabled"
+  is_fw_only && exiterr "Only available when 'firewall.only' is disabled"
 
   if ! is_running; then
     echook "$SINGBOX_NAME is not running"; return 0
@@ -2005,7 +2012,7 @@ version(){
     printf "${SKEEN_NAME}: %s\n" "$(cyan "v${sk_version}")"
     echo "$DELIMETER"
 
-    [ "$FIREWALL_ONLY_ENABLE" != "1" ] \
+    ! is_fw_only \
     && printf "${SINGBOX_NAME}: %s\n" "$(cyan "v${sb_version}")" \
     && $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' \
     && echo "$DELIMETER"
@@ -2036,7 +2043,7 @@ restart() {
 
 reload(){
   check_config && echo "$DELIMETER"
-  if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
+  if ! is_fw_only; then
     stop_singbox && start_singbox || exit 1
   else
     stop && start || exit 1
@@ -2090,7 +2097,7 @@ get_rtx_speed() {
 }
 
 status(){
-  if [ "$CALLER" != "api" ] && [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+  if [ "$CALLER" = "cli" ] && is_fw_only; then
     if is_running; then
       echo "Status: $(green "running") (Firewall Only)"
     else
@@ -2201,7 +2208,7 @@ check_updates() {
   is_update_skeen=0
 
   # sing-box
-  if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
+  if ! is_fw_only; then
     ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
       update_core "https://github.com/SagerNet/sing-box/releases"
     if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ]; then
@@ -2423,7 +2430,7 @@ config_reset(){
         if backup_create; then
           rm -rf "$WORK_DIR"
           mkdir -p "$WORK_DIR"
-          [ "$FIREWALL_ONLY_ENABLE" != "1" ] && create_singbox_config "force"
+          ! is_fw_only && create_singbox_config "force"
           create_skeen_config
           echook "Configuration reset completed"
         else
@@ -2444,7 +2451,7 @@ check_config(){
   msg_err="Configuration check failed"
   is_error=0
 
-  if [ "$FIREWALL_ONLY_ENABLE" != "1" ] && [ -f "$SINGBOX_BIN" ]; then
+  if ! is_fw_only && [ -f "$SINGBOX_BIN" ]; then
     echomsg "Checking $SINGBOX_NAME configuration..."
 
     if $SINGBOX_PROC check -C $CONFIG_DIR; then
@@ -2490,9 +2497,7 @@ show_menu(){
 
   show_header
 
-  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
-    SINGBOX_NAME="Firewall"
-  fi
+  is_fw_only && SINGBOX_NAME="Firewall"
 
   if [ "$AUTO_START_ENABLE" = "1" ]; then
     autostart_status="$(green "yes")"
@@ -2512,7 +2517,7 @@ show_menu(){
 
   output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
 
-  if [ "$FIREWALL_ONLY_ENABLE" != "1" ]; then
+  if ! is_fw_only; then
     version="$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
     [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
     output="$output\n $SINGBOX_NAME version: ${version}"
@@ -2652,7 +2657,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
       esac
     ;;
     apply_firewall) apply_firewall ;;
-    is_fw_only) [ "$(jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall.only.enable')" = "1" ] && exit 0 || exit 1 ;;
+    is_fw_only) is_fw_only ;;
     "") show_menu ;;
     help|*) show_help ;;
   esac
