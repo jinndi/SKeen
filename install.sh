@@ -2061,8 +2061,7 @@ get_cpuload() {
   else
     cpuload=0
   fi
-
-  echo "$total $idle" > "$cpu_stat_file"
+  printf '%s %s' "$total" "$idle" > "$cpu_stat_file"
   echo "$cpuload"
 }
 
@@ -2071,47 +2070,36 @@ get_rtx_speed() {
   net_iface="${1:-br0}"
   net_stat_file="${TMP_DIR}/.skeen_net_stat"
 
-  line="$(grep "^$net_iface:" /proc/net/dev)"
-  # shellcheck disable=SC2086
-  set -- ${line#*:}; rx="$1"; tx="$9"
-  time_now=$(date +%s)
+  read -r rx < "/sys/class/net/${net_iface}/statistics/rx_bytes"
+  read -r tx < "/sys/class/net/${net_iface}/statistics/tx_bytes"
+  time_now="$(date +%s)"
 
   if [ -f "$net_stat_file" ]; then
     read -r prev_time prev_rx prev_tx < "$net_stat_file"
     [ "$rx" -lt "$prev_rx" ] && rx="$prev_rx"
     [ "$tx" -lt "$prev_tx" ] && tx="$prev_tx"
-    dt="$((time_now - prev_time))"; [ "$dt" -eq 0 ] && dt=1
+    dt="$((time_now - prev_time))"; [ "$dt" -le 0 ] && dt=1
     rx_speed="$(( (rx - prev_rx) / dt ))"
     tx_speed="$(( (tx - prev_tx) / dt ))"
   else
     rx_speed=0; tx_speed=0
   fi
 
-  echo "$time_now $rx $tx" > "$net_stat_file"
-  echo "${rx_speed}|${tx_speed}"
+  printf '%s %s %s' "$time_now" "$rx" "$tx" > "$net_stat_file"
+  printf '%s|%s' "$rx_speed" "$tx_speed"
 }
 
-
 status(){
-  singbox="{\"running\":false}"
-  fw_only="false"
-
-  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
-    fw_only="true"
-    if [ "$CALLER" != "api" ]; then
-      if is_running; then
-        echo "Status: $(green "running") (Firewall Only)"
-      else
-        echo "Status: $(red "stopped")"
-      fi
-      return 0
+  if [ "$CALLER" != "api" ] && [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
+    if is_running; then
+      echo "Status: $(green "running") (Firewall Only)"
+    else
+      echo "Status: $(red "stopped")"
     fi
+    return 0
   fi
 
-  get_mb(){
-    awk -v kb="$1" 'BEGIN {printf "%d", (kb+512)/1024}'
-  }
-
+  singbox="{\"running\":false}"
   pid=$(pidof $SINGBOX_PROC)
   if [ -n "$pid" ]; then
     proc_status="$(cat "/proc/${pid}/status")"
@@ -2122,13 +2110,13 @@ status(){
     if [ "$CALLER" != "api" ]; then
       echo "Status: $(green "running")"
       echo "PID: $pid"
-      echo "Memory: $(get_mb "$mem_used") MB (peak: $(get_mb "$mem_peak") MB)"
+      echo "Memory: $((mem_used/1024)) MB (peak: $((mem_peak/1024)) MB)"
       echo "Threads: $threads"
       return 0
     fi
     start_time="$(date -d "$(stat "/proc/${pid}" | grep Change | cut -d'.' -f1 | cut -d' ' -f2-3)" +%s)"
     singbox="$(cat <<EOF
-{"running":true,"start_time":${start_time},"memory_used":$(get_mb "$mem_used"),"memory_peak":$(get_mb "$mem_peak"),"threads":${threads}}
+{"running":true,"start_time":${start_time},"memory_used":${mem_used},"memory_peak":${mem_peak},"threads":${threads}}
 EOF
 )"
   fi
@@ -2138,12 +2126,15 @@ EOF
     net_iface=$(ip route | awk '/default/ {print $3}')
     rtx_speed="$(get_rtx_speed "$net_iface")"
     rx_speed="${rtx_speed%%|*}"; tx_speed="${rtx_speed#*|}"
-    eval "$(free -m | awk '/Mem:/ {printf "memory_used=%s memory_total=%s", $3, $2}')"
-    eval "$(free -m | awk '/Swap:/ {printf "swap_used=%s swap_total=%s", $3, $2}')"
+    # shellcheck disable=SC2046
+    set -- $(awk '/MemTotal:/ {t=$2} /MemAvailable:/ {u=t-$2} END {print u,t}' /proc/meminfo)
+    memory_used="$1"; memory_total="$2"
+    # shellcheck disable=SC2046
+    set -- $(awk '$1 !~ /\(deleted\)/ {u+=$4; t+=$3} END {print u,t}' /proc/swaps)
+    swap_used="$1"; swap_total="$2"
     connections="$(cat /proc/net/nf_conntrack | wc -l)"
-    # shellcheck disable=SC2154
       cat <<EOF
-{"fw_only":${fw_only},"singbox":${singbox},"system":{"cpuload":${cpuload},"memory_used":$(get_mb "$memory_used"),"memory_total":$(get_mb "$memory_total"),"swap_used":$(get_mb "$swap_used"),"swap_total":$(get_mb "$swap_total"),"net_iface":"$net_iface","rx_speed":${rx_speed},"tx_speed":${tx_speed},"connections":${connections}}}
+{"singbox":${singbox},"system":{"cpuload":${cpuload},"memory_used":${memory_used},"memory_total":${memory_total},"swap_used":${swap_used},"swap_total":${swap_total},"net_iface":"$net_iface","rx_speed":${rx_speed},"tx_speed":${tx_speed},"connections":${connections}}}
 EOF
   fi
 }
