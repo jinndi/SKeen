@@ -2044,43 +2044,50 @@ reload(){
 }
 
 
-get_cpuload(){
-  CPU_STAT_FILE="${TMP_DIR}/.skeen_cpu_stat"
-  # shellcheck disable=SC2034
-  read -r cpu user nice system idle iowait irq softirq steal _ < /proc/stat
-  IDLE=$((idle + iowait))
-  TOTAL=$((user + nice + system + idle + iowait + irq + softirq + steal))
-  if [ -f "$CPU_STAT_FILE" ]; then
-    read -r PREV_IDLE PREV_TOTAL < "$CPU_STAT_FILE"
-    DIFF_IDLE=$((IDLE - PREV_IDLE))
-    DIFF_TOTAL=$((TOTAL - PREV_TOTAL))
-    [ "$DIFF_TOTAL" -gt 0 ] && \
-    CPU=$((100 * (DIFF_TOTAL - DIFF_IDLE) / DIFF_TOTAL)) || CPU=0
-    cpuload="$CPU"
+get_cpuload() {
+  cpu_stat_file="${TMP_DIR}/.skeen_cpu_stat"
+  # shellcheck disable=SC2046
+  set -- $(awk '/^cpu / {print $2+$3+$4+$5+$6+$7+$8+$9, $5+$6}' /proc/stat)
+  total=$1; idle=$2
+
+  if [ -f "$cpu_stat_file" ]; then
+    read -r ptotal pidle < "$cpu_stat_file"
+    dt="$((total-ptotal))"; di="$((idle-pidle))"
+    if [ "$dt" -gt 0 ]; then
+      cpuload="$(( 100 * (dt - di) / dt ))"
+    else
+      cpuload=0
+    fi
   else
     cpuload=0
   fi
-  echo "$IDLE $TOTAL" > "$CPU_STAT_FILE"
+
+  echo "$total $idle" > "$cpu_stat_file"
   echo "$cpuload"
 }
 
-get_rtx_speed(){
+
+get_rtx_speed() {
   net_iface="${1:-br0}"
-  NET_STAT_FILE="${TMP_DIR}/.skeen_net_stat"
-  # shellcheck disable=SC2046
-  set -- $(awk -v iface="$net_iface" '$1 ~ iface":" {gsub(":","",$1); print $2, $10}' /proc/net/dev)
-  RX=$1; TX=$2
-  TIME_NOW=$(date +%s)
-  if [ -f "$NET_STAT_FILE" ]; then
-    read -r PREV_TIME PREV_RX PREV_TX < "$NET_STAT_FILE"
-    DT=$((TIME_NOW - PREV_TIME))
-    [ "$DT" -eq 0 ] && DT=1
-    rx_speed=$(( (RX - PREV_RX) / DT ))
-    tx_speed=$(( (TX - PREV_TX) / DT ))
+  net_stat_file="${TMP_DIR}/.skeen_net_stat"
+
+  line="$(grep "^$net_iface:" /proc/net/dev)"
+  # shellcheck disable=SC2086
+  set -- ${line#*:}; rx="$1"; tx="$9"
+  time_now=$(date +%s)
+
+  if [ -f "$net_stat_file" ]; then
+    read -r prev_time prev_rx prev_tx < "$net_stat_file"
+    [ "$rx" -lt "$prev_rx" ] && rx="$prev_rx"
+    [ "$tx" -lt "$prev_tx" ] && tx="$prev_tx"
+    dt="$((time_now - prev_time))"; [ "$dt" -eq 0 ] && dt=1
+    rx_speed="$(( (rx - prev_rx) / dt ))"
+    tx_speed="$(( (tx - prev_tx) / dt ))"
   else
     rx_speed=0; tx_speed=0
   fi
-  echo "$TIME_NOW $RX $TX" > "$NET_STAT_FILE"
+
+  echo "$time_now $rx $tx" > "$net_stat_file"
   echo "${rx_speed}|${tx_speed}"
 }
 
@@ -2128,18 +2135,13 @@ EOF
 
   if [ "$CALLER" = "api" ]; then
     cpuload="$(get_cpuload)"
-    net_iface=$(awk -F: 'NR>2 && $1 !~ /lo/ && $1 !~ /^ *$/ {gsub(/ /,"",$1); print $1; exit}' /proc/net/dev)
+    net_iface=$(ip route | awk '/default/ {print $3}')
     rtx_speed="$(get_rtx_speed "$net_iface")"
-    rx_speed="${rtx_speed%%|*}"
-    tx_speed="${rtx_speed#*|}"
-    # shellcheck disable=SC2046
-    set -- $(free -m | awk '/Mem:/ {print $3, $2}')
-    memory_used=$1; memory_total=$2
-    # shellcheck disable=SC2046
-    set -- $(free -m | awk '/Swap:/ {print $3, $2}')
-    swap_used=$1; swap_total=$2
-    connections="$(netstat -tun 2>/dev/null | tail -n +3 | wc -l)"
-
+    rx_speed="${rtx_speed%%|*}"; tx_speed="${rtx_speed#*|}"
+    eval "$(free -m | awk '/Mem:/ {printf "memory_used=%s memory_total=%s", $3, $2}')"
+    eval "$(free -m | awk '/Swap:/ {printf "swap_used=%s swap_total=%s", $3, $2}')"
+    connections="$(cat /proc/net/nf_conntrack | wc -l)"
+    # shellcheck disable=SC2154
       cat <<EOF
 {"fw_only":${fw_only},"singbox":${singbox},"system":{"cpuload":${cpuload},"memory_used":$(get_mb "$memory_used"),"memory_total":$(get_mb "$memory_total"),"swap_used":$(get_mb "$swap_used"),"swap_total":$(get_mb "$swap_total"),"net_iface":"$net_iface","rx_speed":${rx_speed},"tx_speed":${tx_speed},"connections":${connections}}}
 EOF
