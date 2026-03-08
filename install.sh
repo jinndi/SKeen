@@ -2090,8 +2090,9 @@ get_rtx_speed() {
 
   if [ -f "$net_stat_file" ]; then
     read -r prev_time prev_rx prev_tx < "$net_stat_file"
-    [ "$rx" -lt "$prev_rx" ] && rx="$prev_rx"
-    [ "$tx" -lt "$prev_tx" ] && tx="$prev_tx"
+    if [ "$rx" -lt "$prev_rx" ] || [ "$tx" -lt "$prev_tx" ]; then
+      prev_rx="$rx"; prev_tx="$tx"; prev_time="$time_now"
+    fi
     dt="$((time_now - prev_time))"; [ "$dt" -le 0 ] && dt=1
     rx_speed="$(( (rx - prev_rx) / dt ))"
     tx_speed="$(( (tx - prev_tx) / dt ))"
@@ -2114,13 +2115,11 @@ status(){
   fi
 
   singbox="{\"running\":false}"
-  pid=$(pidof $SINGBOX_PROC)
+  pid="$(pidof $SINGBOX_PROC)"
   if [ -n "$pid" ]; then
-    proc_status="$(cat "/proc/${pid}/status")"
-    mem_used=$(echo "$proc_status" | grep VmRSS | awk '{print $2}')
-    mem_peak=$(echo "$proc_status" | grep VmHWM | awk '{print $2}')
-    threads=$(echo "$proc_status" | grep Threads | awk '{print $2}')
-
+    # shellcheck disable=SC2046
+    set -- $(awk '$1=="VmRSS:"{r=$2} $1=="VmHWM:"{h=$2} $1=="Threads:"{t=$2} END{print r,h,t}' "/proc/$pid/status")
+    mem_used="${1:-0}"; mem_peak="${2:-0}"; threads="${3:-0}"
     if [ "$CALLER" != "api" ]; then
       echo "Status: $(green "running")"
       echo "PID: $pid"
@@ -2128,11 +2127,15 @@ status(){
       echo "Threads: $threads"
       return 0
     fi
-    start_time="$(date -d "$(stat "/proc/${pid}" | grep Change | cut -d'.' -f1 | cut -d' ' -f2-3)" +%s)"
-    singbox="$(cat <<EOF
-{"running":true,"start_time":${start_time},"memory_used":${mem_used},"memory_peak":${mem_peak},"threads":${threads}}
-EOF
-)"
+
+    read -r uptime _ < /proc/uptime; boot_time=$(( $(date +%s) - ${uptime%.*} ))
+    read -r stat_line < "/proc/$pid/stat"; stat_line="${stat_line#*) }"
+    # shellcheck disable=SC2086
+    set -- $stat_line; start_ticks="${20:-0}"
+    start_time="$(( boot_time + start_ticks / 100 ))"
+
+    singbox=$(printf '{"running":true,"start_time":%s,"memory_used":%s,"memory_peak":%s,"threads":%s}' \
+      "$start_time" "$mem_used" "$mem_peak" "$threads")
   fi
 
   if [ "$CALLER" = "api" ]; then
@@ -2142,14 +2145,14 @@ EOF
     rx_speed="${rtx_speed%%|*}"; tx_speed="${rtx_speed#*|}"
     # shellcheck disable=SC2046
     set -- $(awk '/MemTotal:/ {t=$2} /MemAvailable:/ {u=t-$2} END {print u,t}' /proc/meminfo)
-    memory_used="$1"; memory_total="$2"
+    memory_used="${1:-0}"; memory_total="${2:-0}"
     # shellcheck disable=SC2046
     set -- $(awk '$1 !~ /\(deleted\)/ {u+=$4; t+=$3} END {print u,t}' /proc/swaps)
-    swap_used="$1"; swap_total="$2"
-    connections="$(cat /proc/net/nf_conntrack | wc -l)"
-      cat <<EOF
-{"singbox":${singbox},"system":{"cpuload":${cpuload},"memory_used":${memory_used},"memory_total":${memory_total},"swap_used":${swap_used},"swap_total":${swap_total},"net_iface":"$net_iface","rx_speed":${rx_speed},"tx_speed":${tx_speed},"connections":${connections}}}
-EOF
+    swap_used="${1:-0}"; swap_total="${2:-0}"
+    connections="$(wc -l < /proc/net/nf_conntrack)"
+
+    printf '{"singbox":%s,"system":{"cpuload":%s,"memory_used":%s,"memory_total":%s,"swap_used":%s,"swap_total":%s,"net_iface":"%s","rx_speed":%s,"tx_speed":%s,"connections":%s}}' \
+      "$singbox" "$cpuload" "$memory_used" "$memory_total" "$swap_used" "$swap_total" "$net_iface" "$rx_speed" "$tx_speed" "$connections"
   fi
 }
 
