@@ -28,8 +28,8 @@ Keenetic/Netcraze TProxy & Redirect with sing-box (Firewall Mode)
 <details>
   <summary>Soon?</summary>
 <img width="1298" height="746" alt="изображение" src="https://github.com/user-attachments/assets/51ee1cbb-02da-458a-b7b6-8ceb4717feb4" />
-
 <img width="1530" height="734" alt="1" src="https://github.com/user-attachments/assets/ca2603f5-405d-4c11-8419-83b2d08e02ba" />
+<img width="1300" height="725" alt="Снимок экрана_2026-03-22_22-46-31" src="https://github.com/user-attachments/assets/3a486e77-a0b0-4810-9347-fb71a317b20a" />
 
 </details>
 
