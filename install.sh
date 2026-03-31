@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.0.4"
+SKEEN_VERSION="4.1.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -217,9 +217,9 @@ is_fw_only(){
   [ "$CALLER" != "menu" ] && \
   FIREWALL_ONLY_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall.only.enable')"
   if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
-    [ "$CALLER" = "api" ] && exit 0 || return 0
+    return 0
   else
-    [ "$CALLER" = "api" ] && exit 1 || return 1
+    return 1
   fi
 }
 
@@ -271,13 +271,6 @@ get_latest_version() {
   fi
 
   echo "$latest_release" | grep tag_name | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
-}
-
-
-get_latest_version_api(){
-  if version="$(get_latest_version "${1:-}" 2>/dev/null)" && [ -n "$version" ]; then
-    echo "{\"version\":\"$version\"}"
-  else exit 1; fi
 }
 
 
@@ -2023,8 +2016,6 @@ version(){
     && printf "${SINGBOX_NAME}: %s\n" "$(cyan "v${sb_version}")" \
     && $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' \
     && echo "$DELIMETER"
-  elif [ "$CALLER" = "api" ]; then
-    echo "{\"sk_version\": \"${sk_version}\", \"sb_version\": \"${sb_version}\"}"
   fi
 }
 
@@ -2058,52 +2049,6 @@ reload(){
 }
 
 
-get_cpuload() {
-  cpu_stat_file="${TMP_DIR}/.skeen_cpu_stat"
-  # shellcheck disable=SC2046
-  set -- $(awk '/^cpu / {print $2+$3+$4+$5+$6+$7+$8+$9, $5+$6}' /proc/stat)
-  total=$1; idle=$2
-
-  if [ -f "$cpu_stat_file" ]; then
-    read -r ptotal pidle < "$cpu_stat_file"
-    dt="$((total-ptotal))"; di="$((idle-pidle))"
-    if [ "$dt" -gt 0 ]; then
-      cpuload="$(( 100 * (dt - di) / dt ))"
-    else
-      cpuload=0
-    fi
-  else
-    cpuload=0
-  fi
-  printf '%s %s' "$total" "$idle" > "$cpu_stat_file"
-  echo "$cpuload"
-}
-
-
-get_rtx_speed() {
-  net_iface="${1:-br0}"
-  net_stat_file="${TMP_DIR}/.skeen_net_stat"
-
-  read -r rx < "/sys/class/net/${net_iface}/statistics/rx_bytes"
-  read -r tx < "/sys/class/net/${net_iface}/statistics/tx_bytes"
-  time_now="$(date +%s)"
-
-  if [ -f "$net_stat_file" ]; then
-    read -r prev_time prev_rx prev_tx < "$net_stat_file"
-    if [ "$rx" -lt "$prev_rx" ] || [ "$tx" -lt "$prev_tx" ]; then
-      prev_rx="$rx"; prev_tx="$tx"; prev_time="$time_now"
-    fi
-    dt="$((time_now - prev_time))"; [ "$dt" -le 0 ] && dt=1
-    rx_speed="$(( (rx - prev_rx) / dt ))"
-    tx_speed="$(( (tx - prev_tx) / dt ))"
-  else
-    rx_speed=0; tx_speed=0
-  fi
-
-  printf '%s %s %s' "$time_now" "$rx" "$tx" > "$net_stat_file"
-  printf '%s|%s' "$rx_speed" "$tx_speed"
-}
-
 status(){
   if [ "$CALLER" = "cli" ] && is_fw_only; then
     if is_running; then
@@ -2114,45 +2059,17 @@ status(){
     return 0
   fi
 
-  singbox="{\"running\":false}"
   pid="$(pidof $SINGBOX_PROC)"
   if [ -n "$pid" ]; then
     # shellcheck disable=SC2046
     set -- $(awk '$1=="VmRSS:"{r=$2} $1=="VmHWM:"{h=$2} $1=="Threads:"{t=$2} END{print r,h,t}' "/proc/$pid/status")
     mem_used="${1:-0}"; mem_peak="${2:-0}"; threads="${3:-0}"
-    if [ "$CALLER" != "api" ]; then
-      echo "Status: $(green "running")"
-      echo "PID: $pid"
-      echo "Memory: $((mem_used/1024)) MB (peak: $((mem_peak/1024)) MB)"
-      echo "Threads: $threads"
-      return 0
-    fi
 
-    read -r uptime _ < /proc/uptime; boot_time=$(( $(date +%s) - ${uptime%.*} ))
-    read -r stat_line < "/proc/$pid/stat"; stat_line="${stat_line#*) }"
-    # shellcheck disable=SC2086
-    set -- $stat_line; start_ticks="${20:-0}"
-    start_time="$(( boot_time + start_ticks / 100 ))"
-
-    singbox=$(printf '{"running":true,"start_time":%s,"memory_used":%s,"memory_peak":%s,"threads":%s}' \
-      "$start_time" "$mem_used" "$mem_peak" "$threads")
-  fi
-
-  if [ "$CALLER" = "api" ]; then
-    cpuload="$(get_cpuload)"
-    net_iface=$(ip route | awk '/default/ {print $3}')
-    rtx_speed="$(get_rtx_speed "$net_iface")"
-    rx_speed="${rtx_speed%%|*}"; tx_speed="${rtx_speed#*|}"
-    # shellcheck disable=SC2046
-    set -- $(awk '/MemTotal:/ {t=$2} /MemAvailable:/ {u=t-$2} END {print u,t}' /proc/meminfo)
-    memory_used="${1:-0}"; memory_total="${2:-0}"
-    # shellcheck disable=SC2046
-    set -- $(awk '$1 !~ /\(deleted\)/ {u+=$4; t+=$3} END {print u,t}' /proc/swaps)
-    swap_used="${1:-0}"; swap_total="${2:-0}"
-    connections="$(wc -l < /proc/net/nf_conntrack)"
-
-    printf '{"singbox":%s,"system":{"cpuload":%s,"memory_used":%s,"memory_total":%s,"swap_used":%s,"swap_total":%s,"net_iface":"%s","rx_speed":%s,"tx_speed":%s,"connections":%s}}' \
-      "$singbox" "$cpuload" "$memory_used" "$memory_total" "$swap_used" "$swap_total" "$net_iface" "$rx_speed" "$tx_speed" "$connections"
+    echo "Status: $(green "running")"
+    echo "PID: $pid"
+    echo "Memory: $((mem_used/1024)) MB (peak: $((mem_peak/1024)) MB)"
+    echo "Threads: $threads"
+    return 0
   fi
 }
 
@@ -2355,13 +2272,7 @@ test_firewall() {
 
 
 backup_list(){
-  if [ "$CALLER" = "api" ]; then
-    files="$(for f in "${ENTWARE_DIR}"/skeen_*.tar; do [ -e "$f" ] && basename "$f"; done | \
-    awk 'BEGIN{print "["}{printf "%s\"%s\"",sep,$0;sep=","}END{print "]"}')"
-    echo "{\"dir\":\"${ENTWARE_DIR}\",\"files\":$files}"
-  else
-    find "$ENTWARE_DIR" -maxdepth 1 -type f -name "skeen_*.tar"
-  fi
+  find "$ENTWARE_DIR" -maxdepth 1 -type f -name "skeen_*.tar"
 }
 
 
@@ -2375,12 +2286,12 @@ backup_create(){
       echook "Backup successfully created at $archive_path"
     else
       echoerr "Error creating backup!"
-      [ "$CALLER" = "api" ] && exit 1 || return 1
+      return 1
     fi
   else
     echowarn "No current configuration found, skipping backup"
   fi
-  [ "$CALLER" = "api" ] && exit 0 || return 0
+  return 0
 }
 
 
@@ -2419,8 +2330,6 @@ backup_restore(){
       [ -z "$tarname" ] && exit 1
       restore "$tarname" && break
     done
-  elif [ "$CALLER" = "api" ]; then
-    restore "$tarname"
   fi
 }
 
@@ -2666,11 +2575,6 @@ if [ -f "$SKEEN_SCRIPT" ]; then
       esac
     ;;
     apply_firewall) apply_firewall ;;
-    is-fw-only) is_fw_only ;;
-    latest-version-core) get_latest_version_api "$SINGBOX_API_URL" ;;
-    latest-version-skeen) get_latest_version_api "$SKEEN_API_URL" ;;
-    update-core) update_core ;;
-    update-skeen) update_skeen ;;
     "") show_menu ;;
     help|*) show_help ;;
   esac

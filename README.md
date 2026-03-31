@@ -25,15 +25,6 @@ Keenetic/Netcraze TProxy & Redirect with sing-box (Firewall Mode)
 - Network settings optimization ✓
 - Firewall-only mode ✓
 
-<details>
-  <summary>Soon?</summary>
-<img width="1298" height="746" alt="изображение" src="https://github.com/user-attachments/assets/51ee1cbb-02da-458a-b7b6-8ceb4717feb4" />
-<img width="1530" height="734" alt="1" src="https://github.com/user-attachments/assets/ca2603f5-405d-4c11-8419-83b2d08e02ba" />
-<img width="1300" height="725" alt="Снимок экрана_2026-03-22_22-46-31" src="https://github.com/user-attachments/assets/3a486e77-a0b0-4810-9347-fb71a317b20a" />
-
-</details>
-
-
 ### 📋 Requirements
 - Entware installed and configured
 - Netfilter Subsystem Kernel Module installed
@@ -105,6 +96,7 @@ Example Usage: start the daemon `skeen start`
 |`check`| Checks Sing-box configuration in `/opt/etc/skeen/config/` for syntax and logical errors + `/opt/etc/skeen/skeen.json` for syntax error |
 |`format`| Formats Sing-box configuration in `/opt/etc/skeen/config/` without changing its behavior |
 |`backup`|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
+|`backups`|Show all created backup copies in the /opt folder|
 |`restore`|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
 |`reset`|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.json` to defaults, performing a `backup` beforehand|
 
@@ -144,14 +136,14 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
   "firewall": {
     "only": {
       "enable": 0,         // Enable firewall-only mode (1 = on)
-      "process_name": "",  // Name process (binary) with ports listening for TProxy/Redirect
+      "process_name": "",  // Name process or path to binary with ports listening for TProxy/Redirect
       "redirect_port": "", // Redirect port for TCP traffic
       "tproxy_port": "",   // TProxy port for redirecting UDP traffic if 'redirect_port' is set,
                            // otherwise both TCP and UDP traffic will go entirely through TProxy
       "opkgtun_use": 0     // Whether opkgtun configuration is used (1 = on)
     },
     "intercept": {
-      "dns": 1,        // Intercept DNS via TProxy/Redirect (0 = disabled)
+      "dns": 1,        // Intercept DNS req. via TProxy/Hybrid modes (0 = disabled)
       "port": []       // Ports to intercept (all if empty).
                        // Example: [ 80, 443, "1000:2000", "1500:5555" ]
     },
