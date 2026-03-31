@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.1.0...SKeen-v4.2.0) (2026-03-31)
+
+
+### 🚀 Feat
+
+* **config:** add sing-box configuration support with enable and path options ([7874203](https://github.com/jinndi/SKeen/commit/78742036ec72b3732488b54fa6f18b96026fb5d3))
+
+
+### 🧰 Chore
+
+* **README:** update sing-box advantages and installation requirements + sync plugin link ([8d85237](https://github.com/jinndi/SKeen/commit/8d85237484d274e0a80380dfcbc7fc8dc0103a25))
+
 ## [4.1.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.3...SKeen-v4.1.0) (2026-03-31)
 
 
