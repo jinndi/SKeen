@@ -1,5 +1,33 @@
 # Changelog
 
+## [4.1.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.3...SKeen-v4.1.0) (2026-03-31)
+
+
+### 🚀 Feat
+
+* add `backups` command and refactor `test` command output logs ([bbb805f](https://github.com/jinndi/SKeen/commit/bbb805f1fc222e59b54186b896acb75db2978142))
+* add API endpoint for latest version and improve update flow ([dbc2be8](https://github.com/jinndi/SKeen/commit/dbc2be8d9a996389f6b19e2d32e8e222a26daf42))
+* add API version endpoint with JSON output ([3c9fdc2](https://github.com/jinndi/SKeen/commit/3c9fdc2f3f6e86d6b3fbeaab2979c31c92921614))
+* add CPU load and network speed monitoring functions ([6e51f0e](https://github.com/jinndi/SKeen/commit/6e51f0e7dbf06a5207a7c987a565d1eab1eaf04d))
+* enhance status function with API support and firewall-only mode ([68e4b71](https://github.com/jinndi/SKeen/commit/68e4b71f9ed42281257ad6ac28032df20717728a))
+* enhance system monitoring with CPU load and memory metrics ([be5d95c](https://github.com/jinndi/SKeen/commit/be5d95c76f2136bbbbfe313a1c306575c0d525ce))
+
+
+### 🐛 Fix
+
+* escape quotes in JSON output for proper formatting ([b1f3f7e](https://github.com/jinndi/SKeen/commit/b1f3f7e82b85cb6ada17ae651fb223ad2a6dfd13))
+* improve exit handling ([c29dbad](https://github.com/jinndi/SKeen/commit/c29dbad0c72b78ce423bbd4924af8e4976fef6b4))
+
+
+### 🛠 Refactor
+
+* **backup:** restructure backup functions with CLI/API support ([ed2cf40](https://github.com/jinndi/SKeen/commit/ed2cf40a7f3e6e2e4443efb24144a40cae155346))
+* optimize network speed calculation and system monitoring functions ([d3b7106](https://github.com/jinndi/SKeen/commit/d3b7106addcd58f51b9bd3d2ab316d0e69fcf4ea))
+* optimize system monitoring functions with improved performance ([6cbc506](https://github.com/jinndi/SKeen/commit/6cbc5067e5764073ccf0dda5ef0dd96cccaf2bdd))
+* optimize system monitoring functions with improved performance ([2bd44aa](https://github.com/jinndi/SKeen/commit/2bd44aa92c4ca6246ff739e4e24a7da00b3a25b0))
+* replace direct FIREWALL_ONLY_ENABLE checks with is_fw_only function ([15fdafe](https://github.com/jinndi/SKeen/commit/15fdafed72c97f5ea7db085ec44e0d4207aea8fd))
+* update logging format and test output styling ([5453ac0](https://github.com/jinndi/SKeen/commit/5453ac02d1c5f36f2a3b57fa049d970db078a4f3))
+
 ## [4.0.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.0.2...SKeen-v4.0.3) (2026-02-15)
 
 
