@@ -135,7 +135,7 @@ create_skeen_config(){
     "tuning": 0,
     "check": ["1.1.1.1", "ya.ru", "223.5.5.5"],
   },
-  sing_config:{
+  "sing_config":{
     "enable": 0,
     "path": ""
   },
@@ -2383,8 +2383,18 @@ check_config(){
 
   if ! is_fw_only && [ -f "$SINGBOX_BIN" ]; then
     echomsg "Checking $SINGBOX_NAME configuration..."
+    config="-C $CONFIG_DIR"
 
-    if $SINGBOX_PROC check -C $CONFIG_DIR; then
+    SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
+    : "${SING_CONFIG_ENABLE:=0}"
+    if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+      SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
+      : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
+      config="-c $SING_CONFIG_PATH"
+    fi
+
+    # shellcheck disable=SC2086
+    if $SINGBOX_PROC check $config; then
       echook "$SINGBOX_NAME configuration is valid"
     else
       is_error=1; echoerr "$msg_err"
@@ -2538,7 +2548,7 @@ Information & Updates:
 Checks & Testing:
   test    - Checks whether iptables rules are correctly applied (requires $SINGBOX_NAME running and mode ≠ none)
   deps    - Checks if all dependencies are installed (installs missing ones)
-  check   - Checks $SINGBOX_NAME configuration in $CONFIG_DIR for syntax and logical errors
+  check   - Checks $SINGBOX_NAME configuration for syntax and logical errors + skeen.json for JSON validity
   format  - Formats $SINGBOX_NAME configuration in $CONFIG_DIR without changing its behavior
 
 Backup & Restore:

@@ -5,7 +5,7 @@
   SKeen
 </h1>
 <h3 align="center">
-Keenetic/Netcraze TProxy & Redirect with sing-box (Firewall Mode)
+Keenetic/Netcraze TProxy & Redirect with sing-box + Firewall-only mode
 </h3>
 
 <p align="center">
@@ -15,6 +15,25 @@ Keenetic/Netcraze TProxy & Redirect with sing-box (Firewall Mode)
 <img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FXSKeen&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
 <a href="https://deepwiki.com/jinndi/SKeen"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
+
+### 🌟 Why sing-box?
+
+**sing-box** is a standalone proxy engine optimized for embedded devices. It is lightweight, runs reliably on ARM/MIPS, and supports advanced DNS routing and router-mode configurations.
+
+**Advantages compared to others:**
+
+| Feature                  | sing-box | Xray              | mihomo            |
+| ------------------------ | -------- | ----------------- | ----------------- |
+| Lightweight / Low RAM    | ✅        | ⚠                 | ⚠                 |
+| Advanced DNS & routing   | ✅        | ⚠                 | ⚠                 |
+| Router/embedded friendly | ✅        | ⚠                 | ⚠                 |
+| Standalone project       | ✅        | ❌ (fork of V2Ray) | ❌ (fork of Clash) |
+
+### ❌ No Web UI
+
+Doesn’t include a separate configuration Web UI. The built-in **Zashboard** interface is already used for management, making additional UIs unnecessary.
+
+💡 To simplify configuration, a sync plugin is available to import profiles via GUI.for.SingBox: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
 
 ### 🚀 Features
 - TProxy/Redirect/Hybrid modes ✓
@@ -26,9 +45,10 @@ Keenetic/Netcraze TProxy & Redirect with sing-box (Firewall Mode)
 - Firewall-only mode ✓
 
 ### 📋 Requirements
-- Entware installed and configured
+- Entware installed and configured on **non-internal memory**
 - Netfilter Subsystem Kernel Module installed
 - `curl` installed via `opkg install curl`
+- Recommended: at least 256 MB of RAM and an ARM processor to unlock full potential
 
 ### 💾 Installation
 
@@ -93,7 +113,7 @@ Example Usage: start the daemon `skeen start`
 |`update`|Checks for available updates of the sing-box core and the SKeen script, and allows updating|
 |`test`|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
 |`deps`|Check if all dependencies are installed (installs missing ones)|
-|`check`| Checks Sing-box configuration in `/opt/etc/skeen/config/` for syntax and logical errors + `/opt/etc/skeen/skeen.json` for syntax error |
+|`check`| Checks Sing-box configuration for syntax and logical errors + `skeen.json` for JSON validity |
 |`format`| Formats Sing-box configuration in `/opt/etc/skeen/config/` without changing its behavior |
 |`backup`|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
 |`backups`|Show all created backup copies in the /opt folder|
@@ -141,7 +161,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
   },
   "firewall": {
     "only": {
-      "enable": 0,         // Enable firewall-only mode (1 = on)
+      "enable": 0,         // Enable Firewall-only mode (1 = on)
       "process_name": "",  // Name process or path to binary with ports listening for TProxy/Redirect
       "redirect_port": "", // Redirect port for TCP traffic
       "tproxy_port": "",   // TProxy port for redirecting UDP traffic if 'redirect_port' is set,
@@ -171,7 +191,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 ```
 
 ### 🔗 Useful links
-- Proxy setup guide: [https://proxy-tutorials.dustinwin.us.kg/](https://proxy-tutorials.dustinwin.us.kg/)
+- Sync plugin: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
+- Proxy setup guide: [https://proxy-tutorials.dustinwin.us.kg](https://proxy-tutorials.dustinwin.us.kg)
 - Outbound server block generator: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
 - Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
-- rule-sets for various services: [https://github.com/vernette/rulesets](https://github.com/vernette/rulesets)
