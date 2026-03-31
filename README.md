@@ -133,6 +133,12 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "223.5.5.5"
     ]                  // Domains or IPs V4 for connectivity tests (max 3)
   },
+  sing_config:{
+    "enable": 0,       // If set to 1, a single sing-box configuration file
+                       // located at /opt/etc/skeen/config.json will be used
+                       // instead of the default folder /opt/etc/skeen/config
+    "path": ""         // You can specify your own path (full path)
+  },
   "firewall": {
     "only": {
       "enable": 0,         // Enable firewall-only mode (1 = on)

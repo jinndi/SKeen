@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.1.0"
+SKEEN_VERSION="4.2.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -135,6 +135,10 @@ create_skeen_config(){
     "tuning": 0,
     "check": ["1.1.1.1", "ya.ru", "223.5.5.5"],
   },
+  sing_config:{
+    "enable": 0,
+    "path": ""
+  },
   "firewall": {
     "only": {
       "enable": $fw_only_enable,
@@ -187,6 +191,8 @@ loading_config(){
     -e POLICY_NAME='@.policy.name' \
     -e NETWORK_IPV6='@.network.ipv6' \
     -e NETWORK_TUNING='@.network.tuning' \
+    -e SING_CONFIG_ENABLE='@.sing_config.enable' \
+    -e SING_CONFIG_PATH='@.sing_config.path' \
     -e FIREWALL_ONLY_ENABLE='@.firewall.only.enable' \
     -e FIREWALL_ONLY_PROCESS_NAME='@.firewall.only.process_name' \
     -e FIREWALL_ONLY_OPKGTUN_USE='@.firewall.only.opkgtun_use' \
@@ -201,12 +207,18 @@ loading_config(){
   : "${POLICY_NAME:=SKeen}"
   : "${NETWORK_IPV6:=1}"
   : "${NETWORK_TUNING:=0}"
+  : "${SING_CONFIG_ENABLE:=0}"
+  : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
   : "${FIREWALL_ONLY_ENABLE:=0}"
   : "${FIREWALL_ONLY_PROCESS_NAME:=}"
   : "${FIREWALL_ONLY_OPKGTUN_USE:=0}"
   : "${FIREWALL_ONLY_REDIRECT_PORT:=}"
   : "${FIREWALL_ONLY_TPROXY_PORT:=}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
+
+  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+    SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
+  fi
 
   if [ "$FIREWALL_ONLY_ENABLE" = "1" ] && pidof "$SINGBOX_PROC" >/dev/null 2>&1; then
     killall -9 "$SINGBOX_PROC" 2>/dev/null; clean_firewall
