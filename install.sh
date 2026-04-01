@@ -2081,6 +2081,7 @@ status(){
     echo "PID: $pid"
     echo "Memory: $((mem_used/1024)) MB (peak: $((mem_peak/1024)) MB)"
     echo "Threads: $threads"
+    echo "File Descriptors: $(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l) (limit: $(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null))"
     return 0
   fi
 }
