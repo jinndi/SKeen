@@ -2099,6 +2099,24 @@ reload(){
   fi
 }
 
+proc_uptime(){
+  pid="$1"
+  [ -r "/proc/$pid/stat" ] || return 1
+
+  read -r up _ < /proc/uptime
+  read -r stat < "/proc/$pid/stat"
+  stat="${stat#*) }"
+
+  # shellcheck disable=SC2086
+  set -- $stat
+
+  runtime=$(( ${up%.*} - ${20:-0} / 100 ))
+
+  printf "%dd %dh %dm\n" \
+    $(( runtime / 86400 )) \
+    $(( (runtime % 86400) / 3600 )) \
+    $(( (runtime % 3600) / 60 ))
+}
 
 status(){
   if [ "$CALLER" = "cli" ] && is_fw_only; then
@@ -2118,6 +2136,7 @@ status(){
 
     echo "Status: $(green "running")"
     echo "PID: $pid"
+    echo "Uptime: $(proc_uptime "$pid")"
     echo "Memory: $((mem_used/1024)) MB (peak: $((mem_peak/1024)) MB)"
     echo "Threads: $threads"
     echo "File Descriptors: $(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l) (limit: $(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null))"
