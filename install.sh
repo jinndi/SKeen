@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.2.0"
+SKEEN_VERSION="4.2.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -2391,6 +2391,7 @@ check_config(){
       SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
       : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
       config="-c $SING_CONFIG_PATH"
+      SINGBOX_ARGS="run -D $WORK_DIR $config"
     fi
 
     # shellcheck disable=SC2086
