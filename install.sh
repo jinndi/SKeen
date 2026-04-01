@@ -104,6 +104,7 @@ ff00::/8           # Multicast (RFC 4291)
 
 DELIMETER="------------------------------------------------"
 
+is_tty() { [ -t 1 ] || [ -t 2 ]; }
 
 setup_traps() {
   cleanup() {
@@ -244,19 +245,18 @@ is_fw_only(){
   fi
 }
 
-is_tty() { [ -t 1 ] || [ -t 2 ]; }
-check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
-
 cyan()  { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 red()   { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 yellow(){ is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 
-echomsg()  { is_tty && cyan "[INFO]: $1" >&2 || printf "[INFO]: %s\n" "$1"; }
-echook()   { is_tty && green "[OK]: $1" >&2 || printf "[OK]: %s\n" "$1"; }
-echowarn() { is_tty && yellow "[WARN]: $1" >&2 || printf "[WARN]: %s\n" "$1"; }
-echoerr()  { is_tty && red "[ERROR]: $1" >&2 || printf "[ERROR]: %s\n" "$1"; }
-exiterr()  { is_tty && red "[FATAL]: $1" >&2 || printf "[FATAL]: %s\n" "$1"; exit 1; }
+echomsg()  { cyan "[INFO]: $1"; }
+echook()   { green "[OK]: $1"; }
+echowarn() { yellow "[WARN]: $1"; }
+echoerr()  { red "[ERROR]: $1"; }
+exiterr()  { red "[FATAL]: $1"; exit 1; }
+
+check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
 
 logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
@@ -969,7 +969,6 @@ get_iptables_list(){
   set -- $ipt4 $ipt6
   ipt_list="$*"
 
-  echomsg "Detected iptables: $ipt_list"
   echo "$ipt_list"
 }
 
@@ -994,22 +993,11 @@ get_mark_policy(){
     done
   fi
 
-  if [ "$POLICY_ENABLE" != "1" ]; then
-    echomsg "Policy disabled on skeen.json"
-  elif [ -z "$POLICY_NAME" ]; then
-    echowarn "Policy name not set"
-  elif [ -z "$mark" ]; then
-    echowarn "Policy $POLICY_NAME not found"
-  else
-    echomsg "Detected policy mark: $mark"
-    echomsg "Routing for the $POLICY_NAME policy"
-
+  if [ -n "$mark" ]; then
     echo "0x${mark}"
-    return 0
+  else
+    echo ""
   fi
-
-  echowarn "Routing for the entire device"
-  return 0
 }
 
 
@@ -1130,7 +1118,10 @@ get_validate_ports() {
     valid_ports="${valid_ports:+$valid_ports }$p"
   done
 
-  [ -n "$invalid_ports" ] && logger_warning "$msg_err $invalid_ports" && echowarn "$msg_err $invalid_ports"
+  if [ -n "$invalid_ports" ]; then
+    logger_warning "$msg_err $invalid_ports"
+    is_tty && echowarn "$msg_err $invalid_ports"
+  fi
 
   printf '%s' "$valid_ports"
 }
@@ -1192,7 +1183,7 @@ EOF
   done
 
   [ -n "$invalid_list" ] && {
-    echowarn "Invalid IPv$ip_v exclude: $invalid_list"
+    is_tty && echowarn "Invalid IPv$ip_v exclude: $invalid_list"
     logger_warning "Invalid IPv$ip_v exclude: $invalid_list"
   }
 
@@ -1607,7 +1598,28 @@ prepare_firewall(){
 
   SKEEN_MARK_POLICY="$(get_mark_policy)"
 
+  route_all=1
+  if [ "$POLICY_ENABLE" != "1" ]; then
+    echomsg "Policy disabled on skeen.json"
+  elif [ -z "$POLICY_NAME" ]; then
+    echowarn "Policy name not set"
+  elif [ -z "$SKEEN_MARK_POLICY" ]; then
+    echowarn "Policy $POLICY_NAME not found"
+  else
+    echomsg "Detected policy mark: $SKEEN_MARK_POLICY"
+    echomsg "Routing for the $POLICY_NAME policy"
+    route_all=0
+  fi
+  [ "$route_all" = 1 ] && echowarn "Routing for the entire device"
+
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
+
+  if [ -z "$SKEEN_IPTABLES_LIST" ]; then
+    echoerr "No supported iptables found for the firewall mode"
+    press_any_key_to_menu "" 1
+  else
+    echomsg "Detected iptables: $SKEEN_IPTABLES_LIST"
+  fi
 
   SKEEN_INTERCEPT_PORTS=""; SKEEN_EXCLUDE_PORTS=""
   if [ -n "$INTERCEPT_PORTS" ]; then
@@ -2210,7 +2222,10 @@ check_updates() {
 import_firewall_vars(){
   if [ -f "$FIREWALL_HOOK_FILE" ]; then
     set -a
-    eval "$(grep '^export ' "$FIREWALL_HOOK_FILE" | sed 's/^export //')"
+    eval "$(
+      grep -E '^export [A-Za-z_][A-Za-z0-9_]*=' "$FIREWALL_HOOK_FILE" | \
+      sed 's/^export //'
+    )"
     set +a
   fi
 }
@@ -2380,6 +2395,7 @@ backup_restore(){
 
 
 config_reset(){
+  check_tty
   while :; do
     printf "A full configuration reset will be performed,\n"
     printf "with a backup of the current configuration created\n"
