@@ -117,8 +117,10 @@ Example Usage: start the daemon `skeen start`
 |`format`| Formats Sing-box configuration in `/opt/etc/skeen/config/` without changing its behavior |
 |`backup`|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
 |`backups`|Show all created backup copies in the /opt folder|
-|`restore`|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
+|`restore`*|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
 |`reset`|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.json` to defaults, performing a `backup` beforehand|
+
+* archive name can be passed as the second parameter with a .tar extension to immediately start the backup restore process
 
 | OpkgTun manager (KeeneticOS v5+) |
 | -------------------------------------------------------------------------- |

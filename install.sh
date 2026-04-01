@@ -106,7 +106,11 @@ DELIMETER="------------------------------------------------"
 
 
 setup_traps() {
-  cleanup() { stty sane < /dev/tty 2>/dev/null || true; }
+  cleanup() {
+    if is_tty; then
+      stty sane < /dev/tty 2>/dev/null || true
+    fi
+  }
   trap cleanup EXIT TERM
   trap 'printf "\n"; cleanup; exit 130' INT
 }
@@ -240,16 +244,19 @@ is_fw_only(){
   fi
 }
 
-cyan()  { printf '\033[36m%s\033[0m\n' "$1"; }
-red()   { printf '\033[31m%s\033[0m\n' "$1"; }
-green() { printf '\033[32m%s\033[0m\n' "$1"; }
-yellow() { printf '\033[33m%s\033[0m\n' "$1"; }
+is_tty() { [ -t 1 ] || [ -t 2 ]; }
+check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
 
-echomsg() { cyan "[INFO]: $1" >&2; }
-echook() { green "[OK]: $1" >&2; }
-echowarn() { yellow "[WARN]: $1" >&2; }
-echoerr() { red "[ERROR]: $1" >&2; }
-exiterr() { red "[FATAL]: $1" >&2; exit 1; }
+cyan()  { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+red()   { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+yellow(){ is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+
+echomsg()  { is_tty && cyan "[INFO]: $1" >&2 || printf "[INFO]: %s\n" "$1"; }
+echook()   { is_tty && green "[OK]: $1" >&2 || printf "[OK]: %s\n" "$1"; }
+echowarn() { is_tty && yellow "[WARN]: $1" >&2 || printf "[WARN]: %s\n" "$1"; }
+echoerr()  { is_tty && red "[ERROR]: $1" >&2 || printf "[ERROR]: %s\n" "$1"; }
+exiterr()  { is_tty && red "[FATAL]: $1" >&2 || printf "[FATAL]: %s\n" "$1"; exit 1; }
 
 logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
@@ -1376,6 +1383,7 @@ add_output_rules() {
 
 
 release_version_ge5(){
+  check_tty
   major=$(ndmc -c show version | awk -F'[:.]' '/release:/ {gsub(/ /,"",$2); print $2}')
   if [ "$major" -lt 5 ]; then
     echoerr "Release version KeeneticOS is lower than 5" && return 1
@@ -2353,7 +2361,7 @@ backup_restore(){
     return 0
   }
 
-  if [ "$CALLER" = "cli" ]; then
+  if is_tty && [ "$CALLER" = "cli" ] && [ -z "$tarname" ]; then
     while :; do
       printf "Enter the name of the backup archive file\n"
       printf "located in the /opt root directory,\n"
@@ -2362,6 +2370,11 @@ backup_restore(){
       [ -z "$tarname" ] && exit 1
       restore "$tarname" && break
     done
+  elif [ -n "$tarname" ]; then
+    restore "$tarname"
+  else
+    echoerr "No archive name provided"
+    return 1
   fi
 }
 
@@ -2453,6 +2466,7 @@ format_config(){
 
 
 show_menu(){
+  check_tty
   loading_config
   import_firewall_vars
 
@@ -2575,7 +2589,7 @@ Checks & Testing:
 Backup & Restore:
   backup  - Creates a backup of $WORK_DIR and places it in $ENTWARE_DIR
   backups - Show all created backup copies in the $WORK_DIR folder
-  restore - Restores a backup of $WORK_DIR by archive name from $ENTWARE_DIR
+  restore - Restores a backup of $WORK_DIR by archive name (optional second parameter) from $ENTWARE_DIR
 
 Reset Configuration:
   reset   - Resets $CONFIG_DIR and skeen.json to defaults, performing a backup first
@@ -2606,7 +2620,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     format) format_config ;;
     backup) backup_create ;;
     backups) backup_list ;;
-    restore) backup_restore "$3" ;;
+    restore) backup_restore "$2" ;;
     reset) config_reset ;;
     tun)
       release_version_ge5 || exit 1
