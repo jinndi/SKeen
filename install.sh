@@ -54,6 +54,8 @@ TABLE_MARK="0x112"
 TABLE_ID="112"
 DNS_PORT=53
 
+RCI="http://127.0.0.1:79/rci"
+
 # IETF/IANA IPv4 Special-Purpose Address Registry
 # https://www.iana.org/assignments/iana-ipv4-special-registry/
 RESERVED_IPV4="
@@ -177,6 +179,9 @@ json_get_array() {
   jsonfilter -i "$SKEEN_CONFIG" -e "$path" | tr -d '[],"'
 }
 
+rci() {
+  curl -kfsS "${RCI}/${1:-}" 2>/dev/null || echo ""
+}
 
 loading_config(){
   if [ ! -f "$SKEEN_CONFIG" ]; then
@@ -963,10 +968,24 @@ get_iptables_list(){
 
 
 get_mark_policy(){
-  [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_NAME" ] && \
-  mark=$(ndmc -c show ip policy | awk -v d="$(printf '%s' "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')" '
-    /description =/ { f = (tolower($0) ~ "description = " d) }
-    f && /mark:/ { print $2; exit }')
+  mark=""
+
+  if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_NAME" ]; then
+    json_policy="$(rci /show/ip/policy)"
+    policy_name="$(echo "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')"
+    i=1
+    descriptions="$(echo "$json_policy" | jsonfilter -e '@.*.description')"
+    marks="$(echo "$json_policy" | jsonfilter -e '@.*.mark')"
+    # shellcheck disable=SC2086
+    set -- $marks; marks_list="$*"
+
+    for description in $descriptions; do
+      if [ "$(echo "$description" | tr '[:upper:]' '[:lower:]')" = "$policy_name" ]; then
+        mark="$(echo "$marks_list" | awk -v idx="$i" '{print $idx}')"; break
+      fi
+      i=$((i+1))
+    done
+  fi
 
   if [ "$POLICY_ENABLE" != "1" ]; then
     echomsg "Policy disabled on skeen.json"
