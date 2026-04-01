@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.2.0...SKeen-v4.2.1) (2026-04-01)
+
+
+### 🐛 Fix
+
+* add setting of SINGBOX_ARGS during reload when the sing_config.enable parameter is enabled ([7f4276e](https://github.com/jinndi/SKeen/commit/7f4276e2675b758bc5a7b45ad4cfe8a8758919dd))
+
+
+### 🧰 Chore
+
+* add file descriptors count to status output ([9c8d1c7](https://github.com/jinndi/SKeen/commit/9c8d1c7d1859523a8e24d662e38166b2be8622aa))
+
 ## [4.2.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.1.0...SKeen-v4.2.0) (2026-03-31)
 
 
