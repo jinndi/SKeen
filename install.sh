@@ -434,7 +434,7 @@ download_singbox(){
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR" || exit 1
 
-  if curl --fail --connect-timeout 5 --max-time 90 -Lo "$PKG_NAME" "$pkg_url"; then
+  if curl --fail --connect-timeout 5 --max-time 720 -Lo "$PKG_NAME" "$pkg_url"; then
     echook "Downloaded $PKG_NAME successfully"
   else
     echoerr "Failed to download $PKG_NAME"
