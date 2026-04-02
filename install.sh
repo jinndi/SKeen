@@ -2445,22 +2445,28 @@ config_reset(){
 }
 
 
+get_sing_args_config(){
+  config="-C $CONFIG_DIR"
+  SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
+  : "${SING_CONFIG_ENABLE:=0}"
+  SING_CONFIG_PATH="/opt/etc/skeen/config.json"
+  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+    SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
+    : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
+    config="-c $SING_CONFIG_PATH"
+    SINGBOX_ARGS="run -D $WORK_DIR $config"
+  fi
+}
+
+
 check_config(){
   msg_err="Configuration check failed"
   is_error=0
 
   if ! is_fw_only && [ -f "$SINGBOX_BIN" ]; then
     echomsg "Checking $SINGBOX_NAME configuration..."
-    config="-C $CONFIG_DIR"
 
-    SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
-    : "${SING_CONFIG_ENABLE:=0}"
-    if [ "$SING_CONFIG_ENABLE" = "1" ]; then
-      SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
-      : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
-      config="-c $SING_CONFIG_PATH"
-      SINGBOX_ARGS="run -D $WORK_DIR $config"
-    fi
+    get_sing_args_config
 
     # shellcheck disable=SC2086
     if $SINGBOX_PROC check $config; then
@@ -2489,7 +2495,10 @@ format_config(){
   if [ -f "$SINGBOX_BIN" ] && [ -d "$CONFIG_DIR" ]; then
     echomsg "Formatting Sing-box configuration..."
 
-    if $SINGBOX_PROC format -w -C $CONFIG_DIR; then
+    get_sing_args_config
+
+    # shellcheck disable=SC2086
+    if $SINGBOX_PROC format -w $config; then
       echook "Configuration formatted successfully"
     else
       echoerr "Configuration formatting failed"
@@ -2497,6 +2506,38 @@ format_config(){
   else
     echoerr "The $SINGBOX_NAME executable is missing, or the configuration directory was not found"
   fi
+}
+
+
+sync_config(){
+  address="${1:-}"
+  config_tmp="${TMP_DIR}/sing_config_tmp.json"
+
+  if [ -z "$address" ]; then
+    echoerr "No address provided for configuration sync" && return 1
+  fi
+  if ! command -v curl >/dev/null 2>&1; then
+    echoerr "curl is not installed, cannot sync configuration" && return 1
+  fi
+  if ! curl -fsL "$address" -o "$config_tmp"; then
+    echoerr "Failed to download configuration from $address" && return 1
+  fi
+
+  if is_tty && ! $SINGBOX_PROC check -c "$config_tmp"; then
+    echoerr "$SINGBOX_NAME configuration is invalid, cancel synchronization!"
+    rm -f "$config_tmp"
+    return 1
+  fi
+
+  get_sing_args_config
+  config_sync="$SING_CONFIG_PATH"
+
+  if [ "$SING_CONFIG_ENABLE" != "1" ]; then
+    echowarn "Set the parameter sing_config.enable to 1 in the skeen.json file"
+  fi
+
+  rm -f "$config_sync"; mv "$config_tmp" "$config_sync"
+  echook "Configuration synced successfully, then restart SKeen to apply the changes"
 }
 
 
@@ -2629,6 +2670,9 @@ Backup & Restore:
 Reset Configuration:
   reset   - Resets $CONFIG_DIR and skeen.json to defaults, performing a backup first
 
+Synchronizesing Configuration:
+  sync    - Synchronizes the sing-box configuration with a remote copy by URL (optional second parameter)
+
 OpkgTun manager (KeeneticOS v5+):
   tun create <ipv4> <name> - Create interface with the specified IP and name
   tun delete <name>        - Delete interface with the specified name
@@ -2657,6 +2701,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     backups) backup_list ;;
     restore) backup_restore "$2" ;;
     reset) config_reset ;;
+    sync) sync_config "$2" ;;
     tun)
       release_version_ge5 || exit 1
       case "$2" in
