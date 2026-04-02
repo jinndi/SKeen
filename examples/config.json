@@ -1,0 +1,166 @@
+{
+  "log": {
+    "disabled": false,
+    "level": "debug",
+    "output": "",
+    "timestamp": false
+  },
+  "dns": {
+    "servers": [
+      {
+        "type": "tls",
+        "tag": "dns-proxy",
+        "detour": "proxy",
+        "domain_resolver": "dns-resolver",
+        "server": "one.one.one.one"
+      },
+      {
+        "type": "https",
+        "tag": "dns-direct",
+        "domain_resolver": "dns-resolver",
+        "server": "common.dot.dns.yandex.net"
+      },
+      {
+        "type": "fakeip",
+        "tag": "fakeip",
+        "inet4_range": "198.18.0.0/15"
+      },
+      {
+        "type": "udp",
+        "tag": "dns-resolver",
+        "server": "77.88.8.8"
+      }
+    ],
+    "rules": [
+      { "rule_set": "adguard", "action": "reject" },
+      { "clash_mode": "Direct", "server": "dns-direct" },
+      { "clash_mode": "Global", "server": "dns-proxy" },
+      { "rule_set": "geosite-cheburnet", "server": "dns-direct" },
+      { "query_type": ["A"], "server": "fakeip" }
+    ],
+    "disable_cache": false,
+    "disable_expire": false,
+    "independent_cache": true,
+    "final": "dns-proxy",
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    {
+      "type": "redirect",
+      "tag": "redirect-in",
+      "listen": "::",
+      "listen_port": 65081,
+      "tcp_fast_open": true
+    },
+    {
+      "type": "tproxy",
+      "tag": "tproxy-in",
+      "listen": "::",
+      "listen_port": 65082,
+      "udp_timeout": "3m0s",
+      "udp_fragment": true,
+      "network": "udp"
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "type": "selector",
+      "default": "auto",
+      "interrupt_exist_connections": true,
+      "outbounds": ["direct", "auto", "vless-out", "naive-out"]
+    },
+    { "tag": "direct", "type": "direct" },
+    {
+      "tag": "auto",
+      "type": "urltest",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": "3m",
+      "tolerance": 150,
+      "interrupt_exist_connections": true,
+      "outbounds": ["vless-out", "naive-out"]
+    },
+    {
+      "tag": "vless-out",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example.com",
+      "server_port": 443,
+      "tls": {
+        "enabled": true,
+        "alpn": ["http/1.1", "h2"],
+        "server_name": "example.com",
+        "utls": { "enabled": true, "fingerprint": "firefox" }
+      }
+    },
+    {
+      "tag": "naive-out",
+      "type": "naive",
+      "username": "jinndi",
+      "password": "mypass",
+      "quic": true,
+      "quic_congestion_control": "bbr",
+      "server": "example.com",
+      "server_port": 10443,
+      "tls": {
+        "enabled": true,
+        "server_name": "example.com"
+      }
+    }
+  ],
+  "route": {
+    "final": "proxy",
+    "auto_detect_interface": true,
+    "default_domain_resolver": "dns-resolver",
+    "rules": [
+      { "action": "sniff" },
+      {
+        "type": "logical",
+        "mode": "or",
+        "rules": [{ "protocol": "dns" }, { "port": 53 }],
+        "action": "hijack-dns"
+      },
+      { "protocol": "quic", "action": "reject" },
+      { "ip_is_private": true, "outbound": "direct" },
+      { "clash_mode": "Direct", "outbound": "direct" },
+      { "clash_mode": "Global", "outbound": "proxy" },
+      { "rule_set": "geosite-cheburnet", "outbound": "direct" }
+    ],
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": "geosite-cheburnet",
+        "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs",
+        "download_detour": "direct",
+        "update_interval": "24h0m0s"
+      },
+      {
+        "type": "remote",
+        "tag": "adguard",
+        "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs",
+        "download_detour": "direct",
+        "update_interval": "24h0m0s"
+      }
+    ]
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "external_ui": "zashboard",
+      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
+      "external_ui_download_detour": "direct",
+      "secret": "",
+      "default_mode": "rule"
+    },
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "cache_id": "",
+      "store_fakeip": true,
+      "store_rdrc": true,
+      "rdrc_timeout": "7d"
+    }
+  }
+}

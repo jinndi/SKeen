@@ -121,7 +121,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 |`backup`|✓|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
 |`backups`|✓|Show all created backup copies in the /opt folder|
 |`restore`¹|✓|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
-|`reset`|-|Resets `/opt/etc/skeen/config/` and `/opt/etc/skeen/skeen.json` to defaults, performing a `backup` beforehand|
+|`reset`|-|Resets `/opt/etc/skeen` directory to its default state after performing a `backup` beforehand|
 |`sync`²|✓|Synchronizes the sing-box configuration to the location specified in the `sing_config` section of the `skeen.json` configuration file|
 
 1 - archive name can be passed as the second parameter with a .tar extension to immediately start the backup restore process

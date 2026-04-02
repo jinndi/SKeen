@@ -123,8 +123,7 @@ create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
   [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
-  fw_only_enable=0;
-  is_fw_only && fw_only_enable=1 || [ "$install_mode" = "2" ] && fw_only_enable=1
+  fw_only_enable=0; [ "$install_mode" = "2" ] && fw_only_enable=1
 
   cat <<EOF > "$SKEEN_CONFIG"
 // https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs
@@ -487,29 +486,20 @@ create_singbox_config(){
 
   mkdir -p "$CONFIG_DIR"
 
-  cat <<EOF > "$CONFIG_DIR/log.json"
-{"log":{"disabled":false,"level":"debug","timestamp":true}}
-EOF
+  config_json='{"log":{"disabled":false,"level":"debug","output":"","timestamp":false},"dns":{"servers":[{"type":"tls","tag":"dns-proxy","detour":"proxy","domain_resolver":"dns-resolver","server":"one.one.one.one"},{"type":"https","tag":"dns-direct","domain_resolver":"dns-resolver","server":"common.dot.dns.yandex.net"},{"type":"fakeip","tag":"fakeip","inet4_range":"198.18.0.0/15"},{"type":"udp","tag":"dns-resolver","server":"77.88.8.8"}],"rules":[{"rule_set":"adguard","action":"reject"},{"clash_mode":"Direct","server":"dns-direct"},{"clash_mode":"Global","server":"dns-proxy"},{"rule_set":"geosite-cheburnet","server":"dns-direct"},{"query_type":["A"],"server":"fakeip"}],"disable_cache":false,"disable_expire":false,"independent_cache":true,"final":"dns-proxy","strategy":"ipv4_only"},"inbounds":[{"type":"redirect","tag":"redirect-in","listen":"::","listen_port":65081,"tcp_fast_open":true},{"type":"tproxy","tag":"tproxy-in","listen":"::","listen_port":65082,"udp_timeout":"3m0s","udp_fragment":true,"network":"udp"}],"outbounds":[{"tag":"proxy","type":"selector","default":"auto","interrupt_exist_connections":true,"outbounds":["direct","auto","vless-out","naive-out"]},{"tag":"direct","type":"direct"},{"tag":"auto","type":"urltest","url":"http://www.gstatic.com/generate_204","interval":"3m","tolerance":150,"interrupt_exist_connections":true,"outbounds":["vless-out","naive-out"]},{"tag":"vless-out","type":"vless","uuid":"00000000-0000-0000-0000-00000000000","flow":"xtls-rprx-vision","packet_encoding":"xudp","server":"example.com","server_port":443,"tls":{"enabled":true,"alpn":["http/1.1","h2"],"server_name":"example.com","utls":{"enabled":true,"fingerprint":"firefox"}}},{"tag":"naive-out","type":"naive","username":"jinndi","password":"mypass","quic":true,"quic_congestion_control":"bbr","server":"example.com","server_port":10443,"tls":{"enabled":true,"server_name":"example.com"}}],"route":{"final":"proxy","auto_detect_interface":true,"default_domain_resolver":"dns-resolver","rules":[{"action":"sniff"},{"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},{"protocol":"quic","action":"reject"},{"ip_is_private":true,"outbound":"direct"},{"clash_mode":"Direct","outbound":"direct"},{"clash_mode":"Global","outbound":"proxy"},{"rule_set":"geosite-cheburnet","outbound":"direct"}],"rule_set":[{"type":"remote","tag":"geosite-cheburnet","url":"https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs","download_detour":"direct","update_interval":"24h0m0s"},{"type":"remote","tag":"adguard","url":"https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs","download_detour":"direct","update_interval":"24h0m0s"}]},"experimental":{"clash_api":{"external_controller":"0.0.0.0:9090","external_ui":"zashboard","external_ui_download_url":"https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip","external_ui_download_detour":"direct","secret":"","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","cache_id":"","store_fakeip":true,"store_rdrc":true,"rdrc_timeout":"7d"}}}'
 
-  cat <<EOF > "$CONFIG_DIR/dns.json"
-{"dns":{"servers":[{"type":"tls","tag":"dns-proxy","detour":"proxy","domain_resolver":"dns-resolver","server":"one.one.one.one"},{"type":"https","tag":"dns-direct","domain_resolver":"dns-resolver","server":"common.dot.dns.yandex.net"},{"type":"fakeip","tag":"fakeip","inet4_range":"198.18.0.0/15","inet6_range":"fc00::/18"},{"type":"udp","tag":"dns-resolver","server":"77.88.8.8"}],"rules":[{"rule_set":"adguard","action":"reject"},{"clash_mode":"Direct","server":"dns-direct"},{"rule_set":"geosite-cheburnet","server":"dns-direct"},{"query_type":["A","AAAA"],"disable_cache":true,"server":"fakeip"},{"clash_mode":"Global","server":"dns-proxy"}],"final":"dns-proxy","strategy":"prefer_ipv4","independent_cache":true}}
-EOF
+  for key in log dns inbounds outbounds route experimental; do
+    value="$(printf '%s\n' "$config_json" | jsonfilter -e "@.$key")"
 
-  cat <<EOF > "$CONFIG_DIR/inbounds.json"
-{"inbounds":[{"type":"redirect","listen":"::","listen_port":2081,"tcp_fast_open":true},{"type":"tproxy","listen":"::","listen_port":2082,"network":"udp","udp_timeout":"3m"}]}
-EOF
+    if [ -z "$value" ] || [ "$value" = "null" ]; then
+      case "$key" in
+        services|endpoints|inbounds|outbounds) value="[]" ;;
+        *) value="{}" ;;
+      esac
+    fi
 
-  cat <<EOF > "$CONFIG_DIR/outbounds.json"
-{"outbounds":[{"tag":"proxy","type":"selector","default":"auto","interrupt_exist_connections":false,"outbounds":["auto","VLESS","direct"]},{"tag":"auto","type":"urltest","url":"http://www.gstatic.com/generate_204","interval":"5m","tolerance":50,"idle_timeout":"30m","interrupt_exist_connections":false,"outbounds":["VLESS"]},{"tag":"direct","type":"direct"},{"tag":"VLESS","type":"vless","uuid":"00000000-0000-0000-0000-00000000000","flow":"xtls-rprx-vision","packet_encoding":"xudp","server":"example.com","server_port":443,"tls":{"enabled":true,"alpn":["http/1.1","h2"],"server_name":"example.com","utls":{"enabled":true,"fingerprint":"firefox"}}}]}
-EOF
-
-  cat <<EOF > "$CONFIG_DIR/route.json"
-{"route":{"rules":[{"action":"sniff","timeout":"500ms"},{"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},{"clash_mode":"Direct","outbound":"direct"},{"ip_is_private":true,"outbound":"direct"},{"type":"logical","mode":"or","rules":[{"network":"udp","port":443},{"protocol":"stun"}],"action":"reject"},{"clash_mode":"Global","outbound":"proxy"},{"rule_set":"geosite-cheburnet","outbound":"direct"}],"rule_set":[{"type":"remote","tag":"geosite-cheburnet","url":"https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs","download_detour":"direct","update_interval":"24h0m0s"},{"type":"remote","tag":"adguard","url":"https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs","download_detour":"direct","update_interval":"24h0m0s"}],"final":"proxy","default_domain_resolver":"dns-resolver"}}
-EOF
-
-  cat <<EOF > "$CONFIG_DIR/experimental.json"
-{"experimental":{"cache_file":{"enabled":true,"path":"cache.db","store_fakeip":true,"store_rdrc":true},"clash_api":{"external_controller":"0.0.0.0:9090","external_ui":"zashboard","external_ui_download_url":"https://github.com/Zephyruso/zashboard/archive/gh-pages.zip","external_ui_download_detour":"direct","default_mode":"rule"}}}
-EOF
+    echo "{\"$key\": $value}" > "${CONFIG_DIR}/${key}.json"
+  done
 
   $SINGBOX_PROC format -w -C $CONFIG_DIR
 
@@ -2370,13 +2360,13 @@ backup_restore(){
 
     if [ -f "$archive_path" ] && tar -tf "$archive_path" | grep -q "^skeen/"; then
       work_dir_backup="${ENTWARE_DIR}/skeen_backup"
-      mv "$WORK_DIR" "$work_dir_backup"
-      echomsg "Extracting archive..."
-      if tar -xf "$archive_path" -C "$WORK_DIR"; then
+      mv "$WORK_DIR" "$work_dir_backup"; mkdir -p "$WORK_DIR"
+      echomsg "Extracting archive ${archive_path}..."
+      if tar --strip-components=1 -xf "$archive_path" -C "$WORK_DIR"; then
         rm -rf "$work_dir_backup"
         echook "Backup successfully restored"
       else
-        mv "$work_dir_backup" "$WORK_DIR"
+        rm -rf "$WORK_DIR"; mv "$work_dir_backup" "$WORK_DIR"
         echoerr "Error extracting archive $archive_path"
         return 1
       fi
@@ -2419,9 +2409,8 @@ config_reset(){
     case "$option" in
       y|Y)
         if backup_create; then
-          rm -rf "$WORK_DIR"
-          mkdir -p "$WORK_DIR"
-          ! is_fw_only && create_singbox_config "force"
+          rm -rf "$WORK_DIR"; mkdir -p "$WORK_DIR"
+          create_singbox_config "force"
           create_skeen_config
           echook "Configuration reset completed"
         else
@@ -2661,7 +2650,7 @@ Backup & Restore:
   restore - Restores a backup of $WORK_DIR by archive name (optional second parameter) from $ENTWARE_DIR
 
 Reset Configuration:
-  reset   - Resets $CONFIG_DIR and skeen.json to defaults, performing a backup first
+  reset   - Resets $WORK_DIR directory to its default state after performing a backup beforehand
 
 Synchronizesing Configuration:
   sync    - Synchronizes the sing-box configuration with a remote copy by URL (optional second parameter)
