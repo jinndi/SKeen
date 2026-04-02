@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.3.0"
+SKEEN_VERSION="4.3.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -282,17 +282,8 @@ get_latest_version() {
   api_url="${1:-}"
 
   latest_release="$(curl --connect-timeout 5 --max-time 90 -s "$api_url")"
-  curl_exit_status=$?
-
-  if [ $curl_exit_status -ne 0 ]; then
-    echoerr "Failed to fetch the latest version information."
-    return 1
-  fi
-
-  if [ "$(echo "$latest_release" | grep -c tag_name)" -eq 0 ]; then
-    echoerr "Failed to parse the latest version information:\n$(echo "$latest_release" | grep message)"
-    return 1
-  fi
+  # shellcheck disable=SC2181
+  [ $? -ne 0 ] && return 1
 
   echo "$latest_release" | grep tag_name | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
 }
@@ -429,7 +420,9 @@ download_singbox(){
 
   if [ -z "$version" ]; then
     echomsg "Fetching the latest version number..."
-    version="$(get_latest_version "$SINGBOX_API_URL")" || exit 1
+    version="$(get_latest_version "$SINGBOX_API_URL")"
+    [ -z "$version" ] && echoerr "Failed to fetch the latest version number" && exit 1
+
     echook "Latest version is $version"
   fi
 
@@ -2173,13 +2166,13 @@ ask_and_update() {
   echomsg "Checking $name for updates..."
 
   current=$(get_current_version "$proc")
+  [ -z "$current" ] && current="not installed"
   latest=$(get_latest_version "$api")
-
-  { [ -z "$current" ] || [ -z "$latest" ]; } && return 1
+  [ -z "$latest" ] && echoerr "Failed to fetch the latest version number" && return 1
 
   if [ "$latest" != "$current" ]; then
+    printf '%s %s\n' "$(cyan "Current version:")" "$(red "$current")"
     printf '%s %s\n' "$(cyan "New version of $name is available:")" "$(green "$latest")"
-    printf '%s %s\n' "$(cyan "Current installed version:")" "$(red "$current")"
     printf '%s %s\n' "$(cyan "More details:")" "$(green "$releases")"
 
     while :; do
