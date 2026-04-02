@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.3.1...SKeen-v4.3.2) (2026-04-02)
+
+
+### 🐛 Fix
+
+* detection of firewall mode and the presence of DNS settings when the `sing_config.enable` option is enabled ([9923b2f](https://github.com/jinndi/SKeen/commit/9923b2f02da6815f7d8824296e5f49defefc87d3))
+
 ## [4.3.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.3.0...SKeen-v4.3.1) (2026-04-02)
 
 
