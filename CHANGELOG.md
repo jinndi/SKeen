@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.3.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.3.0...SKeen-v4.3.1) (2026-04-02)
+
+
+### 🐛 Fix
+
+* function to get the version during an update (update command) could receive unnecessary text when the request failed ([9214a10](https://github.com/jinndi/SKeen/commit/9214a1062445f8431f74e0a7de21e2244f48048c))
+* increase sing-box download timeout from 90 to 720 seconds ([067c7ca](https://github.com/jinndi/SKeen/commit/067c7caec7a6845521782b6d349f090af5345837))
+* reset and restore config and update default sing-box configuration ([46b12e6](https://github.com/jinndi/SKeen/commit/46b12e692160bbf69a672cf6e88403a725113e06))
+
 ## [4.3.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.2.1...SKeen-v4.3.0) (2026-04-02)
 
 
