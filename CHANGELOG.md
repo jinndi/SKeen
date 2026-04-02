@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.3.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.2.1...SKeen-v4.3.0) (2026-04-02)
+
+
+### 🚀 Feat
+
+* add process uptime tracking to status output ([ee9575d](https://github.com/jinndi/SKeen/commit/ee9575d8fae976eb37dd77f29fc0c14d0352a0a0))
+* **backup:** add support for passing archive name as parameter to restore command ([500eda1](https://github.com/jinndi/SKeen/commit/500eda1fcd1a43013d5f355dec5c8d0428f39839))
+* **sync:** add configuration synchronization command and update documentation ([6640744](https://github.com/jinndi/SKeen/commit/6640744790ca5b9c0a762fa2a627bdcd1d1049de))
+
+
+### 🛠 Refactor
+
+* optimize terminal detection and logging functions ([4fc82de](https://github.com/jinndi/SKeen/commit/4fc82ded02c59f183f83f9e2f00fe6d01b39fb8e))
+* RCI functionality policy mark retrieval ([e80da73](https://github.com/jinndi/SKeen/commit/e80da73578cc6f3aca8f1bc8c30f182f04ba4024))
+
 ## [4.2.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.2.0...SKeen-v4.2.1) (2026-04-01)
 
 
