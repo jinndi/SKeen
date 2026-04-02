@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules/$(uname -r)"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.3.1"
+SKEEN_VERSION="4.3.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -761,6 +761,45 @@ check_internet() {
 }
 
 
+get_fw_mode_param(){
+  file="${1:-}"; type="${2:-}"
+
+  if [ "$type" = "tun" ]; then
+    has_opkgtun=$(jsonfilter -i "$file" \
+      -e '@.inbounds[@.type="'"$type"'"].interface_name' | grep ^opkgtun)
+
+    [ -z "$has_opkgtun" ] && return 0
+
+    echo "opkgtun"
+
+    return 0
+  fi
+
+  port=$(jsonfilter -i "$file" \
+    -e '@.inbounds[@.type="'"$type"'"].listen_port' \
+    | head -n1 2>/dev/null)
+
+  [ -z "$port" ] && return 0
+
+  if [ "$type" = "redirect" ]; then
+    echo "${port}|tcp"
+    return 0
+  fi
+
+  network=$(jsonfilter -i "$file" \
+    -e '@.inbounds[@.type="'"$type"'"].network' \
+    | head -n1 2>/dev/null)
+
+  if [ -n "$network" ]; then
+    echo "${port}|${network}"
+  else
+    echo "${port}|tcpudp"
+  fi
+
+  return 0
+}
+
+
 get_fw_mode_data() {
   type="$1"
 
@@ -779,43 +818,15 @@ get_fw_mode_data() {
     return 0
   fi
 
-  json_files="$(find "$CONFIG_DIR" -name '*.json')"
-
-  for file in $json_files; do
-
-    if [ "$type" = "tun" ]; then
-      has_opkgtun=$(jsonfilter -i "$file" \
-        -e '@.inbounds[@.type="'"$type"'"].interface_name' | grep ^opkgtun)
-
-      [ -z "$has_opkgtun" ] && continue
-
-      echo "opkgtun"
-
-      return 0
-    fi
-
-    port=$(jsonfilter -i "$file" \
-      -e '@.inbounds[@.type="'"$type"'"].listen_port' \
-      | head -n1 2>/dev/null)
-
-    [ -z "$port" ] && continue
-
-    if [ "$type" = "redirect" ]; then
-      echo "${port}|tcp"
-      return 0
-    fi
-
-    network=$(jsonfilter -i "$file" \
-      -e '@.inbounds[@.type="'"$type"'"].network' \
-      | head -n1 2>/dev/null)
-
-    if [ -n "$network" ]; then
-      echo "${port}|${network}"
-    else
-      echo "${port}|tcpudp"
-    fi
-
+  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+    get_fw_mode_param "$SING_CONFIG_PATH" "$type"
     return 0
+  fi
+
+  json_files=""; [ -d "$CONFIG_DIR" ] && json_files="$(find "$CONFIG_DIR" -name '*.json')"
+  for file in $json_files; do
+    param="$(get_fw_mode_param "$file" "$type")"
+    [ -n "$param" ] && echo "$param" && return 0
   done
 
   return 0
@@ -825,12 +836,18 @@ get_fw_mode_data() {
 has_dns_servers() {
   is_fw_only && return 0
 
-  for file in "$CONFIG_DIR"/*.json; do
-    [ -f "$file" ] || continue
-    if jsonfilter -i "$file" -e '@.dns.servers[0]' >/dev/null 2>&1; then
+  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+    if jsonfilter -i "$SING_CONFIG_PATH" -e '@.dns.servers[0]' >/dev/null 2>&1; then
       return 0
     fi
-  done
+  elif [ -d "CONFIG_DIR" ]; then
+    for file in "$CONFIG_DIR"/*.json; do
+      [ -f "$file" ] || continue
+      if jsonfilter -i "$file" -e '@.dns.servers[0]' >/dev/null 2>&1; then
+        return 0
+      fi
+    done
+  fi
 
   return 1
 }
