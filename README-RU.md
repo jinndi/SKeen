@@ -1,0 +1,209 @@
+<p align="center">
+<img alt="SKeen" src="/logo.webp" width="214">
+</p>
+<h1 align="center">
+  SKeen
+</h1>
+<h3 align="center">
+TProxy и Redirect для Keenetic/Netcraze на базе sing-box + режим «только фаервол»
+</h3>
+
+<p align="center">
+<a href="https://github.com/jinndi/SKeen"><img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen"></a>
+<a href="https://github.com/SagerNet/sing-box"><img alt="sing-box" src="https://repology.org/badge/version-for-repo/homebrew/sing-box.svg?header=sing-box-latest-version"></a>
+<img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/SKeen">
+<img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FXSKeen&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
+<a href="https://deepwiki.com/jinndi/SKeen"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+</p>
+
+🇷🇺 **Русский** | [🇺🇸 English](README.md)
+
+### 🌟 Почему sing-box?
+
+**sing-box** — это универсальный прокси-движок, оптимизированный для встраиваемых устройств. Он легковесен, надежно работает на архитектурах ARM/MIPS и поддерживает продвинутую маршрутизацию DNS и конфигурации.
+
+**Преимущества по сравнению с аналогами:**
+
+| Функция | sing-box | Xray | mihomo |
+| :--- | :---: | :---: | :---: |
+| Легковесность / Низкое потребление RAM | ✅ | ⚠ | ⚠ |
+| Продвинутый DNS и маршрутизация | ✅ | ⚠ | ⚠ |
+| Оптимизация для роутеров/embedded | ✅ | ⚠ | ⚠ |
+| Независимый проект | ✅ | ❌ (форк V2Ray) | ❌ (форк Clash) |
+
+### ❌ Без Web UI
+
+Проект не включает отдельный веб-интерфейс для настройки. Для управления уже используется встроенный интерфейс **Zashboard**, что делает дополнительные UI избыточными.
+
+💡 Для упрощения настройки доступен [плагин синхронизации](https://github.com/jinndi/sync-profile-to-skeen), позволяющий импортировать профили через [GUI.for.SingBox](https://github.com/jinndi/sync-profile-to-skeen)
+
+### 🚀 Особенности
+
+  - Режимы TProxy/Redirect/Hybrid ✓
+  - Поддержка IPv4 и IPv6 ✓
+  - Работающий модуль Sing-box DNS ✓
+  - Работающий Sing-box fakeip ✓
+  - Настроенный Zashboard через Clash API ✓
+  - Оптимизация сетевых настроек ✓
+  - Режим «только фаервол» (Firewall-only) ✓
+  - Команды работающие через WEB CLI роутера ✓
+
+### 📋 Требования
+
+  - Установленный и настроенный Entware **не во внутренней памяти** устройства
+  - Установленный компонент «Модули ядра подсистемы Netfilter»
+  - Установленный `curl` (`opkg install curl`)
+  - Рекомендуется: минимум 256 МБ ОЗУ и процессор ARM для раскрытия полного потенциала
+
+### 💾 Установка
+
+**Выполните из среды Entware из SSH:**
+
+```bash
+curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
+```
+
+Перед началом установки вам будет предложено выбрать: установить полную версию с sing-box или использовать SKeen только в качестве фаервола.
+
+После установки (если выбран полный режим) настройте JSON-файлы конфигурации sing-box, расположенные в директории `/opt/etc/skeen/config/`, где уже подготовлены примеры файлов.
+
+Настройки самого SKeen находятся в файле `/opt/etc/skeen/skeen.json`.
+
+Директория `/opt/etc/skeen` не удаляется при деинсталляции программы (ее нужно удалить вручную при необходимости) и не перезаписывается при переустановке, если она уже существует.
+
+Также при выборе полной установки панель Zashboard по умолчанию настроена через Clash API и доступна по IP-адресу роутера (обычно 192.168.1.1) по адресу `http://192.168.1.1:9090`.
+
+Для дальнейшего управления пакетом используйте команду `skeen`.
+
+Структура файлов и папок после успешной установки:
+
+```
+/opt/
+├── bin/
+│   ├── skeen              # Скрипт управления SKeen
+│   └── skeen-box          # Бинарный файл sing-box (при полной установке)
+├── etc/
+│   ├── init.d/
+│   │   └── S99SKeen       # Скрипт автозапуска
+│   ├── ndm/
+│   │   └── netfilter.d/
+│   │       └── skeen_firewall.sh  # Создается при запуске
+│   └── skeen/
+│       ├── skeen.json     # Конфигурация SKeen
+│       └── config/        # Директория конфигов sing-box (при полной установке)
+│           ├── log.json
+│           ├── dns.json
+│           ├── inbounds.json
+│           ├── outbounds.json
+│           ├── route.json
+│           └── experimental.json
+└── tmp/
+    └── (временные файлы загрузки)
+```
+
+### ⚡ Команды
+
+Пример использования через SSH: запуск демона `skeen start`.
+
+При использовании Web CLI роутера добавляйте `exec` перед командой. Например: `exec skeen reload`.
+
+Команда `skeen` без параметров запускает меню управления в SSH. Используйте `help` для справки.
+
+| Команда | WEB CLI | Описание |
+| :--- | :---: | :--- |
+| `start` | ✓ | Запускает Sing-box. Проверяет конфигурацию и не запустится повторно, если процесс уже запущен |
+| `stop` | ✓ | Останавливает Sing-box. Если процесс не найден, сообщает, что демон уже остановлен |
+| `restart` | ✓ | Останавливает и снова запускает Sing-box (полный цикл с переинициализацией iptables) |
+| `reload` | ✓ | Перезагружает sing-box (полный перезапуск, не «горячий») без изменения правил iptables |
+| `kill` | ✓ | Принудительно завершает процесс Sing-box (`kill -9`) и очищает правила iptables |
+| `status` | ✓ | Показывает текущий статус процесса Sing-box и прочие сведения |
+| `version` | ✓ | Отображает текущие версии  SKeen и Sing-box |
+| `update` | - | Проверяет наличие обновлений ядра Sing-box и скрипта SKeen, позволяет выполнить обновление |
+| `test` | ✓ | Проверяет корректность применения правил iptables для текущего режима (требуется запущенный Sing-box и любой режим, кроме `none`) |
+| `deps` | ✓ | Проверяет наличие всех зависимостей и устанавливает недостающие |
+| `check` | ✓ | Проверяет текущую конфигурацию Sing-box на синтаксические и логические ошибки + валидность `skeen.json` |
+| `format` | ✓ | Форматирует текущую конфигурацию Sing-box без изменения её поведения |
+| `backup` | ✓ | Создает резервную копию (архив) директории `/opt/etc/skeen` в корне `/opt` |
+| `backups` | ✓ | Показывает все созданные резервные копии в папке `/opt` |
+| `restore`¹ | ✓ | Восстанавливает бэкап директории `/opt/etc/skeen` из архива в папке `/opt` |
+| `reset` | - | Сбрасывает директорию `/opt/etc/skeen` до состояния по умолчанию, предварительно создав бэкап |
+| `sync`² | ✓ | Синхронизирует конфигурацию Sing-box по адресу, указанному в секции `sing_config` файла `skeen.json` |
+
+1 — в качестве второго параметра можно передать имя архива с расширением `.tar` для немедленного запуска восстановления
+
+2 — принимает URL JSON-конфигурации Sing-box в качестве второго параметра (HTTP или HTTPS)
+
+| Менеджер OpkgTun (KeeneticOS v5+, только через SSH) |
+| :--- |
+| `skeen tun create <ipv4> <name>` — Создать интерфейс с указанным IP и именем |
+| `skeen tun delete <name>` — Удалить интерфейс с указанным именем |
+| `skeen tun list` — Показать все интерфейсы OpkgTun в системе |
+
+### ⚙️ Настройки
+
+> [!NOTE]
+> После внесения изменений в файл требуется перезапуск через `skeen restart` или через меню
+
+Файл `/opt/etc/skeen/skeen.json` содержит следующие настройки:
+
+```json
+{
+  "auto_start": {
+    "enable": 1,       // Автозапуск SKeen при загрузке роутера (0 = выключено)
+    "delay": 0         // Задержка автозапуска в секундах (по умолчанию: 0)
+  },
+  "policy": {
+    "enable": 1,       // Включить маршрутизацию на основе политики (0 = выключено)
+    "name": "SKeen"    // Имя политики роутера (по умолчанию: "SKeen")
+  },
+  "network": {
+    "ipv6": 1,         // Включить поддержку IPv6 (0 = выключено)
+    "tuning": 0,       // Включить оптимизацию сети через sysctl (1 = вкл).
+                       // Если выключено, настройки sysctl сбросятся после перезагрузки.
+    "check": [
+      "1.1.1.1",
+      "77.88.8.8",
+      "223.5.5.5"
+    ]                  // Домены или IPv4 для проверки доступности сети (макс. 3)
+  },
+  "sing_config": {
+    "enable": 0,       // Если 1, будет использоваться один файл конфига
+                       // по адресу /opt/etc/skeen/config.json вместо папки /opt/etc/skeen/config/
+    "path": ""         // Можно указать свой собственный полный путь
+  },
+  "firewall": {
+    "only": {
+      "enable": 0,         // Включить режим «только фаервол» (1 = вкл)
+      "process_name": "",  // Имя процесса или путь к бинарнику, слушающему порты TProxy/Redirect
+      "redirect_port": "", // Порт Redirect для TCP трафика
+      "tproxy_port": "",   // Порт TProxy для UDP трафика, если 'redirect_port' задан,
+                           // иначе и TCP, и UDP пойдут целиком через TProxy
+      "opkgtun_use": 0     // Используется ли конфигурация opkgtun (1 = вкл)
+    },
+    "intercept": {
+      "dns": 1,        // Перехватывать DNS-запросы через режимы TProxy/Hybrid (0 = выкл)
+      "port": []       // Порты для перехвата (все, если пусто).
+                       // Пример: [ 80, 443, "1000:2000", "1500:5555" ]
+    },
+    "exclude": {
+      "port": [
+        123, 137,
+        138, 139,
+        445            // Порты, исключенные из редиректа
+                       // (игнорируется, если задан `intercept.port`)
+      ],
+      "ipv4_cidr": [], // Исключенные подсети IPv4 из редиректа
+                       // Пример: [ "192.87.1.0/24", "192.12.1.1" ]
+      "ipv6_cidr": []  // Исключенные подсети IPv6 из редиректа
+                       // Пример: [ "2001:db8::/32", "2001:db8::1" ]
+    }
+  }
+}
+```
+
+### 🔗 Полезные ссылки
+
+  - Плагин синхронизации: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
+  - Различные примеры настроек: [https://proxy-tutorials.dustinwin.us.kg](https://proxy-tutorials.dustinwin.us.kg)
+  - Генератор outbounds: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
+  - Наборы правил Karing: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)

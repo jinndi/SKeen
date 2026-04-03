@@ -16,6 +16,8 @@ Keenetic/Netcraze TProxy & Redirect with sing-box + Firewall-only mode
 <a href="https://deepwiki.com/jinndi/SKeen"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
+🇺🇸 **English** | [🇷🇺 На русском](README-RU.md)
+
 ### 🌟 Why sing-box?
 
 **sing-box** is a standalone proxy engine optimized for embedded devices. It is lightweight, runs reliably on ARM/MIPS, and supports advanced DNS routing and router-mode configurations.
@@ -33,7 +35,7 @@ Keenetic/Netcraze TProxy & Redirect with sing-box + Firewall-only mode
 
 Doesn’t include a separate configuration Web UI. The built-in **Zashboard** interface is already used for management, making additional UIs unnecessary.
 
-💡 To simplify configuration, a sync plugin is available to import profiles via GUI.for.SingBox: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
+💡 To simplify configuration, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available to import profiles via [GUI.for.SingBox](https://github.com/jinndi/sync-profile-to-skeen)
 
 ### 🚀 Features
 - TProxy/Redirect/Hybrid modes ✓
@@ -43,6 +45,7 @@ Doesn’t include a separate configuration Web UI. The built-in **Zashboard** in
 - Zashboard via Clash API configured ✓
 - Network settings optimization ✓
 - Firewall-only mode ✓
+- Commands working via the router's Web CLI ✓
 
 ### 📋 Requirements
 - Entware installed and configured on **non-internal memory**
