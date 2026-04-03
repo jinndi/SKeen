@@ -60,6 +60,12 @@
       "udp_timeout": "3m0s",
       "udp_fragment": true,
       "network": "udp"
+    },
+    {
+      "type": "socks",
+      "tag": "service-in",
+      "listen": "::",
+      "listen_port": 1080
     }
   ],
   "outbounds": [

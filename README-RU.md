@@ -183,7 +183,7 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
   },
   "service_proxy": {
     "enable": 0,       // Если 1, используется локальный прокси для команд update и sync
-    "port": ""         // Порт локального прокси без аутентификации (например, SOCKS5 или mixed)
+    "port": ""         // Порт локального прокси без аутентификации (SOCKS5 или mixed)
   },
   "firewall": {
     "only": {
