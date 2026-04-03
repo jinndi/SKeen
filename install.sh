@@ -391,6 +391,8 @@ install_dependencies() {
 
   opkg update >/dev/null 2>&1
 
+  pkg_list="$(opkg list | awk '{print $1}')"
+
   for pkg_name in $DEPENDENCIES; do
     printf "[%s] " "$pkg_name" >&2
 
@@ -399,7 +401,7 @@ install_dependencies() {
       continue
     fi
 
-    if opkg list | awk '{print $1}' | grep -qx "$pkg_name"; then
+    if printf '%s\n' "$pkg_list" | grep -qx "$pkg_name"; then
       if opkg install "$pkg_name" >/dev/null 2>&1; then
         echook "Installed"
       else
