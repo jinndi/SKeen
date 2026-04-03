@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.4.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.3.2...SKeen-v4.4.0) (2026-04-03)
+
+
+### 🚀 Feat
+
+* add support for a local proxy for update and sync commands ([5f05adf](https://github.com/jinndi/SKeen/commit/5f05adf9c596a660c1fab52170a565a9062db65c))
+
+
+### ⚡ Perf
+
+* optimize opkg list execution in install_dependencies ([b63caa1](https://github.com/jinndi/SKeen/commit/b63caa1b4450cc492edef7a84e717338f89219d7))
+
 ## [4.3.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.3.1...SKeen-v4.3.2) (2026-04-02)
 
 
