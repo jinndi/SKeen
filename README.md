@@ -180,6 +180,10 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // instead of the default folder /opt/etc/skeen/config
     "path": ""         // You can specify your own path (full path)
   },
+  "service_proxy": {
+    "enable": 0,       // Enable using a local proxy for update and sync commands
+    "port": ""         // Local proxy port (no authentication required, e.g., SOCKS5 or mixed)
+  },
   "firewall": {
     "only": {
       "enable": 0,         // Enable Firewall-only mode (1 = on)

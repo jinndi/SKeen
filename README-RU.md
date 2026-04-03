@@ -177,9 +177,13 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
     ]                  // Домены или IPv4 для проверки доступности сети (макс. 3)
   },
   "sing_config": {
-    "enable": 0,       // Если 1, будет использоваться один файл конфига
+    "enable": 0,       // Если 1, будет использоваться один файл конфига Sing-box
                        // по адресу /opt/etc/skeen/config.json вместо папки /opt/etc/skeen/config/
     "path": ""         // Можно указать свой собственный полный путь
+  },
+  "service_proxy": {
+    "enable": 0,       // Если 1, используется локальный прокси для команд update и sync
+    "port": ""         // Порт локального прокси без аутентификации (например, SOCKS5 или mixed)
   },
   "firewall": {
     "only": {

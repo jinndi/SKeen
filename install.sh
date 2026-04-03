@@ -104,8 +104,6 @@ ff00::/8           # Multicast (RFC 4291)
 
 DELIMETER="------------------------------------------------"
 
-is_tty() { [ -t 1 ] || [ -t 2 ]; }
-
 setup_traps() {
   cleanup() {
     if is_tty; then
@@ -117,6 +115,25 @@ setup_traps() {
 }
 
 setup_traps
+
+is_tty() { [ -t 1 ] || [ -t 2 ]; }
+
+cyan()  { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+red()   { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+yellow(){ is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+
+echomsg()  { cyan "[INFO]: $1"; }
+echook()   { green "[OK]: $1"; }
+echowarn() { yellow "[WARN]: $1"; }
+echoerr()  { red "[ERROR]: $1"; }
+exiterr()  { red "[FATAL]: $1"; exit 1; }
+
+check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
+
+logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
+logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
+logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
 
 create_skeen_config(){
@@ -144,6 +161,10 @@ create_skeen_config(){
   "sing_config":{
     "enable": 0,
     "path": ""
+  },
+  "service_proxy": {
+    "enable": 0,
+    "port": ""
   },
   "firewall": {
     "only": {
@@ -183,14 +204,16 @@ json_get_array() {
   jsonfilter -i "$SKEEN_CONFIG" -e "$path" | tr -d '[],"'
 }
 
+
 rci() {
   curl -kfsS "${RCI}/${1:-}" 2>/dev/null || echo ""
 }
 
+
 loading_config(){
   if [ ! -f "$SKEEN_CONFIG" ]; then
     create_skeen_config
-    echowarn "Configuration file 'skeen.json' not found, a new one has been created"
+    is_tty && echowarn "Configuration file 'skeen.json' not found, a new one has been created"
   fi
 
   eval "$(jsonfilter -i "$SKEEN_CONFIG" \
@@ -202,6 +225,8 @@ loading_config(){
     -e NETWORK_TUNING='@.network.tuning' \
     -e SING_CONFIG_ENABLE='@.sing_config.enable' \
     -e SING_CONFIG_PATH='@.sing_config.path' \
+    -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
+    -e SERVICE_PROXY_PORT='@.service_proxy.port' \
     -e FIREWALL_ONLY_ENABLE='@.firewall.only.enable' \
     -e FIREWALL_ONLY_PROCESS_NAME='@.firewall.only.process_name' \
     -e FIREWALL_ONLY_OPKGTUN_USE='@.firewall.only.opkgtun_use' \
@@ -218,6 +243,8 @@ loading_config(){
   : "${NETWORK_TUNING:=0}"
   : "${SING_CONFIG_ENABLE:=0}"
   : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
+  : "${SERVICE_PROXY_ENABLE:=0}"
+  : "${SERVICE_PROXY_PORT:=}"
   : "${FIREWALL_ONLY_ENABLE:=0}"
   : "${FIREWALL_ONLY_PROCESS_NAME:=}"
   : "${FIREWALL_ONLY_OPKGTUN_USE:=0}"
@@ -234,6 +261,7 @@ loading_config(){
   fi
 }
 
+
 is_fw_only(){
   [ "$CALLER" != "menu" ] && \
   FIREWALL_ONLY_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall.only.enable')"
@@ -244,22 +272,24 @@ is_fw_only(){
   fi
 }
 
-cyan()  { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-red()   { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-yellow(){ is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 
-echomsg()  { cyan "[INFO]: $1"; }
-echook()   { green "[OK]: $1"; }
-echowarn() { yellow "[WARN]: $1"; }
-echoerr()  { red "[ERROR]: $1"; }
-exiterr()  { red "[FATAL]: $1"; exit 1; }
+load_proxy_options(){
+  [ "$CALLER" != "menu" ] && loading_config
 
-check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
-
-logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
-logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
-logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
+  CURL_PROXY_OPTIONS=""
+  if [ "$SERVICE_PROXY_ENABLE" = "1" ]; then
+    err_template="Service proxy is enabled but"
+    if [ -z "$SERVICE_PROXY_PORT" ]; then
+      exiterr "$err_template 'service_proxy.port' is not set"
+    elif ! is_running; then
+      exiterr "$err_template $SINGBOX_NAME is not running"
+    elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
+      exiterr "$err_template no process is listening on port ${SERVICE_PROXY_PORT}"
+    else
+      CURL_PROXY_OPTIONS="--socks5 127.0.0.1:${SERVICE_PROXY_PORT}"
+    fi
+  fi
+}
 
 
 get_current_version() {
@@ -280,7 +310,8 @@ get_current_version() {
 get_latest_version() {
   api_url="${1:-}"
 
-  latest_release="$(curl --connect-timeout 5 --max-time 90 -s "$api_url")"
+  # shellcheck disable=SC2086
+  latest_release="$(curl $CURL_PROXY_OPTIONS --connect-timeout 5 --max-time 90 -s "$api_url")"
   # shellcheck disable=SC2181
   [ $? -ne 0 ] && return 1
 
@@ -435,7 +466,8 @@ download_singbox(){
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR" || exit 1
 
-  if curl --fail --connect-timeout 5 --max-time 720 -Lo "$PKG_NAME" "$pkg_url"; then
+  # shellcheck disable=SC2086
+  if curl $CURL_PROXY_OPTIONS --fail --connect-timeout 5 --max-time 720 -Lo "$PKG_NAME" "$pkg_url"; then
     echook "Downloaded $PKG_NAME successfully"
   else
     echoerr "Failed to download $PKG_NAME"
@@ -570,7 +602,8 @@ download_skeen_script(){
 
   [ -f "$SKEEN_SCRIPT" ] && mv "$SKEEN_SCRIPT" "$backup_script"
 
-  if ! curl --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
+  # shellcheck disable=SC2086
+  if ! curl $CURL_PROXY_OPTIONS --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
     rm -f "$SKEEN_SCRIPT"
     [ -f "$backup_script" ] && mv "$backup_script" "$SKEEN_SCRIPT"
     echoerr "Failed to download $SKEEN_NAME script"
@@ -2148,16 +2181,16 @@ status(){
 
 
 update_core(){
-  if is_running; then stop || exit 1; fi
   get_os_release; get_architecture
   download_singbox "$latest" || return 1
+  if is_running; then stop || exit 1; fi
   install_singbox; create_singbox_config
   echook "$SINGBOX_NAME core has been successfully updated"
 }
 
 
 update_skeen(){
-  if is_running; then stop || exit 1; fi
+  if is_running && [ -z "$CURL_PROXY_OPTIONS" ]; then stop || exit 1; fi
   if download_skeen_script "update"; then
     echook "$SKEEN_NAME has been successfully updated"
     is_update_skeen=1
@@ -2205,6 +2238,8 @@ ask_and_update() {
 
 check_updates() {
   is_update_skeen=0
+
+  load_proxy_options
 
   # sing-box
   if ! is_fw_only; then
@@ -2517,10 +2552,11 @@ sync_config(){
   if [ -z "$address" ]; then
     echoerr "No address provided for configuration sync" && return 1
   fi
-  if ! command -v curl >/dev/null 2>&1; then
-    echoerr "curl is not installed, cannot sync configuration" && return 1
-  fi
-  if ! curl -fsL "$address" -o "$config_tmp"; then
+
+  load_proxy_options
+
+  # shellcheck disable=SC2086
+  if ! curl $PROXY_OPTIONS -fsL "$address" -o "$config_tmp"; then
     echoerr "Failed to download configuration from $address" && return 1
   fi
 
