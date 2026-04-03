@@ -144,7 +144,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 The file `/opt/etc/skeen/skeen.json` has the following settings:
 
-```
+```json
 {
   "auto_start": {
     "enable": 1,       // SKeen autostart on router reboot (0 = disabled)
