@@ -20,16 +20,26 @@ Keenetic/Netcraze TProxy & Redirect with sing-box + Firewall-only mode
 
 ### 🌟 Why sing-box?
 
-**sing-box** is a standalone proxy engine optimized for embedded devices. It is lightweight, runs reliably on ARM/MIPS, and supports advanced DNS routing and router-mode configurations.
+**sing-box** is an open-source universal proxy engine written in Go. It is focused on maximum performance, low resource consumption, and support for the most modern protocols
 
-**Advantages compared to others:**
+**Comparison: Proxy Engines for Routers & Embedded**
 
-| Feature                  | sing-box | Xray              | mihomo            |
-| ------------------------ | -------- | ----------------- | ----------------- |
-| Lightweight / Low RAM    | ✅        | ⚠                 | ⚠                 |
-| Advanced DNS & routing   | ✅        | ⚠                 | ⚠                 |
-| Router/embedded friendly | ✅        | ⚠                 | ⚠                 |
-| Standalone project       | ✅        | ❌ (fork of V2Ray) | ❌ (fork of Clash) |
+|Feature                 |sing-box         |Xray              |mihomo          |
+|------------------------|-----------------|------------------|----------------|
+|Resource Usage (RAM/CPU)|✅ Minimal        |⚠️ Moderate       |❌ High          |
+|Protocol Support        |✅ Advanced       |⚠️ Limited        |✅ Extensive     |
+|Multiplexing            |✅ Superior       |⚠️ Legacy         |✅ Good          |
+|DNS Logic               |🥇 Native (+Fake-IP)|🥉 Sniffing (+FakeDNS)|🥈 Fake-IP (+Real)|
+|Routing                 |✅ Flexible       |⚠️ Basic          |✅ (but heavier) |
+|Rule Management         |✅ Rule-sets (bin)|⚠️ Geo-files (dat)|✅ Rule-providers|
+|Independent Project     |✅ Yes            |❌ (V2Ray fork)    |❌ (Clash fork)  |
+|Learning Curve          |🔴 High          |🟡 Moderate       |🟢 Low          |
+
+Notes:
+
+> sing-box excels due to its modularity and clean-slate architecture: its DNS stack enables complex configurations with minimal RAM overhead. In contrast, mihomo (Clash) prioritizes automation at the cost of high resource usage, while Xray is hindered by legacy networking code and heavy .dat geo-files.
+
+> The high learning curve of sing-box stems from its strict JSON schema and lack of "magic" defaults. This is a trade-off for granular control and peak performance on low-end hardware.
 
 ### ❌ No Web UI
 
