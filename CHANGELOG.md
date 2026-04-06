@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.4.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.1...SKeen-v4.4.2) (2026-04-06)
+
+
+### 🛠 Refactor
+
+* refactor module loader ([3a56460](https://github.com/jinndi/SKeen/commit/3a564608387762a1d63140669b9614b13df848a4))
+* simplify config sync path handling ([f4245e7](https://github.com/jinndi/SKeen/commit/f4245e7ab30ad1c2572e04707c319f6f228ad648))
+
+
+### ↩️ Revert
+
+* remove lock file handling ([8d5b555](https://github.com/jinndi/SKeen/commit/8d5b555c76a3c36929e7aa449a0482ff67b8eae1))
+
 ## [4.4.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.0...SKeen-v4.4.1) (2026-04-06)
 
 
