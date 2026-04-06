@@ -36,6 +36,7 @@ SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen
 SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
+SKEEN_LOCK_FILE="${ENTWARE_DIR}/var/run/${SKEEN_PROC}.lock"
 
 SINGBOX_NAME="Sing-box"
 SINGBOX_PROC="skeen-box"
@@ -104,18 +105,6 @@ ff00::/8           # Multicast (RFC 4291)
 
 DELIMETER="------------------------------------------------"
 
-setup_traps() {
-  cleanup() {
-    if is_tty; then
-      stty sane < /dev/tty 2>/dev/null || true
-    fi
-  }
-  trap cleanup EXIT TERM
-  trap 'printf "\n"; cleanup; exit 130' INT
-}
-
-setup_traps
-
 is_tty() { [ -t 1 ] || [ -t 2 ]; }
 
 cyan()  { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
@@ -135,6 +124,21 @@ logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
 logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
+if [ "$CALLER" = "netfilter" ] && [ -f "$SKEEN_LOCK_FILE" ]; then
+  old_pid=$(cat "$SKEEN_LOCK_FILE" 2>/dev/null)
+  if [ -n "$old_pid" ] && ! kill -0 "$old_pid" 2>/dev/null; then
+    rm -f "$SKEEN_LOCK_FILE"
+  else
+    echoerr "$SKEEN_NAME is already running (PID: $old_pid)"; exit 0;
+  fi
+elif [ "$CALLER" = "netfilter" ]; then
+  echo $$ > "$SKEEN_LOCK_FILE"
+  trap 'rm -f "$SKEEN_LOCK_FILE"' EXIT
+elif is_tty; then
+  cleanup() { stty sane < /dev/tty 2>/dev/null || true; }
+  trap cleanup EXIT TERM
+  trap 'printf "\n"; cleanup; exit 130' INT
+fi
 
 create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
@@ -2748,7 +2752,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
         *) show_help | awk '/OpkgTun / {flag=1} flag' ;;
       esac
     ;;
-    apply_firewall) apply_firewall ;;
+    apply_firewall) [ "$CALLER" = "netfilter" ] && apply_firewall ;;
     "") show_menu ;;
     help|*) show_help ;;
   esac
