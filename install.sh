@@ -36,7 +36,6 @@ SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen
 SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
-SKEEN_LOCK_FILE="${ENTWARE_DIR}/var/run/${SKEEN_PROC}.lock"
 
 SINGBOX_NAME="Sing-box"
 SINGBOX_PROC="skeen-box"
@@ -124,17 +123,7 @@ logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
 logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
-if [ "$CALLER" = "netfilter" ] && [ -f "$SKEEN_LOCK_FILE" ]; then
-  old_pid=$(cat "$SKEEN_LOCK_FILE" 2>/dev/null)
-  if [ -n "$old_pid" ] && ! kill -0 "$old_pid" 2>/dev/null; then
-    rm -f "$SKEEN_LOCK_FILE"
-  else
-    echoerr "$SKEEN_NAME is already running (PID: $old_pid)"; exit 0;
-  fi
-elif [ "$CALLER" = "netfilter" ]; then
-  echo $$ > "$SKEEN_LOCK_FILE"
-  trap 'rm -f "$SKEEN_LOCK_FILE"' EXIT
-elif is_tty; then
+if is_tty; then
   cleanup() { stty sane < /dev/tty 2>/dev/null || true; }
   trap cleanup EXIT TERM
   trap 'printf "\n"; cleanup; exit 130' INT
