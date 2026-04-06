@@ -875,7 +875,7 @@ has_dns_servers() {
     if jsonfilter -i "$SING_CONFIG_PATH" -e '@.dns.servers[0]' >/dev/null 2>&1; then
       return 0
     fi
-  elif [ -d "CONFIG_DIR" ]; then
+  elif [ -d "$CONFIG_DIR" ]; then
     for file in "$CONFIG_DIR"/*.json; do
       [ -f "$file" ] || continue
       if jsonfilter -i "$file" -e '@.dns.servers[0]' >/dev/null 2>&1; then
