@@ -25,7 +25,7 @@ WORK_DIR="${ENTWARE_DIR}/etc/skeen"
 CONFIG_DIR="${WORK_DIR}/config"
 TMP_DIR="${ENTWARE_DIR}/tmp"
 NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
-MODULES_OS_DIR="/lib/modules/$(uname -r)"
+MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
@@ -948,37 +948,18 @@ load_module() {
 
 
 loading_modules() {
-  modules="xt_TPROXY.ko xt_multiport.ko"
+  MODULES_OS_DIR="${MODULES_OS_DIR}/$(uname -r)"
+  modules="xt_TPROXY.ko xt_multiport.ko xt_owner.ko"
+  err_msg="Please install router component: «Kernel modules for Netfilter»"
 
-  case "$SKEEN_FIREWALL_MODE" in
-    tproxy|hybrid)
-      echomsg "Loading modules: xt_TPROXY.ko"
-    ;;
-  esac
-
-  if [ -n "$INTERCEPT_PORTS" ] || [ -n "$EXCLUDE_PORTS" ]; then
-    echomsg "Loading modules: xt_multiport.ko"
-  fi
-
-  if [ "$SKEEN_DNS_ENABLED" = "1" ] && ! is_owner_module_working; then
-    echomsg "Loading modules: xt_owner.ko"
-    load_module "xt_owner.ko"
-
-    if ! is_owner_module_working; then
-      SKEEN_DNS_ENABLED=0
-      echowarn "iptables owner module is not working"
-      echowarn "$SINGBOX_NAME DNS functionality will be disabled"
-    fi
-  fi
-
-  modules="$(echo "$modules" | tr ' ' '\n' | sort -u)"
+  echomsg "Checking and loading modules..."
 
   for module in $modules; do
+    if [ "$module" = "xt_owner.ko" ] && is_owner_module_working; then
+      continue
+    fi
     if ! load_module "$module"; then
-      echoerr "The '$SKEEN_FIREWALL_MODE' mode requires kernel modules"
-      echoerr "Install router component: Kernel modules for Netfilter"
-      logger_error "Missing Kernel modules for Netfilter"
-      press_any_key_to_menu "" 1
+      echoerr "$err_msg"; logger_error "$err_msg"; press_any_key_to_menu "" 1
     fi
   done
 
@@ -1620,9 +1601,9 @@ prepare_firewall(){
     SKEEN_FIREWALL_NETWORK="tcp udp"
   fi
 
-  loading_modules
-
   echomsg "Detected firewall networks: $SKEEN_FIREWALL_NETWORK"
+
+  loading_modules
 
   SKEEN_MARK_POLICY="$(get_mark_policy)"
 
