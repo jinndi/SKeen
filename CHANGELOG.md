@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.4.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.0...SKeen-v4.4.1) (2026-04-06)
+
+
+### 🐛 Fix
+
+* avoid duplicate netfilter runs via lock file ([09b9e96](https://github.com/jinndi/SKeen/commit/09b9e96ed048ed1da8afc0b79410559d6e96c252))
+* previously referenced the literal string “CONFIG_DIR” instead of the $CONFIG_DIR variable ([ee0fcf8](https://github.com/jinndi/SKeen/commit/ee0fcf8fe4d4e6f6be5d7f66a205a12d3fa31eef))
+
 ## [4.4.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.3.2...SKeen-v4.4.0) (2026-04-03)
 
 
