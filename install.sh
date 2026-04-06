@@ -2541,13 +2541,12 @@ sync_config(){
   fi
 
   get_sing_args_config
-  config_sync="$SING_CONFIG_PATH"
 
   if [ "$SING_CONFIG_ENABLE" != "1" ]; then
     echowarn "Set the parameter sing_config.enable to 1 in the skeen.json file"
   fi
 
-  rm -f "$config_sync"; mv "$config_tmp" "$config_sync"
+  rm -f "$SING_CONFIG_PATH"; mv "$config_tmp" "$SING_CONFIG_PATH"
   echook "Configuration synced successfully, then restart SKeen to apply the changes"
 }
 
