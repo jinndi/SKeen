@@ -115,6 +115,8 @@ Example Usage from SSH: start the daemon `skeen start`
 
 When using the router’s Web CLI, add `exec` before the command. For example: `exec skeen reload`
 
+> The output in the WEB CLI is limited to 8 lines and a certain execution time, but this does not affect the correct execution of commands
+
 `skeen` without parameters launches the management menu from SSH, use `help` for help
 
 | Command | WEB CLI | Description |
