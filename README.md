@@ -183,8 +183,10 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "path": ""         // You can specify your own path (full path)
   },
   "service_proxy": {
-    "enable": 0,       // Enable using a local proxy for update and sync commands
-    "port": ""         // Local proxy port (no authentication required, e.g., SOCKS5 or mixed)
+    "enable": 0,       // Enable using a local proxy (127.0.0.1) for update and sync commands
+    "port": "",        // Local proxy port (e.g., SOCKS5 or mixed)
+    "user": "",        // Username for connection (optional)
+    "pass": ""         // Password for connection (required if user is specified)
   },
   "firewall": {
     "only": {

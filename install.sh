@@ -157,7 +157,9 @@ create_skeen_config(){
   },
   "service_proxy": {
     "enable": 0,
-    "port": ""
+    "port": "",
+    "user": "",
+    "pass": ""
   },
   "firewall": {
     "only": {
@@ -220,6 +222,8 @@ loading_config(){
     -e SING_CONFIG_PATH='@.sing_config.path' \
     -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
     -e SERVICE_PROXY_PORT='@.service_proxy.port' \
+    -e SERVICE_PROXY_USER='@.service_proxy.user' \
+    -e SERVICE_PROXY_PASS='@.service_proxy.pass' \
     -e FIREWALL_ONLY_ENABLE='@.firewall.only.enable' \
     -e FIREWALL_ONLY_PROCESS_NAME='@.firewall.only.process_name' \
     -e FIREWALL_ONLY_OPKGTUN_USE='@.firewall.only.opkgtun_use' \
@@ -238,6 +242,8 @@ loading_config(){
   : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
   : "${SERVICE_PROXY_ENABLE:=0}"
   : "${SERVICE_PROXY_PORT:=}"
+  : "${SERVICE_PROXY_USER:=}"
+  : "${SERVICE_PROXY_PASS:=}"
   : "${FIREWALL_ONLY_ENABLE:=0}"
   : "${FIREWALL_ONLY_PROCESS_NAME:=}"
   : "${FIREWALL_ONLY_OPKGTUN_USE:=0}"
@@ -279,7 +285,10 @@ load_proxy_options(){
     elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
       exiterr "$err_template no process is listening on port ${SERVICE_PROXY_PORT}"
     else
-      CURL_PROXY_OPTIONS="--socks5 127.0.0.1:${SERVICE_PROXY_PORT}"
+      CURL_PROXY_OPTIONS="--socks5-hostname 127.0.0.1:${SERVICE_PROXY_PORT}"
+      if [ -n "$SERVICE_PROXY_USER" ] && [ -n "$SERVICE_PROXY_PASS" ]; then
+        CURL_PROXY_OPTIONS="${CURL_PROXY_OPTIONS} --proxy-user ${SERVICE_PROXY_USER}:${SERVICE_PROXY_PASS}"
+      fi
     fi
   fi
 }
