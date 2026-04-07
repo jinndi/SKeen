@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.4.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.2...SKeen-v4.4.3) (2026-04-07)
+
+
+### 🧰 Chore
+
+* add optional `sync_url` for `sing_config` remote sync ([d798a11](https://github.com/jinndi/SKeen/commit/d798a1173b4b2abd869701f7db60d95a91df7d4e))
+* Added `user` and `pass` fields to `service_proxy` for proxy auth, updated ([0326680](https://github.com/jinndi/SKeen/commit/0326680b2c5325f1773fc2d1d65eaed752290b19))
+
 ## [4.4.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.1...SKeen-v4.4.2) (2026-04-06)
 
 
