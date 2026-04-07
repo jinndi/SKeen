@@ -141,7 +141,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 1 - archive name can be passed as the second parameter with a .tar extension to immediately start the backup restore process
 
-2 - accepts the URL of the Sing-box JSON configuration as the second parameter (HTTP or HTTPS)
+2 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
 
 | OpkgTun manager (KeeneticOS v5+, only from SSH) |
 | -------------------------------------------------------------------------- |
@@ -180,7 +180,9 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "enable": 0,       // If set to 1, a single sing-box configuration file
                        // located at /opt/etc/skeen/config.json will be used
                        // instead of the default folder /opt/etc/skeen/config
-    "path": ""         // You can specify your own path (full path)
+    "path": "",        // You can specify your own path (full path)
+    "sync_url": "",    // URL (http:// or https://) from which the configuration will be synced
+                       // using the `skeen sync` command by default (optional)
   },
   "service_proxy": {
     "enable": 0,       // Enable using a local proxy (127.0.0.1) for update and sync commands

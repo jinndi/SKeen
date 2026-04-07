@@ -153,7 +153,8 @@ create_skeen_config(){
   },
   "sing_config":{
     "enable": 0,
-    "path": ""
+    "path": "",
+    "sync_url": ""
   },
   "service_proxy": {
     "enable": 0,
@@ -220,6 +221,7 @@ loading_config(){
     -e NETWORK_TUNING='@.network.tuning' \
     -e SING_CONFIG_ENABLE='@.sing_config.enable' \
     -e SING_CONFIG_PATH='@.sing_config.path' \
+    -e SING_CONFIG_SYNC_URL='@.sing_config.sync_url' \
     -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
     -e SERVICE_PROXY_PORT='@.service_proxy.port' \
     -e SERVICE_PROXY_USER='@.service_proxy.user' \
@@ -240,6 +242,7 @@ loading_config(){
   : "${NETWORK_TUNING:=0}"
   : "${SING_CONFIG_ENABLE:=0}"
   : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
+  : "${SING_CONFIG_SYNC_URL:=}"
   : "${SERVICE_PROXY_ENABLE:=0}"
   : "${SERVICE_PROXY_PORT:=}"
   : "${SERVICE_PROXY_USER:=}"
@@ -290,6 +293,8 @@ load_proxy_options(){
         CURL_PROXY_OPTIONS="${CURL_PROXY_OPTIONS} --proxy-user ${SERVICE_PROXY_USER}:${SERVICE_PROXY_PASS}"
       fi
     fi
+  else
+    SING_CONFIG_SYNC_URL=""
   fi
 }
 
@@ -2529,17 +2534,19 @@ format_config(){
 
 
 sync_config(){
-  address="${1:-}"
+  load_proxy_options
+
+  address="${1:-$SING_CONFIG_SYNC_URL}"
   config_tmp="${TMP_DIR}/sing_config_tmp.json"
 
   if [ -z "$address" ]; then
     echoerr "No address provided for configuration sync" && return 1
+  elif ! echo "$address" | grep -qE '^https?://'; then
+    echoerr "URL must start with http:// or https://" && return 1
   fi
 
-  load_proxy_options
-
   # shellcheck disable=SC2086
-  if ! curl $PROXY_OPTIONS -fsL "$address" -o "$config_tmp"; then
+  if ! curl $CURL_PROXY_OPTIONS -fsL "$address" -o "$config_tmp"; then
     echoerr "Failed to download configuration from $address" && return 1
   fi
 
