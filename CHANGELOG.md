@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.3...SKeen-v4.4.4) (2026-04-08)
+
+
+### 🧰 Chore
+
+* **example:** update config with dns hosts and logical routing rules ([9ec0b76](https://github.com/jinndi/SKeen/commit/9ec0b761f77b3483d33f025a2131b6bf48edefe4))
+
 ## [4.4.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.2...SKeen-v4.4.3) (2026-04-07)
 
 
