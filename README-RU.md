@@ -151,6 +151,13 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 | `skeen tun delete <name>` — Удалить интерфейс с указанным именем |
 | `skeen tun list` — Показать все интерфейсы OpkgTun в системе |
 
+
+Если пропал доступ к SSH Entware, выполните в Web CLI:
+
+```
+exec /opt/etc/init.d/S51dropbear start
+```
+
 ### ⚙️ Настройки
 
 > [!NOTE]

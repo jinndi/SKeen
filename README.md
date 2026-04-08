@@ -149,6 +149,13 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 |`skeen tun delete <name>` - Delete interface with the specified name|
 |`skeen tun list` - Shows all OpkgTun interfaces in the system|
 
+
+If access to Entware SSH is lost, run the following command in the Web CLI:
+
+```
+exec /opt/etc/init.d/S51dropbear start
+```
+
 ### ⚙️ Settigs
 
 > [!NOTE]
