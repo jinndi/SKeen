@@ -8,16 +8,30 @@
   "dns": {
     "servers": [
       {
+        "tag": "dns-hosts",
+        "type": "hosts",
+        "predefined": {
+          "one.one.one.one": [
+            "1.1.1.1",
+            "1.0.0.1"
+          ],
+          "common.dot.dns.yandex.net": [
+            "77.88.8.8",
+            "77.88.8.1"
+          ]
+        }
+      },
+      {
         "type": "tls",
         "tag": "dns-proxy",
         "detour": "proxy",
-        "domain_resolver": "dns-resolver",
+        "domain_resolver": "dns-hosts",
         "server": "one.one.one.one"
       },
       {
         "type": "https",
         "tag": "dns-direct",
-        "domain_resolver": "dns-resolver",
+        "domain_resolver": "dns-hosts",
         "server": "common.dot.dns.yandex.net"
       },
       {
@@ -35,8 +49,32 @@
       { "rule_set": "adguard", "action": "reject" },
       { "clash_mode": "Direct", "server": "dns-direct" },
       { "clash_mode": "Global", "server": "dns-proxy" },
+      { "protocol": "bittorrent", "disable_cache": true, "server": "dns-proxy" },
       { "rule_set": "geosite-cheburnet", "server": "dns-direct" },
-      { "query_type": ["A"], "server": "fakeip" }
+      {
+        "action": "route",
+        "type": "logical",
+        "mode": "and",
+        "rules": [
+          {
+            "domain_suffix": [
+              ".lan",
+              ".localdomain",
+              ".example",
+              ".invalid",
+              ".localhost",
+              ".test",
+              ".local",
+              ".home.arpa",
+              ".msftconnecttest.com",
+              ".msftncsi.com"
+            ],
+            "invert": true
+          },
+          { "query_type": ["A"] }
+        ],
+        "server": "fakeip"
+      }
     ],
     "disable_cache": false,
     "disable_expire": false,
@@ -134,7 +172,6 @@
         "rules": [{ "protocol": "dns" }, { "port": 53 }],
         "action": "hijack-dns"
       },
-      { "protocol": "quic", "action": "reject" },
       { "ip_is_private": true, "outbound": "direct" },
       { "clash_mode": "Direct", "outbound": "direct" },
       { "clash_mode": "Global", "outbound": "proxy" },
