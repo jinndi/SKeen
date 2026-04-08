@@ -2225,6 +2225,8 @@ ask_and_update() {
 
 
 check_updates() {
+  check_tty
+
   is_update_skeen=0
 
   load_proxy_options
