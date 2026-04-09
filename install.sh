@@ -274,6 +274,9 @@ is_fw_only(){
   fi
 }
 
+check_fw_only() {
+  is_fw_only && echoerr "Only available when 'firewall.only' is disabled" && exit 1
+}
 
 load_proxy_options(){
   [ "$CALLER" != "menu" ] && loading_config
@@ -2066,7 +2069,7 @@ stop(){
 
 
 kill_proc(){
-  is_fw_only && exiterr "Only available when 'firewall.only' is disabled"
+  check_fw_only
 
   if ! is_running; then
     echook "$SINGBOX_NAME is not running"; return 0
@@ -2442,6 +2445,7 @@ backup_restore(){
 
 config_reset(){
   check_tty
+
   while :; do
     printf "A full configuration reset will be performed,\n"
     printf "with a backup of the current configuration created\n"
@@ -2518,7 +2522,9 @@ check_config(){
 
 
 format_config(){
-  if [ -f "$SINGBOX_BIN" ] && [ -d "$CONFIG_DIR" ]; then
+  check_fw_only
+
+  if [ -f "$SINGBOX_BIN" ]; then
     echomsg "Formatting Sing-box configuration..."
 
     get_sing_args_config

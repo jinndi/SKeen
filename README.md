@@ -119,29 +119,29 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 `skeen` without parameters launches the management menu from SSH, use `help` for help
 
-| Command | WEB CLI | Description |
+| Command | WEB CLI support |  FW Only support | Description |
 | ------------ | ------------ | -------------------------------------------------------------- |
-|`start`|✓|Starts Sing-box. Checks configuration and will not start again if the process is already running|
-|`stop`|✓|Stops Sing-box. If the process is not found, reports that the daemon is already stopped|
-|`restart`|✓|Stops and then starts Sing-box again|
-|`reload`|✓|Reload sing-box (full restart, not a hot reload) without touching firewall rules|
-|`kill`|✓|Forcefully terminates the Sing-box process (`kill -9`)|
-|`status`|✓|Shows the current status of the process Sing-box|
-|`version`|✓|Displays the current application version|
-|`update`|-|Checks for available updates of the sing-box core and the SKeen script, and allows updating|
-|`test`|✓|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
-|`deps`|✓|Check if all dependencies are installed (installs missing ones)|
-|`check`|✓| Checks current Sing-box configuration for syntax and logical errors + `skeen.json` for JSON validity |
-|`format`|✓| Formats current Sing-box configuration without changing its behavior |
-|`backup`|✓|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
-|`backups`|✓|Show all created backup copies in the /opt folder|
-|`restore`¹|✓|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
-|`reset`|-|Resets `/opt/etc/skeen` directory to its default state after performing a `backup` beforehand|
-|`sync`²|✓|Synchronizes the sing-box configuration to the location specified in the `sing_config` section of the `skeen.json` configuration file|
+|`start`|✓|✓|Starts Sing-box. Checks configuration and will not start again if the process is already running|
+|`stop`|✓|✓|Stops Sing-box. If the process is not found, reports that the daemon is already stopped|
+|`restart`|✓|✓|Stops and then starts Sing-box again|
+|`reload`|✓|✓|Reload sing-box (full restart, not a hot reload) without touching firewall rules|
+|`kill`|✓|-|Forcefully terminates the Sing-box process (`kill -9`)|
+|`status`|✓|✓|Shows the current status of the process Sing-box|
+|`version`|✓|✓|Displays the current application version|
+|`update`|-|✓|Checks for available updates of the sing-box core and the SKeen script, and allows updating|
+|`test`|✓|✓|Check whether iptables rules are correctly applied for the current operating mode (requires Sing-box to be running and the mode to be anything except none)|
+|`deps`|✓|✓|Check if all dependencies are installed (installs missing ones)|
+|`check`|✓|✓| Checks current Sing-box configuration (if working without "firewall.only") for syntax and logical errors + `skeen.json` for JSON validity |
+|`format`|✓|-| Formats current Sing-box configuration without changing its behavior |
+|`backup`|✓|✓|Creates a backup (archive) of the `/opt/etc/skeen` directory and places it in the `/opt` root|
+|`backups`|✓|✓|Show all created backup copies in the /opt folder|
+|`restore`¹|✓|✓|Restores a backup of the `/opt/etc/skeen` directory by archive name from the `/opt` directory|
+|`reset`|-|✓|Resets `/opt/etc/skeen` directory to its default state after performing a `backup` beforehand|
+|`sync`²|✓|✓|Synchronizes the sing-box configuration (or another one in `firewall.only` mode) to the location specified in the `sing_config` section of the `skeen.json` configuration file|
 
 1 - archive name can be passed as the second parameter with a .tar extension to immediately start the backup restore process
 
-2 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
+2 - accepts the Sing-box JSON configuration URL (or another one in `firewall.only` mode) as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
 
 | OpkgTun manager (KeeneticOS v5+, only from SSH) |
 | -------------------------------------------------------------------------- |
