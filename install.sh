@@ -1858,11 +1858,11 @@ apply_sysctl_network_tuning(){
         sysctl -w net.ipv6.conf.all.disable_ipv6=0
         sysctl -w net.ipv6.conf.default.disable_ipv6=0
         sysctl -w net.ipv6.conf.lo.disable_ipv6=0
-      fi
 
-      # Forwarding
-      sysctl -w net.ipv6.conf.all.forwarding=1
-      sysctl -w net.ipv6.conf.default.forwarding=1
+        # Forwarding
+        sysctl -w net.ipv6.conf.all.forwarding=1
+        sysctl -w net.ipv6.conf.default.forwarding=1
+      fi
     fi
 
     [ "$NETWORK_TUNING" != "1" ] && return 0
