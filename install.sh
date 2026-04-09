@@ -2124,12 +2124,9 @@ restart() {
 
 
 reload(){
+  check_fw_only
   check_config && echo "$DELIMETER"
-  if ! is_fw_only; then
-    stop_singbox && start_singbox || exit 1
-  else
-    stop && start || exit 1
-  fi
+  stop_singbox && start_singbox || exit 1
 }
 
 proc_uptime(){
@@ -2683,41 +2680,41 @@ show_menu(){
 show_help(){
 cat <<EOF
 
-$SKEEN_NAME CLI Commands (use: help for this list):
+$SKEEN_NAME CLI Commands (use: 'skeen help' for this list):
 
 Service Control:
-  start   - Starts $SINGBOX_NAME. Checks configuration and will not start again if already running
-  stop    - Stops $SINGBOX_NAME. If the process is not found, reports that the daemon is already stopped
-  restart - Stops and then starts $SINGBOX_NAME again
-  reload  - Reload $SINGBOX_NAME (full restart, not a hot reload) without touching firewall rules
-  kill    - Forcefully terminates the $SINGBOX_NAME process (kill -9)
-  status  - Shows the current status of the $SINGBOX_NAME process
+  start   - Start service
+  stop    - Stop service
+  restart - Restart service
+  reload  - Restart without changing firewall rules
+  kill    - Force stop
+  status  - Show status
 
 Information & Updates:
-  version - Displays the current application version
-  update  - Checks for updates of $SINGBOX_NAME core and $SKEEN_NAME script, and allows updating
+  version - Show version(s)
+  update  - Check and install updates
 
 Checks & Testing:
-  test    - Checks whether iptables rules are correctly applied (requires $SINGBOX_NAME running and mode ≠ none)
-  deps    - Checks if all dependencies are installed (installs missing ones)
-  check   - Checks $SINGBOX_NAME configuration for syntax and logical errors + skeen.json for JSON validity
-  format  - Formats $SINGBOX_NAME configuration in $CONFIG_DIR without changing its behavior
+  test    - Test firewall rules
+  deps    - Check dependencies
+  check   - Check configuration
+  format  - Format $SINGBOX_NAME configuration
 
 Backup & Restore:
-  backup  - Creates a backup of $WORK_DIR and places it in $ENTWARE_DIR
-  backups - Show all created backup copies in the $WORK_DIR folder
-  restore - Restores a backup of $WORK_DIR by archive name (optional second parameter) from $ENTWARE_DIR
+  backup  - Create archive of $WORK_DIR
+  backups - List created archives in $ENTWARE_DIR
+  restore - Restore $WORK_DIR from archive in $ENTWARE_DIR
 
 Reset Configuration:
-  reset   - Resets $WORK_DIR directory to its default state after performing a backup beforehand
+  reset   - Reset $WORK_DIR to default
 
-Synchronizesing Configuration:
-  sync    - Synchronizes the sing-box configuration with a remote copy by URL (optional second parameter)
+Synchronization:
+  sync    - Synchronize proxy-core configuration
 
 OpkgTun manager (KeeneticOS v5+):
-  tun create <ipv4> <name> - Create interface with the specified IP and name
-  tun delete <name>        - Delete interface with the specified name
-  tun list                 - Shows all OpkgTun interfaces in the system
+  tun create <ipv4> <name> - Create interface with IP address and name
+  tun delete <name>        - Delete interface by name
+  tun list                 - List all OpkgTun interfaces
 EOF
 }
 
