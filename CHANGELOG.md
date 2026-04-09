@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.4.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.4...SKeen-v4.4.5) (2026-04-09)
+
+
+### 🐛 Fix
+
+* add check_tty to update routine ([ecbbb20](https://github.com/jinndi/SKeen/commit/ecbbb2031d4c4f6c6adae536251c1a609396939d))
+* update command table and add firewall-only checks ([cdcd19b](https://github.com/jinndi/SKeen/commit/cdcd19bb52ed9dd5d5e05da3e7746251aba29cd5))
+
 ## [4.4.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.3...SKeen-v4.4.4) (2026-04-08)
 
 
