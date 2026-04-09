@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.4.6](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.5...SKeen-v4.4.6) (2026-04-09)
+
+
+### 🐛 Fix
+
+* **network:** keep IPv6 enabled on t2s* interfaces when disabling global IPv6 ([ae52adc](https://github.com/jinndi/SKeen/commit/ae52adc12f2b7e55bb586485377555eae8094b88))
+
+
+### 🧰 Chore
+
+* **help:** update command table formatting and help output ([db9b5b0](https://github.com/jinndi/SKeen/commit/db9b5b0451ae583af6d899bd20dabc9834e92692))
+
 ## [4.4.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.4...SKeen-v4.4.5) (2026-04-09)
 
 
