@@ -120,7 +120,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 `skeen` without parameters launches the management menu from SSH, use `help` for help
 
 | Command | WEB CLI support |  FW Only support | Description |
-| ------------ | ------------ | -------------------------------------------------------------- |
+| :--- | :---: | :---: | :--- |
 |`start`|✓|✓|Starts Sing-box. Checks configuration and will not start again if the process is already running|
 |`stop`|✓|✓|Stops Sing-box. If the process is not found, reports that the daemon is already stopped|
 |`restart`|✓|✓|Stops and then starts Sing-box again|
