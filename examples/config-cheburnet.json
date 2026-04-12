@@ -1,0 +1,364 @@
+{
+  "log": {
+    "disabled": false,
+    "level": "debug",
+    "output": "",
+    "timestamp": false
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns-hosts",
+        "type": "hosts",
+        "predefined": {
+          "one.one.one.one": [
+            "1.1.1.1",
+            "1.0.0.1"
+          ],
+          "common.dot.dns.yandex.net": [
+            "77.88.8.8",
+            "77.88.8.1"
+          ]
+        }
+      },
+      {
+        "tag": "dns-proxy",
+        "type": "tls",
+        "detour": "proxy",
+        "domain_resolver": "dns-hosts",
+        "server_port": 853,
+        "server": "one.one.one.one"
+      },
+      {
+        "tag": "dns-direct",
+        "type": "https",
+        "domain_resolver": "dns-hosts",
+        "server_port": 443,
+        "server": "common.dot.dns.yandex.net"
+      },
+      {
+        "tag": "dns-resolver",
+        "type": "udp",
+        "server": "77.88.8.8"
+      },
+      {
+        "tag": "fakeip",
+        "type": "fakeip",
+        "inet4_range": "198.18.0.0/15"
+      }
+    ],
+    "rules": [
+      {
+        "action": "reject",
+        "rule_set": [
+          "adguard"
+        ],
+        "method": "default"
+      },
+      {
+        "action": "route",
+        "clash_mode": "direct",
+        "server": "dns-direct"
+      },
+      {
+        "action": "route",
+        "clash_mode": "global",
+        "server": "dns-proxy"
+      },
+      {
+        "action": "route",
+        "protocol": "bittorent",
+        "disable_cache": true,
+        "server": "dns-proxy"
+      },
+      {
+        "action": "route",
+        "rule_set": [
+          "geosite-category-ru",
+          "category-ip-geo-detect"
+        ],
+        "server": "dns-direct"
+      },
+      {
+        "action": "route",
+        "type": "logical",
+        "mode": "and",
+        "rules": [
+          {
+            "domain_suffix": [
+              ".lan",
+              ".localdomain",
+              ".example",
+              ".invalid",
+              ".localhost",
+              ".test",
+              ".local",
+              ".home.arpa",
+              ".msftconnecttest.com",
+              ".msftncsi.com"
+            ],
+            "invert": true
+          },
+          {
+            "query_type": [
+              "A",
+              "AAAA"
+            ]
+          }
+        ],
+        "client_subnet": "5.255.255.0/24",
+        "server": "fakeip"
+      }
+    ],
+    "disable_cache": false,
+    "disable_expire": false,
+    "independent_cache": true,
+    "reverse_mapping": true,
+    "final": "dns-proxy",
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    {
+      "type": "redirect",
+      "tag": "redirect-in",
+      "listen": "::",
+      "listen_port": 65081,
+      "tcp_fast_open": true
+    },
+    {
+      "type": "tproxy",
+      "tag": "tproxy-in",
+      "listen": "::",
+      "listen_port": 65082,
+      "udp_timeout": "3m0s",
+      "udp_fragment": true,
+      "network": "udp"
+    },
+    {
+      "type": "socks",
+      "tag": "service-in",
+      "listen": "127.0.0.1",
+      "listen_port": 22108,
+      "users": [
+        {
+          "username": "jinndi",
+          "password": "mypass"
+        }
+      ]
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "type": "selector",
+      "default": "auto",
+      "interrupt_exist_connections": true,
+      "outbounds": ["direct", "auto", "vless-out", "naive-out"]
+    },
+    {
+      "tag": "proxy-ru",
+      "type": "selector",
+      "default": "auto-ru",
+      "interrupt_exist_connections": true,
+      "outbounds": ["direct", "auto-ru", "vless-ru-out", "naive-ru-out"]
+    },
+    { "tag": "direct", "type": "direct" },
+    {
+      "tag": "auto",
+      "type": "urltest",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": "3m",
+      "tolerance": 150,
+      "interrupt_exist_connections": true,
+      "outbounds": ["vless-out", "naive-out"]
+    },
+    {
+      "tag": "auto-ru",
+      "type": "urltest",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": "3m",
+      "tolerance": 150,
+      "interrupt_exist_connections": true,
+      "outbounds": ["vless-ru-out", "naive-ru-out"]
+    },
+    {
+      "tag": "vless-out",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example.com",
+      "server_port": 443,
+      "tls": {
+        "enabled": true,
+        "alpn": ["http/1.1", "h2"],
+        "server_name": "example.com",
+        "utls": { "enabled": true, "fingerprint": "firefox" }
+      }
+    },
+    {
+      "tag": "naive-out",
+      "type": "naive",
+      "username": "jinndi",
+      "password": "mypass",
+      "quic": true,
+      "quic_congestion_control": "bbr",
+      "server": "example.com",
+      "server_port": 10443,
+      "tls": {
+        "enabled": true,
+        "server_name": "example.com"
+      }
+    },
+    {
+      "tag": "vless-ru-out",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example.ru",
+      "server_port": 443,
+      "tls": {
+        "enabled": true,
+        "alpn": ["http/1.1", "h2"],
+        "server_name": "example.ru",
+        "utls": { "enabled": true, "fingerprint": "firefox" }
+      }
+    },
+    {
+      "tag": "naive-ru-out",
+      "type": "naive",
+      "username": "jinndi",
+      "password": "mypass",
+      "quic": true,
+      "quic_congestion_control": "bbr",
+      "server": "example.ru",
+      "server_port": 10443,
+      "tls": {
+        "enabled": true,
+        "server_name": "example.ru"
+      }
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "final": "proxy",
+    "default_domain_resolver": "dns-resolver",
+    "rules": [
+      {
+        "action": "sniff"
+      },
+      {
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "port": 53
+          },
+          {
+            "protocol": "dns"
+          }
+        ],
+        "action": "hijack-dns"
+      },
+      {
+        "action": "reject",
+        "protocol": "stun"
+      },
+      {
+        "action": "route",
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "action": "route",
+        "rule_set": [
+          "category-ip-geo-detect"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "action": "route",
+        "clash_mode": "direct",
+        "outbound": "direct"
+      },
+      {
+        "action": "route",
+        "clash_mode": "global",
+        "outbound": "proxy"
+      },
+      {
+        "action": "route",
+        "rule_set": [
+          "geosite-cheburnet"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "action": "route",
+        "rule_set": [
+          "geosite-category-ru"
+        ],
+        "outbound": "proxy-ru"
+      },
+      {"action": "resolve"},
+      {
+        "action": "route",
+        "rule_set": [
+          "geoip-ru"
+        ],
+        "outbound": "proxy-ru"
+      }
+    ],
+    "rule_set": [
+      {
+        "tag": "category-ip-geo-detect",
+        "type": "remote",
+        "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ip-geo-detect.srs",
+        "format": "binary"
+      },
+      {
+        "tag": "adguard",
+        "type": "remote",
+        "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs",
+        "format": "binary"
+      },
+      {
+        "tag": "geosite-cheburnet",
+        "type": "remote",
+        "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs",
+        "format": "binary"
+      },
+      {
+        "tag": "geoip-ru",
+        "type": "remote",
+        "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geoip/ru.srs",
+        "format": "binary"
+      },
+      {
+        "tag": "geosite-category-ru",
+        "type": "remote",
+        "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/geosite-category-ru.srs",
+        "format": "binary"
+      }
+    ]
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "external_ui": "zashboard",
+      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
+      "external_ui_download_detour": "direct",
+      "secret": "",
+      "default_mode": "rule"
+    },
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "cache_id": "",
+      "store_fakeip": true,
+      "store_rdrc": true,
+      "rdrc_timeout": "7d"
+    }
+  }
+}
