@@ -338,7 +338,7 @@
       {
         "tag": "geosite-category-ru",
         "type": "remote",
-        "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/geosite-category-ru.srs",
+        "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs",
         "format": "binary"
       }
     ]
