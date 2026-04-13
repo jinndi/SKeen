@@ -74,6 +74,7 @@
       {
         "action": "route",
         "rule_set": [
+          "geosite-cheburnet",
           "geosite-category-ru",
           "category-ip-geo-detect"
         ],
