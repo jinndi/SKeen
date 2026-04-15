@@ -76,13 +76,8 @@
         "action": "route",
         "rule_set": [
           "geosite-cheburnet",
-<<<<<<< HEAD
-          "geosite-category-ru",
-          "category-ip-geo-detect"
-=======
           "category-ip-geo-detect",
           "geosite-category-ru"
->>>>>>> a2e6353 (chore(config): add mobile example and update configs)
         ],
         "server": "dns-direct"
       },
