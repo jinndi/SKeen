@@ -76,13 +76,8 @@
         "action": "route",
         "rule_set": [
           "geosite-cheburnet",
-<<<<<<< HEAD
-          "geosite-category-ru",
-          "category-ip-geo-detect"
-=======
           "category-ip-geo-detect",
           "geosite-category-ru"
->>>>>>> a2e6353 (chore(config): add mobile example and update configs)
         ],
         "server": "dns-direct"
       },
@@ -162,6 +157,13 @@
       "interrupt_exist_connections": true,
       "outbounds": ["direct", "auto", "vless-out", "naive-out"]
     },
+    {
+      "tag": "proxy-ru",
+      "type": "selector",
+      "default": "auto-ru",
+      "interrupt_exist_connections": true,
+      "outbounds": ["direct", "auto-ru", "vless-ru-out", "naive-ru-out"]
+    },
     { "tag": "direct", "type": "direct" },
     {
       "tag": "auto",
@@ -171,6 +173,15 @@
       "tolerance": 150,
       "interrupt_exist_connections": true,
       "outbounds": ["vless-out", "naive-out"]
+    },
+    {
+      "tag": "auto-ru",
+      "type": "urltest",
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": "3m",
+      "tolerance": 150,
+      "interrupt_exist_connections": true,
+      "outbounds": ["vless-ru-out", "naive-ru-out"]
     },
     {
       "tag": "vless-out",
@@ -198,6 +209,34 @@
       "tls": {
         "enabled": true,
         "server_name": "example.com"
+      }
+    },
+    {
+      "tag": "vless-ru-out",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example.ru",
+      "server_port": 443,
+      "tls": {
+        "enabled": true,
+        "server_name": "example.ru",
+        "utls": { "enabled": true, "fingerprint": "firefox" }
+      }
+    },
+    {
+      "tag": "naive-ru-out",
+      "type": "naive",
+      "username": "jinndi",
+      "password": "mypass",
+      "quic": true,
+      "quic_congestion_control": "bbr",
+      "server": "example.ru",
+      "server_port": 10443,
+      "tls": {
+        "enabled": true,
+        "server_name": "example.ru"
       }
     }
   ],
@@ -251,10 +290,16 @@
       {
         "action": "route",
         "rule_set": [
-          "geosite-cheburnet",
-          "geosite-category-ru"
+          "geosite-cheburnet"
         ],
         "outbound": "direct"
+      },
+      {
+        "action": "route",
+        "rule_set": [
+          "geosite-category-ru"
+        ],
+        "outbound": "proxy-ru"
       },
       {"action": "resolve"},
       {

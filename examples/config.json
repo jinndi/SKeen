@@ -8,36 +8,17 @@
   "dns": {
     "servers": [
       {
-        "tag": "dns-hosts",
-        "type": "hosts",
-        "predefined": {
-          "one.one.one.one": [
-            "1.1.1.1",
-            "1.0.0.1"
-          ],
-          "common.dot.dns.yandex.net": [
-            "77.88.8.8",
-            "77.88.8.1"
-          ]
-        }
-      },
-      {
         "type": "tls",
         "tag": "dns-proxy",
         "detour": "proxy",
-        "domain_resolver": "dns-hosts",
+        "domain_resolver": "dns-resolver",
         "server": "one.one.one.one"
       },
       {
         "type": "https",
         "tag": "dns-direct",
-        "domain_resolver": "dns-hosts",
+        "domain_resolver": "dns-resolver",
         "server": "common.dot.dns.yandex.net"
-      },
-      {
-        "type": "fakeip",
-        "tag": "fakeip",
-        "inet4_range": "198.18.0.0/15"
       },
       {
         "type": "udp",
@@ -49,36 +30,8 @@
       { "rule_set": "adguard", "action": "reject" },
       { "clash_mode": "Direct", "server": "dns-direct" },
       { "clash_mode": "Global", "server": "dns-proxy" },
-      { "protocol": "bittorrent", "disable_cache": true, "server": "dns-proxy" },
-      { "rule_set": "geosite-cheburnet", "server": "dns-direct" },
-      {
-        "action": "route",
-        "type": "logical",
-        "mode": "and",
-        "rules": [
-          {
-            "domain_suffix": [
-              ".lan",
-              ".localdomain",
-              ".example",
-              ".invalid",
-              ".localhost",
-              ".test",
-              ".local",
-              ".home.arpa",
-              ".msftconnecttest.com",
-              ".msftncsi.com"
-            ],
-            "invert": true
-          },
-          { "query_type": ["A"] }
-        ],
-        "server": "fakeip"
-      }
+      { "rule_set": "geosite-category-ru", "server": "dns-direct" }
     ],
-    "disable_cache": false,
-    "disable_expire": false,
-    "independent_cache": true,
     "final": "dns-proxy",
     "strategy": "ipv4_only"
   },
@@ -98,18 +51,6 @@
       "udp_timeout": "3m0s",
       "udp_fragment": true,
       "network": "udp"
-    },
-    {
-      "type": "socks",
-      "tag": "service-in",
-      "listen": "127.0.0.1",
-      "listen_port": 22108,
-      "users": [
-        {
-          "username": "jinndi",
-          "password": "mypass"
-        }
-      ]
     }
   ],
   "outbounds": [
@@ -125,8 +66,8 @@
       "tag": "auto",
       "type": "urltest",
       "url": "http://www.gstatic.com/generate_204",
-      "interval": "3m",
-      "tolerance": 150,
+      "interval": "5m",
+      "tolerance": 100,
       "interrupt_exist_connections": true,
       "outbounds": ["vless-out", "naive-out"]
     },
@@ -140,7 +81,6 @@
       "server_port": 443,
       "tls": {
         "enabled": true,
-        "alpn": ["http/1.1", "h2"],
         "server_name": "example.com",
         "utls": { "enabled": true, "fingerprint": "firefox" }
       }
@@ -175,22 +115,27 @@
       { "ip_is_private": true, "outbound": "direct" },
       { "clash_mode": "Direct", "outbound": "direct" },
       { "clash_mode": "Global", "outbound": "proxy" },
-      { "rule_set": "geosite-cheburnet", "outbound": "direct" }
+      { "protocol": "bittorrent", "outbound": "direct"},
+      { "rule_set": ["geosite-category-ru", "geoip-ru"], "outbound": "direct" }
     ],
     "rule_set": [
       {
         "type": "remote",
-        "tag": "geosite-cheburnet",
-        "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs",
-        "download_detour": "direct",
-        "update_interval": "24h0m0s"
-      },
-      {
-        "type": "remote",
         "tag": "adguard",
         "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs",
-        "download_detour": "direct",
-        "update_interval": "24h0m0s"
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geoip-ru",
+        "type": "remote",
+        "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geoip/ru.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-category-ru",
+        "type": "remote",
+        "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs",
+        "download_detour": "direct"
       }
     ]
   },
@@ -200,16 +145,13 @@
       "external_ui": "zashboard",
       "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
       "external_ui_download_detour": "direct",
-      "secret": "",
       "default_mode": "rule"
     },
     "cache_file": {
       "enabled": true,
       "path": "cache.db",
-      "cache_id": "",
       "store_fakeip": true,
-      "store_rdrc": true,
-      "rdrc_timeout": "7d"
+      "store_rdrc": true
     }
   }
 }
