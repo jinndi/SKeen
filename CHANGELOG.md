@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.7](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.6...SKeen-v4.4.7) (2026-04-15)
+
+
+### 🧰 Chore
+
+* **config:** add mobile example and update configs ([eb97d18](https://github.com/jinndi/SKeen/commit/eb97d18631f032e2613deaaa31dbaf8ab6a98967))
+
 ## [4.4.6](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.5...SKeen-v4.4.6) (2026-04-09)
 
 
