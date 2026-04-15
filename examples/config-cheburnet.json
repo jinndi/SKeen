@@ -87,25 +87,11 @@
         "mode": "and",
         "rules": [
           {
-            "domain_suffix": [
-              ".lan",
-              ".localdomain",
-              ".example",
-              ".invalid",
-              ".localhost",
-              ".test",
-              ".local",
-              ".home.arpa",
-              ".msftconnecttest.com",
-              ".msftncsi.com"
-            ],
+            "rule_set": "fakeip-filter",
             "invert": true
           },
           {
-            "query_type": [
-              "A",
-              "AAAA"
-            ]
+            "query_type": ["A", "AAAA"]
           }
         ],
         "client_subnet": "5.255.255.0/24",
@@ -272,6 +258,13 @@
         "tag": "adguard",
         "type": "remote",
         "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs",
+        "format": "binary",
+        "download_detour": "proxy"
+      },
+      {
+        "tag": "fakeip-filter",
+        "type": "remote",
+        "url": "https://github.com/jinndi/fakeip-filter-srs/releases/latest/download/fakeip-filter.srs",
         "format": "binary",
         "download_detour": "proxy"
       },
