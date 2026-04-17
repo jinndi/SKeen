@@ -18,7 +18,9 @@ Keenetic/Netcraze TProxy & Redirect with sing-box
 
 🇺🇸 **English** | [🇷🇺 На русском](README-RU.md)
 
-### 🌟 Why sing-box?
+<details>
+  <summary>🤔 Why sing-box ?</summary>
+<br>
 
 **sing-box** is an open-source universal proxy engine written in Go. It is focused on maximum performance, low resource consumption, and support for the most modern protocols
 
@@ -40,12 +42,15 @@ Notes:
 > sing-box excels due to its modularity and clean-slate architecture: its DNS stack enables complex configurations with minimal RAM overhead. In contrast, mihomo (Clash) prioritizes automation at the cost of high resource usage, while Xray is hindered by legacy networking code and heavy .dat geo-files.
 
 > The high learning curve of sing-box stems from its strict JSON schema and lack of "magic" defaults. This is a trade-off for granular control and peak performance on low-end hardware.
+</details>
 
-### ❌ No Web UI
-
+<details>
+  <summary>🖥️ Web UI ?</summary>
+<br>
 Doesn’t include a separate configuration Web UI. The built-in **Zashboard** interface is already used for management, making additional UIs unnecessary.
 
 💡 To simplify configuration, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available to import profiles via [GUI.for.SingBox](https://github.com/jinndi/sync-profile-to-skeen)
+</details>
 
 ### 🚀 Features
 - TProxy/Redirect/Hybrid modes ✓
@@ -80,7 +85,9 @@ The `/opt/etc/skeen` directory is not removed during program uninstallation (it 
 
 Manage the package further using the `skeen` command.
 
-After successful installation:
+<details>
+  <summary>After successful installation:</summary>
+<br>
 
 ```
 /opt/
@@ -105,6 +112,7 @@ After successful installation:
 └── tmp/
     └── (temporary download files)
 ```
+</details>
 
 ### ⚡ Commands
 
