@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/opt/bin/sh
+# shellcheck disable=SC3043
 #
 # https://github.com/jinndi/SKeen
 #
@@ -106,34 +107,40 @@ DELIMETER="------------------------------------------------"
 
 is_tty() { [ -t 1 ] || [ -t 2 ]; }
 
-cyan()  { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-red()   { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+cyan() { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+red() { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-yellow(){ is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+yellow() { is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 
-echomsg()  { cyan "[INFO]: $1"; }
-echook()   { green "[OK]: $1"; }
+echomsg() { cyan "[INFO]: $1"; }
+echook() { green "[OK]: $1"; }
 echowarn() { yellow "[WARN]: $1"; }
-echoerr()  { red "[ERROR]: $1"; }
-exiterr()  { red "[FATAL]: $1"; exit 1; }
+echoerr() { red "[ERROR]: $1"; }
+exiterr() {
+  red "[FATAL]: $1"
+  exit 1
+}
 
-check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
+check_tty() { is_tty || {
+  echoerr "Command supports only tty"
+  exit 1
+}; }
 
 logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
 logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
 if is_tty; then
-  cleanup() { stty sane < /dev/tty 2>/dev/null || true; }
+  cleanup() { stty sane </dev/tty 2>/dev/null || true; }
   trap cleanup EXIT TERM
   trap 'printf "\n"; cleanup; exit 130' INT
 fi
 
-create_skeen_config(){
+create_skeen_config() {
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
   [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
-  cat <<EOF > "$SKEEN_CONFIG"
+  cat <<EOF >"$SKEEN_CONFIG"
 // https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs
 {
   "auto_start": {
@@ -174,12 +181,12 @@ create_skeen_config(){
 }
 EOF
 
-  create_autostart_script > /dev/null 2>&1
+  create_autostart_script >/dev/null 2>&1
 }
 
-
 json_get_array() {
-  path="${1:-}"
+  local path="${1:-}"
+  local arr
 
   arr="$(jsonfilter -i "$SKEEN_CONFIG" -e "${path}[*]")"
 
@@ -191,33 +198,32 @@ json_get_array() {
   jsonfilter -i "$SKEEN_CONFIG" -e "$path" | tr -d '[],"'
 }
 
-
 rci() {
   curl -kfsS "${RCI}/${1:-}" 2>/dev/null || echo ""
 }
 
-
-loading_config(){
+loading_config() {
   if [ ! -f "$SKEEN_CONFIG" ]; then
     create_skeen_config
     is_tty && echowarn "Configuration file 'skeen.json' not found, a new one has been created"
   fi
 
-  eval "$(jsonfilter -i "$SKEEN_CONFIG" \
-    -e AUTO_START_ENABLE='@.auto_start.enable' \
-    -e AUTO_START_DELAY='@.auto_start.delay' \
-    -e POLICY_ENABLE='@.policy.enable' \
-    -e POLICY_NAME='@.policy.name' \
-    -e NETWORK_IPV6='@.network.ipv6' \
-    -e NETWORK_TUNING='@.network.tuning' \
-    -e SING_CONFIG_ENABLE='@.sing_config.enable' \
-    -e SING_CONFIG_PATH='@.sing_config.path' \
-    -e SING_CONFIG_SYNC_URL='@.sing_config.sync_url' \
-    -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
-    -e SERVICE_PROXY_PORT='@.service_proxy.port' \
-    -e SERVICE_PROXY_USER='@.service_proxy.user' \
-    -e SERVICE_PROXY_PASS='@.service_proxy.pass' \
-    -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
+  eval "$(
+    jsonfilter -i "$SKEEN_CONFIG" \
+      -e AUTO_START_ENABLE='@.auto_start.enable' \
+      -e AUTO_START_DELAY='@.auto_start.delay' \
+      -e POLICY_ENABLE='@.policy.enable' \
+      -e POLICY_NAME='@.policy.name' \
+      -e NETWORK_IPV6='@.network.ipv6' \
+      -e NETWORK_TUNING='@.network.tuning' \
+      -e SING_CONFIG_ENABLE='@.sing_config.enable' \
+      -e SING_CONFIG_PATH='@.sing_config.path' \
+      -e SING_CONFIG_SYNC_URL='@.sing_config.sync_url' \
+      -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
+      -e SERVICE_PROXY_PORT='@.service_proxy.port' \
+      -e SERVICE_PROXY_USER='@.service_proxy.user' \
+      -e SERVICE_PROXY_PASS='@.service_proxy.pass' \
+      -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns'
   )"
 
   : "${AUTO_START_ENABLE:=1}"
@@ -240,7 +246,9 @@ loading_config(){
   fi
 }
 
-load_proxy_options(){
+load_proxy_options() {
+  local err_template
+
   [ "$CALLER" != "menu" ] && loading_config
 
   CURL_PROXY_OPTIONS=""
@@ -263,24 +271,26 @@ load_proxy_options(){
   fi
 }
 
-
 get_current_version() {
-  proc="${1:-}"
+  local proc="${1:-}"
 
   case "$proc" in
-    "$SINGBOX_PROC")
-      if [ -f "$SINGBOX_BIN" ]; then
-        $SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs
-      fi
+  "$SINGBOX_PROC")
+    if [ -f "$SINGBOX_BIN" ]; then
+      $SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs
+    fi
     ;;
-    "$SKEEN_PROC") echo "$SKEEN_VERSION" ;;
-    *) echoerr "Unknown program: $1"; return 1 ;;
+  "$SKEEN_PROC") echo "$SKEEN_VERSION" ;;
+  *)
+    echoerr "Unknown program: $1"
+    return 1
+    ;;
   esac
 }
 
-
 get_latest_version() {
-  api_url="${1:-}"
+  local api_url="${1:-}"
+  local latest_release
 
   # shellcheck disable=SC2086
   latest_release="$(curl $CURL_PROXY_OPTIONS --connect-timeout 5 --max-time 90 -s "$api_url")"
@@ -290,7 +300,6 @@ get_latest_version() {
   echo "$latest_release" | grep tag_name | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
 }
 
-
 show_header() {
   cyan "
 
@@ -299,21 +308,26 @@ show_header() {
 ░█▄▄▄█ ░█ ░█ ▀▀▀ ▀▀▀ ▀  ▀"
 }
 
+get_os_release() {
+  local release_path
 
-get_os_release(){
   release_path="$(command -v opkg)"
 
   if [ "$release_path" != "/opt/bin/opkg" ]; then
     exiterr "Unsupported the system OS!"
   else
-    PKG_OS="openwrt"; PKG_SUFFIX=".ipk"
+    PKG_OS="openwrt"
+    PKG_SUFFIX=".ipk"
   fi
 }
 
-
 arch_elf() {
-  bin="/opt/bin/opkg"; base="mips"
+  local bin
+  local base="mips"
+  local B5
+  local B6
 
+  bin="/opt/bin/opkg"
   B5=$(printf "%d" "'$(dd if="$bin" bs=1 skip=4 count=1 2>/dev/null | head -c1)'")
   B6=$(printf "%d" "'$(dd if="$bin" bs=1 skip=5 count=1 2>/dev/null | head -c1)'")
 
@@ -326,14 +340,17 @@ arch_elf() {
   echo "$base"
 }
 
-
 get_architecture() {
+  local opkg_arch
+  local ARCH
+  local cpu_info
+
   opkg_arch=$(opkg print-architecture 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
   case "$opkg_arch" in
-    *aarch64*|*arm64*|*armv8*) ARCH="aarch64" ;;
-    *mips*)                    ARCH="$(arch_elf)" ;;
-    *)                         ARCH="" ;;
+  *aarch64* | *arm64* | *armv8*) ARCH="aarch64" ;;
+  *mips*) ARCH="$(arch_elf)" ;;
+  *) ARCH="" ;;
   esac
 
   [ -z "$ARCH" ] && exiterr "Unsupported CPU architecture"
@@ -341,55 +358,56 @@ get_architecture() {
   cpu_info=$(tr '[:upper:]' '[:lower:]' </proc/cpuinfo)
 
   case "$ARCH" in
-    aarch64)
-      case "$(echo "$cpu_info" | grep -m1 'cpu part')" in
-        *0xd03*) PKG_ARCH="${ARCH}_cortex-a53" ;;
-        *0xd08*) PKG_ARCH="${ARCH}_cortex-a72" ;;
-        *0xd0b*) PKG_ARCH="${ARCH}_cortex-a76" ;;
-        *)       PKG_ARCH="${ARCH}_generic" ;; # fallback
-      esac
+  aarch64)
+    case "$(echo "$cpu_info" | grep -m1 'cpu part')" in
+    *0xd03*) PKG_ARCH="${ARCH}_cortex-a53" ;;
+    *0xd08*) PKG_ARCH="${ARCH}_cortex-a72" ;;
+    *0xd0b*) PKG_ARCH="${ARCH}_cortex-a76" ;;
+    *) PKG_ARCH="${ARCH}_generic" ;; # fallback
+    esac
     ;;
-    mipsel)
-      case "$cpu_info" in
-        *74k*)   PKG_ARCH="${ARCH}_74kc" ;;
-        *24kf*)  PKG_ARCH="${ARCH}_24kc_24kf" ;;
-        *24k*)   PKG_ARCH="${ARCH}_24kc" ;;
-        *) PKG_ARCH="${ARCH}_mips32" ;; # fallback 1004, 34k, ...
-      esac
+  mipsel)
+    case "$cpu_info" in
+    *74k*) PKG_ARCH="${ARCH}_74kc" ;;
+    *24kf*) PKG_ARCH="${ARCH}_24kc_24kf" ;;
+    *24k*) PKG_ARCH="${ARCH}_24kc" ;;
+    *) PKG_ARCH="${ARCH}_mips32" ;; # fallback 1004, 34k, ...
+    esac
     ;;
-    mips)
-      case "$cpu_info" in
-        *24k*)   PKG_ARCH="${ARCH}_24kc" ;;
-        *4kec*)  PKG_ARCH="${ARCH}_4kec" ;;
-        *) PKG_ARCH="${ARCH}_mips32" ;; # fallback ...
-      esac
+  mips)
+    case "$cpu_info" in
+    *24k*) PKG_ARCH="${ARCH}_24kc" ;;
+    *4kec*) PKG_ARCH="${ARCH}_4kec" ;;
+    *) PKG_ARCH="${ARCH}_mips32" ;; # fallback ...
+    esac
     ;;
-    mips64el)
+  mips64el)
+    PKG_ARCH="${ARCH}_mips64r2"
+    ;;
+  mips64)
+    if echo "$cpu_info" | grep -qi octeon; then
+      PKG_ARCH="${ARCH}_octeonplus"
+    else
       PKG_ARCH="${ARCH}_mips64r2"
-    ;;
-    mips64)
-      if echo "$cpu_info" | grep -qi octeon; then
-        PKG_ARCH="${ARCH}_octeonplus"
-      else
-        PKG_ARCH="${ARCH}_mips64r2"
-      fi
+    fi
     ;;
   esac
 
   echomsg "Detected Arch: $(green "$PKG_ARCH")"
 }
 
-
-wait_input(){
-  oldstty=$(stty -g < /dev/tty)
-  stty -icanon -echo min 1 time 0 < /dev/tty
-  dd bs=1 count=1 < /dev/tty 2>/dev/null
-  stty "$oldstty" < /dev/tty
-  echo > /dev/tty
+wait_input() {
+  local oldstty
+  oldstty=$(stty -g </dev/tty)
+  stty -icanon -echo min 1 time 0 </dev/tty
+  dd bs=1 count=1 </dev/tty 2>/dev/null
+  stty "$oldstty" </dev/tty
+  echo >/dev/tty
 }
 
-
 install_dependencies() {
+  local pkg_list
+
   echomsg "Checking dependencies"
 
   opkg update >/dev/null 2>&1
@@ -418,9 +436,10 @@ install_dependencies() {
   echook "All dependencies are installed"
 }
 
-
-download_singbox(){
-  version="${1:-}"
+download_singbox() {
+  local version="${1:-}"
+  local PKG_NAME
+  local pkg_url
 
   if [ -z "$version" ]; then
     echomsg "Fetching the latest version number..."
@@ -447,9 +466,8 @@ download_singbox(){
   fi
 }
 
-
-install_singbox(){
-  tmp_unpack_dir="${TMP_DIR}/sing-box-unpack"
+install_singbox() {
+  local tmp_unpack_dir="${TMP_DIR}/sing-box-unpack"
 
   [ -d "$tmp_unpack_dir" ] && rm -rf "$tmp_unpack_dir"
 
@@ -477,13 +495,13 @@ install_singbox(){
   echook "$SINGBOX_NAME binary installed successfully"
 }
 
+create_singbox_config() {
+  local act="${1:-}"
+  local key
+  local value
 
-create_singbox_config(){
-  act="${1:-}"
-
-  if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] && \
-    ls "$CONFIG_DIR"/*.json >/dev/null 2>&1;
-  then
+  if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] &&
+    ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
     echomsg "Configuration files already exist in ${CONFIG_DIR}, skipping creation"
     return
   fi
@@ -499,12 +517,12 @@ create_singbox_config(){
 
     if [ -z "$value" ] || [ "$value" = "null" ]; then
       case "$key" in
-        services|endpoints|inbounds|outbounds) value="[]" ;;
-        *) value="{}" ;;
+      services | endpoints | inbounds | outbounds) value="[]" ;;
+      *) value="{}" ;;
       esac
     fi
 
-    echo "{\"$key\": $value}" > "${CONFIG_DIR}/${key}.json"
+    echo "{\"$key\": $value}" >"${CONFIG_DIR}/${key}.json"
   done
 
   $SINGBOX_PROC format -w -C $CONFIG_DIR
@@ -512,8 +530,7 @@ create_singbox_config(){
   echook "Configuration file created successfully"
 }
 
-
-create_autostart_script(){
+create_autostart_script() {
   echomsg "Create $SKEEN_NAME autostart script at $SKEEN_AUTOSTART_SCRIPT"
 
   [ -f "$SKEEN_AUTOSTART_SCRIPT" ] && rm -f "$SKEEN_AUTOSTART_SCRIPT"
@@ -524,7 +541,7 @@ create_autostart_script(){
     echo "#!/bin/sh"
     echo "PATH=$PATH"
     echo "$SKEEN_PROC start init"
-  } > "$SKEEN_AUTOSTART_SCRIPT"
+  } >"$SKEEN_AUTOSTART_SCRIPT"
 
   chmod 755 "$SKEEN_AUTOSTART_SCRIPT"
   chmod +x "$SKEEN_AUTOSTART_SCRIPT"
@@ -532,10 +549,9 @@ create_autostart_script(){
   echook "Autostart script created successfully"
 }
 
-
 get_free_gid() {
-  start=${1:-1000}; max=65535
-  gid=$start
+  local gid="${1:-1000}"
+  local max=65535
 
   while [ "$gid" -le "$max" ]; do
     if ! grep -q ":$gid:" /etc/group 2>/dev/null; then
@@ -548,16 +564,16 @@ get_free_gid() {
   exiterr "No free GID available"
 }
 
-
 create_skeen_group() {
-  name="$SKEEN_PROC"
+  local name="$SKEEN_PROC"
+  local gid_num
 
   if ! grep -q "^${name}:" "${ENTWARE_DIR}/etc/group" 2>/dev/null; then
     gid_num=$(get_free_gid 1000)
 
     echomsg "Creating group $name with GID ${gid_num}..."
-    addgroup -g "$gid_num" "$name" >/dev/null 2>&1 \
-      || exiterr "Failed to create group $name"
+    addgroup -g "$gid_num" "$name" >/dev/null 2>&1 ||
+      exiterr "Failed to create group $name"
     echook "Group $name created successfully"
     return 2
   else
@@ -565,10 +581,9 @@ create_skeen_group() {
   fi
 }
 
-
-download_skeen_script(){
-  action="${1:-}"
-  backup_script="${SKEEN_SCRIPT}.backup"
+download_skeen_script() {
+  local action="${1:-}"
+  local backup_script="${SKEEN_SCRIPT}.backup"
 
   echomsg "Downloading $SKEEN_NAME script at $SKEEN_SCRIPT"
 
@@ -592,16 +607,15 @@ download_skeen_script(){
   return 0
 }
 
-
-press_any_key_to_menu(){
-  action="${1:-}"
-  exit_code="${2:-0}"
+press_any_key_to_menu() {
+  local action="${1:-}"
+  local exit_code="${2:-0}"
 
   [ "$CALLER" != "menu" ] && exit "$exit_code"
 
   echo "$DELIMETER"
 
-  printf "Press any key to open menu..." > /dev/tty
+  printf "Press any key to open menu..." >/dev/tty
   wait_input
 
   if [ "$action" = "reload" ]; then
@@ -611,17 +625,19 @@ press_any_key_to_menu(){
   fi
 }
 
-
 is_running() {
   pidof "$SINGBOX_PROC" >/dev/null 2>&1
 }
 
-
-install(){
-  get_os_release; get_architecture
+install() {
+  get_os_release
+  get_architecture
   install_dependencies
-  download_singbox; install_singbox; create_singbox_config
-  create_autostart_script; create_skeen_group
+  download_singbox
+  install_singbox
+  create_singbox_config
+  create_autostart_script
+  create_skeen_group
   download_skeen_script
 
   echomsg "$SINGBOX_NAME version:"
@@ -634,8 +650,7 @@ install(){
   press_any_key_to_menu
 }
 
-
-uninstall(){
+uninstall() {
   echomsg "Uninstalling ${SKEEN_NAME}..."
 
   is_running && stop
@@ -663,29 +678,37 @@ uninstall(){
   exit 0
 }
 
-
-accept_uninstall(){
-  max_attempts=3; attempt=0
+accept_uninstall() {
+  local max_attempts=3
+  local attempt=0
+  local option
 
   while [ $attempt -lt $max_attempts ]; do
-    printf "Uninstall, %s? [y/n]: " "$SKEEN_NAME" > /dev/tty
-    read -r option < /dev/tty
+    printf "Uninstall, %s? [y/n]: " "$SKEEN_NAME" >/dev/tty
+    read -r option </dev/tty
 
     [ -z "$option" ] && option="n"
 
     case "$option" in
-      y|Y) uninstall ;;
-      n|N) break ;;
-      *) echoerr "Incorrect option"; attempt=$((attempt+1)) ;;
+    y | Y) uninstall ;;
+    n | N) break ;;
+    *)
+      echoerr "Incorrect option"
+      attempt=$((attempt + 1))
+      ;;
     esac
   done
 
   show_menu
 }
 
-
 get_net_check_hosts() {
-  ipv="${1:-}"; hosts=""; sys_hosts=""; max="3"
+  local ipv="${1:-}"
+  local hosts=""
+  local sys_hosts=""
+  local max="3"
+  local count
+  local result
 
   if [ "$ipv" = "4" ]; then
     sys_hosts="1.1.1.1 77.88.8.8 223.5.5.5"
@@ -697,7 +720,7 @@ get_net_check_hosts() {
   if [ -z "$hosts" ]; then
     echo "$sys_hosts"
   else
-    hosts="$(echo "$hosts" | \
+    hosts="$(echo "$hosts" |
       tr ',\t\n' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
 
     # shellcheck disable=SC2086
@@ -716,9 +739,14 @@ get_net_check_hosts() {
   fi
 }
 
-
 check_internet() {
-  hosts="$(get_net_check_hosts "4")"; max_attempts=3
+  local hosts
+  local max_attempts=3
+  local host
+  local attempt
+
+  hosts="$(get_net_check_hosts "4")"
+  max_attempts=3
 
   for host in $hosts; do
     attempt=1
@@ -737,9 +765,12 @@ check_internet() {
   logger_error "Internet is not available via any of the checked hosts"
 }
 
-
-get_fw_mode_param(){
-  file="${1:-}"; type="${2:-}"
+get_fw_mode_param() {
+  local file="${1:-}"
+  local type="${2:-}"
+  local has_opkgtun
+  local port
+  local network
 
   if [ "$type" = "tun" ]; then
     has_opkgtun=$(jsonfilter -i "$file" \
@@ -753,8 +784,8 @@ get_fw_mode_param(){
   fi
 
   port=$(jsonfilter -i "$file" \
-    -e '@.inbounds[@.type="'"$type"'"].listen_port' \
-    | head -n1 2>/dev/null)
+    -e '@.inbounds[@.type="'"$type"'"].listen_port' |
+    head -n1 2>/dev/null)
 
   [ -z "$port" ] && return 0
 
@@ -764,8 +795,8 @@ get_fw_mode_param(){
   fi
 
   network=$(jsonfilter -i "$file" \
-    -e '@.inbounds[@.type="'"$type"'"].network' \
-    | head -n1 2>/dev/null)
+    -e '@.inbounds[@.type="'"$type"'"].network' |
+    head -n1 2>/dev/null)
 
   if [ -n "$network" ]; then
     echo "${port}|${network}"
@@ -776,16 +807,19 @@ get_fw_mode_param(){
   return 0
 }
 
-
 get_fw_mode_data() {
-  type="$1"
+  local type="$1"
+  local json_files
+  local file
+  local param
 
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
     get_fw_mode_param "$SING_CONFIG_PATH" "$type"
     return 0
   fi
 
-  json_files=""; [ -d "$CONFIG_DIR" ] && json_files="$(find "$CONFIG_DIR" -name '*.json')"
+  json_files=""
+  [ -d "$CONFIG_DIR" ] && json_files="$(find "$CONFIG_DIR" -name '*.json')"
   for file in $json_files; do
     param="$(get_fw_mode_param "$file" "$type")"
     [ -n "$param" ] && echo "$param" && return 0
@@ -793,7 +827,6 @@ get_fw_mode_data() {
 
   return 0
 }
-
 
 has_dns_servers() {
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
@@ -812,20 +845,22 @@ has_dns_servers() {
   return 1
 }
 
-
 check_port() {
-  port="${1:-}";
+  local port="${1:-}"
+  local msg_err
 
   if [ -z "$port" ] && iptables -t mangle -nvL INPUT --line-numbers | grep -q 'tcp dpt:443'; then
     msg_err="HTTPS Port 443 is in use by Keenetic services."
-    echoerr "$msg_err"; logger_error "$msg_err"
+    echoerr "$msg_err"
+    logger_error "$msg_err"
     echoerr "TProxy mode requires a free port to work."
     echoerr "Please free it on the 'Users and Access' page of the router web interface"
     press_any_key_to_menu "" 1
   elif [ -n "$port" ]; then
     if netstat -lnt 2>/dev/null | grep -q ":$port\s"; then
       msg_err="Port $port is in use. Free it and try running again"
-      echoerr "$msg_err"; logger_error "$msg_err";
+      echoerr "$msg_err"
+      logger_error "$msg_err"
       press_any_key_to_menu "" 1
     fi
   fi
@@ -833,9 +868,9 @@ check_port() {
   return 0
 }
 
-
 is_owner_module_working() {
-  chain="TEST_OWNER_CHAIN"
+  local chain="TEST_OWNER_CHAIN"
+  local result
 
   iptables -w -t mangle -N "$chain" >/dev/null 2>&1 || true
 
@@ -848,9 +883,11 @@ is_owner_module_working() {
   return "$result"
 }
 
-
 load_module() {
-  module="$1"; modname="${module%.ko}"
+  local module="$1"
+  local modname="${module%.ko}"
+  local path_os
+  local path_entware
 
   if lsmod | grep -q "^$modname"; then
     return 0
@@ -878,11 +915,12 @@ load_module() {
   return 1
 }
 
-
 loading_modules() {
+  local modules="xt_TPROXY.ko xt_multiport.ko xt_owner.ko"
+  local err_msg="Please install router component: «Kernel modules for Netfilter»"
+  local module
+
   MODULES_OS_DIR="${MODULES_OS_DIR}/$(uname -r)"
-  modules="xt_TPROXY.ko xt_multiport.ko xt_owner.ko"
-  err_msg="Please install router component: «Kernel modules for Netfilter»"
 
   echomsg "Checking and loading modules..."
 
@@ -891,19 +929,24 @@ loading_modules() {
       continue
     fi
     if ! load_module "$module"; then
-      echoerr "$err_msg"; logger_error "$err_msg"; press_any_key_to_menu "" 1
+      echoerr "$err_msg"
+      logger_error "$err_msg"
+      press_any_key_to_menu "" 1
     fi
   done
 
   return 0
 }
 
+get_iptables_list() {
+  local ipt4
+  local ipt6
+  local ipt_list
 
-get_iptables_list(){
-  ipt4="$(ip -4 addr show | grep -q "inet " && \
+  ipt4="$(ip -4 addr show | grep -q "inet " &&
     command -v iptables >/dev/null 2>&1 && echo iptables)"
 
-  ipt6="$(ip -6 addr show | grep -q "inet6 " && \
+  ipt6="$(ip -6 addr show | grep -q "inet6 " &&
     command -v ip6tables >/dev/null 2>&1 && echo ip6tables)"
 
   # shellcheck disable=SC2086
@@ -913,24 +956,33 @@ get_iptables_list(){
   echo "$ipt_list"
 }
 
+get_mark_policy() {
+  local mark
+  local json_policy
+  local policy_name
+  local i=1
+  local descriptions
+  local marks
+  local marks_list
+  local description
 
-get_mark_policy(){
   mark=""
 
   if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_NAME" ]; then
     json_policy="$(rci /show/ip/policy)"
     policy_name="$(echo "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')"
-    i=1
     descriptions="$(echo "$json_policy" | jsonfilter -e '@.*.description')"
     marks="$(echo "$json_policy" | jsonfilter -e '@.*.mark')"
     # shellcheck disable=SC2086
-    set -- $marks; marks_list="$*"
+    set -- $marks
+    marks_list="$*"
 
     for description in $descriptions; do
       if [ "$(echo "$description" | tr '[:upper:]' '[:lower:]')" = "$policy_name" ]; then
-        mark="$(echo "$marks_list" | awk -v idx="$i" '{print $idx}')"; break
+        mark="$(echo "$marks_list" | awk -v idx="$i" '{print $idx}')"
+        break
       fi
-      i=$((i+1))
+      i=$((i + 1))
     done
   fi
 
@@ -941,8 +993,10 @@ get_mark_policy(){
   fi
 }
 
-
 set_route_rules() {
+  local source_table
+  local policy_table
+
   if [ -n "$SKEEN_MARK_POLICY" ]; then
     source_table=$(ip rule show |
       awk -v p="$SKEEN_MARK_POLICY" '$0 ~ p && /lookup/ && !/blackhole/ {print $NF; exit}' | sed -n '1p')
@@ -961,8 +1015,8 @@ set_route_rules() {
       ip -"$IP_VERSION" route show default 2>/dev/null | grep -q '^default'
     else
       ip -"$IP_VERSION" route show table all 2>/dev/null |
-      grep -E "^[[:space:]]*default .* table $policy_table( |$)" |
-      grep -vq 'unreachable'
+        grep -E "^[[:space:]]*default .* table $policy_table( |$)" |
+        grep -vq 'unreachable'
     fi
   }
 
@@ -992,14 +1046,21 @@ set_route_rules() {
   ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
 
   ip -"$IP_VERSION" route show table "$source_table" 2>/dev/null |
-  while read -r r; do
-    case "$r" in default*|blackhole*|unreachable*) continue ;; esac
-    ip -"$IP_VERSION" route add table "$TABLE_ID" "$r" 2>/dev/null || true
-  done
+    while read -r r; do
+      case "$r" in default* | blackhole* | unreachable*) continue ;; esac
+      ip -"$IP_VERSION" route add table "$TABLE_ID" "$r" 2>/dev/null || true
+    done
 }
 
 is_valid_ipv4() {
-  addr="${1:-}"; ip="${addr%%/*}"; cidr="${addr#*/}"
+  local addr="${1:-}"
+  local ip
+  local cidr
+  local o1 o2 o3 o4
+  local o
+
+  ip="${addr%%/*}"
+  cidr="${addr#*/}"
 
   IFS=. read -r o1 o2 o3 o4 <<EOF
 $ip
@@ -1008,52 +1069,72 @@ EOF
   [ "$o1" ] && [ "$o2" ] && [ "$o3" ] && [ "$o4" ] || return 1
 
   for o in $o1 $o2 $o3 $o4; do
-    [ "$o" -ge 0 ] 2>/dev/null || return 1;
-    [ "$o" -le 255 ] 2>/dev/null || return 1;
+    [ "$o" -ge 0 ] 2>/dev/null || return 1
+    [ "$o" -le 255 ] 2>/dev/null || return 1
   done
 
   if [ "$ip" != "$addr" ]; then
-    case "$cidr" in ''|[0-9]|[1-2][0-9]|3[0-2]) ;; *) return 1 ;; esac
+    case "$cidr" in '' | [0-9] | [1-2][0-9] | 3[0-2]) ;; *) return 1 ;; esac
   fi
 }
 
-
 is_valid_ipv6() {
-  addr="${1:-}"; ip_only="${addr%%/*}"; cidr="${addr#*/}"
+  local addr="${1:-}"
+  local ip_only
+  local cidr
+
+  ip_only="${addr%%/*}"
+  cidr="${addr#*/}"
 
   ip -6 route get "$ip_only" >/dev/null 2>&1 || return 1
 
   if [ "$ip_only" != "$addr" ]; then
     case "$cidr" in
-      ''|[0-9]|[1-9][0-9]|1[0-2][0-8]) ;;
-      *) return 1 ;;
+    '' | [0-9] | [1-9][0-9] | 1[0-2][0-8]) ;;
+    *) return 1 ;;
     esac
   fi
 }
 
-
 get_validate_ports() {
-  label="${1:-}"; input="${2:-}"
+  local label="${1:-}"
+  local input="${2:-}"
+  local msg_err="Invalid ${label} port:"
+  local valid_ports=""
+  local invalid_ports=""
+  local ports
+  local p
+  local start
+  local end
 
   msg_err="Invalid ${label} port:"
-  valid_ports=""; invalid_ports=""
+  valid_ports=""
+  invalid_ports=""
 
   ports="$(printf '%s\n' "$input" | tr ', ' '\n' | sed '/^$/d')"
 
   for p in $ports; do
     case "$p" in
-      *:*) start="${p%%:*}"; end="${p##*:}" ;;
-      *) start="$p"; end="$p" ;;
+    *:*)
+      start="${p%%:*}"
+      end="${p##*:}"
+      ;;
+    *)
+      start="$p"
+      end="$p"
+      ;;
     esac
 
     case "$start$end" in
-      *[!0-9]*|'')
-        invalid_ports="${invalid_ports:+$invalid_ports }$p"; continue
+    *[!0-9]* | '')
+      invalid_ports="${invalid_ports:+$invalid_ports }$p"
+      continue
       ;;
     esac
 
     if [ "$start" -lt 1 ] || [ "$end" -gt 65535 ] || [ "$start" -gt "$end" ]; then
-      invalid_ports="${invalid_ports:+$invalid_ports }$p"; continue
+      invalid_ports="${invalid_ports:+$invalid_ports }$p"
+      continue
     fi
 
     valid_ports="${valid_ports:+$valid_ports }$p"
@@ -1068,19 +1149,35 @@ get_validate_ports() {
 }
 
 get_eth_subnet() {
-  _ip_v="${1:-}"; addresses="$(get_net_check_hosts "$_ip_v")"
-  prefix_length="32"; [ "$_ip_v" = "6" ] && prefix_length="128"
+  local _ip_v="${1:-}"
+  local addresses
+  local prefix_length="32"
+  local address
+  local eth_ip
+
+  [ "$_ip_v" = "6" ] && prefix_length="128"
+
+  addresses="$(get_net_check_hosts "$_ip_v")"
 
   for address in $addresses; do
     eth_ip="$(ip -"$_ip_v" route get "$address" 2>/dev/null |
-              awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
+      awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
     [ -n "$eth_ip" ] && echo "${eth_ip}/${prefix_length}" && break
   done
 }
 
 get_exclude_addresses() {
-  ip_v="${1:-}"; eth_subnet=""
-  reserved_subnets=""; user_exclude=""
+  local ip_v="${1:-}"
+  local eth_subnet
+  local reserved_subnets
+  local user_exclude
+  local prefix_length_default
+  local all_list
+  local line
+  local subnet
+  local invalid_list
+  local addr
+  local validator
 
   [ "$ip_v" = "4" ] && prefix_length_default="32" || prefix_length_default="128"
 
@@ -1097,7 +1194,7 @@ get_exclude_addresses() {
   while IFS= read -r line; do
     [ -z "$line" ] && continue
     case "$line" in
-      \#*) continue ;;
+    \#*) continue ;;
     esac
     subnet=$(echo "$line" | cut -d ' ' -f1)
     all_list="$all_list $subnet"
@@ -1112,8 +1209,8 @@ EOF
     [ "${addr#*/}" = "$addr" ] && addr="$addr/$prefix_length_default"
 
     case "$ip_v" in
-      4) validator=is_valid_ipv4 ;;
-      6) validator=is_valid_ipv6 ;;
+    4) validator=is_valid_ipv4 ;;
+    6) validator=is_valid_ipv6 ;;
     esac
 
     if $validator "$addr"; then
@@ -1131,16 +1228,20 @@ EOF
   echo "$all_list" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
-
 add_rule() {
-  iptables="${1:-}"; table="${2:-}"; chain="${3:-}"; shift 3
+  local iptables="${1:-}"
+  local table="${2:-}"
+  local chain="${3:-}"
+  shift 3
   # shellcheck disable=SC2068
   $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
 }
 
-
 add_tproxy_rules() {
-  iptables="${1:-}"; table="${2:-}"; chain="${3:-}"
+  local iptables="${1:-}"
+  local table="${2:-}"
+  local chain="${3:-}"
+  local net
 
   for net in $SKEEN_TPROXY_NETWORK; do
     add_rule "$iptables" "$table" "$chain" \
@@ -1155,23 +1256,29 @@ add_tproxy_rules() {
   done
 }
 
-
-add_redirect_rules(){
-  iptables=${1:-}; table=${2:-}; chain=${3:-}
+add_redirect_rules() {
+  local iptables="${1:-}"
+  local table="${2:-}"
+  local chain="${3:-}"
 
   add_rule "$iptables" "$table" "$chain" \
     -p tcp -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
 }
 
-
 set_iptables_rules() {
-  iptables="${1:-}"; table="${2:-}"; chain="${3:-}"
+  local iptables="${1:-}"
+  local table="${2:-}"
+  local chain="${3:-}"
+  local set_name
+  local bp_rule_set
+  local case_mode
+  local net
 
   set_name="${BYPASS_NET_SET}${IP_VERSION}"
   bp_rule_set="-m set --match-set $set_name dst -j RETURN"
 
-  if [ "$chain" = "$CHAIN_PREROUTING" ] && \
-     ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
+  if [ "$chain" = "$CHAIN_PREROUTING" ] &&
+    ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
 
     $iptables -t "$table" -N "$chain" || return 0
 
@@ -1179,40 +1286,40 @@ set_iptables_rules() {
     [ "$SKEEN_DNS_ENABLED" != "1" ] && case_mode="not_set"
 
     case "$case_mode" in
-      hybrid:nat)
+    hybrid:nat)
+      # shellcheck disable=SC2086
+      add_rule "$iptables" "$table" "$chain" \
+        -p tcp ! --dport "$DNS_PORT" $bp_rule_set
+      ;;
+    hybrid:mangle | tproxy:mangle)
+      for net in $SKEEN_TPROXY_NETWORK; do
         # shellcheck disable=SC2086
         add_rule "$iptables" "$table" "$chain" \
-          -p tcp ! --dport "$DNS_PORT" $bp_rule_set
+          -p "$net" ! --dport "$DNS_PORT" $bp_rule_set
+      done
       ;;
-      hybrid:mangle|tproxy:mangle)
-        for net in $SKEEN_TPROXY_NETWORK; do
-          # shellcheck disable=SC2086
-          add_rule "$iptables" "$table" "$chain" \
-            -p "$net" ! --dport "$DNS_PORT" $bp_rule_set
-        done
-      ;;
-      *)
-        # shellcheck disable=SC2086
-        add_rule "$iptables" "$table" "$chain" $bp_rule_set
+    *)
+      # shellcheck disable=SC2086
+      add_rule "$iptables" "$table" "$chain" $bp_rule_set
       ;;
     esac
 
     case "$SKEEN_FIREWALL_MODE" in
-      hybrid)
-        if [ "$table" = "$TABLE_REDIRECT" ]; then
-          add_redirect_rules "$iptables" "$table" "$chain"
-        else
-          add_tproxy_rules "$iptables" "$table" "$chain"
-        fi
+    hybrid)
+      if [ "$table" = "$TABLE_REDIRECT" ]; then
+        add_redirect_rules "$iptables" "$table" "$chain"
+      else
+        add_tproxy_rules "$iptables" "$table" "$chain"
+      fi
       ;;
-      tproxy) add_tproxy_rules "$iptables" "$table" "$chain" ;;
-      redirect) add_redirect_rules "$iptables" "$table" "$chain" ;;
-      *) return 0 ;;
+    tproxy) add_tproxy_rules "$iptables" "$table" "$chain" ;;
+    redirect) add_redirect_rules "$iptables" "$table" "$chain" ;;
+    *) return 0 ;;
     esac
   fi
 
-  if [ "$chain" = "$CHAIN_OUTPUT" ] && \
-     ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
+  if [ "$chain" = "$CHAIN_OUTPUT" ] &&
+    ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
 
     $iptables -t "$table" -N "$chain" || return 0
 
@@ -1226,9 +1333,15 @@ set_iptables_rules() {
   fi
 }
 
-
 set_prerouting_rules() {
-  iptables="${1:-}"; table="${2:-}"; connmark_option=""
+  local iptables="${1:-}"
+  local table="${2:-}"
+  local connmark_option
+  local ports
+  local dports_op
+  local rule
+  local chunk
+  local proto
 
   if [ "$table" = "$TABLE_TPROXY" ]; then
     rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
@@ -1241,7 +1354,8 @@ set_prerouting_rules() {
   [ -n "$SKEEN_MARK_POLICY" ] &&
     connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
 
-  ports=""; dports_op=""
+  ports=""
+  dports_op=""
 
   if [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
     ports="$SKEEN_INTERCEPT_PORTS"
@@ -1268,14 +1382,14 @@ set_prerouting_rules() {
 
   # shellcheck disable=SC2086
   set -- $ports
-  total=$#
-  i=1
+  local total=$#
+  local i=1
 
   while [ "$i" -le "$total" ]; do
     chunk="$(printf '%s\n' "$ports" |
-            sed -n "${i},$((i+6))p" |
-            tr '\n' ',' |
-            sed 's/,$//')"
+      sed -n "${i},$((i + 6))p" |
+      tr '\n' ',' |
+      sed 's/,$//')"
 
     [ -z "$chunk" ] && break
 
@@ -1296,14 +1410,16 @@ set_prerouting_rules() {
   done
 }
 
-
 add_output_rules() {
-  iptables="$1"; table="$2"
+  local iptables="$1"
+  local table="$2"
+  local rule
+  local proto
 
   case "$SKEEN_FIREWALL_MODE" in
-    tproxy) proto='! -p icmp' ;;
-    hybrid) proto='-p udp' ;;
-    *) return 0 ;;
+  tproxy) proto='! -p icmp' ;;
+  hybrid) proto='-p udp' ;;
+  *) return 0 ;;
   esac
 
   rule="-m owner ! --gid-owner $SKEEN_PROC \
@@ -1316,8 +1432,9 @@ add_output_rules() {
   fi
 }
 
+release_version_ge5() {
+  local major
 
-release_version_ge5(){
   check_tty
   major=$(ndmc -c show version | awk -F'[:.]' '/release:/ {gsub(/ /,"",$2); print $2}')
   if [ "$major" -lt 5 ]; then
@@ -1325,20 +1442,24 @@ release_version_ge5(){
   fi
 }
 
-
-tun_create(){
-  opkgtun_ip="${1:-}"; opkgtun_desc="${2:-}"
-  opkgtun_id="0"; opkgtun_name="OpkgTun0"
+tun_create() {
+  local opkgtun_ip="${1:-}"
+  local opkgtun_desc="${2:-}"
+  local opkgtun_id="0"
+  local opkgtun_name="OpkgTun0"
+  local inface_list
+  local opkgtun_ids
+  local opkgtun_name_lower
 
   if [ -z "$opkgtun_ip" ] || [ -z "$opkgtun_desc" ]; then
-    echoerr "Use the following format to create an OpkgTun interface:"
+    echomsg "Use the following format to create an OpkgTun interface:"
     echomsg "skeen tun create <ipv4> <name>"
     return
   fi
 
   case "$opkgtun_desc" in
-    [!A-Za-z0-9_-]*)
-      exiterr "Invalid name, allowed characters: A–Z, a–z, 0–9, _ and -"
+  [!A-Za-z0-9_-]*)
+    exiterr "Invalid name, allowed characters: A–Z, a–z, 0–9, _ and -"
     ;;
   esac
 
@@ -1355,9 +1476,8 @@ tun_create(){
 
   inface_list="$(ndmc -c show interface)"
 
-  if echo "$inface_list" \
-    | grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"
-  then
+  if echo "$inface_list" |
+    grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"; then
     echoerr "Interface named \"$opkgtun_desc\" already exists"
     return
   fi
@@ -1367,37 +1487,38 @@ tun_create(){
         sub(/.*: */, "", $0)
         if ($0 == ip) found=1
     }
-    END { exit !found }'
-  then
+    END { exit !found }'; then
     exiterr "IP address $opkgtun_ip is already in use"
   fi
 
-  opkgtun_ids="$(echo "$inface_list" \
-    | grep 'id:[[:space:]]*OpkgTun' \
-    | awk -F'OpkgTun' '{print $2}')"
+  opkgtun_ids="$(echo "$inface_list" |
+    grep 'id:[[:space:]]*OpkgTun' |
+    awk -F'OpkgTun' '{print $2}')"
 
   if [ -n "$opkgtun_ids" ]; then
-    opkgtun_id=$(
-      i=0
-      while :; do
-        echo "$opkgtun_ids" | grep -qx "$i" || { echo "$i"; break; }
-        i=$((i+1))
-      done
-    )
+    local i=0
+    while :; do
+      echo "$opkgtun_ids" | grep -qx "$i" || {
+        echo "$i"
+        break
+      }
+      i=$((i + 1))
+    done
+    opkgtun_id=$?
     opkgtun_name="OpkgTun${opkgtun_id}"
   fi
 
   opkgtun_name_lower=$(echo "$opkgtun_name" | tr '[:upper:]' '[:lower:]')
 
-  tun_delete_msg(){
+  tun_delete_msg() {
     tun_delete "$opkgtun_desc"
     exiterr "Failed to set ${1} the interface"
   }
 
   ndmc -c interface "$opkgtun_name" || { echoerr "Failed to create the interface" && return; }
-  ndmc -c interface "$opkgtun_name" description "$opkgtun_desc"  || tun_delete_msg "description"
+  ndmc -c interface "$opkgtun_name" description "$opkgtun_desc" || tun_delete_msg "description"
   ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" || tun_delete_msg "ip address"
-  ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name"  || tun_delete_msg "ip route default"
+  ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name" || tun_delete_msg "ip route default"
   ndmc -c interface "$opkgtun_name" ip global auto || tun_delete_msg "ip global auto"
   ndmc -c interface "$opkgtun_name" up && ndmc -c system configuration save
 
@@ -1405,9 +1526,9 @@ tun_create(){
   echo "Use the name $(green "\"$opkgtun_name_lower\"") for the $(yellow "\"interface_name\"") field in the tun configuration"
 }
 
-
-tun_delete(){
-  opkgtun_desc="${1:-8888}"
+tun_delete() {
+  local opkgtun_desc="${1:-8888}"
+  local opkgtun_name
 
   if [ -z "$opkgtun_desc" ]; then
     echoerr "Please specify the name of the OpkgTun interface to delete"
@@ -1415,22 +1536,21 @@ tun_delete(){
     return
   fi
 
-  if ndmc -c show interface \
-    | grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"
-  then
+  if ndmc -c show interface |
+    grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"; then
     opkgtun_name=$(ndmc -c show interface | awk -v d="$opkgtun_desc" '
       /^[[:space:]]*interface-name:/ { iface=$0; sub(/.*: */, "", iface) }
       /^[[:space:]]*description:/   { desc=$0; sub(/.*: */, "", desc); if(desc==d){print iface; exit} }')
 
     case "$opkgtun_name" in
-      OpkgTun[0-9]*)
-        ndmc -c no interface "$opkgtun_name" || { echoerr "Failed to delete the interface" && return; }
-        ndmc -c system configuration save
-        echook "Interface \"$opkgtun_name\" has been successfully deleted"
+    OpkgTun[0-9]*)
+      ndmc -c no interface "$opkgtun_name" || { echoerr "Failed to delete the interface" && return; }
+      ndmc -c system configuration save
+      echook "Interface \"$opkgtun_name\" has been successfully deleted"
       ;;
-      *)
-        echoerr "Interface name: \"$opkgtun_name\" not OpkgTun"
-        echoerr "You can only delete an OpkgTun interface"
+    *)
+      echoerr "Interface name: \"$opkgtun_name\" not OpkgTun"
+      echoerr "You can only delete an OpkgTun interface"
       ;;
     esac
   else
@@ -1438,8 +1558,8 @@ tun_delete(){
   fi
 }
 
-
-tun_list(){
+tun_list() {
+  local opkgtun_list
   opkgtun_list="$(
     ndmc -c show interface | awk '/^Interface, name = "OpkgTun/ { print_block=1 }
       print_block { print }
@@ -1448,8 +1568,7 @@ tun_list(){
   [ -z "$opkgtun_list" ] && echomsg "No OpkgTun interfaces found" || echo "$opkgtun_list"
 }
 
-
-get_tun_fw_rules(){
+get_tun_fw_rules() {
   cat <<EOF
 if [ "\$type" = "iptables" ] && ! iptables -C INPUT -i opkgtun+ -j ACCEPT 2>/dev/null;
 then
@@ -1460,8 +1579,16 @@ fi
 EOF
 }
 
+prepare_firewall() {
+  local complete_msg
+  local redirect_data
+  local tproxy_data
+  local has_opkgtun
+  local warn_msg
+  local route_all
+  local intercept_ports
+  local exclude_ports
 
-prepare_firewall(){
   echomsg "Preparing a firewall..."
 
   complete_msg="Firewall preparation is complete"
@@ -1501,8 +1628,8 @@ prepare_firewall(){
     warn_msg="the DNS configuration is not used"
 
     case "$SKEEN_FIREWALL_MODE" in
-      tproxy|hybrid) SKEEN_DNS_ENABLED="1" ;;
-      *) echowarn "In '$SKEEN_FIREWALL_MODE' mode, $warn_msg" ;;
+    tproxy | hybrid) SKEEN_DNS_ENABLED="1" ;;
+    *) echowarn "In '$SKEEN_FIREWALL_MODE' mode, $warn_msg" ;;
     esac
   fi
 
@@ -1514,7 +1641,7 @@ prepare_firewall(){
       echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
       echo "export SKEEN_DNS_ENABLED=\"$SKEEN_DNS_ENABLED\""
       get_tun_fw_rules
-    } > "$FIREWALL_HOOK_FILE"
+    } >"$FIREWALL_HOOK_FILE"
 
     chmod +x "$FIREWALL_HOOK_FILE"
     echook "$complete_msg"
@@ -1559,7 +1686,8 @@ prepare_firewall(){
     echomsg "Detected iptables: $SKEEN_IPTABLES_LIST"
   fi
 
-  SKEEN_INTERCEPT_PORTS=""; SKEEN_EXCLUDE_PORTS=""
+  SKEEN_INTERCEPT_PORTS=""
+  SKEEN_EXCLUDE_PORTS=""
   intercept_ports="$(get_validate_ports "intercept" "$(json_get_array '@.firewall.intercept.port')")"
   if [ -n "$intercept_ports" ]; then
     SKEEN_INTERCEPT_PORTS="$intercept_ports"
@@ -1569,8 +1697,9 @@ prepare_firewall(){
   fi
 
   setup_bypass_ipset() {
-    ipver="$1"; family="$2"
-    name_set="${BYPASS_NET_SET}${ipver}"
+    local ipver="$1"
+    local family="$2"
+    local name_set="${BYPASS_NET_SET}${ipver}"
 
     ipset create "$name_set" hash:net family "$family" -exist
     ipset flush "$name_set"
@@ -1613,24 +1742,26 @@ prepare_firewall(){
     echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
 
     case "$SKEEN_FIREWALL_MODE" in
-      hybrid) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
-      tproxy) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0" ;;
-      redirect) echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
-      *) echo "exit 0" ;;
+    hybrid) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
+    tproxy) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0" ;;
+    redirect) echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
+    *) echo "exit 0" ;;
     esac
 
     echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table\""
 
     echo "$SKEEN_SCRIPT apply_firewall netfilter"
-  } > "$FIREWALL_HOOK_FILE"
+  } >"$FIREWALL_HOOK_FILE"
 
   chmod +x "$FIREWALL_HOOK_FILE"
 
   echook "$complete_msg"
 }
 
+apply_firewall() {
+  local iptables
+  local eth_subnet
 
-apply_firewall(){
   [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
 
   echomsg "Applying firewall rules..."
@@ -1643,7 +1774,7 @@ apply_firewall(){
       IP_VERSION="6"
       PROXY_IP="::1"
     else
-      msg_err="Unknown iptables: $iptables"
+      local msg_err="Unknown iptables: $iptables"
       logger_error "$msg_err"
       echoerr "$msg_err"
       press_any_key_to_menu "" 1
@@ -1680,8 +1811,13 @@ apply_firewall(){
   echook "Firewall rules applied successfully"
 }
 
+clean_firewall() {
+  local msg_ok
+  local ipt_cmd
+  local tbl
+  local set_name
+  local ip_ver
 
-clean_firewall(){
   import_firewall_vars
 
   [ -z "$SKEEN_FIREWALL_MODE" ] && return 0
@@ -1695,7 +1831,12 @@ clean_firewall(){
   [ "$SKEEN_FIREWALL_MODE" = "tun" ] && echook "$msg_ok" && return 0
 
   clean_chain() {
-    iptables="$1"; table="$2"; chain="$3"; parent="$4"
+    local iptables="$1"
+    local table="$2"
+    local chain="$3"
+    local parent="$4"
+    local rule_num
+    local rule
 
     if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
       return 0
@@ -1706,7 +1847,7 @@ clean_firewall(){
     while :; do
       rule_num=$(
         $iptables -w -t "$table" -nL "$parent" --line-numbers 2>/dev/null |
-        awk -v ch="$chain" '$0 ~ ch {print $1; exit}'
+          awk -v ch="$chain" '$0 ~ ch {print $1; exit}'
       )
       [ -z "$rule_num" ] && break
       $iptables -w -t "$table" -D "$parent" "$rule_num" >/dev/null 2>&1
@@ -1724,7 +1865,7 @@ clean_firewall(){
   for ipt_cmd in iptables ip6tables; do
     for tbl in nat mangle; do
       clean_chain "$ipt_cmd" "$tbl" "$CHAIN_PREROUTING" PREROUTING
-      clean_chain "$ipt_cmd" "$tbl" "$CHAIN_OUTPUT"     OUTPUT
+      clean_chain "$ipt_cmd" "$tbl" "$CHAIN_OUTPUT" OUTPUT
     done
   done
 
@@ -1736,7 +1877,7 @@ clean_firewall(){
       fi
 
       set_name="${BYPASS_NET_SET}${ip_ver}"
-      ipset list "$set_name" >/dev/null 2>&1 && \
+      ipset list "$set_name" >/dev/null 2>&1 &&
         ipset flush "$set_name" && ipset destroy "$set_name"
     done
   fi
@@ -1744,17 +1885,16 @@ clean_firewall(){
   echook "$msg_ok"
 }
 
-
-apply_sysctl_network_tuning(){
+apply_sysctl_network_tuning() {
   {
     # IPv4 Forwarding & TProxy Support
-    sysctl -w net.ipv4.ip_forward=1                    # Enable IPv4 routing
-    sysctl -w net.ipv4.conf.all.src_valid_mark=0       # Accept TProxy marked packets
-    sysctl -w net.ipv4.conf.lo.route_localnet=1        # Allow lo local routing (TProxy)
-    sysctl -w net.ipv4.conf.all.send_redirects=0       # Disable ICMP redirects globally
-    sysctl -w net.ipv4.conf.default.send_redirects=0   # Disable ICMP redirects by default
-    sysctl -w net.ipv4.conf.all.route_localnet=1       # Allow TPROXY to route packets via 127.0.0.1
-    sysctl -w net.ipv4.ip_nonlocal_bind=1              # Allow processes to bind to any IP
+    sysctl -w net.ipv4.ip_forward=1                  # Enable IPv4 routing
+    sysctl -w net.ipv4.conf.all.src_valid_mark=0     # Accept TProxy marked packets
+    sysctl -w net.ipv4.conf.lo.route_localnet=1      # Allow lo local routing (TProxy)
+    sysctl -w net.ipv4.conf.all.send_redirects=0     # Disable ICMP redirects globally
+    sysctl -w net.ipv4.conf.default.send_redirects=0 # Disable ICMP redirects by default
+    sysctl -w net.ipv4.conf.all.route_localnet=1     # Allow TPROXY to route packets via 127.0.0.1
+    sysctl -w net.ipv4.ip_nonlocal_bind=1            # Allow processes to bind to any IP
 
     # IPv6 support
     if [ -f /proc/net/if_inet6 ]; then
@@ -1782,53 +1922,52 @@ apply_sysctl_network_tuning(){
     [ "$NETWORK_TUNING" != "1" ] && return 0
 
     # Network Buffers (TCP/UDP)
-    sysctl -w net.core.rmem_max=6291456     # Max TCP/UDP receive buffer
-    sysctl -w net.core.wmem_max=6291456     # Max TCP/UDP send buffer
-    sysctl -w net.core.rmem_default=229376  # Default receive buffer
-    sysctl -w net.core.wmem_default=229376  # Default send buffer
+    sysctl -w net.core.rmem_max=6291456    # Max TCP/UDP receive buffer
+    sysctl -w net.core.wmem_max=6291456    # Max TCP/UDP send buffer
+    sysctl -w net.core.rmem_default=229376 # Default receive buffer
+    sysctl -w net.core.wmem_default=229376 # Default send buffer
 
     # Interface Queues
-    sysctl -w net.core.netdev_max_backlog=4096   # Max packets queued on interface
-    sysctl -w net.core.somaxconn=512             # Max pending TCP connections
+    sysctl -w net.core.netdev_max_backlog=4096 # Max packets queued on interface
+    sysctl -w net.core.somaxconn=512           # Max pending TCP connections
 
     # Connection Tracking
-    sysctl -w net.netfilter.nf_conntrack_max=50000                     # Max tracked connections
-    sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=600   # TCP established timeout
-    sysctl -w net.netfilter.nf_conntrack_udp_timeout=60                # UDP timeout without data
-    sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=180        # UDP timeout with data
-    sysctl -w net.netfilter.nf_conntrack_checksum=0                    # Skip checksum validation
+    sysctl -w net.netfilter.nf_conntrack_max=50000                   # Max tracked connections
+    sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=600 # TCP established timeout
+    sysctl -w net.netfilter.nf_conntrack_udp_timeout=60              # UDP timeout without data
+    sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=180      # UDP timeout with data
+    sysctl -w net.netfilter.nf_conntrack_checksum=0                  # Skip checksum validation
 
     # TCP/UDP Memory & Buffers
-    sysctl -w net.ipv4.tcp_moderate_rcvbuf=1           # autotuning
-    sysctl -w net.ipv4.tcp_mem="8192 16384 32768"      # TCP memory thresholds
-    sysctl -w net.ipv4.udp_mem="8192 16384 32768"      # UDP memory thresholds
-    sysctl -w net.ipv4.tcp_rmem="4096 87380 6291456"   # TCP per-socket read buffer min/def/max
-    sysctl -w net.ipv4.tcp_wmem="4096 65536 6291456"   # TCP per-socket write buffer min/def/max
-    sysctl -w net.ipv4.udp_rmem_min=16384              # Min UDP receive buffer
-    sysctl -w net.ipv4.udp_wmem_min=16384              # Min UDP send buffer
-    sysctl -w net.ipv4.tcp_limit_output_bytes=262144   # Limit per-socket output burst
+    sysctl -w net.ipv4.tcp_moderate_rcvbuf=1         # autotuning
+    sysctl -w net.ipv4.tcp_mem="8192 16384 32768"    # TCP memory thresholds
+    sysctl -w net.ipv4.udp_mem="8192 16384 32768"    # UDP memory thresholds
+    sysctl -w net.ipv4.tcp_rmem="4096 87380 6291456" # TCP per-socket read buffer min/def/max
+    sysctl -w net.ipv4.tcp_wmem="4096 65536 6291456" # TCP per-socket write buffer min/def/max
+    sysctl -w net.ipv4.udp_rmem_min=16384            # Min UDP receive buffer
+    sysctl -w net.ipv4.udp_wmem_min=16384            # Min UDP send buffer
+    sysctl -w net.ipv4.tcp_limit_output_bytes=262144 # Limit per-socket output burst
 
     # TCP Behavior / Optimizations
-    sysctl -w net.ipv4.tcp_syncookies=1          # Enable SYN cookies (SYN flood protection)
-    sysctl -w net.ipv4.tcp_tw_reuse=1            # Allow reuse of TIME_WAIT sockets
-    sysctl -w net.ipv4.tcp_fin_timeout=15        # Shorten FIN timeout
-    sysctl -w net.ipv4.tcp_keepalive_time=600    # TCP keepalive interval
-    sysctl -w net.ipv4.tcp_keepalive_probes=5    # Keepalive probes count
-    sysctl -w net.ipv4.tcp_keepalive_intvl=10    # Keepalive interval between probes
-    sysctl -w net.ipv4.tcp_timestamps=0          # Disable TCP timestamps for performance
-    sysctl -w net.ipv4.tcp_sack=1                # Enable selective ACKs
-    sysctl -w net.ipv4.tcp_max_syn_backlog=512   # Max SYN backlog
-    sysctl -w net.ipv4.tcp_max_tw_buckets=8192   # Max TIME_WAIT sockets
-    sysctl -w net.ipv4.tcp_fastopen=3            # Enable TCP Fast Open
-    sysctl -w net.ipv4.tcp_mtu_probing=0         # Disable TCP MTU probing
+    sysctl -w net.ipv4.tcp_syncookies=1        # Enable SYN cookies (SYN flood protection)
+    sysctl -w net.ipv4.tcp_tw_reuse=1          # Allow reuse of TIME_WAIT sockets
+    sysctl -w net.ipv4.tcp_fin_timeout=15      # Shorten FIN timeout
+    sysctl -w net.ipv4.tcp_keepalive_time=600  # TCP keepalive interval
+    sysctl -w net.ipv4.tcp_keepalive_probes=5  # Keepalive probes count
+    sysctl -w net.ipv4.tcp_keepalive_intvl=10  # Keepalive interval between probes
+    sysctl -w net.ipv4.tcp_timestamps=0        # Disable TCP timestamps for performance
+    sysctl -w net.ipv4.tcp_sack=1              # Enable selective ACKs
+    sysctl -w net.ipv4.tcp_max_syn_backlog=512 # Max SYN backlog
+    sysctl -w net.ipv4.tcp_max_tw_buckets=8192 # Max TIME_WAIT sockets
+    sysctl -w net.ipv4.tcp_fastopen=3          # Enable TCP Fast Open
+    sysctl -w net.ipv4.tcp_mtu_probing=0       # Disable TCP MTU probing
 
     # Local Ports
-    sysctl -w net.ipv4.ip_local_port_range="10000 60001"  # Set ephemeral port range
+    sysctl -w net.ipv4.ip_local_port_range="10000 60001" # Set ephemeral port range
   } >/dev/null 2>&1
 }
 
-
-get_ulimit_n(){
+get_ulimit_n() {
   if [ -r /proc/sys/fs/file-max ]; then
     file_max=$(cat /proc/sys/fs/file-max)
     ulimit_n=$((file_max / 2))
@@ -1842,8 +1981,10 @@ get_ulimit_n(){
   echo "$ulimit_n"
 }
 
-start_singbox(){
-  timeout=10
+start_singbox() {
+  local timeout=10
+  local status_start
+  local msg
 
   echomsg "Starting ${SINGBOX_NAME}..."
 
@@ -1856,27 +1997,32 @@ start_singbox(){
 
   if [ $status_start -ne 0 ]; then
     msg="Failed to start $SINGBOX_NAME"
-    echoerr "$msg"; logger_error "$msg"; return 1
+    echoerr "$msg"
+    logger_error "$msg"
+    return 1
   fi
 
   while ! is_running && [ $timeout -gt 0 ]; do
-    sleep 1; timeout=$((timeout - 1))
+    sleep 1
+    timeout=$((timeout - 1))
   done
 
   if ! is_running; then
     msg="$SINGBOX_NAME did not start in time"
-    echoerr "$msg"; logger_error "$msg"; return 1
+    echoerr "$msg"
+    logger_error "$msg"
+    return 1
   fi
 
-  echook "$SINGBOX_NAME started"; logger_notice "$SINGBOX_NAME started"
+  echook "$SINGBOX_NAME started"
+  logger_notice "$SINGBOX_NAME started"
   return 0
 }
-
 
 start() {
   if [ ! -f "$SINGBOX_BIN" ]; then
     echoerr "$SINGBOX_NAME binary not found, please install it first"
-    press_any_key_to_menu  "" 1
+    press_any_key_to_menu "" 1
   fi
 
   if [ "$CALLER" = "init" ]; then
@@ -1885,22 +2031,26 @@ start() {
       return 0
     else
       if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null; then
-        sleep "$AUTO_START_DELAY"; check_internet
+        sleep "$AUTO_START_DELAY"
+        check_internet
       else
-        sleep 5; check_internet
+        sleep 5
+        check_internet
       fi
     fi
   fi
 
   if is_running; then
-    echook "Already started"; return 0
+    echook "Already started"
+    return 0
   fi
 
   check_config && echo "$DELIMETER"
 
   [ "$CALLER" != "init" ] && loading_config
 
-  create_skeen_group; [ $? -eq 2 ] && echo "$DELIMETER"
+  create_skeen_group
+  [ $? -eq 2 ] && echo "$DELIMETER"
 
   apply_sysctl_network_tuning
 
@@ -1913,14 +2063,16 @@ start() {
   return 0
 }
 
-
-stop_singbox(){
-  timeout=10
+stop_singbox() {
+  local timeout=10
+  local status_stop
+  local msg
 
   echomsg "Stopping ${SINGBOX_NAME}..."
 
   if ! is_running; then
-    echook "$SINGBOX_NAME already stopped"; return 0
+    echook "$SINGBOX_NAME already stopped"
+    return 0
   fi
 
   start-stop-daemon -K -x $SINGBOX_PROC >/dev/null
@@ -1928,24 +2080,30 @@ stop_singbox(){
 
   if [ $status_stop -ne 0 ]; then
     msg="Failed to send stop signal to $SINGBOX_NAME"
-    echoerr "$msg"; logger_error "$msg"; return 1
+    echoerr "$msg"
+    logger_error "$msg"
+    return 1
   fi
 
   while is_running && [ $timeout -gt 0 ]; do
-    sleep 1; timeout=$((timeout - 1))
+    sleep 1
+    timeout=$((timeout - 1))
   done
 
   if is_running; then
     msg="$SINGBOX_NAME did not stop in time"
-    echoerr "$msg"; logger_error "$msg"; return 1
+    echoerr "$msg"
+    logger_error "$msg"
+    return 1
   fi
 
   msg="$SINGBOX_NAME stopped"
-  echook "$msg"; logger_notice "$msg"; return 0
+  echook "$msg"
+  logger_notice "$msg"
+  return 0
 }
 
-
-stop(){
+stop() {
   if stop_singbox && clean_firewall; then
     [ "$on_restart" = "1" ] && echo "$DELIMETER"
     return 0
@@ -1954,10 +2112,10 @@ stop(){
   fi
 }
 
-
-kill_proc(){
+kill_proc() {
   if ! is_running; then
-    echook "$SINGBOX_NAME is not running"; return 0
+    echook "$SINGBOX_NAME is not running"
+    return 0
   fi
 
   echo "Killing ${SINGBOX_PROC}..."
@@ -1965,8 +2123,10 @@ kill_proc(){
   clean_firewall
 }
 
+version() {
+  local sk_version
+  local sb_version
 
-version(){
   sk_version="$(get_current_version "$SKEEN_PROC")"
   sb_version="$(get_current_version "$SINGBOX_PROC")"
   if [ "$CALLER" = "cli" ]; then
@@ -1975,13 +2135,12 @@ version(){
     echo "$DELIMETER"
 
     printf "${SINGBOX_NAME}: %s\n" "$(cyan "v${sb_version}")" &&
-    $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' &&
-    echo "$DELIMETER"
+      $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' &&
+      echo "$DELIMETER"
   fi
 }
 
-
-switch_state(){
+switch_state() {
   if is_running; then
     stop
   else
@@ -1990,53 +2149,61 @@ switch_state(){
   press_any_key_to_menu
 }
 
-
 restart() {
-  on_restart=1;
+  on_restart=1
   stop || press_any_key_to_menu "" 1
   start || press_any_key_to_menu "" 1
   on_restart=0
   press_any_key_to_menu
 }
 
-
-reload(){
+reload() {
   check_config && echo "$DELIMETER"
   stop_singbox && start_singbox || exit 1
 }
 
-proc_uptime(){
-  pid="$1"
+proc_uptime() {
+  local pid="$1"
+  local up
+  local stat
+  local runtime
+
   [ -r "/proc/$pid/stat" ] || return 1
 
-  read -r up _ < /proc/uptime
-  read -r stat < "/proc/$pid/stat"
+  read -r up _ </proc/uptime
+  read -r stat <"/proc/$pid/stat"
   stat="${stat#*) }"
 
   # shellcheck disable=SC2086
   set -- $stat
 
-  runtime=$(( ${up%.*} - ${20:-0} / 100 ))
+  runtime=$((${up%.*} - ${20:-0} / 100))
 
   printf "%dd %dh %dm\n" \
-    $(( runtime / 86400 )) \
-    $(( (runtime % 86400) / 3600 )) \
-    $(( (runtime % 3600) / 60 ))
+    $((runtime / 86400)) \
+    $(((runtime % 86400) / 3600)) \
+    $(((runtime % 3600) / 60))
 }
 
+status() {
+  local pid
+  local mem_used
+  local mem_peak
+  local threads
 
-status(){
   pid="$(pidof $SINGBOX_PROC)"
 
   if [ -n "$pid" ]; then
     # shellcheck disable=SC2046
     set -- $(awk '$1=="VmRSS:"{r=$2} $1=="VmHWM:"{h=$2} $1=="Threads:"{t=$2} END{print r,h,t}' "/proc/$pid/status")
-    mem_used="${1:-0}"; mem_peak="${2:-0}"; threads="${3:-0}"
+    mem_used="${1:-0}"
+    mem_peak="${2:-0}"
+    threads="${3:-0}"
 
     echo "Status: $(green "running")"
     echo "PID: $pid"
     echo "Uptime: $(proc_uptime "$pid")"
-    echo "Memory: $((mem_used/1024)) MB (peak: $((mem_peak/1024)) MB)"
+    echo "Memory: $((mem_used / 1024)) MB (peak: $((mem_peak / 1024)) MB)"
     echo "Threads: $threads"
     echo "File Descriptors: $(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l) (limit: $(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null))"
   else
@@ -2044,17 +2211,17 @@ status(){
   fi
 }
 
-
-update_core(){
-  get_os_release; get_architecture
+update_core() {
+  get_os_release
+  get_architecture
   download_singbox "$latest" || return 1
   if is_running; then stop || exit 1; fi
-  install_singbox; create_singbox_config
+  install_singbox
+  create_singbox_config
   echook "$SINGBOX_NAME core has been successfully updated"
 }
 
-
-update_skeen(){
+update_skeen() {
   if is_running && [ -z "$CURL_PROXY_OPTIONS" ]; then stop || exit 1; fi
   if download_skeen_script "update"; then
     echook "$SKEEN_NAME has been successfully updated"
@@ -2065,10 +2232,15 @@ update_skeen(){
   fi
 }
 
-
 ask_and_update() {
-  name="${1:-}"; proc="${2:-}"; api="${3:-}"
-  update_fn="${4:-}"; releases="${5:-}"
+  local name="${1:-}"
+  local proc="${2:-}"
+  local api="${3:-}"
+  local update_fn="${4:-}"
+  local releases="${5:-}"
+  local current
+  local latest
+  local opt
 
   echomsg "Checking $name for updates..."
 
@@ -2083,14 +2255,17 @@ ask_and_update() {
     printf '%s %s\n' "$(cyan "More details:")" "$(green "$releases")"
 
     while :; do
-      printf 'Perform the update? [y/n] (default: n): ' > /dev/tty
-      read -r opt < /dev/tty
+      printf 'Perform the update? [y/n] (default: n): ' >/dev/tty
+      read -r opt </dev/tty
       [ -z "$opt" ] && opt=n
 
       case $opt in
-        y|Y) "$update_fn" || return 1; break ;;
-        n|N) break ;;
-        *) echoerr "Incorrect option" ;;
+      y | Y)
+        "$update_fn" || return 1
+        break
+        ;;
+      n | N) break ;;
+      *) echoerr "Incorrect option" ;;
       esac
     done
   else
@@ -2100,8 +2275,9 @@ ask_and_update() {
   return 0
 }
 
-
 check_updates() {
+  local optt
+
   check_tty
 
   is_update_skeen=0
@@ -2113,14 +2289,17 @@ check_updates() {
     update_core "https://github.com/SagerNet/sing-box/releases"
   if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ]; then
     while :; do
-      printf "Download %s %s? [y/n] (default: n): " "$SINGBOX_NAME" "$latest" > /dev/tty
-      read -r optt < /dev/tty
+      printf "Download %s %s? [y/n] (default: n): " "$SINGBOX_NAME" "$latest" >/dev/tty
+      read -r optt </dev/tty
       [ -z "$optt" ] && optt=n
 
       case $optt in
-        y|Y) update_core; break;;
-        n|N) break ;;
-        *) echoerr "Incorrect option" ;;
+      y | Y)
+        update_core
+        break
+        ;;
+      n | N) break ;;
+      *) echoerr "Incorrect option" ;;
       esac
     done
   fi
@@ -2139,20 +2318,19 @@ check_updates() {
   fi
 }
 
-
-import_firewall_vars(){
+import_firewall_vars() {
   if [ -f "$FIREWALL_HOOK_FILE" ]; then
     set -a
     eval "$(
-      grep -E '^export [A-Za-z_][A-Za-z0-9_]*=' "$FIREWALL_HOOK_FILE" | \
-      sed 's/^export //'
+      grep -E '^export [A-Za-z_][A-Za-z0-9_]*=' "$FIREWALL_HOOK_FILE" |
+        sed 's/^export //'
     )"
     set +a
   fi
 }
 
-
 fw_test() {
+  local content
   # $1 — table
   # $2 — chain
   # $3 — content
@@ -2166,8 +2344,8 @@ fw_test() {
   fi
 }
 
-
 fw_test_chain() {
+  local content
   # $1 — table
   # $2 — chain
   # $3 — iptables
@@ -2202,8 +2380,9 @@ fw_test_chain() {
   fi
 }
 
-
 test_firewall() {
+  local tables
+
   if ! is_running; then
     echoerr "Testing are available only when $SKEEN_NAME is started"
     press_any_key_to_menu "" 1
@@ -2240,19 +2419,21 @@ test_firewall() {
       fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
     done
 
-    [ "$tables" != "nat"  ] && fw_test_chain mangle "$CHAIN_OUTPUT" "$iptables"
+    [ "$tables" != "nat" ] && fw_test_chain mangle "$CHAIN_OUTPUT" "$iptables"
   done
 
   press_any_key_to_menu
 }
 
-
-backup_list(){
+backup_list() {
   find "$ENTWARE_DIR" -maxdepth 1 -type f -name "skeen_*.tar"
 }
 
+backup_create() {
+  local archive_path
+  local parent_dir
+  local folder_name
 
-backup_create(){
   if [ -d "$WORK_DIR" ] && [ "$(ls -A "$WORK_DIR")" ]; then
     echomsg "Creating a backup of the current configuration..."
     archive_path="${ENTWARE_DIR}/skeen_$(date '+%Y-%m-%d_%H%M%S').tar"
@@ -2270,22 +2451,25 @@ backup_create(){
   return 0
 }
 
+backup_restore() {
+  local tarname="${1:-}"
+  local archive_path
+  local work_dir_backup
 
-backup_restore(){
-  tarname="${1:-}"
-
-  restore(){
-    archive_path="${ENTWARE_DIR}/${1:-}"
+  restore() {
+    local archive_path="${ENTWARE_DIR}/${1:-}"
 
     if [ -f "$archive_path" ] && tar -tf "$archive_path" | grep -q "^skeen/"; then
       work_dir_backup="${ENTWARE_DIR}/skeen_backup"
-      mv "$WORK_DIR" "$work_dir_backup"; mkdir -p "$WORK_DIR"
+      mv "$WORK_DIR" "$work_dir_backup"
+      mkdir -p "$WORK_DIR"
       echomsg "Extracting archive ${archive_path}..."
       if tar --strip-components=1 -xf "$archive_path" -C "$WORK_DIR"; then
         rm -rf "$work_dir_backup"
         echook "Backup successfully restored"
       else
-        rm -rf "$WORK_DIR"; mv "$work_dir_backup" "$WORK_DIR"
+        rm -rf "$WORK_DIR"
+        mv "$work_dir_backup" "$WORK_DIR"
         echoerr "Error extracting archive $archive_path"
         return 1
       fi
@@ -2301,8 +2485,8 @@ backup_restore(){
     while :; do
       printf "Enter the name of the backup archive file\n"
       printf "located in the /opt root directory,\n"
-      printf "for example %s: " "$(cyan "skeen.tar")" > /dev/tty
-      read -r tarname < /dev/tty
+      printf "for example %s: " "$(cyan "skeen.tar")" >/dev/tty
+      read -r tarname </dev/tty
       [ -z "$tarname" ] && exit 1
       restore "$tarname" && break
     done
@@ -2314,56 +2498,54 @@ backup_restore(){
   fi
 }
 
-
-config_reset(){
+config_reset() {
   check_tty
 
   while :; do
     printf "A full configuration reset will be performed,\n"
     printf "with a backup of the current configuration created\n"
-    printf "Continue? [y/n]: " > /dev/tty
-    read -r option < /dev/tty
+    printf "Continue? [y/n]: " >/dev/tty
+    read -r option </dev/tty
 
     [ -z "$option" ] && option="n"
 
     case "$option" in
-      y|Y)
-        if backup_create; then
-          rm -rf "$WORK_DIR"; mkdir -p "$WORK_DIR"
-          create_singbox_config "force"
-          create_skeen_config
-          echook "Configuration reset completed"
-        else
-          echoerr "Failed to reset configuration!"
-        fi
-        break
+    y | Y)
+      if backup_create; then
+        rm -rf "$WORK_DIR"
+        mkdir -p "$WORK_DIR"
+        create_singbox_config "force"
+        create_skeen_config
+        echook "Configuration reset completed"
+      else
+        echoerr "Failed to reset configuration!"
+      fi
+      break
       ;;
-      n|N) break ;;
-      *) echoerr "Incorrect option" ;;
+    n | N) break ;;
+    *) echoerr "Incorrect option" ;;
     esac
   done
 
   press_any_key_to_menu
 }
 
-
-get_sing_args_config(){
-  config="-C $CONFIG_DIR"
+get_sing_args_config() {
+  SING_CONFIG_ARGS="-C $CONFIG_DIR"
   SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
   : "${SING_CONFIG_ENABLE:=0}"
   SING_CONFIG_PATH="/opt/etc/skeen/config.json"
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
     SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
     : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
-    config="-c $SING_CONFIG_PATH"
-    SINGBOX_ARGS="run -D $WORK_DIR $config"
+    SING_CONFIG_ARGS="-c $SING_CONFIG_PATH"
+    SINGBOX_ARGS="run -D $WORK_DIR $SING_CONFIG_ARGS"
   fi
 }
 
-
-check_config(){
-  msg_err="Configuration check failed"
-  is_error=0
+check_config() {
+  local msg_err="Configuration check failed"
+  local is_error=0
 
   if [ -f "$SINGBOX_BIN" ]; then
     echomsg "Checking $SINGBOX_NAME configuration..."
@@ -2371,10 +2553,11 @@ check_config(){
     get_sing_args_config
 
     # shellcheck disable=SC2086
-    if $SINGBOX_PROC check $config; then
+    if $SINGBOX_PROC check $SING_CONFIG_ARGS; then
       echook "$SINGBOX_NAME configuration is valid"
     else
-      is_error=1; echoerr "$msg_err"
+      is_error=1
+      echoerr "$msg_err"
     fi
   fi
 
@@ -2382,25 +2565,26 @@ check_config(){
   if jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall' >/dev/null 2>&1; then
     echook "$SKEEN_NAME JSON valid"
   else
-    is_error=1; echoerr "$msg_err"
+    is_error=1
+    echoerr "$msg_err"
   fi
 
   if [ $is_error -eq 1 ] && [ "$CALLER" = "menu" ]; then
     press_any_key_to_menu
   elif [ $is_error -eq 1 ]; then
-    logger_error "$msg"; exit 1
+    logger_error "$msg"
+    exit 1
   fi
 }
 
-
-format_config(){
+format_config() {
   if [ -f "$SINGBOX_BIN" ]; then
     echomsg "Formatting Sing-box configuration..."
 
     get_sing_args_config
 
     # shellcheck disable=SC2086
-    if $SINGBOX_PROC format -w $config; then
+    if $SINGBOX_PROC format -w $SING_CONFIG_ARGS; then
       echook "Configuration formatted successfully"
     else
       echoerr "Configuration formatting failed"
@@ -2410,12 +2594,11 @@ format_config(){
   fi
 }
 
+sync_config() {
+  local address="${1:-$SING_CONFIG_SYNC_URL}"
+  local config_tmp="${TMP_DIR}/sing_config_tmp.json"
 
-sync_config(){
   load_proxy_options
-
-  address="${1:-$SING_CONFIG_SYNC_URL}"
-  config_tmp="${TMP_DIR}/sing_config_tmp.json"
 
   if [ -z "$address" ]; then
     echoerr "No address provided for configuration sync" && return 1
@@ -2440,12 +2623,21 @@ sync_config(){
     echowarn "Set the parameter sing_config.enable to 1 in the skeen.json file"
   fi
 
-  rm -f "$SING_CONFIG_PATH"; mv "$config_tmp" "$SING_CONFIG_PATH"
+  rm -f "$SING_CONFIG_PATH"
+  mv "$config_tmp" "$SING_CONFIG_PATH"
   echook "Configuration synced successfully, then restart SKeen to apply the changes"
 }
 
+show_menu() {
+  local autostart_status
+  local running_status
+  local running_text
+  local output
+  local version
+  local ipv4
+  local ipv6
+  local sb_dns_work_text
 
-show_menu(){
   check_tty
   loading_config
   import_firewall_vars
@@ -2478,11 +2670,12 @@ show_menu(){
 
   output="$output\n Start automatically: $autostart_status"
 
-  ipv4=""; ipv6=""
+  ipv4=""
+  ipv6=""
 
-  if [ "$running_text" = "Stop" ] && \
-      [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
-    echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt"  && ipv4="$(cyan "4")"
+  if [ "$running_text" = "Stop" ] &&
+    [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
+    echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
     if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
@@ -2513,8 +2706,8 @@ show_menu(){
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    printf "\nEnter your selection [0-5]: " > /dev/tty
-    read -r option < /dev/tty
+    printf "\nEnter your selection [0-5]: " >/dev/tty
+    read -r option </dev/tty
 
     printf "\n"
 
@@ -2522,25 +2715,24 @@ show_menu(){
       echo "$DELIMETER"
 
       case "$option" in
-        1) switch_state ;;
-        2) restart ;;
-        3) check_updates ;;
-        4) test_firewall ;;
-        5) accept_uninstall ;;
+      1) switch_state ;;
+      2) restart ;;
+      3) check_updates ;;
+      4) test_firewall ;;
+      5) accept_uninstall ;;
       esac
     else
       [ "$option" = 0 ] && exit 0
       echoerr "Incorrect option"
-      attempt=$((attempt+1))
+      attempt=$((attempt + 1))
     fi
   done
 
   exiterr "Maximum attempts reached, exiting menu."
- }
+}
 
-
-show_help(){
-cat <<EOF
+show_help() {
+  cat <<EOF
 
 $SKEEN_NAME CLI Commands (use: 'skeen help' for this list):
 
@@ -2580,40 +2772,42 @@ OpkgTun manager (KeeneticOS v5+):
 EOF
 }
 
-
 if [ -f "$SKEEN_SCRIPT" ]; then
   case "$ACTION" in
-    start)   start ;;
-    stop)    stop ;;
-    restart) restart ;;
-    reload)  reload ;;
-    kill)    kill_proc ;;
-    status)  status ;;
+  start) start ;;
+  stop) stop ;;
+  restart) restart ;;
+  reload) reload ;;
+  kill) kill_proc ;;
+  status) status ;;
 
-    version) version ;;
-    update) check_updates ;;
+  version) version ;;
+  update) check_updates ;;
 
-    test) test_firewall ;;
-    deps) install_dependencies; press_any_key_to_menu ;;
-    check) check_config ;;
-    format) format_config ;;
-    backup) backup_create ;;
-    backups) backup_list ;;
-    restore) backup_restore "$2" ;;
-    reset) config_reset ;;
-    sync) sync_config "$2" ;;
-    tun)
-      release_version_ge5 || exit 1
-      case "$2" in
-        create) tun_create "$3" "$4" ;;
-        delete) tun_delete "$3" ;;
-        list) tun_list ;;
-        *) show_help | awk '/OpkgTun / {flag=1} flag' ;;
-      esac
+  test) test_firewall ;;
+  deps)
+    install_dependencies
+    press_any_key_to_menu
     ;;
-    apply_firewall) [ "$CALLER" = "netfilter" ] && apply_firewall ;;
-    "") show_menu ;;
-    help|*) show_help ;;
+  check) check_config ;;
+  format) format_config ;;
+  backup) backup_create ;;
+  backups) backup_list ;;
+  restore) backup_restore "$2" ;;
+  reset) config_reset ;;
+  sync) sync_config "$2" ;;
+  tun)
+    release_version_ge5 || exit 1
+    case "$2" in
+    create) tun_create "$3" "$4" ;;
+    delete) tun_delete "$3" ;;
+    list) tun_list ;;
+    *) show_help | awk '/OpkgTun / {flag=1} flag' ;;
+    esac
+    ;;
+  apply_firewall) [ "$CALLER" = "netfilter" ] && apply_firewall ;;
+  "") show_menu ;;
+  help | *) show_help ;;
   esac
 else
   install
