@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.5.0"
+SKEEN_VERSION="4.5.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1279,15 +1279,18 @@ set_prerouting_rules() {
 
     [ -z "$chunk" ] && break
 
-    rule="PREROUTING $connmark_option \
-      -m conntrack ! --ctstate INVALID \
-      -m multiport $dports_op $chunk \
-      -j $CHAIN_PREROUTING"
-
-    # shellcheck disable=SC2086
-    if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
-      $iptables -t "$table" -A $rule >/dev/null 2>&1
-    fi
+    # shellcheck disable=SC2043
+    for proto in $SKEEN_FIREWALL_NETWORK; do
+      rule="PREROUTING $connmark_option \
+        -p $proto \
+        -m conntrack ! --ctstate INVALID \
+        -m multiport $dports_op $chunk \
+        -j $CHAIN_PREROUTING"
+      # shellcheck disable=SC2086
+      if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
+        $iptables -t "$table" -A $rule >/dev/null 2>&1
+      fi
+    done
 
     i=$((i + 7))
   done
@@ -1557,10 +1560,12 @@ prepare_firewall(){
   fi
 
   SKEEN_INTERCEPT_PORTS=""; SKEEN_EXCLUDE_PORTS=""
-  if [ -n "$INTERCEPT_PORTS" ]; then
-    SKEEN_INTERCEPT_PORTS="$(get_validate_ports "intercept" "$(json_get_array '@.firewall.intercept.port')")"
-  elif [ -n "$EXCLUDE_PORTS" ]; then
-    SKEEN_EXCLUDE_PORTS="$(get_validate_ports "exclude" "$(json_get_array '@.firewall.exclude.port')")"
+  intercept_ports="$(get_validate_ports "intercept" "$(json_get_array '@.firewall.intercept.port')")"
+  if [ -n "$intercept_ports" ]; then
+    SKEEN_INTERCEPT_PORTS="$intercept_ports"
+  else
+    exclude_ports="$(get_validate_ports "exclude" "$(json_get_array '@.firewall.exclude.port')")"
+    [ -n "$exclude_ports" ] && SKEEN_EXCLUDE_PORTS="$exclude_ports"
   fi
 
   setup_bypass_ipset() {
@@ -2566,7 +2571,7 @@ Reset Configuration:
   reset   - Reset $WORK_DIR to default
 
 Synchronization:
-  sync    - Synchronize proxy-core configuration
+  sync    - Synchronize $SINGBOX_NAME configuration
 
 OpkgTun manager (KeeneticOS v5+):
   tun create <ipv4> <name> - Create interface with IP address and name

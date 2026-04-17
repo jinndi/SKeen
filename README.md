@@ -142,7 +142,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 | `backups` | List created archives in `/opt` | ✓ |
 | `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ |
 | `reset` | Reset `/opt/etc/skeen` to default | - |
-| `sync`² | Synchronize proxy-core configuration | ✓ |
+| `sync`² | Synchronize sing-box configuration | ✓ |
 
 1 - archive name can be passed as the second parameter with a `.tar` extension to immediately start the backup restore process
 
