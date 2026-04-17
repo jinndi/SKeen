@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.7...SKeen-v4.5.0) (2026-04-17)
+
+
+### 🚀 Feat
+
+* simplify configuration (Remove the "firewall-only" ) ([84ef57b](https://github.com/jinndi/SKeen/commit/84ef57b5d27457bfaeb0f405dbbc12ee74e43f1c))
+
 ## [4.4.7](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.6...SKeen-v4.4.7) (2026-04-15)
 
 
