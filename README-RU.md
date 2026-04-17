@@ -115,7 +115,7 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 └── tmp/
     └── (временные файлы загрузки)
 ```
-<details>
+</details>
 
 ### ⚡ Команды
 
