@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.5.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.0...SKeen-v4.5.1) (2026-04-17)
+
+
+### 🐛 Fix
+
+* **iptables:** correct include/exclude ports handling from skeen.json ([9a608c2](https://github.com/jinndi/SKeen/commit/9a608c244c834e9b93ae3ea9cf8d3e6def912af0))
+
+
+### 🧰 Chore
+
+* Fixes and improvements ([ed21f41](https://github.com/jinndi/SKeen/commit/ed21f41e7c49faa3ccb9bd14335beca725c7aebb))
+
 ## [4.5.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.4.7...SKeen-v4.5.0) (2026-04-17)
 
 
