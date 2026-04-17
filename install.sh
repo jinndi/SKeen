@@ -29,7 +29,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.4.7"
+SKEEN_VERSION="4.5.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -133,8 +133,6 @@ create_skeen_config(){
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
   [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
-  fw_only_enable=0; [ "$install_mode" = "2" ] && fw_only_enable=1
-
   cat <<EOF > "$SKEEN_CONFIG"
 // https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs
 {
@@ -163,13 +161,6 @@ create_skeen_config(){
     "pass": ""
   },
   "firewall": {
-    "only": {
-      "enable": $fw_only_enable,
-      "process_name": "",
-      "redirect_port": "",
-      "tproxy_port": "",
-      "opkgtun_use": 0
-    },
     "intercept": {
       "dns": 1,
       "port": []
@@ -226,11 +217,6 @@ loading_config(){
     -e SERVICE_PROXY_PORT='@.service_proxy.port' \
     -e SERVICE_PROXY_USER='@.service_proxy.user' \
     -e SERVICE_PROXY_PASS='@.service_proxy.pass' \
-    -e FIREWALL_ONLY_ENABLE='@.firewall.only.enable' \
-    -e FIREWALL_ONLY_PROCESS_NAME='@.firewall.only.process_name' \
-    -e FIREWALL_ONLY_OPKGTUN_USE='@.firewall.only.opkgtun_use' \
-    -e FIREWALL_ONLY_REDIRECT_PORT='@.firewall.only.redirect_port' \
-    -e FIREWALL_ONLY_TPROXY_PORT='@.firewall.only.tproxy_port' \
     -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
   )"
 
@@ -247,35 +233,11 @@ loading_config(){
   : "${SERVICE_PROXY_PORT:=}"
   : "${SERVICE_PROXY_USER:=}"
   : "${SERVICE_PROXY_PASS:=}"
-  : "${FIREWALL_ONLY_ENABLE:=0}"
-  : "${FIREWALL_ONLY_PROCESS_NAME:=}"
-  : "${FIREWALL_ONLY_OPKGTUN_USE:=0}"
-  : "${FIREWALL_ONLY_REDIRECT_PORT:=}"
-  : "${FIREWALL_ONLY_TPROXY_PORT:=}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
 
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
     SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
   fi
-
-  if [ "$FIREWALL_ONLY_ENABLE" = "1" ] && pidof "$SINGBOX_PROC" >/dev/null 2>&1; then
-    killall -9 "$SINGBOX_PROC" 2>/dev/null; clean_firewall
-  fi
-}
-
-
-is_fw_only(){
-  [ "$CALLER" != "menu" ] && \
-  FIREWALL_ONLY_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall.only.enable')"
-  if [ "$FIREWALL_ONLY_ENABLE" = "1" ]; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-check_fw_only() {
-  is_fw_only && echoerr "Only available when 'firewall.only' is disabled" && exit 1
 }
 
 load_proxy_options(){
@@ -530,7 +492,7 @@ create_singbox_config(){
 
   mkdir -p "$CONFIG_DIR"
 
-  config_json='{"log":{"disabled":false,"level":"debug","output":"","timestamp":false},"dns":{"servers":[{"type":"tls","tag":"dns-proxy","detour":"proxy","domain_resolver":"dns-resolver","server":"one.one.one.one"},{"type":"https","tag":"dns-direct","domain_resolver":"dns-resolver","server":"common.dot.dns.yandex.net"},{"type":"udp","tag":"dns-resolver","server":"77.88.8.8"}],"rules":[{"rule_set":"adguard","action":"reject"},{"clash_mode":"Direct","server":"dns-direct"},{"clash_mode":"Global","server":"dns-proxy"},{"rule_set":"geosite-category-ru","server":"dns-direct"}],"final":"dns-proxy","strategy":"ipv4_only"},"inbounds":[{"type":"redirect","tag":"redirect-in","listen":"::","listen_port":65081,"tcp_fast_open":true},{"type":"tproxy","tag":"tproxy-in","listen":"::","listen_port":65082,"udp_timeout":"3m0s","udp_fragment":true,"network":"udp"}],"outbounds":[{"tag":"proxy","type":"selector","default":"auto","interrupt_exist_connections":true,"outbounds":["direct","auto","vless-out","naive-out"]},{"tag":"direct","type":"direct"},{"tag":"auto","type":"urltest","url":"http://www.gstatic.com/generate_204","interval":"5m","tolerance":100,"interrupt_exist_connections":true,"outbounds":["vless-out","naive-out"]},{"tag":"vless-out","type":"vless","uuid":"00000000-0000-0000-0000-00000000000","flow":"xtls-rprx-vision","packet_encoding":"xudp","server":"example.com","server_port":443,"tls":{"enabled":true,"server_name":"example.com","utls":{"enabled":true,"fingerprint":"firefox"}}},{"tag":"naive-out","type":"naive","username":"jinndi","password":"mypass","quic":true,"quic_congestion_control":"bbr","server":"example.com","server_port":10443,"tls":{"enabled":true,"server_name":"example.com"}}],"route":{"final":"proxy","auto_detect_interface":true,"default_domain_resolver":"dns-resolver","rules":[{"action":"sniff"},{"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},{"ip_is_private":true,"outbound":"direct"},{"clash_mode":"Direct","outbound":"direct"},{"clash_mode":"Global","outbound":"proxy"},{"protocol":"bittorrent","outbound":"direct"},{"rule_set":["geosite-category-ru","geoip-ru"],"outbound":"direct"}],"rule_set":[{"type":"remote","tag":"adguard","url":"https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs","download_detour":"direct"},{"tag":"geoip-ru","type":"remote","url":"https://github.com/KaringX/karing-ruleset/raw/sing/geo/geoip/ru.srs","download_detour":"direct"},{"tag":"geosite-category-ru","type":"remote","url":"https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs","download_detour":"direct"}]},"experimental":{"clash_api":{"external_controller":"0.0.0.0:9090","external_ui":"zashboard","external_ui_download_url":"https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip","external_ui_download_detour":"direct","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","store_fakeip":true,"store_rdrc":true}}}'
+  config_json='{"log":{"disabled":false,"level":"debug","output":"","timestamp":false},"dns":{"servers":[{"type":"tls","tag":"dns-proxy","detour":"proxy","domain_resolver":"dns-resolver","server":"one.one.one.one"},{"type":"https","tag":"dns-direct","domain_resolver":"dns-resolver","server":"common.dot.dns.yandex.net"},{"type":"udp","tag":"dns-resolver","server":"77.88.8.8"}],"rules":[{"rule_set":"adguard","action":"reject"},{"clash_mode":"Direct","server":"dns-direct"},{"clash_mode":"Global","server":"dns-proxy"},{"rule_set":"geosite-category-ru","server":"dns-direct"}],"final":"dns-proxy","strategy":"ipv4_only"},"inbounds":[{"type":"redirect","tag":"redirect-in","listen":"::","listen_port":65081,"tcp_fast_open":true},{"type":"tproxy","tag":"tproxy-in","listen":"::","listen_port":65082,"udp_timeout":"3m0s","udp_fragment":true,"network":"udp"}],"outbounds":[{"tag":"proxy","type":"selector","default":"auto","interrupt_exist_connections":true,"outbounds":["direct","auto","vless-out","naive-out"]},{"tag":"direct","type":"direct"},{"tag":"auto","type":"urltest","url":"http://www.gstatic.com/generate_204","interval":"5m","tolerance":100,"interrupt_exist_connections":true,"outbounds":["vless-out","naive-out"]},{"tag":"vless-out","type":"vless","uuid":"00000000-0000-0000-0000-00000000000","flow":"xtls-rprx-vision","packet_encoding":"xudp","server":"example.com","server_port":443,"tls":{"enabled":true,"server_name":"example.com","utls":{"enabled":true,"fingerprint":"firefox"}}},{"tag":"naive-out","type":"naive","username":"jinndi","password":"mypass","quic":true,"quic_congestion_control":"bbr","server":"example.com","server_port":10443,"tls":{"enabled":true,"server_name":"example.com"}}],"route":{"final":"proxy","auto_detect_interface":true,"default_domain_resolver":"dns-resolver","rules":[{"action":"sniff"},{"type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}],"action":"hijack-dns"},{"ip_is_private":true,"outbound":"direct"},{"clash_mode":"Direct","outbound":"direct"},{"clash_mode":"Global","outbound":"proxy"},{"protocol":"bittorrent","outbound":"direct"},{"rule_set":["geosite-category-ru","geoip-ru"],"outbound":"direct"}],"rule_set":[{"type":"remote","tag":"adguard","url":"https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs","download_detour":"direct"},{"tag":"geoip-ru","type":"remote","url":"https://github.com/KaringX/karing-ruleset/raw/sing/geo/geoip/ru.srs","download_detour":"direct"},{"tag":"geosite-category-ru","type":"remote","url":"https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs","download_detour":"direct"}]},"experimental":{"clash_api":{"external_controller":"0.0.0.0:9999","external_ui":"zashboard","external_ui_download_url":"https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip","external_ui_download_detour":"direct","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","store_fakeip":true,"store_rdrc":true}}}'
 
   for key in log dns inbounds outbounds route experimental; do
     value="$(printf '%s\n' "$config_json" | jsonfilter -e "@.$key")"
@@ -651,51 +613,23 @@ press_any_key_to_menu(){
 
 
 is_running() {
-  if is_fw_only; then
-    [ -f "$FIREWALL_HOOK_FILE" ] && [ -s "$FIREWALL_HOOK_FILE" ]
-  else
-    pidof "$SINGBOX_PROC" >/dev/null 2>&1
-  fi
+  pidof "$SINGBOX_PROC" >/dev/null 2>&1
 }
 
 
 install(){
-  install_mode="";
-
-  show_header
-
-  while true; do
-    output="";
-    output="$output\n$(cyan "Installation mode:")"
-    output="$output\n  $(green "1.") Full install"
-    output="$output\n  $(green "2.") Firewall only\n"
-    printf "%b" "$output"
-
-    printf "\nChoise [1-2]: " > /dev/tty
-    read -r option < /dev/tty
-
-    case "$option" in
-      1|2) install_mode="$option"; printf "\n"; output=""; break ;;
-      *) echoerr "Incorrect option" ;;
-    esac
-  done
-
   get_os_release; get_architecture
   install_dependencies
-  if [ "$install_mode" = "1" ]; then
-    download_singbox; install_singbox; create_singbox_config
-  fi
+  download_singbox; install_singbox; create_singbox_config
   create_autostart_script; create_skeen_group
   download_skeen_script
 
-  msg_ok="Installation completed"
-  if [ "$install_mode" = "1" ]; then
-    echook "${msg_ok}, $SINGBOX_NAME version:"
-    "$SINGBOX_BIN" version
-    echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
-  else
-    echook "${msg_ok}, configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
-  fi
+  echomsg "$SINGBOX_NAME version:"
+  "$SINGBOX_BIN" version
+
+  echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
+  echomsg "Configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
+  echook "Installation completed"
 
   press_any_key_to_menu
 }
@@ -706,10 +640,8 @@ uninstall(){
 
   is_running && stop
 
-  [ -f "$SINGBOX_BIN" ] && {
-    echomsg "Removing $SINGBOX_NAME binary..."
-    rm -f "$SINGBOX_BIN"
-  }
+  echomsg "Removing $SINGBOX_NAME binary..."
+  rm -f "$SINGBOX_BIN"
 
   echomsg "Removing auto-start script..."
   rm -f "$SKEEN_AUTOSTART_SCRIPT"
@@ -848,21 +780,6 @@ get_fw_mode_param(){
 get_fw_mode_data() {
   type="$1"
 
-  if is_fw_only; then
-    case "$type" in
-      tun) [ "$FIREWALL_ONLY_OPKGTUN_USE" = "1" ] && echo "opkgtun" ;;
-      redirect) echo "${FIREWALL_ONLY_REDIRECT_PORT}|tcp" ;;
-      tproxy)
-        if [ -n "$FIREWALL_ONLY_REDIRECT_PORT" ] && [ -n "$FIREWALL_ONLY_TPROXY_PORT" ]; then
-          echo "${FIREWALL_ONLY_TPROXY_PORT}|udp"
-        elif [ -n "$FIREWALL_ONLY_TPROXY_PORT" ]; then
-          echo "${FIREWALL_ONLY_TPROXY_PORT}|tcpudp"
-        fi
-      ;;
-    esac
-    return 0
-  fi
-
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
     get_fw_mode_param "$SING_CONFIG_PATH" "$type"
     return 0
@@ -879,8 +796,6 @@ get_fw_mode_data() {
 
 
 has_dns_servers() {
-  is_fw_only && return 0
-
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
     if jsonfilter -i "$SING_CONFIG_PATH" -e '@.dns.servers[0]' >/dev/null 2>&1; then
       return 0
@@ -1555,9 +1470,7 @@ prepare_firewall(){
   SKEEN_TPROXY_PORT="$(echo "$tproxy_data" | cut -d'|' -f1)"
   SKEEN_TPROXY_NETWORK="$(echo "$tproxy_data" | cut -d'|' -f2)"
 
-  if ! is_fw_only; then
-    for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do check_port "$port"; done
-  fi
+  for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do check_port "$port"; done
 
   has_opkgtun="$(get_fw_mode_data "tun")"
 
@@ -1572,10 +1485,6 @@ prepare_firewall(){
     SKEEN_FIREWALL_MODE="tun"
   else
     SKEEN_FIREWALL_MODE="none"
-    if is_fw_only; then
-      echoerr "Redirect ports must be specified in firewall-only mode"
-      press_any_key_to_menu "" 1
-    fi
   fi
 
   echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
@@ -1681,7 +1590,7 @@ prepare_firewall(){
     echo "#!/bin/sh"
     echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
-    ! is_fw_only && echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
+    echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
 
     [ -n "$has_opkgtun" ] && get_tun_fw_rules
 
@@ -1928,34 +1837,7 @@ get_ulimit_n(){
   echo "$ulimit_n"
 }
 
-
-set_chgrp_fw_only(){
-  action="${1:-}"
-
-  ! is_fw_only && return 0
-
-  if [ -z "$FIREWALL_ONLY_PROCESS_NAME" ]; then
-    echoerr "'firewall.only.process_name' has not been set"
-    press_any_key_to_menu  "" 1
-  fi
-
-  path_to_bin="$(command -v "$FIREWALL_ONLY_PROCESS_NAME")"
-
-  if [ ! -f "$path_to_bin" ]; then
-    echoerr "'firewall.only.process_name' is not pointing to an executable file"
-    press_any_key_to_menu  "" 1
-  fi
-
-  case $action in
-    start) chgrp "$SKEEN_PROC" "$path_to_bin"; chmod g+s "$path_to_bin" ;;
-    stop) chgrp root "$path_to_bin"; chmod g-s "$path_to_bin" ;;
-  esac
-}
-
-
 start_singbox(){
-  is_fw_only && return 0
-
   timeout=10
 
   echomsg "Starting ${SINGBOX_NAME}..."
@@ -1987,7 +1869,7 @@ start_singbox(){
 
 
 start() {
-  if ! is_fw_only && [ ! -f "$SINGBOX_BIN" ]; then
+  if [ ! -f "$SINGBOX_BIN" ]; then
     echoerr "$SINGBOX_NAME binary not found, please install it first"
     press_any_key_to_menu  "" 1
   fi
@@ -2015,25 +1897,19 @@ start() {
 
   create_skeen_group; [ $? -eq 2 ] && echo "$DELIMETER"
 
-  set_chgrp_fw_only "start"
-
   apply_sysctl_network_tuning
 
   prepare_firewall && echo "$DELIMETER"
 
   start_singbox || press_any_key_to_menu "" 1
 
-  [ "$SKEEN_FIREWALL_MODE" != "none" ] \
-  && { ! is_fw_only && echo "$DELIMETER"; }
-  [ "$SKEEN_FIREWALL_MODE" != "none" ] && apply_firewall
+  [ "$SKEEN_FIREWALL_MODE" != "none" ] && echo "$DELIMETER" && apply_firewall
 
   return 0
 }
 
 
 stop_singbox(){
-  is_fw_only && return 0
-
   timeout=10
 
   echomsg "Stopping ${SINGBOX_NAME}..."
@@ -2065,7 +1941,6 @@ stop_singbox(){
 
 
 stop(){
-  set_chgrp_fw_only "stop"
   if stop_singbox && clean_firewall; then
     [ "$on_restart" = "1" ] && echo "$DELIMETER"
     return 0
@@ -2076,8 +1951,6 @@ stop(){
 
 
 kill_proc(){
-  check_fw_only
-
   if ! is_running; then
     echook "$SINGBOX_NAME is not running"; return 0
   fi
@@ -2096,10 +1969,9 @@ version(){
     printf "${SKEEN_NAME}: %s\n" "$(cyan "v${sk_version}")"
     echo "$DELIMETER"
 
-    ! is_fw_only \
-    && printf "${SINGBOX_NAME}: %s\n" "$(cyan "v${sb_version}")" \
-    && $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' \
-    && echo "$DELIMETER"
+    printf "${SINGBOX_NAME}: %s\n" "$(cyan "v${sb_version}")" &&
+    $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' &&
+    echo "$DELIMETER"
   fi
 }
 
@@ -2124,7 +1996,6 @@ restart() {
 
 
 reload(){
-  check_fw_only
   check_config && echo "$DELIMETER"
   stop_singbox && start_singbox || exit 1
 }
@@ -2148,17 +2019,10 @@ proc_uptime(){
     $(( (runtime % 3600) / 60 ))
 }
 
-status(){
-  if [ "$CALLER" = "cli" ] && is_fw_only; then
-    if is_running; then
-      echo "Status: $(green "running") (Firewall Only)"
-    else
-      echo "Status: $(red "stopped")"
-    fi
-    return 0
-  fi
 
+status(){
   pid="$(pidof $SINGBOX_PROC)"
+
   if [ -n "$pid" ]; then
     # shellcheck disable=SC2046
     set -- $(awk '$1=="VmRSS:"{r=$2} $1=="VmHWM:"{h=$2} $1=="Threads:"{t=$2} END{print r,h,t}' "/proc/$pid/status")
@@ -2170,7 +2034,8 @@ status(){
     echo "Memory: $((mem_used/1024)) MB (peak: $((mem_peak/1024)) MB)"
     echo "Threads: $threads"
     echo "File Descriptors: $(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l) (limit: $(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null))"
-    return 0
+  else
+    echo "Status: $(red "stopped")"
   fi
 }
 
@@ -2239,22 +2104,20 @@ check_updates() {
   load_proxy_options
 
   # sing-box
-  if ! is_fw_only; then
-    ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
-      update_core "https://github.com/SagerNet/sing-box/releases"
-    if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ]; then
-      while :; do
-        printf "Download %s %s? [y/n] (default: n): " "$SINGBOX_NAME" "$latest" > /dev/tty
-        read -r optt < /dev/tty
-        [ -z "$optt" ] && optt=n
+  ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
+    update_core "https://github.com/SagerNet/sing-box/releases"
+  if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ]; then
+    while :; do
+      printf "Download %s %s? [y/n] (default: n): " "$SINGBOX_NAME" "$latest" > /dev/tty
+      read -r optt < /dev/tty
+      [ -z "$optt" ] && optt=n
 
-        case $optt in
-          y|Y) update_core; break;;
-          n|N) break ;;
-          *) echoerr "Incorrect option" ;;
-        esac
-      done
-    fi
+      case $optt in
+        y|Y) update_core; break;;
+        n|N) break ;;
+        *) echoerr "Incorrect option" ;;
+      esac
+    done
   fi
 
   # skeen
@@ -2497,7 +2360,7 @@ check_config(){
   msg_err="Configuration check failed"
   is_error=0
 
-  if ! is_fw_only && [ -f "$SINGBOX_BIN" ]; then
+  if [ -f "$SINGBOX_BIN" ]; then
     echomsg "Checking $SINGBOX_NAME configuration..."
 
     get_sing_args_config
@@ -2526,8 +2389,6 @@ check_config(){
 
 
 format_config(){
-  check_fw_only
-
   if [ -f "$SINGBOX_BIN" ]; then
     echomsg "Formatting Sing-box configuration..."
 
@@ -2586,8 +2447,6 @@ show_menu(){
 
   show_header
 
-  is_fw_only && SINGBOX_NAME="Firewall"
-
   if [ "$AUTO_START_ENABLE" = "1" ]; then
     autostart_status="$(green "yes")"
   else
@@ -2606,11 +2465,9 @@ show_menu(){
 
   output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
 
-  if ! is_fw_only; then
-    version="$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
-    [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
-    output="$output\n $SINGBOX_NAME version: ${version}"
-  fi
+  version="$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+  [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
+  output="$output\n $SINGBOX_NAME version: ${version}"
 
   output="$output\n $SINGBOX_NAME state: $running_status"
 

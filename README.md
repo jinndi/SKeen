@@ -5,7 +5,7 @@
   SKeen
 </h1>
 <h3 align="center">
-Keenetic/Netcraze TProxy & Redirect with sing-box + Firewall-only mode
+Keenetic/Netcraze TProxy & Redirect with sing-box
 </h3>
 
 <p align="center">
@@ -54,7 +54,6 @@ Doesn’t include a separate configuration Web UI. The built-in **Zashboard** in
 - Sing-box fakeip working ✓
 - Zashboard via Clash API configured ✓
 - Network settings optimization ✓
-- Firewall-only mode ✓
 - Commands working via the router's Web CLI ✓
 
 ### 📋 Requirements
@@ -71,15 +70,13 @@ Doesn’t include a separate configuration Web UI. The built-in **Zashboard** in
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 ```
 
-Before installation begins, you will be prompted to choose whether to install in full mode with sing-box, or to use it only as a firewall.
+**Configure SKeen**. Its configuration file is located at `/opt/etc/skeen/skeen.json`.
 
-After installation, if full mode was selected, configure the sing-box JSON configuration files located in the `/opt/etc/skeen/config/` directory, where example configuration files are provided.
+**Configure the sing-box JSON configuration file(s)** located in the `/opt/etc/skeen/config/` directory. Example configuration files are already provided there. Alternatively, you can use your own single configuration file by enabling the `sing_config.enable` mode.
 
-The SKeen settings are located in the file at `/opt/etc/skeen/skeen.json`.
+**Zashboard panel** is configured by default via the Clash API and can be accessed through the router’s IP address (usually 192.168.1.1) at `http://192.168.1.1:9999`
 
-`/opt/etc/skeen` directory is not removed during program uninstallation and must be deleted manually if required. It is also not overwritten during reinstallation if it already exists.
-
-Also, if the full installation was selected, the Zashboard panel is configured by default via the Clash API and can be accessed through the router’s IP address (usually 192.168.1.1) at `http://192.168.1.1:9090`
+The `/opt/etc/skeen` directory is not removed during program uninstallation (it must be deleted manually if necessary) and is not overwritten during reinstallation if it already exists.
 
 Manage the package further using the `skeen` command.
 
@@ -89,7 +86,7 @@ After successful installation:
 /opt/
 ├── bin/
 │   ├── skeen              # SKeen management script
-│   └── skeen-box          # sing-box binary (with a full installation)
+│   └── skeen-box          # sing-box binary
 ├── etc/
 │   ├── init.d/
 │   │   └── S99SKeen       # Autostart script
@@ -98,7 +95,7 @@ After successful installation:
 │   │       └── skeen_firewall.sh  # Created on start
 │   └── skeen/
 │       ├── skeen.json     # SKeen configuration
-│       └── config/        # sing-box config dir (with a full installation)
+│       └── config/        # sing-box config dir
 │           ├── log.json
 │           ├── dns.json
 │           ├── inbounds.json
@@ -119,25 +116,25 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 `skeen` without parameters launches the management menu from SSH, use `help` for help
 
-| Command | Description | WEB CLI | FW Only |
-| :--- | :--- | :---: | :---: |
-| `start` | Start service | ✓ | ✓ |
-| `stop` | Stop service | ✓ | ✓ |
-| `restart` | Restart service | ✓ | ✓ |
-| `reload` | Restart without changing firewall rules | ✓ | - |
-| `kill` | Force stop | ✓ | - |
-| `status` | Show status | ✓ | ✓ |
-| `version` | Show version(s) | ✓ | ✓ |
-| `update` | Check and install updates | - | ✓ |
-| `test` | Test firewall rules | ✓ | ✓ |
-| `deps` | Check dependencies | ✓ | ✓ |
-| `check` | Check configuration | ✓ | ✓ |
-| `format` | Format Sing-box configuration | ✓ | - |
-| `backup` | Create archive of `/opt/etc/skeen` | ✓ | ✓ |
-| `backups` | List created archives in `/opt` | ✓ | ✓ |
-| `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ | ✓ |
-| `reset` | Reset `/opt/etc/skeen` to default | - | ✓ |
-| `sync`² | Synchronize proxy-core configuration | ✓ | ✓ |
+| Command | Description | WEB CLI |
+| :--- | :--- | :---: |
+| `start` | Start service | ✓ |
+| `stop` | Stop service | ✓ |
+| `restart` | Restart service | ✓ |
+| `reload` | Restart without changing firewall rules | ✓ |
+| `kill` | Force stop | ✓ |
+| `status` | Show status | ✓ |
+| `version` | Show version(s) | ✓ |
+| `update` | Check and install updates | - |
+| `test` | Test firewall rules | ✓ |
+| `deps` | Check dependencies | ✓ |
+| `check` | Check configuration | ✓ |
+| `format` | Format Sing-box configuration | ✓ |
+| `backup` | Create archive of `/opt/etc/skeen` | ✓ |
+| `backups` | List created archives in `/opt` | ✓ |
+| `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ |
+| `reset` | Reset `/opt/etc/skeen` to default | - |
+| `sync`² | Synchronize proxy-core configuration | ✓ |
 
 1 - archive name can be passed as the second parameter with a `.tar` extension to immediately start the backup restore process
 
@@ -197,14 +194,6 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "pass": ""         // Password for connection (required if user is specified)
   },
   "firewall": {
-    "only": {
-      "enable": 0,         // Enable Firewall-only mode (1 = on)
-      "process_name": "",  // Name process or path to binary with ports listening for TProxy/Redirect
-      "redirect_port": "", // Redirect port for TCP traffic
-      "tproxy_port": "",   // TProxy port for redirecting UDP traffic if 'redirect_port' is set,
-                           // otherwise both TCP and UDP traffic will go entirely through TProxy
-      "opkgtun_use": 0     // Whether opkgtun configuration is used (1 = on)
-    },
     "intercept": {
       "dns": 1,        // Intercept DNS req. via TProxy/Hybrid modes (0 = disabled)
       "port": []       // Ports to intercept (all if empty).
