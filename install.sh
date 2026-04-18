@@ -1286,15 +1286,22 @@ set_iptables_rules() {
 
     case "$case_mode" in
     hybrid:nat)
+      add_rule "$iptables" "$table" "$chain" \
+        -p tcp --dport "$DNS_PORT" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+
       # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$chain" \
-        -p tcp ! --dport "$DNS_PORT" $bp_rule_set
+        -p tcp $bp_rule_set
       ;;
     hybrid:mangle | tproxy:mangle)
       for net in $SKEEN_TPROXY_NETWORK; do
+        add_rule "$iptables" "$table" "$chain" \
+          -p "$net" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
+          --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
+
         # shellcheck disable=SC2086
         add_rule "$iptables" "$table" "$chain" \
-          -p "$net" ! --dport "$DNS_PORT" $bp_rule_set
+          -p "$net" $bp_rule_set
       done
       ;;
     *)
