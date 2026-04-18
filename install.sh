@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.5.4"
+SKEEN_VERSION="4.5.5"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -914,7 +914,7 @@ load_module() {
 }
 
 loading_modules() {
-  local modules="xt_TPROXY.ko xt_multiport.ko xt_owner.ko"
+  local modules="xt_TPROXY.ko xt_socket.ko xt_multiport.ko xt_owner.ko"
   local err_msg="Please install router component: «Kernel modules for Netfilter»"
   local module
 
@@ -1238,11 +1238,16 @@ add_tproxy_rules() {
   local net
 
   for net in $SKEEN_TPROXY_NETWORK; do
-    add_rule "$iptables" "$table" "$chain" \
-      -p "$net" -j MARK --set-mark "$TABLE_MARK"
+    # add_rule "$iptables" "$table" "$chain" \
+    #   -p "$net" -j MARK --set-mark "$TABLE_MARK"
+
+    # add_rule "$iptables" "$table" "$chain" \
+    #   -p "$net" -j CONNMARK --save-mark
 
     add_rule "$iptables" "$table" "$chain" \
-      -p "$net" -j CONNMARK --save-mark
+      -p "$net" -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
+    add_rule "$iptables" "$table" "$chain" \
+      -p "$net"  -m socket --transparent -j ACCEPT
 
     add_rule "$iptables" "$table" "$chain" \
       -p "$net" -j TPROXY --on-ip "$PROXY_IP" \
@@ -1337,13 +1342,13 @@ set_prerouting_rules() {
   local chunk
   local proto
 
-  if [ "$table" = "$TABLE_TPROXY" ]; then
-    rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
-    # shellcheck disable=SC2086
-    if ! $iptables -t "$table" -C PREROUTING $rule >/dev/null 2>&1; then
-      $iptables -t "$table" -I PREROUTING 1 $rule >/dev/null 2>&1
-    fi
-  fi
+  # if [ "$table" = "$TABLE_TPROXY" ]; then
+  #   rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
+  #   # shellcheck disable=SC2086
+  #   if ! $iptables -t "$table" -C PREROUTING $rule >/dev/null 2>&1; then
+  #     $iptables -t "$table" -I PREROUTING 1 $rule >/dev/null 2>&1
+  #   fi
+  # fi
 
   [ -n "$SKEEN_MARK_POLICY" ] &&
     connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
@@ -2360,13 +2365,11 @@ fw_test_chain() {
     fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK set"
   fi
 
-  if [ "$1" = "mangle" ]; then
-    fw_test "$1" "$2" "$($3 -t "$1" -nvL PREROUTING 2>/dev/null)" "CONNMARK restore" "CONNMARK restore"
-  fi
+  # if [ "$1" = "mangle" ]; then
+  #   fw_test "$1" "$2" "$($3 -t "$1" -nvL PREROUTING 2>/dev/null)" "CONNMARK restore" "CONNMARK restore"
+  # fi
 
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
-
-  fw_test "$1" "$2" "$content" "redir|redirect" "Redirect"
 
   if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
     fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS intercept"
@@ -2376,6 +2379,12 @@ fw_test_chain() {
     # shellcheck disable=SC2015
     fw_test "$1" "$2" "$($3 -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport"
   fi
+
+  if [ "$1" = "mangle" ]; then
+    fw_test "$1" "$2" "$content" "socket" "Socket"
+  fi
+
+  fw_test "$1" "$2" "$content" "redir|redirect" "Redirect"
 }
 
 test_firewall() {
