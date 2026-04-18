@@ -1237,17 +1237,17 @@ add_tproxy_rules() {
   local chain="${3:-}"
   local net
 
+  add_rule "$iptables" "$table" "$chain" \
+    -p tcp -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
+  add_rule "$iptables" "$table" "$chain" \
+    -p tcp  -m socket --transparent -j ACCEPT
+
   for net in $SKEEN_TPROXY_NETWORK; do
     # add_rule "$iptables" "$table" "$chain" \
     #   -p "$net" -j MARK --set-mark "$TABLE_MARK"
 
     # add_rule "$iptables" "$table" "$chain" \
     #   -p "$net" -j CONNMARK --save-mark
-
-    add_rule "$iptables" "$table" "$chain" \
-      -p "$net" -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
-    add_rule "$iptables" "$table" "$chain" \
-      -p "$net"  -m socket --transparent -j ACCEPT
 
     add_rule "$iptables" "$table" "$chain" \
       -p "$net" -j TPROXY --on-ip "$PROXY_IP" \
@@ -1852,11 +1852,11 @@ clean_firewall() {
       $iptables -w -t "$table" -D "$parent" "$rule_num" >/dev/null 2>&1
     done
 
-    if [ "$table" = "mangle" ] && [ "$parent" = "PREROUTING" ]; then
-      rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
-      # shellcheck disable=SC2086
-      while $iptables -w -t "$table" -D "$parent" $rule >/dev/null 2>&1; do :; done
-    fi
+    # if [ "$table" = "mangle" ] && [ "$parent" = "PREROUTING" ]; then
+    #   rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
+    #   # shellcheck disable=SC2086
+    #   while $iptables -w -t "$table" -D "$parent" $rule >/dev/null 2>&1; do :; done
+    # fi
 
     $iptables -w -t "$table" -X "$chain" >/dev/null 2>&1
   }
