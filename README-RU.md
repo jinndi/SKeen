@@ -149,7 +149,7 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 
 1 - в качестве второго параметра можно передать имя архива с расширением `.tar` для немедленного запуска восстановления
 
-2 - принимает URL JSON-конфигурации Sing-box (либо другой в режиме работы `firewall.only`) в качестве второго параметра (HTTP или HTTPS), необязательно указывать, если прописан адрес в `sing_config.sync_url`
+2 - принимает URL JSON-конфигурации Sing-box в качестве второго параметра (HTTP или HTTPS), необязательно указывать, если прописан адрес в `sing_config.sync_url`
 
 
 | Менеджер OpkgTun (KeeneticOS v5+, только через SSH) |

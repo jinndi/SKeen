@@ -146,7 +146,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 1 - archive name can be passed as the second parameter with a `.tar` extension to immediately start the backup restore process
 
-2 - accepts the Sing-box JSON configuration URL (or another one in `firewall.only` mode) as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
+2 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
 
 | OpkgTun manager (KeeneticOS v5+, only from SSH) |
 | -------------------------------------------------------------------------- |
