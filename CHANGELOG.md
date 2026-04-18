@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.5.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.1...SKeen-v4.5.2) (2026-04-18)
+
+
+### 🐛 Fix
+
+* restore WEB CLI functionality ([8105409](https://github.com/jinndi/SKeen/commit/8105409184977d8001984896d6e134f52b6dc38e))
+
+
+### 🛠 Refactor
+
+* optimize curl proxy handling and script structure ([61f8fc2](https://github.com/jinndi/SKeen/commit/61f8fc28380c4af154bad6adb2e8bfcd7a7ed980))
+
 ## [4.5.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.0...SKeen-v4.5.1) (2026-04-17)
 
 
