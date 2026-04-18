@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.5.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.4...SKeen-v4.5.5) (2026-04-18)
+
+
+### 🐛 Fix
+
+* **tproxy:** apply socket match only for TCP, drop UDP socket lookup ([ede731b](https://github.com/jinndi/SKeen/commit/ede731b92de26fa4559052fda7198b447d034413))
+
+
+### ⚡ Perf
+
+* update tproxy rules and kernel modules (socket) ([a811cc1](https://github.com/jinndi/SKeen/commit/a811cc1c2b57dafa712c38d61f6442eac826a6d9))
+
 ## [4.5.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.3...SKeen-v4.5.4) (2026-04-18)
 
 
