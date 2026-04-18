@@ -1,4 +1,4 @@
-#!/opt/bin/sh
+#!/bin/sh
 # shellcheck disable=SC3043
 #
 # https://github.com/jinndi/SKeen
