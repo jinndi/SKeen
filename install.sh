@@ -12,6 +12,7 @@
 # set -e -u
 
 PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH
 
 ACTION="${1:-}"
 CALLER="${2:-}"
@@ -30,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.5.3"
+SKEEN_VERSION="4.5.4"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -105,7 +106,13 @@ ff00::/8           # Multicast (RFC 4291)
 
 DELIMETER="------------------------------------------------"
 
-is_tty() { [ -t 1 ] || [ -t 2 ]; }
+_cached_tty=""
+is_tty() {
+  case "$_cached_tty" in
+  "") _cached_tty=$([ -t 1 ] || [ -t 2 ]) && printf '%s' "$_cached_tty" || printf '0' ;;
+  *) printf '%s' "$_cached_tty" ;;
+  esac
+}
 
 cyan() { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 red() { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
@@ -400,13 +407,11 @@ wait_input() {
 }
 
 install_dependencies() {
-  local pkg_list
-
   echomsg "Checking dependencies"
 
   opkg update >/dev/null 2>&1
-
-  pkg_list="$(opkg list | awk '{print $1}')"
+  local pkg_list
+  pkg_list="$(opkg list 2>/dev/null | awk '{print $1}')"
 
   for pkg_name in $DEPENDENCIES; do
     printf "[%s] " "$pkg_name" >&2
@@ -416,15 +421,16 @@ install_dependencies() {
       continue
     fi
 
-    if printf '%s\n' "$pkg_list" | grep -qx "$pkg_name"; then
+    case "$pkg_list" in
+    *"$pkg_name"*)
       if opkg install "$pkg_name" >/dev/null 2>&1; then
         echook "Installed"
       else
         exiterr "Installation error"
       fi
-    else
-      exiterr "Package not found in opkg repositories"
-    fi
+      ;;
+    *) exiterr "Package not found in opkg repositories" ;;
+    esac
   done
 
   echook "All dependencies are installed"
@@ -634,7 +640,6 @@ install() {
   create_skeen_group
   download_skeen_script
 
-  echomsg "$SINGBOX_NAME version:"
   "$SINGBOX_BIN" version
 
   echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
@@ -746,11 +751,11 @@ check_internet() {
     attempt=1
     while [ $attempt -le $max_attempts ]; do
       if ping -c 1 "$host" >/dev/null 2>&1; then
-        logger_notice "Internet is available via ${host}"
-        return 0
+      logger_notice "Internet is available via ${host}"
+      return 0
       else
         logger_warning "Internet is not available (${host}), attempt ${attempt}/${max_attempts}..."
-      fi
+    fi
       attempt=$((attempt + 1))
       sleep 10
     done
@@ -803,7 +808,6 @@ get_fw_mode_param() {
 
 get_fw_mode_data() {
   local type="$1"
-  local json_files
   local file
   local param
 
@@ -812,9 +816,9 @@ get_fw_mode_data() {
     return 0
   fi
 
-  json_files=""
-  [ -d "$CONFIG_DIR" ] && json_files="$(find "$CONFIG_DIR" -name '*.json')"
-  for file in $json_files; do
+  [ -d "$CONFIG_DIR" ] || return 0
+  for file in "$CONFIG_DIR"/*.json; do
+    [ -f "$file" ] || continue
     param="$(get_fw_mode_param "$file" "$type")"
     [ -n "$param" ] && echo "$param" && return 0
   done
@@ -933,19 +937,15 @@ loading_modules() {
 }
 
 get_iptables_list() {
-  local ipt4
-  local ipt6
-  local ipt_list
+  local ipt_list=""
 
-  ipt4="$(ip -4 addr show | grep -q "inet " &&
-    command -v iptables >/dev/null 2>&1 && echo iptables)"
+  command -v iptables >/dev/null 2>&1 &&
+    [ -n "$(ip -4 addr show 2>/dev/null)" ] &&
+    ipt_list="${ipt_list:+$ipt_list }iptables"
 
-  ipt6="$(ip -6 addr show | grep -q "inet6 " &&
-    command -v ip6tables >/dev/null 2>&1 && echo ip6tables)"
-
-  # shellcheck disable=SC2086
-  set -- $ipt4 $ipt6
-  ipt_list="$*"
+  command -v ip6tables >/dev/null 2>&1 &&
+    [ -n "$(ip -6 addr show 2>/dev/null)" ] &&
+    ipt_list="${ipt_list:+$ipt_list }ip6tables"
 
   echo "$ipt_list"
 }
@@ -1744,7 +1744,7 @@ prepare_firewall() {
 
     echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table\""
 
-    echo "$SKEEN_SCRIPT apply_firewall netfilter"
+    echo "$SKEEN_PROC apply_firewall netfilter"
   } >"$FIREWALL_HOOK_FILE"
 
   chmod +x "$FIREWALL_HOOK_FILE"
