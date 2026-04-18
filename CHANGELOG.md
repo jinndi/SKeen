@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.5.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.3...SKeen-v4.5.4) (2026-04-18)
+
+
+### ⚡ Perf
+
+* improve script robustness and shell efficiency ([c7a7d2f](https://github.com/jinndi/SKeen/commit/c7a7d2f599471ffa4f9f32246860befaa2156c53))
+* simplify is_tty implementation ([17559f2](https://github.com/jinndi/SKeen/commit/17559f2fc712ff621e2af47fd771fc1e93154cb5))
+
 ## [4.5.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.2...SKeen-v4.5.3) (2026-04-18)
 
 
