@@ -106,12 +106,12 @@ ff00::/8           # Multicast (RFC 4291)
 
 DELIMETER="------------------------------------------------"
 
-_cached_tty=""
 is_tty() {
-  case "$_cached_tty" in
-  "") _cached_tty=$([ -t 1 ] || [ -t 2 ]) && printf '%s' "$_cached_tty" || printf '0' ;;
-  *) printf '%s' "$_cached_tty" ;;
-  esac
+  [ -t 1 ] || [ -t 2 ]
+  ret=$?
+
+  is_tty() { return "$ret"; }
+  return "$ret"
 }
 
 cyan() { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
