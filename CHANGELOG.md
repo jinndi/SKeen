@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.2...SKeen-v4.5.3) (2026-04-18)
+
+
+### 🧰 Chore
+
+* update service stop logic ([65ba0b7](https://github.com/jinndi/SKeen/commit/65ba0b7cfbcd4ffd57f453ba70928bd0a8d345e2))
+
 ## [4.5.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.1...SKeen-v4.5.2) (2026-04-18)
 
 
