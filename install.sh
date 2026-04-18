@@ -116,15 +116,9 @@ echomsg() { cyan "[INFO]: $1"; }
 echook() { green "[OK]: $1"; }
 echowarn() { yellow "[WARN]: $1"; }
 echoerr() { red "[ERROR]: $1"; }
-exiterr() {
-  red "[FATAL]: $1"
-  exit 1
-}
+exiterr() { red "[FATAL]: $1"; exit 1; }
 
-check_tty() { is_tty || {
-  echoerr "Command supports only tty"
-  exit 1
-}; }
+check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
 
 logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
@@ -251,7 +245,7 @@ load_proxy_options() {
 
   [ "$CALLER" != "menu" ] && loading_config
 
-  CURL_PROXY_OPTIONS=""
+  CURL_PROXY_OPTIONS="--connect-timeout 5 --max-time 720"
   if [ "$SERVICE_PROXY_ENABLE" = "1" ]; then
     err_template="Service proxy is enabled but"
     if [ -z "$SERVICE_PROXY_PORT" ]; then
@@ -261,7 +255,7 @@ load_proxy_options() {
     elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
       exiterr "$err_template no process is listening on port ${SERVICE_PROXY_PORT}"
     else
-      CURL_PROXY_OPTIONS="--socks5-hostname 127.0.0.1:${SERVICE_PROXY_PORT}"
+      CURL_PROXY_OPTIONS="${CURL_PROXY_OPTIONS} --socks5-hostname 127.0.0.1:${SERVICE_PROXY_PORT}"
       if [ -n "$SERVICE_PROXY_USER" ] && [ -n "$SERVICE_PROXY_PASS" ]; then
         CURL_PROXY_OPTIONS="${CURL_PROXY_OPTIONS} --proxy-user ${SERVICE_PROXY_USER}:${SERVICE_PROXY_PASS}"
       fi
@@ -293,7 +287,7 @@ get_latest_version() {
   local latest_release
 
   # shellcheck disable=SC2086
-  latest_release="$(curl $CURL_PROXY_OPTIONS --connect-timeout 5 --max-time 90 -s "$api_url")"
+  latest_release="$(curl $CURL_PROXY_OPTIONS -s "$api_url")"
   # shellcheck disable=SC2181
   [ $? -ne 0 ] && return 1
 
@@ -458,7 +452,7 @@ download_singbox() {
   cd "$TMP_DIR" || exit 1
 
   # shellcheck disable=SC2086
-  if curl $CURL_PROXY_OPTIONS --fail --connect-timeout 5 --max-time 720 -Lo "$PKG_NAME" "$pkg_url"; then
+  if curl $CURL_PROXY_OPTIONS --fail -Lo "$PKG_NAME" "$pkg_url"; then
     echook "Downloaded $PKG_NAME successfully"
   else
     echoerr "Failed to download $PKG_NAME"
@@ -590,7 +584,7 @@ download_skeen_script() {
   [ -f "$SKEEN_SCRIPT" ] && mv "$SKEEN_SCRIPT" "$backup_script"
 
   # shellcheck disable=SC2086
-  if ! curl $CURL_PROXY_OPTIONS --fail --connect-timeout 5 --max-time 90 -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
+  if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
     rm -f "$SKEEN_SCRIPT"
     [ -f "$backup_script" ] && mv "$backup_script" "$SKEEN_SCRIPT"
     echoerr "Failed to download $SKEEN_NAME script"
@@ -2222,13 +2216,17 @@ update_core() {
 }
 
 update_skeen() {
-  if is_running && [ -z "$CURL_PROXY_OPTIONS" ]; then stop || exit 1; fi
+  if ! is_running && [ "$SERVICE_PROXY_ENABLE" = "1" ]; then
+    start || exit 1
+  elif is_running; then
+    stop || exit 1
+  fi
+
   if download_skeen_script "update"; then
     echook "$SKEEN_NAME has been successfully updated"
     is_update_skeen=1
   else
     echoerr "Failed to update $SKEEN_NAME"
-    [ "$CALLER" = "node" ] && exit 1
   fi
 }
 
