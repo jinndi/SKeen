@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.6](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.5...SKeen-v4.5.6) (2026-04-18)
+
+
+### ⚡ Perf
+
+* add explicit rules for DNS traffic in hybrid and tproxy modes ([6086fcd](https://github.com/jinndi/SKeen/commit/6086fcde2bcd67fd8e74e0f7b8dff73195faba8b))
+
 ## [4.5.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.4...SKeen-v4.5.5) (2026-04-18)
 
 
