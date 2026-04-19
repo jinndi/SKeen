@@ -47,6 +47,7 @@ Notes:
 <details>
   <summary>🖥️ Web UI ?</summary>
 <br>
+  
 Doesn’t include a separate configuration Web UI. The built-in **Zashboard** interface is already used for management, making additional UIs unnecessary.
 
 💡 To simplify configuration, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available to import profiles via [GUI.for.SingBox](https://github.com/jinndi/sync-profile-to-skeen)
