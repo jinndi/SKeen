@@ -1240,7 +1240,7 @@ add_tproxy_rules() {
   add_rule "$iptables" "$table" "$chain" \
     -p tcp -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
   add_rule "$iptables" "$table" "$chain" \
-    -p tcp  -m socket --transparent -j ACCEPT
+    -p tcp -m socket --transparent -j ACCEPT
 
   for net in $SKEEN_TPROXY_NETWORK; do
     # add_rule "$iptables" "$table" "$chain" \
@@ -1270,7 +1270,6 @@ set_iptables_rules() {
   local chain="${3:-}"
   local set_name
   local bp_rule_set
-  local case_mode
   local net
 
   set_name="${BYPASS_NET_SET}${IP_VERSION}"
@@ -1281,27 +1280,30 @@ set_iptables_rules() {
 
     $iptables -t "$table" -N "$chain" || return 0
 
-    case_mode="${SKEEN_FIREWALL_MODE}:${table}"
-    [ "$SKEEN_DNS_ENABLED" != "1" ] && case_mode="not_set"
-
-    case "$case_mode" in
+    case "${SKEEN_FIREWALL_MODE}:${table}" in
     hybrid:nat)
-      add_rule "$iptables" "$table" "$chain" \
-        -p tcp --dport "$DNS_PORT" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+      if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
+        add_rule "$iptables" "$table" "$chain" \
+          -p tcp --dport "$DNS_PORT" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+      else
+        add_rule "$iptables" "$table" "$chain" -p tcp ! --dport "$DNS_PORT" -j RETURN
+      fi
 
       # shellcheck disable=SC2086
-      add_rule "$iptables" "$table" "$chain" \
-        -p tcp $bp_rule_set
+      add_rule "$iptables" "$table" "$chain" -p tcp $bp_rule_set
       ;;
     hybrid:mangle | tproxy:mangle)
       for net in $SKEEN_TPROXY_NETWORK; do
-        add_rule "$iptables" "$table" "$chain" \
-          -p "$net" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
-          --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
+        if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
+          add_rule "$iptables" "$table" "$chain" \
+            -p "$net" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
+            --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
+        else
+          add_rule "$iptables" "$table" "$chain" -p "$net" ! --dport "$DNS_PORT" -j RETURN
+        fi
 
         # shellcheck disable=SC2086
-        add_rule "$iptables" "$table" "$chain" \
-          -p "$net" $bp_rule_set
+        add_rule "$iptables" "$table" "$chain" -p "$net" $bp_rule_set
       done
       ;;
     *)
