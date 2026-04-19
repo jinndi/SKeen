@@ -48,9 +48,16 @@ Notes:
   <summary>🖥️ Web UI ?</summary>
 <br>
 
-Doesn’t include a separate configuration Web UI. The built-in **Zashboard** interface is already used for management, making additional UIs unnecessary.
-
 💡 To simplify configuration, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available to import profiles via [GUI.for.SingBox](https://github.com/jinndi/sync-profile-to-skeen)
+
+The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
+
+* **Resource Efficiency**: Bypassing heavy WebUIs saves RAM and reduces CPU overhead, preserving system resources for high-speed routing and encryption.
+* **Seamless Integration**: Monitoring and basic management are already handled by the built-in **Zashboard** interface, making additional UIs redundant.
+* **System Security & Stability**: Fewer active web services and open ports minimize the potential attack surface and reduce the risk of software conflicts within KeeneticOS.
+* **No Functional Limits**: Direct configuration via CLI/files ensures access to 100% of Sing-Box's features, which are often restricted or oversimplified in graphical interfaces.
+* **Minimalist Footprint**: The script remains lightweight with zero dependencies, requiring no extra packages like web servers or interpreters that consume valuable flash storage.
+* **A Tool, Not a Toy**: While other projects compete to draw pretty buttons and flashy graphs—effectively turning a router into a laggy digital photo frame—SKeen focuses on moving packets. We consider building heavy web panels for a network script a sign of poor engineering and an inability to handle the system directly. If you need a Christmas tree with a UI, you're in the wrong place; if you need performance, you've arrived.
 </details>
 
 <details>
