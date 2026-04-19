@@ -47,10 +47,61 @@ Notes:
 <details>
   <summary>🖥️ Web UI ?</summary>
 <br>
-  
+
 Doesn’t include a separate configuration Web UI. The built-in **Zashboard** interface is already used for management, making additional UIs unnecessary.
 
 💡 To simplify configuration, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available to import profiles via [GUI.for.SingBox](https://github.com/jinndi/sync-profile-to-skeen)
+</details>
+
+<details>
+  <summary>🧩 Architecture ?</summary>
+<br>
+
+### Redirect — Utilized in `redirect` and `hybrid` modes (TCP)
+
+Uses a single `nat` chain — **skeen**:
+
+Entry into this chain can be triggered by the router policy's `fwmark`, specific ports, or port exclusions. It follows this rule order:
+
+* **RETURN**: Bypasses local, reserved, and user-defined addresses.
+* **REDIRECT**: Redirects TCP traffic to the Sing-Box `redirect` port.
+
+> DNS request interception via NAT is not available for Sing-Box in `redirect` mode.
+
+---
+
+### TProxy — Utilized in `tproxy` and `hybrid` modes (UDP)
+
+Uses two base chains within the `mangle` table:
+
+#### 1. PREROUTING **skeen**
+Entry into this chain can be triggered by the router policy's `fwmark`, specific ports, or port exclusions. It follows this rule order:
+
+* **DNS TPROXY**: TCP/UDP redirection of port 53 to the Sing-Box TProxy port (optional).
+* **RETURN**: Bypasses local, reserved, and user-defined addresses.
+* **MARK + ACCEPT SOCKET**: Fast path for established transparent sockets.
+* **TPROXY**: Directs remaining TCP/UDP traffic to the Sing-Box TProxy port.
+
+#### 2. OUTPUT **skeen_mask**
+Entry into this chain is restricted to processes NOT belonging to the `skeen` group (to prevent proxy self-looping). It follows this rule order:
+
+* **RETURN**: Bypasses local, reserved, and user-defined addresses.
+* **MARK**: Applies general marking for TCP/UDP traffic.
+
+</details>
+
+<details>
+  <summary>🕵️‍♂️ FakeIP ?</summary>
+<br>
+
+The following are intentionally **excluded** from the bypass list (local network exceptions):
+
+1.  **Subnet `198.18.0.0/15`**
+    In the script, the `198.18.0.0/15` line is commented out. This means traffic to Sing-Box FakeIP addresses will be intercepted and processed by the kernel as intended. This is a deliberate design choice for proper routing.
+
+2.  **Subnet `fc00::/18`**
+    The IPv6 segment `fc00::/18` (Sing-Box Fake-IP range for IPv6) is also excluded from the bypass list for the same reason.
+
 </details>
 
 ### 🚀 Features
