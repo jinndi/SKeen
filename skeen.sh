@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.6.0"
+SKEEN_VERSION="4.6.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -142,7 +142,7 @@ create_skeen_config() {
   [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
   cat <<EOF >"$SKEEN_CONFIG"
-// https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs
+// https://github.com/jinndi/SKeen
 {
   "auto_start": {
     "enable": 1,
@@ -206,7 +206,7 @@ rci() {
 loading_config() {
   if [ ! -f "$SKEEN_CONFIG" ]; then
     create_skeen_config
-    is_tty && echowarn "Configuration file 'skeen.json' not found, a new one has been created"
+    is_tty && echowarn "Configuration file 'skeen.json' not found, a new created"
   fi
 
   eval "$(
@@ -282,10 +282,6 @@ get_current_version() {
     fi
     ;;
   "$SKEEN_PROC") echo "$SKEEN_VERSION" ;;
-  *)
-    echoerr "Unknown program: $1"
-    return 1
-    ;;
   esac
 }
 
@@ -442,9 +438,9 @@ download_singbox() {
   local pkg_url
 
   if [ -z "$version" ]; then
-    echomsg "Fetching the latest version number..."
+    echomsg "Fetching the latest version..."
     version="$(get_latest_version "$SINGBOX_API_URL")"
-    [ -z "$version" ] && echoerr "Failed to fetch the latest version number" && exit 1
+    [ -z "$version" ] && echoerr "Failed to fetch the latest version" && exit 1
 
     echook "Latest version is $version"
   fi
@@ -851,7 +847,7 @@ check_port() {
     msg_err="HTTPS Port 443 is in use by Keenetic services."
     echoerr "$msg_err"
     logger_error "$msg_err"
-    echoerr "TProxy mode requires a free port to work."
+    echoerr "TProxy requires a free port to work."
     echoerr "Please free it on the 'Users and Access' page of the router web interface"
     press_any_key_to_menu "" 1
   elif [ -n "$port" ]; then
@@ -2254,11 +2250,11 @@ ask_and_update() {
   current=$(get_current_version "$proc")
   [ -z "$current" ] && current="not installed"
   latest=$(get_latest_version "$api")
-  [ -z "$latest" ] && echoerr "Failed to fetch the latest version number" && return 1
+  [ -z "$latest" ] && echoerr "Failed to fetch the latest version" && return 1
 
   if [ "$latest" != "$current" ]; then
-    printf '%s %s\n' "$(cyan "Current version:")" "$(red "$current")"
-    printf '%s %s\n' "$(cyan "New version of $name is available:")" "$(green "$latest")"
+    printf '%s %s\n' "$(cyan "Current version ${name}:")" "$(red "$current")"
+    printf '%s %s\n' "$(cyan "New version is available:")" "$(green "$latest")"
     printf '%s %s\n' "$(cyan "More details:")" "$(green "$releases")"
 
     while :; do

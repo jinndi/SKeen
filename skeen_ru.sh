@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.6.0"
+SKEEN_VERSION="4.6.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -142,7 +142,7 @@ create_skeen_config() {
   [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
   cat <<EOF >"$SKEEN_CONFIG"
-// https://github.com/jinndi/SKeen?tab=readme-ov-file#%EF%B8%8F-settigs
+// https://github.com/jinndi/SKeen/blob/main/README-RU.md
 {
   "auto_start": {
     "enable": 1,
@@ -282,10 +282,6 @@ get_current_version() {
     fi
     ;;
   "$SKEEN_PROC") echo "$SKEEN_VERSION" ;;
-  *)
-    echoerr "Неизвестная программа: $1"
-    return 1
-    ;;
   esac
 }
 
@@ -851,7 +847,7 @@ check_port() {
     msg_err="HTTPS порт 443 используется сервисами Keenetic"
     echoerr "$msg_err"
     logger_error "$msg_err"
-    echoerr "Режим TProxy требует свободный порт"
+    echoerr "TProxy требует свободный порт"
     echoerr "Освободите его на странице 'Пользователи и доступ' веб-интерфейса роутера"
     press_any_key_to_menu "" 1
   elif [ -n "$port" ]; then
@@ -1215,8 +1211,8 @@ EOF
   done
 
   [ -n "$invalid_list" ] && {
-    is_tty && echowarn "Invalid IPv$ip_v exclude: $invalid_list"
-    logger_warning "Invalid IPv$ip_v exclude: $invalid_list"
+    is_tty && echowarn "Неверные IPv${ip_v} исключения: $invalid_list"
+    logger_warning "Неверные IPv${ip_v} исключения: $invalid_list"
   }
 
   echo "$all_list" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
@@ -1751,7 +1747,7 @@ prepare_firewall() {
     *) echo "exit 0" ;;
     esac
 
-    echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table\""
+    echo "logger -p notice -t \"$SKEEN_NAME\" \"Обновление \$type правил для \$table\""
 
     echo "$SKEEN_PROC apply_firewall netfilter"
   } >"$FIREWALL_HOOK_FILE"
@@ -2696,18 +2692,18 @@ show_menu() {
     fi
 
     output="$output\n ${SINGBOX_NAME} DNS работает: $sb_dns_work_text"
-    output="$output\n Режим файрвола: $(cyan "$SKEEN_FIREWALL_MODE")"
-    output="$output\n Сеть файрвола: $(cyan "$SKEEN_FIREWALL_NETWORK")"
-    output="$output\n Версия IP файрвола: $ipv4 $ipv6"
+    output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
+    output="$output\n Сеть фаервола: $(cyan "$SKEEN_FIREWALL_NETWORK")"
+    output="$output\n Версия IP фаервола: $ipv4 $ipv6"
 
   elif [ "$running_text" = "Остановить" ]; then
-    output="$output\n Режим файрвола: $(cyan "$SKEEN_FIREWALL_MODE")"
+    output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
   fi
 
-  output="$output\n\n$(cyan "Выберите пункт:")"
+  output="$output\n\n$(cyan "Выберите действие:")"
   output="$output\n  $(green "1.") $running_text"
   output="$output\n  $(green "2.") Перезапустить"
-  output="$output\n  $(green "3.") Обновления"
+  output="$output\n  $(green "3.") Обновление"
   output="$output\n  $(green "4.") Тест фаервола"
   output="$output\n  $(green "5.") Удаление"
   output="$output\n  $(green "0.") Выход\n"
