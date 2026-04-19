@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.0...SKeen-v4.6.1) (2026-04-19)
+
+
+### 🐛 Fix
+
+* improve messaging ([d78c905](https://github.com/jinndi/SKeen/commit/d78c905b694863d9947a3d0f5984ecc77d8eb8df))
+
 ## [4.6.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.6...SKeen-v4.6.0) (2026-04-19)
 
 
