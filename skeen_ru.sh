@@ -31,10 +31,10 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.5.6"
+SKEEN_VERSION="4.6.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
-SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
+SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
 SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
@@ -125,7 +125,7 @@ echowarn() { yellow "[WARN]: $1"; }
 echoerr() { red "[ERROR]: $1"; }
 exiterr() { red "[FATAL]: $1"; exit 1; }
 
-check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
+check_tty() { is_tty || { echoerr "Команда только для терминала"; exit 1; }; }
 
 logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
@@ -206,7 +206,7 @@ rci() {
 loading_config() {
   if [ ! -f "$SKEEN_CONFIG" ]; then
     create_skeen_config
-    is_tty && echowarn "Configuration file 'skeen.json' not found, a new one has been created"
+    is_tty && echowarn "Конфигурационный файл 'skeen.json' не найден, создан новый"
   fi
 
   eval "$(
@@ -254,13 +254,13 @@ load_proxy_options() {
 
   CURL_PROXY_OPTIONS="--connect-timeout 5 --max-time 720"
   if [ "$SERVICE_PROXY_ENABLE" = "1" ]; then
-    err_template="Service proxy is enabled but"
+    err_template="Прокси-сервис включен, но"
     if [ -z "$SERVICE_PROXY_PORT" ]; then
-      exiterr "$err_template 'service_proxy.port' is not set"
+      exiterr "$err_template 'service_proxy.port' не задан"
     elif ! is_running; then
-      exiterr "$err_template $SINGBOX_NAME is not running"
+      exiterr "$err_template $SINGBOX_NAME не запущен"
     elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
-      exiterr "$err_template no process is listening on port ${SERVICE_PROXY_PORT}"
+      exiterr "$err_template процесс не слушает на порту ${SERVICE_PROXY_PORT}"
     else
       CURL_PROXY_OPTIONS="${CURL_PROXY_OPTIONS} --socks5-hostname 127.0.0.1:${SERVICE_PROXY_PORT}"
       if [ -n "$SERVICE_PROXY_USER" ] && [ -n "$SERVICE_PROXY_PASS" ]; then
@@ -283,7 +283,7 @@ get_current_version() {
     ;;
   "$SKEEN_PROC") echo "$SKEEN_VERSION" ;;
   *)
-    echoerr "Unknown program: $1"
+    echoerr "Неизвестная программа: $1"
     return 1
     ;;
   esac
@@ -315,7 +315,7 @@ get_os_release() {
   release_path="$(command -v opkg)"
 
   if [ "$release_path" != "/opt/bin/opkg" ]; then
-    exiterr "Unsupported the system OS!"
+    exiterr "Неподдерживаемая система!"
   else
     PKG_OS="openwrt"
     PKG_SUFFIX=".ipk"
@@ -354,7 +354,7 @@ get_architecture() {
   *) ARCH="" ;;
   esac
 
-  [ -z "$ARCH" ] && exiterr "Unsupported CPU architecture"
+  [ -z "$ARCH" ] && exiterr "Неподдерживаемая архитектура CPU"
 
   cpu_info=$(tr '[:upper:]' '[:lower:]' </proc/cpuinfo)
 
@@ -394,7 +394,7 @@ get_architecture() {
     ;;
   esac
 
-  echomsg "Detected Arch: $(green "$PKG_ARCH")"
+  echomsg "Обнаружена архитектура CPU: $(green "$PKG_ARCH")"
 }
 
 wait_input() {
@@ -407,7 +407,7 @@ wait_input() {
 }
 
 install_dependencies() {
-  echomsg "Checking dependencies"
+  echomsg "Проверка зависимостей"
 
   opkg update >/dev/null 2>&1
   local pkg_list
@@ -417,23 +417,23 @@ install_dependencies() {
     printf "[%s] " "$pkg_name" >&2
 
     if command -v "$pkg_name" >/dev/null 2>&1; then
-      echook "Already installed"
+      echook "Уже установлено"
       continue
     fi
 
     case "$pkg_list" in
     *"$pkg_name"*)
       if opkg install "$pkg_name" >/dev/null 2>&1; then
-        echook "Installed"
+        echook "Установлено"
       else
-        exiterr "Installation error"
+        exiterr "Ошибка установки"
       fi
       ;;
-    *) exiterr "Package not found in opkg repositories" ;;
+    *) exiterr "Пакет не найден в opkg" ;;
     esac
   done
 
-  echook "All dependencies are installed"
+  echook "Все зависимости установлены"
 }
 
 download_singbox() {
@@ -442,26 +442,26 @@ download_singbox() {
   local pkg_url
 
   if [ -z "$version" ]; then
-    echomsg "Fetching the latest version number..."
+    echomsg "Получение последней версии..."
     version="$(get_latest_version "$SINGBOX_API_URL")"
-    [ -z "$version" ] && echoerr "Failed to fetch the latest version number" && exit 1
+    [ -z "$version" ] && echoerr "Не удалось получить версию" && exit 1
 
-    echook "Latest version is $version"
+    echook "Последняя версия: $version"
   fi
 
   PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
   pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${version}/${PKG_NAME}"
 
-  echomsg "Downloading ${PKG_NAME}..."
+  echomsg "Загрузка ${PKG_NAME}..."
 
   mkdir -p "$TMP_DIR"
   cd "$TMP_DIR" || exit 1
 
   # shellcheck disable=SC2086
   if curl $CURL_PROXY_OPTIONS --fail -Lo "$PKG_NAME" "$pkg_url"; then
-    echook "Downloaded $PKG_NAME successfully"
+    echook "$PKG_NAME загружен успешно"
   else
-    echoerr "Failed to download $PKG_NAME"
+    echoerr "Не удалось загрузить $PKG_NAME"
     [ -n "$version" ] && return 1 || exit 1
   fi
 }
@@ -471,19 +471,19 @@ install_singbox() {
 
   [ -d "$tmp_unpack_dir" ] && rm -rf "$tmp_unpack_dir"
 
-  echomsg "Extracting $PKG_NAME"
+  echomsg "Распаковка $PKG_NAME"
   mkdir -p "$tmp_unpack_dir"
   cd "$tmp_unpack_dir" || exit 1
 
   if tar -xzf "../${PKG_NAME}" && tar -xzf data.tar.gz; then
-    echook "Extraction completed"
+    echook "Распаковка завершена"
   else
     rm -rf "$tmp_unpack_dir"
     rm -f "${TMP_DIR}/${PKG_NAME}"
-    exiterr "Error extracting $PKG_NAME"
+    exiterr "Ошибка распаковки $PKG_NAME"
   fi
 
-  echomsg "Installing $SINGBOX_NAME binary to $SINGBOX_BIN"
+  echomsg "Установка $SINGBOX_NAME в $SINGBOX_BIN"
   [ -f "$SINGBOX_BIN" ] && rm -f "$SINGBOX_BIN"
   mv ./usr/bin/sing-box "$SINGBOX_BIN"
   chmod 755 "$SINGBOX_BIN"
@@ -492,7 +492,7 @@ install_singbox() {
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${PKG_NAME}"
 
-  echook "$SINGBOX_NAME binary installed successfully"
+  echook "$SINGBOX_NAME успешно установлен"
 }
 
 create_singbox_config() {
@@ -506,7 +506,7 @@ create_singbox_config() {
     return
   fi
 
-  echomsg "Creating default configuration files..."
+  echomsg "Создание конфигурационных файлов..."
 
   mkdir -p "$CONFIG_DIR"
 
@@ -527,11 +527,11 @@ create_singbox_config() {
 
   $SINGBOX_PROC format -w -C $CONFIG_DIR
 
-  echook "Configuration file created successfully"
+  echook "Конфигурационные файлы созданы успешно"
 }
 
 create_autostart_script() {
-  echomsg "Create $SKEEN_NAME autostart script at $SKEEN_AUTOSTART_SCRIPT"
+  echomsg "Создание скрипта автозапуска $SKEEN_NAME в $SKEEN_AUTOSTART_SCRIPT"
 
   [ -f "$SKEEN_AUTOSTART_SCRIPT" ] && rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
@@ -546,7 +546,7 @@ create_autostart_script() {
   chmod 755 "$SKEEN_AUTOSTART_SCRIPT"
   chmod +x "$SKEEN_AUTOSTART_SCRIPT"
 
-  echook "Autostart script created successfully"
+  echook "Скрипт автозапуска создан успешно"
 }
 
 get_free_gid() {
@@ -561,7 +561,7 @@ get_free_gid() {
     gid=$((gid + 1))
   done
 
-  exiterr "No free GID available"
+  exiterr "Нет свободного GID"
 }
 
 create_skeen_group() {
@@ -571,10 +571,10 @@ create_skeen_group() {
   if ! grep -q "^${name}:" "${ENTWARE_DIR}/etc/group" 2>/dev/null; then
     gid_num=$(get_free_gid 1000)
 
-    echomsg "Creating group $name with GID ${gid_num}..."
+    echomsg "Создание группы $name с GID ${gid_num}..."
     addgroup -g "$gid_num" "$name" >/dev/null 2>&1 ||
-      exiterr "Failed to create group $name"
-    echook "Group $name created successfully"
+      exiterr "Не удалось создать группу $name"
+    echook "Группа $name создана успешно"
     return 2
   else
     return 0
@@ -585,7 +585,7 @@ download_skeen_script() {
   local action="${1:-}"
   local backup_script="${SKEEN_SCRIPT}.backup"
 
-  echomsg "Downloading $SKEEN_NAME script at $SKEEN_SCRIPT"
+  echomsg "Загрузка скрипта $SKEEN_NAME в $SKEEN_SCRIPT"
 
   [ -f "$SKEEN_SCRIPT" ] && mv "$SKEEN_SCRIPT" "$backup_script"
 
@@ -593,7 +593,7 @@ download_skeen_script() {
   if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
     rm -f "$SKEEN_SCRIPT"
     [ -f "$backup_script" ] && mv "$backup_script" "$SKEEN_SCRIPT"
-    echoerr "Failed to download $SKEEN_NAME script"
+    echoerr "Не удалось загрузить скрипт $SKEEN_NAME"
     [ "$action" != "update" ] && exit 1
     return 1
   fi
@@ -603,7 +603,7 @@ download_skeen_script() {
 
   [ -f "$backup_script" ] && rm -f "$backup_script"
 
-  echook "$SKEEN_NAME script downloaded successfully"
+  echook "Скрипт $SKEEN_NAME загружен успешно"
   return 0
 }
 
@@ -615,7 +615,7 @@ press_any_key_to_menu() {
 
   echo "$DELIMETER"
 
-  printf "Press any key to open menu..." >/dev/tty
+  printf "Нажмите любую клавишу для открытия меню..." >/dev/tty
   wait_input
 
   if [ "$action" = "reload" ]; then
@@ -642,38 +642,38 @@ install() {
 
   "$SINGBOX_BIN" version
 
-  echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
-  echomsg "Configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
-  echook "Installation completed"
+  echomsg "Настройте $SINGBOX_NAME: отредактировав $CONFIG_DIR"
+  echomsg "Настройте $SKEEN_NAME: отредактировав $SKEEN_CONFIG"
+  echook "Установка завершена"
 
   press_any_key_to_menu
 }
 
 uninstall() {
-  echomsg "Uninstalling ${SKEEN_NAME}..."
+  echomsg "Удаление ${SKEEN_NAME}..."
 
   is_running && stop
 
-  echomsg "Removing $SINGBOX_NAME binary..."
+  echomsg "Удаление файла $SINGBOX_NAME..."
   rm -f "$SINGBOX_BIN"
 
-  echomsg "Removing auto-start script..."
+  echomsg "Удаление скрипта автозапуска..."
   rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
-  echomsg "Removing firewall hook script..."
+  echomsg "Удаление скрипта файрвола..."
   rm -f "$FIREWALL_HOOK_FILE"
 
-  echomsg "Removing $SKEEN_NAME script..."
+  echomsg "Удаление скрипта ${SKEEN_NAME}..."
   rm -f "$SKEEN_SCRIPT"
 
-  echomsg "Delete group ${SKEEN_PROC}..."
+  echomsg "Удаление группы ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
 
   if [ -d "$WORK_DIR" ]; then
-    echomsg "Configuration directory $WORK_DIR is retained"
-    echomsg "If you want to remove it manually, run: rm -rf $WORK_DIR"
+    echomsg "Каталог конфигурации $WORK_DIR незатронут"
+    echomsg "Для удаления вручную выполните: rm -rf $WORK_DIR"
   fi
-  echook "${SKEEN_NAME} has been uninstalled successfully"
+  echook "${SKEEN_NAME} успешно удалён"
   exit 0
 }
 
@@ -683,7 +683,7 @@ accept_uninstall() {
   local option
 
   while [ $attempt -lt $max_attempts ]; do
-    printf "Uninstall, %s? [y/n]: " "$SKEEN_NAME" >/dev/tty
+    printf "Удалить, %s? [y/n]: " "$SKEEN_NAME" >/dev/tty
     read -r option </dev/tty
 
     [ -z "$option" ] && option="n"
@@ -692,7 +692,7 @@ accept_uninstall() {
     y | Y) uninstall ;;
     n | N) break ;;
     *)
-      echoerr "Incorrect option"
+      echoerr "Некорректный вариант"
       attempt=$((attempt + 1))
       ;;
     esac
@@ -751,17 +751,17 @@ check_internet() {
     attempt=1
     while [ $attempt -le $max_attempts ]; do
       if ping -c 1 "$host" >/dev/null 2>&1; then
-      logger_notice "Internet is available via ${host}"
-      return 0
+        logger_notice "Интернет доступен через ${host}"
+        return 0
       else
-        logger_warning "Internet is not available (${host}), attempt ${attempt}/${max_attempts}..."
-    fi
+        logger_warning "Интернет недоступен (${host}), попытка ${attempt}/${max_attempts}..."
+      fi
       attempt=$((attempt + 1))
       sleep 10
     done
   done
 
-  logger_error "Internet is not available via any of the checked hosts"
+  logger_error "Интернет недоступен ни через один из проверенных хостов"
 }
 
 get_fw_mode_param() {
@@ -848,15 +848,15 @@ check_port() {
   local msg_err
 
   if [ -z "$port" ] && iptables -t mangle -nvL INPUT --line-numbers | grep -q 'tcp dpt:443'; then
-    msg_err="HTTPS Port 443 is in use by Keenetic services."
+    msg_err="HTTPS порт 443 используется сервисами Keenetic"
     echoerr "$msg_err"
     logger_error "$msg_err"
-    echoerr "TProxy mode requires a free port to work."
-    echoerr "Please free it on the 'Users and Access' page of the router web interface"
+    echoerr "Режим TProxy требует свободный порт"
+    echoerr "Освободите его на странице 'Пользователи и доступ' веб-интерфейса роутера"
     press_any_key_to_menu "" 1
   elif [ -n "$port" ]; then
     if netstat -lnt 2>/dev/null | grep -q ":$port\s"; then
-      msg_err="Port $port is in use. Free it and try running again"
+      msg_err="Порт $port занят. Освободите его и попробуйте снова"
       echoerr "$msg_err"
       logger_error "$msg_err"
       press_any_key_to_menu "" 1
@@ -909,18 +909,18 @@ load_module() {
     insmod "$path_entware" >/dev/null 2>&1 && return 0
   fi
 
-  echoerr "Module '$module' not found"
+  echoerr "Модуль '$module' не найден"
   return 1
 }
 
 loading_modules() {
   local modules="xt_TPROXY.ko xt_socket.ko xt_multiport.ko xt_owner.ko"
-  local err_msg="Please install router component: «Kernel modules for Netfilter»"
+  local err_msg="Установите компонент роутера: «Модули ядра подсистемы Netfilter»"
   local module
 
   MODULES_OS_DIR="${MODULES_OS_DIR}/$(uname -r)"
 
-  echomsg "Checking and loading modules..."
+  echomsg "Проверка и загрузка модулей..."
 
   for module in $modules; do
     if [ "$module" = "xt_owner.ko" ] && is_owner_module_working; then
@@ -1017,11 +1017,11 @@ set_route_rules() {
   if ! check_default_route; then
     [ -f "$WAIT_ROUTE_FILE" ] || touch "$WAIT_ROUTE_FILE"
 
-    msg="Default route in table '$source_table' (IPv$IP_VERSION) not found"
+    msg="Маршрут по умолчанию в таблице '$source_table' (IPv$IP_VERSION) не найден"
 
-    msg2="Check your internet connection"
+    msg2="Проверьте подключение к интернету"
     if [ -n "$SKEEN_MARK_POLICY" ]; then
-      msg2="$msg2 for policy ${POLICY_NAME:-unknown}"
+      msg2="$msg2 для политики ${POLICY_NAME:-unknown}"
     fi
 
     echowarn "$msg"
@@ -1446,7 +1446,7 @@ release_version_ge5() {
   check_tty
   major=$(ndmc -c show version | awk -F'[:.]' '/release:/ {gsub(/ /,"",$2); print $2}')
   if [ "$major" -lt 5 ]; then
-    echoerr "Release version KeeneticOS is lower than 5" && return 1
+    echoerr "Версия KeeneticOS ниже 5-ой" && return 1
   fi
 }
 
@@ -1460,33 +1460,28 @@ tun_create() {
   local opkgtun_name_lower
 
   if [ -z "$opkgtun_ip" ] || [ -z "$opkgtun_desc" ]; then
-    echomsg "Use the following format to create an OpkgTun interface:"
-    echomsg "skeen tun create <ipv4> <name>"
+    echomsg "Используйте следующий формат для создания интерфейса OpkgTun:"
+    echomsg "skeen tun create <ipv4> <имя>"
     return
   fi
 
   case "$opkgtun_desc" in
   [!A-Za-z0-9_-]*)
-    exiterr "Invalid name, allowed characters: A–Z, a–z, 0–9, _ and -"
+    exiterr "Недопустимое имя, допустимые символы: A–Z, a–z, 0–9, _ and -"
     ;;
   esac
 
   if ! is_valid_ipv4 "$opkgtun_ip"; then
-    echoerr "Invalid IPv4 address specified"
+    echoerr "Неверный IPv4 адрес: $opkgtun_ip"
     return
   fi
   opkgtun_ip="${opkgtun_ip%%/*}"
-
-  if [ -z "$opkgtun_desc" ]; then
-    echoerr "Please specify the name of the OpkgTun interface to delete"
-    return
-  fi
 
   inface_list="$(ndmc -c show interface)"
 
   if echo "$inface_list" |
     grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"; then
-    echoerr "Interface named \"$opkgtun_desc\" already exists"
+    echoerr "Интерфейс с именем \"$opkgtun_desc\" уже существует"
     return
   fi
 
@@ -1496,7 +1491,7 @@ tun_create() {
         if ($0 == ip) found=1
     }
     END { exit !found }'; then
-    exiterr "IP address $opkgtun_ip is already in use"
+    exiterr "IP адрес $opkgtun_ip уже используется"
   fi
 
   opkgtun_ids="$(echo "$inface_list" |
@@ -1520,18 +1515,18 @@ tun_create() {
 
   tun_delete_msg() {
     tun_delete "$opkgtun_desc"
-    exiterr "Failed to set ${1} the interface"
+    exiterr "Не удалось установить $1 для интерфейса"
   }
 
-  ndmc -c interface "$opkgtun_name" || { echoerr "Failed to create the interface" && return; }
+  ndmc -c interface "$opkgtun_name" || { echoerr "Не удалось создать интерфейс" && return; }
   ndmc -c interface "$opkgtun_name" description "$opkgtun_desc" || tun_delete_msg "description"
   ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" || tun_delete_msg "ip address"
   ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name" || tun_delete_msg "ip route default"
   ndmc -c interface "$opkgtun_name" ip global auto || tun_delete_msg "ip global auto"
   ndmc -c interface "$opkgtun_name" up && ndmc -c system configuration save
 
-  echook "OpkgTun interface named \"$opkgtun_desc\" was created successfully"
-  echo "Use the name $(green "\"$opkgtun_name_lower\"") for the $(yellow "\"interface_name\"") field in the tun configuration"
+  echook "OpkgTun интерфейс с именем \"$opkgtun_desc\" был успешно создан"
+  echo "Используйте имя $(green "\"$opkgtun_name_lower\"") для поля $(yellow "\"interface_name\"") в конфигурации tun"
 }
 
 tun_delete() {
@@ -1539,8 +1534,8 @@ tun_delete() {
   local opkgtun_name
 
   if [ -z "$opkgtun_desc" ]; then
-    echoerr "Please specify the name of the OpkgTun interface to delete"
-    echomsg "skeen tun delete <name>"
+    echoerr "Пожалуйста, укажите имя для интерфейса OpkgTun"
+    echomsg "skeen tun delete <имя>"
     return
   fi
 
@@ -1554,15 +1549,15 @@ tun_delete() {
     OpkgTun[0-9]*)
       ndmc -c no interface "$opkgtun_name" || { echoerr "Failed to delete the interface" && return; }
       ndmc -c system configuration save
-      echook "Interface \"$opkgtun_name\" has been successfully deleted"
+      echook "Интерфейс \"$opkgtun_name\" был успешно удален"
       ;;
     *)
-      echoerr "Interface name: \"$opkgtun_name\" not OpkgTun"
-      echoerr "You can only delete an OpkgTun interface"
+      echoerr "Имя интерфейса: \"$opkgtun_name\" не является OpkgTun"
+      echoerr "Вы можете удалять только интерфейсы типа OpkgTun"
       ;;
     esac
   else
-    echoerr "Interface named $opkgtun_desc does not exist"
+    echoerr "Интерфейс с именем $opkgtun_desc не существует"
   fi
 }
 
@@ -1573,7 +1568,7 @@ tun_list() {
       print_block { print }
       /^Interface, name =/ && $0 !~ /^Interface, name = "OpkgTun/ { print_block=0 }'
   )"
-  [ -z "$opkgtun_list" ] && echomsg "No OpkgTun interfaces found" || echo "$opkgtun_list"
+  [ -z "$opkgtun_list" ] && echomsg "Интерфейсы типа OpkgTun не найдены" || echo "$opkgtun_list"
 }
 
 get_tun_fw_rules() {
@@ -1597,9 +1592,9 @@ prepare_firewall() {
   local intercept_ports
   local exclude_ports
 
-  echomsg "Preparing a firewall..."
+  echomsg "Подготовка фаервола..."
 
-  complete_msg="Firewall preparation is complete"
+  complete_msg="Подготовка фаервола завершена"
 
   redirect_data="$(get_fw_mode_data "redirect")"
   SKEEN_REDIRECT_PORT="$(echo "$redirect_data" | cut -d'|' -f1)"
@@ -1625,19 +1620,19 @@ prepare_firewall() {
     SKEEN_FIREWALL_MODE="none"
   fi
 
-  echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
+  echomsg "Обнаружен режим: $SKEEN_FIREWALL_MODE"
 
   [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && check_port
 
   SKEEN_DNS_ENABLED="0"
   if [ "$FIREWALL_INTERCEPT_DNS" = "1" ] && has_dns_servers; then
-    echomsg "Detected use of DNS configuration"
+    echomsg "Обнаружена конфигурация DNS"
 
-    warn_msg="the DNS configuration is not used"
+    warn_msg="конфигурация DNS не используется"
 
     case "$SKEEN_FIREWALL_MODE" in
     tproxy | hybrid) SKEEN_DNS_ENABLED="1" ;;
-    *) echowarn "In '$SKEEN_FIREWALL_MODE' mode, $warn_msg" ;;
+    *) echowarn "В режиме '$SKEEN_FIREWALL_MODE', $warn_msg" ;;
     esac
   fi
 
@@ -1665,7 +1660,7 @@ prepare_firewall() {
     SKEEN_FIREWALL_NETWORK="tcp udp"
   fi
 
-  echomsg "Detected firewall networks: $SKEEN_FIREWALL_NETWORK"
+  echomsg "Обнаружены сети фаервола: $SKEEN_FIREWALL_NETWORK"
 
   loading_modules
 
@@ -1673,25 +1668,25 @@ prepare_firewall() {
 
   route_all=1
   if [ "$POLICY_ENABLE" != "1" ]; then
-    echomsg "Policy disabled on skeen.json"
+    echomsg "Политика отключена в skeen.json"
   elif [ -z "$POLICY_NAME" ]; then
-    echowarn "Policy name not set"
+    echowarn "Имя политики не задано"
   elif [ -z "$SKEEN_MARK_POLICY" ]; then
-    echowarn "Policy $POLICY_NAME not found"
+    echowarn "Политика $POLICY_NAME не найдена"
   else
-    echomsg "Detected policy mark: $SKEEN_MARK_POLICY"
-    echomsg "Routing for the $POLICY_NAME policy"
+    echomsg "Обнаружена метка политики: $SKEEN_MARK_POLICY"
+    echomsg "Маршрутизация для политики: $POLICY_NAME"
     route_all=0
   fi
-  [ "$route_all" = 1 ] && echowarn "Routing for the entire device"
+  [ "$route_all" = 1 ] && echowarn "Маршрутизация для всего устройства"
 
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
-    echoerr "No supported iptables found for the firewall mode"
+    echoerr "Нет поддерживаемых iptables"
     press_any_key_to_menu "" 1
   else
-    echomsg "Detected iptables: $SKEEN_IPTABLES_LIST"
+    echomsg "Обнаружены iptables: $SKEEN_IPTABLES_LIST"
   fi
 
   SKEEN_INTERCEPT_PORTS=""
@@ -1772,7 +1767,7 @@ apply_firewall() {
 
   [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
 
-  echomsg "Applying firewall rules..."
+  echomsg "Применение правил фаервола..."
 
   for iptables in ${SKEEN_IPTABLES_LIST:-}; do
     if [ "$iptables" = "iptables" ]; then
@@ -1782,7 +1777,7 @@ apply_firewall() {
       IP_VERSION="6"
       PROXY_IP="::1"
     else
-      local msg_err="Unknown iptables: $iptables"
+      local msg_err="Неизвестный iptables: $iptables"
       logger_error "$msg_err"
       echoerr "$msg_err"
       press_any_key_to_menu "" 1
@@ -1816,7 +1811,7 @@ apply_firewall() {
 
   [ -f "$WAIT_ROUTE_FILE" ] && rm -f "$WAIT_ROUTE_FILE"
 
-  echook "Firewall rules applied successfully"
+  echook "Правила фаервола применены"
 }
 
 clean_firewall() {
@@ -1830,9 +1825,9 @@ clean_firewall() {
 
   [ -z "$SKEEN_FIREWALL_MODE" ] && return 0
 
-  echomsg "Cleaning firewall rules..."
+  echomsg "Очистка правил фаервола..."
 
-  msg_ok="Firewall cleanup completed"
+  msg_ok="Очистка фаервола завершена"
 
   [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
 
@@ -1994,17 +1989,17 @@ start_singbox() {
   local status_start
   local msg
 
-  echomsg "Starting ${SINGBOX_NAME}..."
+  echomsg "Запуск ${SINGBOX_NAME}..."
 
   # shellcheck disable=SC3045
-  ulimit -n "$(get_ulimit_n)" || exiterr "Failed to set ulimit -n"
+  ulimit -n "$(get_ulimit_n)" || exiterr "Не удалось установить ulimit -n"
 
   # shellcheck disable=SC2086
   start-stop-daemon -S -b -x $SINGBOX_PROC -c root:$SKEEN_PROC -- $SINGBOX_ARGS
   status_start=$?
 
   if [ $status_start -ne 0 ]; then
-    msg="Failed to start $SINGBOX_NAME"
+    msg="Не удалось запустить $SINGBOX_NAME"
     echoerr "$msg"
     logger_error "$msg"
     return 1
@@ -2016,20 +2011,20 @@ start_singbox() {
   done
 
   if ! is_running; then
-    msg="$SINGBOX_NAME did not start in time"
+    msg="$SINGBOX_NAME не запустился вовремя"
     echoerr "$msg"
     logger_error "$msg"
     return 1
   fi
 
-  echook "$SINGBOX_NAME started"
-  logger_notice "$SINGBOX_NAME started"
+  echook "$SINGBOX_NAME запущен"
+  logger_notice "$SINGBOX_NAME запущен"
   return 0
 }
 
 start() {
   if [ ! -f "$SINGBOX_BIN" ]; then
-    echoerr "$SINGBOX_NAME binary not found, please install it first"
+    echoerr "$SINGBOX_NAME не найден, сначала установите его"
     press_any_key_to_menu "" 1
   fi
 
@@ -2049,7 +2044,7 @@ start() {
   fi
 
   if is_running; then
-    echook "Already started"
+    echook "$SINGBOX_NAME уже запущен"
     return 0
   fi
 
@@ -2076,10 +2071,10 @@ stop_singbox() {
   local status_stop
   local msg
 
-  echomsg "Stopping ${SINGBOX_NAME}..."
+  echomsg "Остановка ${SINGBOX_NAME}..."
 
   if ! is_running; then
-    echook "$SINGBOX_NAME already stopped"
+    echook "$SINGBOX_NAME уже остановлен"
     return 0
   fi
 
@@ -2087,7 +2082,7 @@ stop_singbox() {
   status_stop=$?
 
   if [ $status_stop -ne 0 ]; then
-    msg="Failed to send stop signal to $SINGBOX_NAME"
+    msg="Не удалось отправить сигнал остановки $SINGBOX_NAME"
     echoerr "$msg"
     logger_error "$msg"
     return 1
@@ -2099,13 +2094,13 @@ stop_singbox() {
   done
 
   if is_running; then
-    msg="$SINGBOX_NAME did not stop in time"
+    msg="$SINGBOX_NAME не остановился вовремя"
     echoerr "$msg"
     logger_error "$msg"
     return 1
   fi
 
-  msg="$SINGBOX_NAME stopped"
+  msg="$SINGBOX_NAME остановлен"
   echook "$msg"
   logger_notice "$msg"
   return 0
@@ -2122,11 +2117,11 @@ stop() {
 
 kill_proc() {
   if ! is_running; then
-    echook "$SINGBOX_NAME is not running"
+    echook "$SINGBOX_NAME не запущен"
     return 0
   fi
 
-  echo "Killing ${SINGBOX_PROC}..."
+  echo "Принудительная остановка ${SKEEN_PROC}..."
   killall -9 "$SINGBOX_PROC" 2>/dev/null
   clean_firewall
 }
@@ -2208,14 +2203,14 @@ status() {
     mem_peak="${2:-0}"
     threads="${3:-0}"
 
-    echo "Status: $(green "running")"
+    echo "Статус: $(green "запущен")"
     echo "PID: $pid"
-    echo "Uptime: $(proc_uptime "$pid")"
-    echo "Memory: $((mem_used / 1024)) MB (peak: $((mem_peak / 1024)) MB)"
-    echo "Threads: $threads"
-    echo "File Descriptors: $(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l) (limit: $(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null))"
+    echo "Время работы: $(proc_uptime "$pid")"
+    echo "Память: $((mem_used / 1024)) MB (пиковая: $((mem_peak / 1024)) MB)"
+    echo "Потоки: $threads"
+    echo "Файловые дескрипторы: $(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l) (лимит: $(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null))"
   else
-    echo "Status: $(red "stopped")"
+    echo "Статус: $(red "остановлен")"
   fi
 }
 
@@ -2226,7 +2221,7 @@ update_core() {
   if is_running; then stop || exit 1; fi
   install_singbox
   create_singbox_config
-  echook "$SINGBOX_NAME core has been successfully updated"
+  echook "Ядро $SINGBOX_NAME успешно обновлено"
 }
 
 update_skeen() {
@@ -2237,10 +2232,10 @@ update_skeen() {
   fi
 
   if download_skeen_script "update"; then
-    echook "$SKEEN_NAME has been successfully updated"
+    echook "$SKEEN_NAME успешно обновлён"
     is_update_skeen=1
   else
-    echoerr "Failed to update $SKEEN_NAME"
+    echoerr "Не удалось обновить $SKEEN_NAME"
   fi
 }
 
@@ -2254,20 +2249,20 @@ ask_and_update() {
   local latest
   local opt
 
-  echomsg "Checking $name for updates..."
+  echomsg "Проверка обновлений ${name}..."
 
   current=$(get_current_version "$proc")
-  [ -z "$current" ] && current="not installed"
+  [ -z "$current" ] && current="не установлено"
   latest=$(get_latest_version "$api")
-  [ -z "$latest" ] && echoerr "Failed to fetch the latest version number" && return 1
+  [ -z "$latest" ] && echoerr "Не удалось получить номер последней версии" && return 1
 
   if [ "$latest" != "$current" ]; then
-    printf '%s %s\n' "$(cyan "Current version:")" "$(red "$current")"
-    printf '%s %s\n' "$(cyan "New version of $name is available:")" "$(green "$latest")"
-    printf '%s %s\n' "$(cyan "More details:")" "$(green "$releases")"
+    printf '%s %s\n' "$(cyan "Текущая версия ${name}:")" "$(red "$current")"
+    printf '%s %s\n' "$(cyan "Доступна новая версия:")" "$(green "$latest")"
+    printf '%s %s\n' "$(cyan "Подробнее:")" "$(green "$releases")"
 
     while :; do
-      printf 'Perform the update? [y/n] (default: n): ' >/dev/tty
+      printf 'Выполнить обновление? [y/n] (по умолчанию: n): ' >/dev/tty
       read -r opt </dev/tty
       [ -z "$opt" ] && opt=n
 
@@ -2277,11 +2272,11 @@ ask_and_update() {
         break
         ;;
       n | N) break ;;
-      *) echoerr "Incorrect option" ;;
+      *) echoerr "Неверный вариант" ;;
       esac
     done
   else
-    echook "The latest $name version $latest is already installed"
+    echook "Последняя версия $name $latest уже установлена"
   fi
 
   return 0
@@ -2301,7 +2296,7 @@ check_updates() {
     update_core "https://github.com/SagerNet/sing-box/releases"
   if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ]; then
     while :; do
-      printf "Download %s %s? [y/n] (default: n): " "$SINGBOX_NAME" "$latest" >/dev/tty
+      printf "Загрузить %s %s? [y/n] (по умолчанию: n): " "$SINGBOX_NAME" "$latest" >/dev/tty
       read -r optt </dev/tty
       [ -z "$optt" ] && optt=n
 
@@ -2311,7 +2306,7 @@ check_updates() {
         break
         ;;
       n | N) break ;;
-      *) echoerr "Incorrect option" ;;
+      *) echoerr "Неверный вариант" ;;
       esac
     done
   fi
@@ -2362,7 +2357,7 @@ fw_test_chain() {
   # $2 — chain
   # $3 — iptables
 
-  echomsg "Test $3 $1 $2"
+  echomsg "Проверка $3 $1 $2"
 
   content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
@@ -2400,15 +2395,15 @@ test_firewall() {
   local tables
 
   if ! is_running; then
-    echoerr "Testing are available only when $SKEEN_NAME is started"
+    echoerr "Тестирование доступно только когда $SKEEN_NAME запущен"
     press_any_key_to_menu "" 1
   else
     import_firewall_vars
   fi
 
   if [ ! -f "$FIREWALL_HOOK_FILE" ]; then
-    echoerr "The file at path $FIREWALL_HOOK_FILE is missing!"
-    echomsg "Please reboot $SINGBOX_NAME"
+    echoerr "Файл по пути $FIREWALL_HOOK_FILE отсутствует!"
+    echomsg "Пожалуйста, перезагрузите $SINGBOX_NAME"
     press_any_key_to_menu "" 1
   fi
 
@@ -2419,12 +2414,12 @@ test_firewall() {
   elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
     tables="nat"
   else
-    echowarn "Testing is available in redirect, tproxy, and hybrid modes"
+    echowarn "Тестирование доступно в режимах redirect, tproxy и hybrid"
     press_any_key_to_menu "" 1
   fi
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
-    echoerr "iptables utility is not installed"
+    echoerr "Утилита iptables не установлена"
     press_any_key_to_menu "" 1
   fi
 
@@ -2451,18 +2446,18 @@ backup_create() {
   local folder_name
 
   if [ -d "$WORK_DIR" ] && [ "$(ls -A "$WORK_DIR")" ]; then
-    echomsg "Creating a backup of the current configuration..."
+    echomsg "Создание резервной копии конфигурации..."
     archive_path="${ENTWARE_DIR}/skeen_$(date '+%Y-%m-%d_%H%M%S').tar"
     parent_dir=$(dirname "$WORK_DIR")
     folder_name=$(basename "$WORK_DIR")
     if tar -cf "$archive_path" -C "$parent_dir" "$folder_name"; then
-      echook "Backup successfully created at $archive_path"
+      echook "Резервная копия успешно создана: $archive_path"
     else
-      echoerr "Error creating backup!"
+      echoerr "Ошибка создания резервной копии!"
       return 1
     fi
   else
-    echowarn "No current configuration found, skipping backup"
+    echowarn "Конфигурация не найдена, резервное копирование пропущено"
   fi
   return 0
 }
@@ -2479,37 +2474,37 @@ backup_restore() {
       work_dir_backup="${ENTWARE_DIR}/skeen_backup"
       mv "$WORK_DIR" "$work_dir_backup"
       mkdir -p "$WORK_DIR"
-      echomsg "Extracting archive ${archive_path}..."
+      echomsg "Распаковка архива ${archive_path}..."
       if tar --strip-components=1 -xf "$archive_path" -C "$WORK_DIR"; then
         rm -rf "$work_dir_backup"
-        echook "Backup successfully restored"
+        echook "Резервная копия успешно восстановлена"
       else
         rm -rf "$WORK_DIR"
         mv "$work_dir_backup" "$WORK_DIR"
-        echoerr "Error extracting archive $archive_path"
+        echoerr "Ошибка распаковки архива $archive_path"
         return 1
       fi
     else
-      echoerr "Archive missing or 'skeen' folder not found"
+      echoerr "Архив отсутствует или папка 'skeen' не найдена"
       return 1
     fi
 
     return 0
   }
 
-  if is_tty && [ "$CALLER" = "cli" ] && [ -z "$tarname" ]; then
-    while :; do
-      printf "Enter the name of the backup archive file\n"
-      printf "located in the /opt root directory,\n"
-      printf "for example %s: " "$(cyan "skeen.tar")" >/dev/tty
-      read -r tarname </dev/tty
-      [ -z "$tarname" ] && exit 1
-      restore "$tarname" && break
-    done
+if is_tty && [ "$CALLER" = "cli" ] && [ -z "$tarname" ]; then
+  while :; do
+    printf "Введите имя файла резервного архива\n"
+    printf "находящегося в корневом каталоге /opt,\n"
+    printf "например %s: " "$(cyan "skeen.tar")" >/dev/tty
+    read -r tarname </dev/tty
+    [ -z "$tarname" ] && exit 1
+    restore "$tarname" && break
+  done
   elif [ -n "$tarname" ]; then
     restore "$tarname"
   else
-    echoerr "No archive name provided"
+    echoerr "Имя архива не указано"
     return 1
   fi
 }
@@ -2518,9 +2513,9 @@ config_reset() {
   check_tty
 
   while :; do
-    printf "A full configuration reset will be performed,\n"
-    printf "with a backup of the current configuration created\n"
-    printf "Continue? [y/n]: " >/dev/tty
+    printf "Будет выполнен полный сброс конфигурации,\n"
+    printf "с созданием резервной копии текущей конфигурации\n"
+    printf "Продолжить? [y/n]: " >/dev/tty
     read -r option </dev/tty
 
     [ -z "$option" ] && option="n"
@@ -2532,15 +2527,15 @@ config_reset() {
         mkdir -p "$WORK_DIR"
         create_singbox_config "force"
         create_skeen_config
-        echook "Configuration reset completed"
+        echook "Сброс конфигурации выполнен"
       else
-        echoerr "Failed to reset configuration!"
+        echoerr "Не удалось сбросить конфигурацию!"
       fi
       break
       ;;
     n | N) break ;;
-    *) echoerr "Incorrect option" ;;
-    esac
+    *) echoerr "Неверный вариант" ;;
+  esac
   done
 
   press_any_key_to_menu
@@ -2560,26 +2555,26 @@ get_sing_args_config() {
 }
 
 check_config() {
-  local msg_err="Configuration check failed"
+  local msg_err="Проверка конфигурации не удалась"
   local is_error=0
 
   if [ -f "$SINGBOX_BIN" ]; then
-    echomsg "Checking $SINGBOX_NAME configuration..."
+    echomsg "Проверка конфигурации $SINGBOX_NAME..."
 
     get_sing_args_config
 
     # shellcheck disable=SC2086
     if $SINGBOX_PROC check $SING_CONFIG_ARGS; then
-      echook "$SINGBOX_NAME configuration is valid"
+      echook "Конфигурация $SINGBOX_NAME корректна"
     else
       is_error=1
       echoerr "$msg_err"
     fi
   fi
 
-  echomsg "Checking $SKEEN_NAME configuration..."
+  echomsg "Проверка конфигурации $SKEEN_NAME..."
   if jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall' >/dev/null 2>&1; then
-    echook "$SKEEN_NAME JSON valid"
+    echook "$SKEEN_NAME JSON корректен"
   else
     is_error=1
     echoerr "$msg_err"
@@ -2595,18 +2590,18 @@ check_config() {
 
 format_config() {
   if [ -f "$SINGBOX_BIN" ]; then
-    echomsg "Formatting Sing-box configuration..."
+    echomsg "Форматирование конфигурации ${SINGBOX_NAME}..."
 
     get_sing_args_config
 
     # shellcheck disable=SC2086
     if $SINGBOX_PROC format -w $SING_CONFIG_ARGS; then
-      echook "Configuration formatted successfully"
+      echook "Конфигурация отформатирована успешно"
     else
-      echoerr "Configuration formatting failed"
+      echoerr "Ошибка форматирования конфигурации"
     fi
   else
-    echoerr "The $SINGBOX_NAME executable is missing, or the configuration directory was not found"
+    echoerr "Исполняемый файл $SINGBOX_NAME отсутствует"
   fi
 }
 
@@ -2617,18 +2612,18 @@ sync_config() {
   load_proxy_options
 
   if [ -z "$address" ]; then
-    echoerr "No address provided for configuration sync" && return 1
+    echoerr "Адрес для синхронизации не указан" && return 1
   elif ! echo "$address" | grep -qE '^https?://'; then
-    echoerr "URL must start with http:// or https://" && return 1
+    echoerr "URL должен начинаться с http:// или https://" && return 1
   fi
 
   # shellcheck disable=SC2086
   if ! curl $CURL_PROXY_OPTIONS -fsL "$address" -o "$config_tmp"; then
-    echoerr "Failed to download configuration from $address" && return 1
+    echoerr "Не удалось загрузить конфигурацию с $address" && return 1
   fi
 
   if is_tty && ! $SINGBOX_PROC check -c "$config_tmp"; then
-    echoerr "$SINGBOX_NAME configuration is invalid, cancel synchronization!"
+    echoerr "$SINGBOX_NAME конфигурация недействительна, синхронизация отменена!"
     rm -f "$config_tmp"
     return 1
   fi
@@ -2636,12 +2631,12 @@ sync_config() {
   get_sing_args_config
 
   if [ "$SING_CONFIG_ENABLE" != "1" ]; then
-    echowarn "Set the parameter sing_config.enable to 1 in the skeen.json file"
+    echowarn "Установите параметр sing_config.enable в 1 в файле skeen.json"
   fi
 
   rm -f "$SING_CONFIG_PATH"
   mv "$config_tmp" "$SING_CONFIG_PATH"
-  echook "Configuration synced successfully, then restart SKeen to apply the changes"
+  echook "Конфигурация синхронизирована, перезапустите $SKEEN_NAME для применения изменений"
 }
 
 show_menu() {
@@ -2661,68 +2656,68 @@ show_menu() {
   show_header
 
   if [ "$AUTO_START_ENABLE" = "1" ]; then
-    autostart_status="$(green "yes")"
+    autostart_status="$(green "да")"
   else
-    autostart_status="$(red "no")"
+    autostart_status="$(red "нет")"
   fi
 
   if is_running; then
-    running_status="$(green "running")"
-    running_text="Stop"
+    running_status="$(green "работает")"
+    running_text="Остановить"
   else
-    running_status="$(red "stopped")"
-    running_text="Start"
+    running_status="$(red "остановлен")"
+    running_text="Запустить"
   fi
 
   output=""
 
-  output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
+  output="$output\n Версия ${SKEEN_NAME}: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
 
   version="$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
   [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
-  output="$output\n $SINGBOX_NAME version: ${version}"
+  output="$output\n Версия ${SINGBOX_NAME}: ${version}"
 
-  output="$output\n $SINGBOX_NAME state: $running_status"
+  output="$output\n Состояние ${SINGBOX_NAME}: $running_status"
 
-  output="$output\n Start automatically: $autostart_status"
+  output="$output\n Автоматический запуск: $autostart_status"
 
   ipv4=""
   ipv6=""
 
-  if [ "$running_text" = "Stop" ] &&
+  if [ "$running_text" = "Остановить" ] &&
     [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
     echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
     if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
-      sb_dns_work_text="$(green yes)"
+      sb_dns_work_text="$(green "да")"
     else
-      sb_dns_work_text="$(red no)"
+      sb_dns_work_text="$(red "нет")"
     fi
 
-    output="$output\n ${SINGBOX_NAME} DNS working: $sb_dns_work_text"
-    output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
-    output="$output\n Firewall network: $(cyan "$SKEEN_FIREWALL_NETWORK")"
-    output="$output\n Firewall IP ver.: $ipv4 $ipv6"
+    output="$output\n ${SINGBOX_NAME} DNS работает: $sb_dns_work_text"
+    output="$output\n Режим файрвола: $(cyan "$SKEEN_FIREWALL_MODE")"
+    output="$output\n Сеть файрвола: $(cyan "$SKEEN_FIREWALL_NETWORK")"
+    output="$output\n Версия IP файрвола: $ipv4 $ipv6"
 
-  elif [ "$running_text" = "Stop" ]; then
-    output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
+  elif [ "$running_text" = "Остановить" ]; then
+    output="$output\n Режим файрвола: $(cyan "$SKEEN_FIREWALL_MODE")"
   fi
 
-  output="$output\n\n$(cyan "Select option:")"
-  output="$output\n  $(green "1.") $running_text $SINGBOX_NAME"
-  output="$output\n  $(green "2.") Restart $SINGBOX_NAME"
-  output="$output\n  $(green "3.") Check Updates"
-  output="$output\n  $(green "4.") Test Firewall"
-  output="$output\n  $(green "5.") Uninstall $SKEEN_NAME"
-  output="$output\n  $(green "0.") Exit\n"
+  output="$output\n\n$(cyan "Выберите пункт:")"
+  output="$output\n  $(green "1.") $running_text"
+  output="$output\n  $(green "2.") Перезапустить"
+  output="$output\n  $(green "3.") Обновления"
+  output="$output\n  $(green "4.") Тест фаервола"
+  output="$output\n  $(green "5.") Удаление"
+  output="$output\n  $(green "0.") Выход\n"
 
   printf "%b" "$output"
 
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    printf "\nEnter your selection [0-5]: " >/dev/tty
+    printf "\nВведите ваш выбор [0-5]: " >/dev/tty
     read -r option </dev/tty
 
     printf "\n"
@@ -2736,55 +2731,55 @@ show_menu() {
       3) check_updates ;;
       4) test_firewall ;;
       5) accept_uninstall ;;
-      esac
+    esac
     else
       [ "$option" = 0 ] && exit 0
-      echoerr "Incorrect option"
+      echoerr "Неверный вариант"
       attempt=$((attempt + 1))
     fi
   done
 
-  exiterr "Maximum attempts reached, exiting menu."
+  exiterr "Достигнуто максимальное количество попыток, выход из меню."
 }
 
 show_help() {
   cat <<EOF
 
-$SKEEN_NAME CLI Commands (use: 'skeen help' for this list):
+$SKEEN_NAME CLI Команды (используйте: 'skeen help' для этого списка):
 
-Service Control:
-  start   - Start service
-  stop    - Stop service
-  restart - Restart service
-  reload  - Restart without changing firewall rules
-  kill    - Force stop
-  status  - Show status
+Управление сервисом:
+  start   - Запустить сервис
+  stop    - Остановить сервис
+  restart - Перезапустить сервис
+  reload  - Перезапустить без изменения правил файрвола
+  kill    - Принудительная остановка
+  status  - Показать статус
 
-Information & Updates:
-  version - Show version(s)
-  update  - Check and install updates
+Информация & обновления:
+  version - Показать версию(и)
+  update  - Проверить и установить обновления
 
-Checks & Testing:
-  test    - Test firewall rules
-  deps    - Check dependencies
-  check   - Check configuration
-  format  - Format $SINGBOX_NAME configuration
+Проверка & тестирование:
+  test    - Тестировать правила файрвола
+  deps    - Проверить зависимости
+  check   - Проверить конфигурацию
+  format  - Отформатировать конфигурацию $SINGBOX_NAME
 
-Backup & Restore:
-  backup  - Create archive of $WORK_DIR
-  backups - List created archives in $ENTWARE_DIR
-  restore - Restore $WORK_DIR from archive in $ENTWARE_DIR
+Резервное копирование & восстановление:
+  backup  - Создать архив $WORK_DIR
+  backups - Список созданных архивов в $ENTWARE_DIR
+  restore - Восстановить $WORK_DIR из архива в $ENTWARE_DIR
 
-Reset Configuration:
-  reset   - Reset $WORK_DIR to default
+Сброс конфигурации:
+  reset   - Сбросить $WORK_DIR в значение по умолчанию
 
-Synchronization:
-  sync    - Synchronize $SINGBOX_NAME configuration
+Синхронизация:
+  sync    - Синхронизировать конфигурацию $SINGBOX_NAME
 
-OpkgTun manager (KeeneticOS v5+):
-  tun create <ipv4> <name> - Create interface with IP address and name
-  tun delete <name>        - Delete interface by name
-  tun list                 - List all OpkgTun interfaces
+Менеджер OpkgTun (KeeneticOS v5+):
+  tun create <ipv4> <имя>  - Создать интерфейс с IP-адресом и именем
+  tun delete <имя>         - Удалить интерфейс по имени
+  tun list                 - Список всех интерфейсов OpkgTun
 EOF
 }
 

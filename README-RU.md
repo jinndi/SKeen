@@ -1,5 +1,5 @@
 <p align="center">
-<img alt="SKeen" src="/logo.webp" width="214">
+<img alt="SKeen" src="/logo_ru.webp" width="214">
 </p>
 <h1 align="center">
   SKeen
@@ -75,7 +75,7 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
 **Выполните из среды Entware из SSH:**
 
 ```bash
-curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
+curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru | sh
 ```
 
 **Настройте SKeen**. Его файл конфигурации находится по адресу `/opt/etc/skeen/skeen.json`.
