@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.6.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.6...SKeen-v4.6.0) (2026-04-19)
+
+
+### 🚀 Feat
+
+* **install:** separate installation scripts by language ([6f4f8e9](https://github.com/jinndi/SKeen/commit/6f4f8e98c05a51ffc1b80edd552d370feefbbeed))
+
+
+### 🧰 Chore
+
+* improve DNS rule handling in hybrid and tproxy modes ([1b5d41a](https://github.com/jinndi/SKeen/commit/1b5d41aa29aa2940decf599e376544f2b4ff7f14))
+
 ## [4.5.6](https://github.com/jinndi/SKeen/compare/SKeen-v4.5.5...SKeen-v4.5.6) (2026-04-18)
 
 
