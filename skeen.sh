@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.6.2"
+SKEEN_VERSION="4.6.3"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -497,7 +497,7 @@ create_singbox_config() {
 
   if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] &&
     ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
-    echomsg "Configuration files already exist in ${CONFIG_DIR}, skipping creation"
+    echomsg "Found configuration folder ${CONFIG_DIR}, skipping creation"
     return
   fi
 
@@ -914,8 +914,6 @@ loading_modules() {
   local module
 
   MODULES_OS_DIR="${MODULES_OS_DIR}/$(uname -r)"
-
-  echomsg "Checking and loading modules..."
 
   for module in $modules; do
     if [ "$module" = "xt_owner.ko" ] && is_owner_module_working; then
@@ -1615,13 +1613,13 @@ prepare_firewall() {
     SKEEN_FIREWALL_MODE="none"
   fi
 
-  echomsg "Detected firewall mode: $SKEEN_FIREWALL_MODE"
+  cyan " - Detected firewall mode: $SKEEN_FIREWALL_MODE"
 
   [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && check_port
 
   SKEEN_DNS_ENABLED="0"
   if [ "$FIREWALL_INTERCEPT_DNS" = "1" ] && has_dns_servers; then
-    echomsg "Detected use of DNS configuration"
+    cyan " - Detected use of DNS configuration"
 
     warn_msg="the DNS configuration is not used"
 
@@ -1655,22 +1653,20 @@ prepare_firewall() {
     SKEEN_FIREWALL_NETWORK="tcp udp"
   fi
 
-  echomsg "Detected firewall networks: $SKEEN_FIREWALL_NETWORK"
-
+  cyan " - Checking and loading modules..."
   loading_modules
 
   SKEEN_MARK_POLICY="$(get_mark_policy)"
 
   route_all=1
   if [ "$POLICY_ENABLE" != "1" ]; then
-    echomsg "Policy disabled on skeen.json"
+    cyan " - Policy disabled on skeen.json"
   elif [ -z "$POLICY_NAME" ]; then
-    echowarn "Policy name not set"
+    cyan " - Policy name not set"
   elif [ -z "$SKEEN_MARK_POLICY" ]; then
-    echowarn "Policy $POLICY_NAME not found"
+    cyan " - Policy $POLICY_NAME not found"
   else
-    echomsg "Detected policy mark: $SKEEN_MARK_POLICY"
-    echomsg "Routing for the $POLICY_NAME policy"
+    cyan " - Routing for the $POLICY_NAME policy"
     route_all=0
   fi
   [ "$route_all" = 1 ] && echowarn "Routing for the entire device"
@@ -1680,8 +1676,6 @@ prepare_firewall() {
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
     echoerr "No supported iptables found for the firewall mode"
     press_any_key_to_menu "" 1
-  else
-    echomsg "Detected iptables: $SKEEN_IPTABLES_LIST"
   fi
 
   SKEEN_INTERCEPT_PORTS=""
