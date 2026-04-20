@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.6.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.1...SKeen-v4.6.2) (2026-04-20)
+
+
+### 🐛 Fix
+
+* conditionally create config based on `sing_config` (update core) ([c996717](https://github.com/jinndi/SKeen/commit/c99671719537705ce921f5a292d57e62d6646a1f))
+* download sing-box ([8e76eca](https://github.com/jinndi/SKeen/commit/8e76eca57ba8b5055cd48c8cd9e5b425eeb4cd6b))
+
 ## [4.6.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.0...SKeen-v4.6.1) (2026-04-19)
 
 
