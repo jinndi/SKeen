@@ -9,11 +9,21 @@ Keenetic/Netcraze TProxy & Redirect with sing-box
 </h3>
 
 <p align="center">
-<a href="https://github.com/jinndi/SKeen"><img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen"></a>
-<a href="https://github.com/SagerNet/sing-box"><img alt="sing-box" src="https://repology.org/badge/version-for-repo/homebrew/sing-box.svg?header=sing-box-latest-version"></a>
-<img alt="Code size in bytes" src="https://img.shields.io/github/languages/code-size/jinndi/SKeen">
-<img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FXSKeen&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
-<a href="https://deepwiki.com/jinndi/SKeen"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+<a href="https://github.com/jinndi/SKeen/releases/latest">
+  <img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen">
+</a>
+<a href="https://github.com/SagerNet/sing-box">
+  <img alt="sing-box" src="https://repology.org/badge/version-for-repo/homebrew/sing-box.svg?header=sing-box-latest-version">
+</a>
+<a href="https://github.com/jinndi/SKeen">
+  <img alt="Visitor" src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fjinndi%2FXSKeen&label=visitor&icon=eye&color=%230d6efd&message=&style=flat&tz=UTC">
+</a>
+<a href="https://github.com/jinndi/SKeen/releases/latest">
+  <img alt="Downloads" src="https://img.shields.io/github/downloads/jinndi/SKeen/total?color=%23AAEEEE">
+</a>
+<a href="https://deepwiki.com/jinndi/SKeen">
+  <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
+</a>
 </p>
 
 🇺🇸 **English** | [🇷🇺 На русском](README-RU.md)
