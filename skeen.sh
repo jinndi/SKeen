@@ -434,7 +434,6 @@ install_dependencies() {
 
 download_singbox() {
   local version="${1:-}"
-  local PKG_NAME
   local pkg_url
 
   if [ -z "$version" ]; then
