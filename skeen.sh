@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.6.3"
+SKEEN_VERSION="4.6.4"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -138,8 +138,16 @@ if is_tty; then
 fi
 
 create_skeen_config() {
+  if [ "$1" = "force" ]; then
+    rm -f "$SKEEN_CONFIG"
+  elif [ -f "$SKEEN_CONFIG" ]; then
+    echomsg "Configuration file $SKEEN_NAME already exists, skipping creation"
+    return
+  fi
+
+  echomsg "Creating configuration file $SKEEN_NAME..."
+
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
-  [ -f "$SKEEN_CONFIG" ] && rm -f "$SKEEN_CONFIG"
 
   cat <<EOF >"$SKEEN_CONFIG"
 // https://github.com/jinndi/SKeen
@@ -182,7 +190,9 @@ create_skeen_config() {
 }
 EOF
 
-  create_autostart_script >/dev/null 2>&1
+  [ ! -f "$SKEEN_AUTOSTART_SCRIPT" ] && create_autostart_script >/dev/null 2>&1
+
+  echook "Configuration file $SKEEN_NAME created successfully"
 }
 
 json_get_array() {
@@ -206,7 +216,6 @@ rci() {
 loading_config() {
   if [ ! -f "$SKEEN_CONFIG" ]; then
     create_skeen_config
-    is_tty && echowarn "Configuration file 'skeen.json' not found, a new created"
   fi
 
   eval "$(
@@ -499,9 +508,17 @@ create_singbox_config() {
     ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
     echomsg "Found configuration folder ${CONFIG_DIR}, skipping creation"
     return
+  elif [ ! -d "$CONFIG_DIR" ] && [ -f "$SKEEN_CONFIG" ]; then
+    get_sing_args_config
+    if [ "$SING_CONFIG_ENABLE" = "1" ] && [ ! -f "$SING_CONFIG_PATH" ]; then
+      echowarn "Configuration files for $SINGBOX_NAME not found"
+    else
+      echomsg "Configuration file $SINGBOX_NAME found, skipping creation"
+      return
+    fi
   fi
 
-  echomsg "Creating default configuration files..."
+  echomsg "Creating $SINGBOX_NAME configuration files..."
 
   mkdir -p "$CONFIG_DIR"
 
@@ -522,11 +539,11 @@ create_singbox_config() {
 
   $SINGBOX_PROC format -w -C $CONFIG_DIR
 
-  echook "Configuration file created successfully"
+  echook "Configuration files $SINGBOX_NAME created successfully"
 }
 
 create_autostart_script() {
-  echomsg "Create $SKEEN_NAME autostart script at $SKEEN_AUTOSTART_SCRIPT"
+  echomsg "Create $SKEEN_NAME autostart script..."
 
   [ -f "$SKEEN_AUTOSTART_SCRIPT" ] && rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
@@ -634,11 +651,16 @@ install() {
   create_autostart_script
   create_skeen_group
   download_skeen_script
+  create_skeen_config
 
   "$SINGBOX_BIN" version
 
-  echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
+  if [ "$SING_CONFIG_ENABLE" != "1" ] && [ -d "$CONFIG_DIR" ]; then
+    echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
+  fi
+
   echomsg "Configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
+
   echook "Installation completed"
 
   press_any_key_to_menu
@@ -2209,8 +2231,7 @@ update_core() {
   download_singbox "$latest" || return 1
   if is_running; then stop || exit 1; fi
   install_singbox
-  get_sing_args_config
-  [ "$SING_CONFIG_ENABLE" != "1" ] && create_singbox_config
+  create_singbox_config
   echook "$SINGBOX_NAME core has been successfully updated"
 }
 
@@ -2516,7 +2537,7 @@ config_reset() {
         rm -rf "$WORK_DIR"
         mkdir -p "$WORK_DIR"
         create_singbox_config "force"
-        create_skeen_config
+        create_skeen_config "force"
         echook "Configuration reset completed"
       else
         echoerr "Failed to reset configuration!"
