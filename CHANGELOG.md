@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.3...SKeen-v4.6.4) (2026-04-20)
+
+
+### 🐛 Fix
+
+* **cli:** improve config creation logic with force option and better messaging ([9dfc35d](https://github.com/jinndi/SKeen/commit/9dfc35d8a0bb0daf9bff49a4372c0319c1c897c7))
+
 ## [4.6.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.2...SKeen-v4.6.3) (2026-04-20)
 
 
