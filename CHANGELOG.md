@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.2...SKeen-v4.6.3) (2026-04-20)
+
+
+### 🧰 Chore
+
+* **cli:** improve output formatting ([ec17022](https://github.com/jinndi/SKeen/commit/ec17022f0c02e2424100b65cb47c156737eddd5e))
+
 ## [4.6.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.1...SKeen-v4.6.2) (2026-04-20)
 
 
