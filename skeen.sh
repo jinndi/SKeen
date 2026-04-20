@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.6.1"
+SKEEN_VERSION="4.6.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -2215,7 +2215,8 @@ update_core() {
   download_singbox "$latest" || return 1
   if is_running; then stop || exit 1; fi
   install_singbox
-  create_singbox_config
+  get_sing_args_config
+  [ "$SING_CONFIG_ENABLE" != "1" ] && create_singbox_config
   echook "$SINGBOX_NAME core has been successfully updated"
 }
 
