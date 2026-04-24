@@ -2552,6 +2552,58 @@ config_reset() {
   press_any_key_to_menu
 }
 
+clean_cache() {
+  local experimental_file=""
+  local cache_file=""
+  local msg_not_found="Cache file not found at path"
+
+  get_sing_args_config
+
+  if [ "$SING_CONFIG_ENABLE" = "1" ] && [ -f "$SING_CONFIG_PATH" ]; then
+    experimental_file="$SING_CONFIG_PATH"
+  elif [ -d "$CONFIG_DIR" ] && [ -f "${CONFIG_DIR}/experimental.json" ]; then
+    experimental_file="${CONFIG_DIR}/experimental.json"
+  elif [ -d "$CONFIG_DIR" ]; then
+    for file in "$CONFIG_DIR"/*.json; do
+      [ -f "$file" ] || continue
+      if jsonfilter -i "$file" -e '@.experimental.cache_file.enabled' >/dev/null 2>&1; then
+        experimental_file="$file"
+        break
+      fi
+    done
+  fi
+
+  if [ -z "$experimental_file" ]; then
+    echoerr "Configuration file with 'experimental.cache_file' parameter not found"
+    return 0
+  fi
+
+  cache_file_enabled="$(jsonfilter -i "$experimental_file" -e '@.experimental.cache_file.enabled')"
+  if [ "$cache_file_enabled" != "true" ]; then
+    echowarn "Cache file is disabled in $SINGBOX_NAME configuration"
+  fi
+
+  cache_file="$(jsonfilter -i "$experimental_file" -e '@.experimental.cache_file.path')"
+
+  if [ -z "$cache_file" ]; then
+    cache_file="${WORK_DIR}/cache.db"
+  else
+    if ! echo "$cache_file" | grep -q "^/"; then
+      cache_file="${WORK_DIR}/${cache_file}"
+      if [ ! -f "$cache_file" ]; then
+        echoerr "${msg_not_found}: $cache_file"
+        return 0
+      fi
+    elif [ ! -f "$cache_file" ]; then
+      echoerr "${msg_not_found}: $cache_file"
+      return 0
+    fi
+  fi
+
+  rm -f "$cache_file"
+  echook "Cache cleared. Restart $SKEEN_NAME to apply changes"
+}
+
 get_sing_args_config() {
   SING_CONFIG_ARGS="-C $CONFIG_DIR"
   SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
@@ -2781,8 +2833,9 @@ Backup & Restore:
   backups - List created archives in $ENTWARE_DIR
   restore - Restore $WORK_DIR from archive in $ENTWARE_DIR
 
-Reset Configuration:
+Reset & Cleanup:
   reset   - Reset $WORK_DIR to default
+  clean   - Clear $SINGBOX_NAME cache file
 
 Synchronization:
   sync    - Synchronize $SINGBOX_NAME configuration
@@ -2817,6 +2870,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   backups) backup_list ;;
   restore) backup_restore "$2" ;;
   reset) config_reset ;;
+  clean) clean_cache ;;
   sync) sync_config "$2" ;;
   tun)
     release_version_ge5 || exit 1

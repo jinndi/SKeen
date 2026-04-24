@@ -2525,7 +2525,7 @@ config_reset() {
 
   while :; do
     printf "Будет выполнен полный сброс конфигурации,\n"
-    printf "с созданием резервной копии текущей конфигурации\n"
+    printf "с созданием резервной копии текущей\n"
     printf "Продолжить? [y/n]: " >/dev/tty
     read -r option </dev/tty
 
@@ -2550,6 +2550,58 @@ config_reset() {
   done
 
   press_any_key_to_menu
+}
+
+clean_cache() {
+  local experimental_file=""
+  local cache_file=""
+  local msg_not_found="Кэш файл не найден по пути"
+
+  get_sing_args_config
+
+  if [ "$SING_CONFIG_ENABLE" = "1" ] && [ -f "$SING_CONFIG_PATH" ]; then
+    experimental_file="$SING_CONFIG_PATH"
+  elif [ -d "$CONFIG_DIR" ] && [ -f "${CONFIG_DIR}/experimental.json" ]; then
+    experimental_file="${CONFIG_DIR}/experimental.json"
+  elif [ -d "$CONFIG_DIR" ]; then
+    for file in "$CONFIG_DIR"/*.json; do
+      [ -f "$file" ] || continue
+      if jsonfilter -i "$file" -e '@.experimental.cache_file.enabled' >/dev/null 2>&1; then
+        experimental_file="$file"
+        break
+      fi
+    done
+  fi
+
+  if [ -z "$experimental_file" ]; then
+    echoerr "Файл конфигурации с параметром experimental.cache_file не найден"
+    return 0
+  fi
+
+  cache_file_enabled="$(jsonfilter -i "$experimental_file" -e '@.experimental.cache_file.enabled')"
+  if [ "$cache_file_enabled" != "true" ]; then
+    echowarn "Кэш файл отключен в конфигурации $SINGBOX_NAME"
+  fi
+
+  cache_file="$(jsonfilter -i "$experimental_file" -e '@.experimental.cache_file.path')"
+
+  if [ -z "$cache_file" ]; then
+    cache_file="${WORK_DIR}/cache.db"
+  else
+    if ! echo "$cache_file" | grep -q "^/"; then
+      cache_file="${WORK_DIR}/${cache_file}"
+      if [ ! -f "$cache_file" ]; then
+        echoerr "${msg_not_found}: $cache_file"
+        return 0
+      fi
+    elif [ ! -f "$cache_file" ]; then
+      echoerr "${msg_not_found}: $cache_file"
+      return 0
+    fi
+  fi
+
+  rm -f "$cache_file"
+  echook "Кэш очищен. Перезапустите $SKEEN_NAME для применения изменений"
 }
 
 get_sing_args_config() {
@@ -2781,8 +2833,9 @@ $SKEEN_NAME CLI Команды (используйте: 'skeen help' для эт
   backups - Список созданных архивов в $ENTWARE_DIR
   restore - Восстановить $WORK_DIR из архива в $ENTWARE_DIR
 
-Сброс конфигурации:
+Сброс & очистка:
   reset   - Сбросить $WORK_DIR в значение по умолчанию
+  clean   - Очистить кэш файл $SINGBOX_NAME
 
 Синхронизация:
   sync    - Синхронизировать конфигурацию $SINGBOX_NAME
@@ -2817,6 +2870,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   backups) backup_list ;;
   restore) backup_restore "$2" ;;
   reset) config_reset ;;
+  clean) clean_cache ;;
   sync) sync_config "$2" ;;
   tun)
     release_version_ge5 || exit 1
