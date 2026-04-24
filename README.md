@@ -33,6 +33,7 @@ Keenetic/Netcraze TProxy & Redirect with sing-box
 |Protocol Support        |✅ Advanced       |⚠️ Limited        |✅ Extensive     |
 |Multiplexing            |✅ Superior       |⚠️ Legacy         |✅ Good          |
 |DNS Logic               |🥇 Native (+Fake-IP)|🥉 Sniffing (+FakeDNS)|🥈 Fake-IP (+Real)|
+|L7 Sniffing (Protocols) |✅ Leader         |⚠️ Mid-tier       |❌ Domain-only   |
 |Routing                 |✅ Flexible       |⚠️ Basic          |✅ (but heavier) |
 |Rule Management         |✅ Rule-sets (bin)|⚠️ Geo-files (dat)|✅ Rule-providers|
 |Independent Project     |✅ Yes            |❌ (V2Ray fork)    |❌ (Clash fork)  |
@@ -41,6 +42,8 @@ Keenetic/Netcraze TProxy & Redirect with sing-box
 Notes:
 
 > sing-box excels due to its modularity and clean-slate architecture: its DNS stack enables complex configurations with minimal RAM overhead. In contrast, mihomo (Clash) prioritizes automation at the cost of high resource usage, while Xray is hindered by legacy networking code and heavy .dat geo-files.
+
+> Sniffing Differences: sing-box and Xray utilize full DPI (Deep Packet Inspection), which allows them to identify the protocol type (e.g., BitTorrent) based on packet content. In contrast, mihomo is limited to metadata extraction (domains) from TLS/HTTP headers, making protocol-based routing impossible.
 
 > The high learning curve of sing-box stems from its strict JSON schema and lack of "magic" defaults. This is a trade-off for granular control and peak performance on low-end hardware.
 </details>
@@ -58,7 +61,7 @@ The project intentionally does not include a dedicated management panel. This ap
 * **System Security & Stability**: Fewer active web services and open ports minimize the potential attack surface and reduce the risk of software conflicts within KeeneticOS.
 * **No Functional Limits**: Direct configuration via CLI/files ensures access to 100% of Sing-Box's features, which are often restricted or oversimplified in graphical interfaces.
 * **Minimalist Footprint**: The script remains lightweight with zero dependencies, requiring no extra packages like web servers or interpreters that consume valuable flash storage.
-* **A Tool, Not a Toy**: While other projects compete to draw pretty buttons and flashy graphs—effectively turning a router into a laggy digital photo frame—SKeen focuses on moving packets. We consider building heavy web panels for a network script a sign of poor engineering and an inability to handle the system directly. If you need a Christmas tree with a UI, you're in the wrong place; if you need performance, you've arrived.
+* **A Tool, Not a Toy**: While other projects compete to draw pretty buttons and flashy graphs—effectively turning a router into a laggy digital photo frame SKeen focuses on moving packets. We consider building heavy web panels for a network script a sign of poor engineering and an inability to handle the system directly. If you need a Christmas tree with a UI, you're in the wrong place; if you need performance, you've arrived.
 </details>
 
 <details>
@@ -202,11 +205,14 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 | `backups` | List created archives in `/opt` | ✓ |
 | `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ |
 | `reset` | Reset `/opt/etc/skeen` to default | - |
-| `sync`² | Synchronize sing-box configuration | ✓ |
+| `clean`² | Clear Sing-box cache file | ✓ |
+| `sync`³ | Synchronize Sing-box configuration | ✓ |
 
 1 - archive name can be passed as the second parameter with a `.tar` extension to immediately start the backup restore process
 
-2 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
+2 - clears the cache file. This is required when using the `experimental.cache_file` feature in sing-box, for example, to reset the cache of loaded rule_set and DNS query history. Starting with sing-box version 1.14, all DNS responses are stored in the cache (previously only rejected ones)
+
+3 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
 
 | OpkgTun manager (KeeneticOS v5+, only from SSH) |
 | -------------------------------------------------------------------------- |
