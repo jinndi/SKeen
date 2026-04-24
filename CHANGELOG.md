@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.7.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.4...SKeen-v4.7.0) (2026-04-24)
+
+
+### 🚀 Feat
+
+* **cli:** add clean cache command to clear sing-box cache file ([3bda72f](https://github.com/jinndi/SKeen/commit/3bda72f47abe0bd4d9f9a551c6d7bd03f83d3fd1))
+* update rci function to support POST ([f87b2f7](https://github.com/jinndi/SKeen/commit/f87b2f72a37d17aeca3a6e52fdbd41cd64ca7ca2))
+
 ## [4.6.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.3...SKeen-v4.6.4) (2026-04-20)
 
 
