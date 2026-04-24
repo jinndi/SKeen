@@ -44,6 +44,7 @@ SINGBOX_PROC="skeen-box"
 SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
 SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
 SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
+SINGBOX_SPACE_MB=128
 
 FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
 WAIT_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_route"
@@ -315,6 +316,20 @@ show_header() {
 ░█▀▀▀█ ░█ ▄▀ █▀▀ █▀▀ █▀▀▄
 ─▀▀▀▄▄ ░█▀▄  █▀▀ █▀▀ █  █
 ░█▄▄▄█ ░█ ░█ ▀▀▀ ▀▀▀ ▀  ▀"
+}
+
+check_free_space() {
+  local required_mb="${1:-$SINGBOX_SPACE_MB}"
+  local path="${2:-$ENTWARE_DIR}"
+  local free_mb
+
+  free_mb="$(df -m "$path" 2>/dev/null | tail -1 | awk '{print $4}')"
+
+  if [ -z "$free_mb" ]; then
+    exiterr "Failed to determine free space on $path"
+  elif [ "$free_mb" -lt "$required_mb" ]; then
+    exiterr "Insufficient free space on $path: ${required_mb}MB required, ${free_mb}MB available"
+  fi
 }
 
 get_os_release() {
@@ -645,6 +660,7 @@ is_running() {
 }
 
 install() {
+  check_free_space
   get_os_release
   get_architecture
   install_dependencies
@@ -2225,6 +2241,7 @@ status() {
 }
 
 update_core() {
+  check_free_space
   get_os_release
   get_architecture
   download_singbox "$latest" || return 1
@@ -2454,8 +2471,13 @@ backup_create() {
   local archive_path
   local parent_dir
   local folder_name
+  local required_mb
 
   if [ -d "$WORK_DIR" ] && [ "$(ls -A "$WORK_DIR")" ]; then
+    required_mb="$(du -sm "$WORK_DIR" | awk '{print $1}')"
+
+    check_free_space "$required_mb"
+
     echomsg "Creating a backup of the current configuration..."
     archive_path="${ENTWARE_DIR}/skeen_$(date '+%Y-%m-%d_%H%M%S').tar"
     parent_dir=$(dirname "$WORK_DIR")
@@ -2475,12 +2497,16 @@ backup_create() {
 backup_restore() {
   local tarname="${1:-}"
   local archive_path
-  local work_dir_backup
 
   restore() {
     local archive_path="${ENTWARE_DIR}/${1:-}"
+    local work_dir_backup
+    local required_mb
 
     if [ -f "$archive_path" ] && tar -tf "$archive_path" | grep -q "^skeen/"; then
+      required_mb="$(du -sm "$archive_path" | awk '{print $1}')"
+      check_free_space "$required_mb"
+
       work_dir_backup="${ENTWARE_DIR}/skeen_backup"
       mv "$WORK_DIR" "$work_dir_backup"
       mkdir -p "$WORK_DIR"
