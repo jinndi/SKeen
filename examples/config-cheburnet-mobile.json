@@ -150,6 +150,13 @@
       "interrupt_exist_connections": true,
       "outbounds": ["direct", "auto-ru", "vless-ru-out", "naive-ru-out"]
     },
+    {
+      "tag": "torrent",
+      "type": "selector",
+      "default": "direct",
+      "interrupt_exist_connections": true,
+      "outbounds": ["direct", "auto", "vless-out", "naive-out"]
+    },
     { "tag": "direct", "type": "direct" },
     {
       "tag": "auto",
@@ -272,6 +279,11 @@
         "action": "route",
         "clash_mode": "global",
         "outbound": "proxy"
+      },
+      {
+        "action": "route",
+        "protocol": "bittorrent",
+        "outbound": "torrent"
       },
       {
         "action": "route",
