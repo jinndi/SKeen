@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.7.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.0...SKeen-v4.7.1) (2026-04-24)
+
+
+### 🧰 Chore
+
+* add disk space validation for install, update, and backup operations ([1e8009b](https://github.com/jinndi/SKeen/commit/1e8009b48ef9c2f1492bb0f778c46b9a11f99157))
+
 ## [4.7.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.6.4...SKeen-v4.7.0) (2026-04-24)
 
 
