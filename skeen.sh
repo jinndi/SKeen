@@ -993,30 +993,34 @@ get_mark_policy() {
   local descriptions
   local marks_list
   local description
+  local desc_lower
+  local mark_val
 
   if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_NAME" ]; then
     json_policy="$(rci show/ip/policy)"
-    descriptions="$(echo "$json_policy" | jsonfilter -e '$.policy.*.description')"
-    marks_list="$(echo "$json_policy" | jsonfilter -e '$.policy.*.mark')"
-    policy_name_lower="$(echo "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')"
+
+    descriptions="$(printf '%s' "$json_policy" | jsonfilter -e '$.policy.*.description')"
+    marks_list="$(printf '%s' "$json_policy" | jsonfilter -e '$.policy.*.mark')"
+
+    [ -n "$descriptions" ] && [ -n "$marks_list" ] || return
+
+    policy_name_lower=$(printf '%s' "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')
 
     while IFS= read -r description && IFS= read -r mark_val <&3; do
-      if [ "$(echo "$description" | tr '[:upper:]' '[:lower:]')" = "$policy_name_lower" ]; then
+      desc_lower=$(printf '%s' "$description" | tr '[:upper:]' '[:lower:]')
+
+      if [ "$desc_lower" = "$policy_name_lower" ]; then
         mark="$mark_val"
         break
       fi
-done <<EOF 3<<EOF2
-$descriptions
-EOF
+    done 3<<EOF2 <<EOF
 $marks_list
 EOF2
+$descriptions
+EOF
   fi
 
-  if [ -n "$mark" ]; then
-    echo "0x${mark}"
-  else
-    echo ""
-  fi
+  [ -n "$mark" ] && echo "0x$mark"
 }
 
 set_route_rules() {
