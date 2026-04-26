@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.7.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.1...SKeen-v4.7.2) (2026-04-26)
+
+
+### 🐛 Fix
+
+* improve group file handling in get_free_gid function ([a3ac434](https://github.com/jinndi/SKeen/commit/a3ac4346ba997668f71a19daf8e0ef97841ace75))
+* **policy:** synchronize policy mark extraction using parallel file descriptors ([0d0bbc6](https://github.com/jinndi/SKeen/commit/0d0bbc61a5821ef99e55cef729fce75978be6df3))
+* **tun:** update TUN configuration comments and streamline OpkgTun ID generation ([04b55e2](https://github.com/jinndi/SKeen/commit/04b55e20a9d47078676fc9ee48577ed8002e86a8))
+
+
+### ⚡ Perf
+
+* **policy:** optimize mark retrieval with printf and conditional returns ([a54211d](https://github.com/jinndi/SKeen/commit/a54211ded27bb523fe0f2098368a4d6dc8ffda6f))
+
 ## [4.7.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.0...SKeen-v4.7.1) (2026-04-24)
 
 
