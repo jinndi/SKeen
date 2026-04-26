@@ -580,11 +580,12 @@ create_autostart_script() {
 }
 
 get_free_gid() {
-  local gid="${1:-1000}"
+  local group_file="${1}"
+  local gid="${2:-1000}"
   local max=65535
 
   while [ "$gid" -le "$max" ]; do
-    if ! grep -q ":$gid:" /etc/group 2>/dev/null; then
+    if ! grep -q ":$gid:[^:]*$" "$group_file" 2>/dev/null; then
       echo "$gid"
       return 0
     fi
@@ -596,10 +597,11 @@ get_free_gid() {
 
 create_skeen_group() {
   local name="$SKEEN_PROC"
+  local group_file="${ENTWARE_DIR}/etc/group"
   local gid_num
 
-  if ! grep -q "^${name}:" "${ENTWARE_DIR}/etc/group" 2>/dev/null; then
-    gid_num=$(get_free_gid 1000)
+  if ! grep -q "^${name}:" "$group_file" 2>/dev/null; then
+    gid_num=$(get_free_gid "$group_file" 1000)
 
     echomsg "Создание группы $name с GID ${gid_num}..."
     addgroup -g "$gid_num" "$name" >/dev/null 2>&1 ||
