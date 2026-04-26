@@ -987,15 +987,12 @@ get_iptables_list() {
 }
 
 get_mark_policy() {
-  local mark
+  local mark=""
   local json_policy
   local policy_name_lower
-  local i=1
   local descriptions
   local marks_list
   local description
-
-  mark=""
 
   if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_NAME" ]; then
     json_policy="$(rci show/ip/policy)"
@@ -1003,13 +1000,16 @@ get_mark_policy() {
     marks_list="$(echo "$json_policy" | jsonfilter -e '$.policy.*.mark')"
     policy_name_lower="$(echo "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')"
 
-    for description in $descriptions; do
+    while IFS= read -r description && IFS= read -r mark_val <&3; do
       if [ "$(echo "$description" | tr '[:upper:]' '[:lower:]')" = "$policy_name_lower" ]; then
-        mark="$(echo "$marks_list" | awk -v idx="$i" '{print $idx}')"
+        mark="$mark_val"
         break
       fi
-      i=$((i + 1))
-    done
+done <<EOF 3<<EOF2
+$descriptions
+EOF
+$marks_list
+EOF2
   fi
 
   if [ -n "$mark" ]; then
