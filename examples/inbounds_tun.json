@@ -1,11 +1,29 @@
 // TUN OpkgTun KeeneticOS v5+
 // NOT recommended, CPU usage is ~20% higher TProxy
-// sing-box DNS not working
+// ! sing-box DNS not working
 
 // Create OpkgTun
 // skeen tun create 172.18.0.1 "SKeenTUN"
 
+// List OpkgTun
+// skeen tun list
+
 // Delete OpkgTun
+// skeen tun delete "SKeenTUN"
+
+// RU ------------------------------------
+
+// TUN OpkgTun KeeneticOS v5+
+// НЕ рекомендуется, нагрузка на CPU примерно на 20% выше, чем у TProxy
+// ! DNS в sing-box не работает
+
+// Создать OpkgTun
+// skeen tun create 172.18.0.1 "SKeenTUN"
+
+// Список OpkgTun
+// skeen tun list
+
+// Удалить OpkgTun
 // skeen tun delete "SKeenTUN"
 
 
@@ -15,11 +33,11 @@
       "type": "tun",
       "tag": "tun-in",
       "interface_name": "opkgtun0",
-      "address": "172.18.0.1/30", // NOT use IP v6
-      "auto_route": false,
-      "mtu": 1500,                // IMPORTANT
+      "address": "172.18.0.1/30", // NOT use IP v6 / Не используйте IP v6
+      "auto_route": true,         // add default route to this tun / добавить маршрут по умолчанию к этому туннелю
+      "mtu": 1500,                // IMPORTANT for performance / ВАЖНО для производительности
       "udp_timeout": "3m",
-      "stack": "system"           // NOT use gvisor !!!
+      "stack": "system"           // NOT use gvisor !!! / НЕ используйте gvisor !!!
     }
   ]
 }

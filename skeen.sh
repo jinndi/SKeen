@@ -1489,7 +1489,6 @@ release_version_ge5() {
 tun_create() {
   local opkgtun_ip="${1:-}"
   local opkgtun_desc="${2:-}"
-  local opkgtun_id="0"
   local opkgtun_name="OpkgTun0"
   local inface_list
   local opkgtun_ids
@@ -1536,15 +1535,10 @@ tun_create() {
 
   if [ -n "$opkgtun_ids" ]; then
     local i=0
-    while :; do
-      echo "$opkgtun_ids" | grep -qx "$i" || {
-        echo "$i"
-        break
-      }
+    while printf '%s\n' "$opkgtun_ids" | grep -qx "$i"; do
       i=$((i + 1))
     done
-    opkgtun_id=$?
-    opkgtun_name="OpkgTun${opkgtun_id}"
+    opkgtun_name="OpkgTun${i}"
   fi
 
   opkgtun_name_lower=$(echo "$opkgtun_name" | tr '[:upper:]' '[:lower:]')
