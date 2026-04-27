@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.0.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.3...SKeen-v5.0.0) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **ipset:** Requires BYPASS_NET_SET variable to be defined in environment configuration
+
+### 🐛 Fix
+
+* **ipset:** add ipset name variable for bypass network management ([654af74](https://github.com/jinndi/SKeen/commit/654af746e148826a50fba48e10a8c9944ae27ef6))
+* **tun:** add TCP MSS clamping and NAT masquerade for tunnel interfaces ([32cd72e](https://github.com/jinndi/SKeen/commit/32cd72e76028524c257483f8c567313cd26c40f4))
+
 ## [4.7.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.2...SKeen-v4.7.3) (2026-04-27)
 
 
