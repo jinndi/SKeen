@@ -34,7 +34,7 @@
       "tag": "tun-in",
       "interface_name": "opkgtun0",
       "address": "172.18.0.1/30", // NOT use IP v6 / Не используйте IP v6
-      "auto_route": true,         // add default route to this tun / добавить маршрут по умолчанию к этому туннелю
+      "auto_route": false,        // not enable default route to this tun / не включать маршрут по умолчанию к этому туннелю
       "mtu": 1500,                // IMPORTANT for performance / ВАЖНО для производительности
       "udp_timeout": "3m",
       "stack": "system"           // NOT use gvisor !!! / НЕ используйте gvisor !!!

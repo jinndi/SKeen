@@ -1029,7 +1029,11 @@ set_route_rules() {
 
   if [ -n "$SKEEN_MARK_POLICY" ]; then
     source_table=$(ip rule show |
-      awk -v p="$SKEEN_MARK_POLICY" '$0 ~ p && /lookup/ && !/blackhole/ {print $NF; exit}' | sed -n '1p')
+      awk -v p="$SKEEN_MARK_POLICY" '$0 ~ p && /lookup/ && !/blackhole|unspec/ {print $NF; exit}')
+
+    if ! echo "$source_table" | grep -Eq '^[0-9]+$|^main$'; then
+      source_table=""
+    fi
     policy_table="$source_table"
   else
     source_table="main"
@@ -1041,24 +1045,22 @@ set_route_rules() {
       return 0
     fi
 
-    if [ "$source_table" = "main" ]; then
+    if [ "$source_table" = "main" ] || [ -z "$source_table" ]; then
       ip -"$IP_VERSION" route show default 2>/dev/null | grep -q '^default'
     else
       ip -"$IP_VERSION" route show table all 2>/dev/null |
-        grep -E "^[[:space:]]*default .* table $policy_table( |$)" |
+        grep -E "^default .*(dev|via) .* table $policy_table( |$)" |
         grep -vq 'unreachable'
     fi
   }
 
-  if ! check_default_route; then
+  if [ -z "$source_table" ] || ! check_default_route; then
     [ -f "$WAIT_ROUTE_FILE" ] || touch "$WAIT_ROUTE_FILE"
 
-    msg="Маршрут по умолчанию в таблице '$source_table' (IPv$IP_VERSION) не найден"
+    msg="Маршрут по умолчанию в таблице '${source_table:-unknown}' (IPv$IP_VERSION) не найден"
 
     msg2="Проверьте подключение к интернету"
-    if [ -n "$SKEEN_MARK_POLICY" ]; then
-      msg2="$msg2 для политики ${POLICY_NAME:-unknown}"
-    fi
+    [ -n "$SKEEN_MARK_POLICY" ] && msg2="$msg2 для политики ${POLICY_NAME:-unknown}"
 
     echowarn "$msg"
     echoerr "$msg2"
@@ -1066,7 +1068,7 @@ set_route_rules() {
 
     [ "$CALLER" = "netfilter" ] && exit 0
 
-    press_any_key_to_menu "" 1
+    press_any_key_to_menu "" 1; return 1
   fi
 
   ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
@@ -1078,7 +1080,8 @@ set_route_rules() {
   ip -"$IP_VERSION" route show table "$source_table" 2>/dev/null |
     while read -r r; do
       case "$r" in default* | blackhole* | unreachable*) continue ;; esac
-      ip -"$IP_VERSION" route add table "$TABLE_ID" "$r" 2>/dev/null || true
+      # shellcheck disable=SC2086
+      [ -n "$r" ] && ip -"$IP_VERSION" route add table "$TABLE_ID" $r 2>/dev/null || true
     done
 }
 
