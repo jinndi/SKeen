@@ -36,7 +36,7 @@
       "address": "172.18.0.1/30", // NOT use IP v6 / Не используйте IP v6
       "auto_route": false,        // not enable default route to this tun / не включать маршрут по умолчанию к этому туннелю
       "mtu": 1500,                // IMPORTANT for performance / ВАЖНО для производительности
-      "udp_timeout": "3m",
+      "udp_timeout": "30s",
       "stack": "system"           // NOT use gvisor !!! / НЕ используйте gvisor !!!
     }
   ]
