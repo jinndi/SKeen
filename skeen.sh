@@ -1025,45 +1025,29 @@ EOF
 
 set_route_rules() {
   local source_table
-  local policy_table
-
-  if [ -n "$SKEEN_MARK_POLICY" ]; then
-    source_table=$(ip rule show |
-      awk -v p="$SKEEN_MARK_POLICY" '$0 ~ p && /lookup/ && !/blackhole|unspec/ {print $NF; exit}')
-
-    if ! echo "$source_table" | grep -Eq '^[0-9]+$|^main$'; then
-      source_table=""
-    fi
-    policy_table="$source_table"
-  else
-    source_table="main"
-    policy_table=""
-  fi
 
   check_default_route() {
+    local target="1.1.1.1"
+    [ "$IP_VERSION" = "6" ] && target="2606:4700:4700::1111"
+
     if [ "$IP_VERSION" = "6" ] && ! ip -6 route show default 2>/dev/null | grep -q .; then
       return 0
     fi
 
-    if [ "$source_table" = "main" ] || [ -z "$source_table" ]; then
-      ip -"$IP_VERSION" route show default 2>/dev/null | grep -q '^default'
+    if [ -n "$SKEEN_MARK_POLICY" ]; then
+      ip -"$IP_VERSION" route get "$target" mark "$SKEEN_MARK_POLICY" 2>/dev/null | grep -Eq "via|dev"
     else
-      ip -"$IP_VERSION" route show table all 2>/dev/null |
-        grep -E "^default .*(dev|via) .* table $policy_table( |$)" |
-        grep -vq 'unreachable'
+      ip -"$IP_VERSION" route get "$target" 2>/dev/null | grep -Eq "via|dev"
     fi
   }
 
-  if [ -z "$source_table" ] || ! check_default_route; then
+  if ! check_default_route; then
     [ -f "$WAIT_ROUTE_FILE" ] || touch "$WAIT_ROUTE_FILE"
 
-    msg="Default route in table '${source_table:-unknown}' (IPv$IP_VERSION) not found"
+    local msg="Check your internet connection"
+    [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg for policy ${POLICY_NAME:-unknown}"
 
-    msg2="Check your internet connection"
-    [ -n "$SKEEN_MARK_POLICY" ] && msg2="$msg2 for policy ${POLICY_NAME:-unknown}"
-
-    echowarn "$msg"
-    echoerr "$msg2"
+    echoerr "$msg"
     logger_warning "$msg"
 
     [ "$CALLER" = "netfilter" ] && exit 0
@@ -1076,6 +1060,13 @@ set_route_rules() {
 
   ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID"
   ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
+
+  if [ -n "$SKEEN_MARK_POLICY" ]; then
+    source_table=$(ip rule show |
+      awk -v p="$SKEEN_MARK_POLICY" '$0 ~ p && /lookup/ && !/blackhole|unspec/ {print $NF; exit}')
+  else
+    source_table="main"
+  fi
 
   ip -"$IP_VERSION" route show table "$source_table" 2>/dev/null |
     while read -r r; do
