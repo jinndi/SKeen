@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.7.4"
+SKEEN_VERSION="4.7.5"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -1024,8 +1024,6 @@ EOF
 }
 
 set_route_rules() {
-  local source_table
-
   check_default_route() {
     local target="1.1.1.1"
     [ "$IP_VERSION" = "6" ] && target="2606:4700:4700::1111"
@@ -1060,20 +1058,6 @@ set_route_rules() {
 
   ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID"
   ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
-
-  if [ -n "$SKEEN_MARK_POLICY" ]; then
-    source_table=$(ip rule show |
-      awk -v p="$SKEEN_MARK_POLICY" '$0 ~ p && /lookup/ && !/blackhole|unspec/ {print $NF; exit}')
-  else
-    source_table="main"
-  fi
-
-  ip -"$IP_VERSION" route show table "$source_table" 2>/dev/null |
-    while read -r r; do
-      case "$r" in default* | blackhole* | unreachable*) continue ;; esac
-      # shellcheck disable=SC2086
-      [ -n "$r" ] && ip -"$IP_VERSION" route add table "$TABLE_ID" $r 2>/dev/null || true
-    done
 }
 
 is_valid_ipv4() {
