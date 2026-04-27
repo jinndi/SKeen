@@ -1554,6 +1554,7 @@ tun_create() {
   ndmc -c interface "$opkgtun_name" || { echoerr "Не удалось создать интерфейс" && return; }
   ndmc -c interface "$opkgtun_name" description "$opkgtun_desc" || tun_delete_msg "description"
   ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" || tun_delete_msg "ip address"
+  ndmc -c interface "$opkgtun_name" ip tcp adjust-mss pmtu || tun_delete_msg "ip tcp adjust-mss pmtu"
   ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name" || tun_delete_msg "ip route default"
   ndmc -c interface "$opkgtun_name" ip global auto || tun_delete_msg "ip global auto"
   ndmc -c interface "$opkgtun_name" up && ndmc -c system configuration save
@@ -1608,9 +1609,10 @@ get_tun_fw_rules() {
   cat <<EOF
 if [ "\$type" = "iptables" ] && ! iptables -C INPUT -i opkgtun+ -j ACCEPT 2>/dev/null;
 then
-  iptables -A INPUT -i opkgtun+ -j ACCEPT
-  iptables -A FORWARD -i opkgtun+ -j ACCEPT
-  iptables -A FORWARD -o opkgtun+ -j ACCEPT
+iptables -A INPUT -i opkgtun+ -j ACCEPT
+iptables -A FORWARD -i opkgtun+ -j ACCEPT
+iptables -A FORWARD -o opkgtun+ -j ACCEPT
+iptables -t nat -A POSTROUTING -o opkgtun+ -j MASQUERADE
 fi
 EOF
 }
@@ -1792,7 +1794,7 @@ prepare_firewall() {
 
 apply_firewall() {
   local iptables
-  local eth_subnet
+  local eth_subnet set_name
 
   [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
 
@@ -1816,6 +1818,7 @@ apply_firewall() {
 
     if [ -f "$WAIT_ROUTE_FILE" ]; then
       eth_subnet="$(get_eth_subnet "$IP_VERSION")"
+      set_name="${BYPASS_NET_SET}${IP_VERSION}"
       ipset add "$set_name" "$eth_subnet" -exist
     fi
 
@@ -1859,6 +1862,10 @@ clean_firewall() {
   msg_ok="Очистка фаервола завершена"
 
   [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
+
+  # shellcheck disable=SC2086
+  iptables-save | grep "opkgtun+" | sed 's/-A//' | while read -r line; do iptables -D $line 2>/dev/null; done
+  while iptables -t nat -D POSTROUTING -o opkgtun+ -j MASQUERADE 2>/dev/null; do :; done
 
   [ "$SKEEN_FIREWALL_MODE" = "tun" ] && echook "$msg_ok" && return 0
 
