@@ -1792,7 +1792,7 @@ prepare_firewall() {
 
 apply_firewall() {
   local iptables
-  local eth_subnet
+  local eth_subnet set_name
 
   [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
 
@@ -1816,6 +1816,7 @@ apply_firewall() {
 
     if [ -f "$WAIT_ROUTE_FILE" ]; then
       eth_subnet="$(get_eth_subnet "$IP_VERSION")"
+      set_name="${BYPASS_NET_SET}${IP_VERSION}"
       ipset add "$set_name" "$eth_subnet" -exist
     fi
 
