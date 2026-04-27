@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.7.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.4...SKeen-v4.7.5) (2026-04-27)
+
+
+### 🧰 Chore
+
+* v4.7.4 update supplement ([851df68](https://github.com/jinndi/SKeen/commit/851df68f97cf39d0dddee14f0303fb336434c474))
+
 ## [4.7.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.3...SKeen-v4.7.4) (2026-04-27)
 
 
