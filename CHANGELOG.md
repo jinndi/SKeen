@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.7.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.3...SKeen-v4.7.4) (2026-04-27)
+
+
+### 🐛 Fix
+
+* **tun:** implement iptables NAT masquerade and cleanup for tunnel interfaces ([98d2ce4](https://github.com/jinndi/SKeen/commit/98d2ce449a789589cbfcd2c13f071659562cf5c1))
+
+
+### 🛠 Refactor
+
+* **route:** simplify route rule logic and improve default route validation ([ec3a4c1](https://github.com/jinndi/SKeen/commit/ec3a4c1d6e02b9a4a8a0298631103f0c961c9c83))
+
 ## [4.7.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.2...SKeen-v4.7.3) (2026-04-27)
 
 
