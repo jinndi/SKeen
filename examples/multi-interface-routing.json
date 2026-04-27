@@ -1,0 +1,39 @@
+// This is a partial configuration sing-box snippet for routing based on network interfaces.
+// It demonstrates how to bind specific outbounds to different network interfaces and how to configure routing rules accordingly.
+
+// RU ------------------------------------
+
+// Это фрагмент частичной конфигурации sing-box маршрутизации на основе сетевых интерфейсов.
+// Он демонстрирует, как привязать определенные исходящие соединения к различным сетевым интерфейсам и как соответствующим образом настроить правила маршрутизации.
+
+{
+  ...,
+  "outbounds": [
+    ...,
+    {
+      "type": "direct",
+      "tag": "direct-lte",
+      "bind_interface": "lte_br0" // Bind the direct outbound to the LTE interface / Привязать прямой исходящий трафик к интерфейсу LTE
+    },
+    {
+      "tag": "vless-out",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example.com",
+      "server_port": 443,
+      "tls": {
+        "enabled": true,
+        "server_name": "example.com",
+        "utls": { "enabled": true, "fingerprint": "qq" }
+      },
+      "bind_interface": "ppp1" // Bind the vless outbound to the PPP1 interface / Привязать исходящий трафик VLESS к интерфейсу PPP1
+    }
+  ],
+  "route": {
+    ...,
+    "auto_detect_interface": false, // Disable automatic interface detection / Отключить автоматическое определение интерфейса
+    "default_interface": "ppp0"     // Set the default interface for routing / Установить интерфейс по умолчанию для маршрутизации
+  }
+}
