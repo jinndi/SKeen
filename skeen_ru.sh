@@ -1047,7 +1047,7 @@ set_route_rules() {
     local msg="Проверьте подключение к интернету"
     [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg для политики ${POLICY_NAME:-unknown}"
 
-    echowarn "$msg"
+    echoerr "$msg"
     logger_warning "$msg"
 
     [ "$CALLER" = "netfilter" ] && exit 0
