@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.7.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.2...SKeen-v4.7.3) (2026-04-27)
+
+
+### 🐛 Fix
+
+* **tun:** disable auto_route and improve route table validation logic ([6f3bcb4](https://github.com/jinndi/SKeen/commit/6f3bcb4e3aaf0a0a901cb0c17e935d487de6af36))
+
 ## [4.7.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.1...SKeen-v4.7.2) (2026-04-26)
 
 
