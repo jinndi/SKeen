@@ -580,7 +580,7 @@ create_autostart_script() {
 }
 
 get_free_gid() {
-  local group_file="${1}"
+  local group_file="${1:-}"
   local gid="${2:-1000}"
   local max=65535
 
