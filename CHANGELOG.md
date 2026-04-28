@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.1...SKeen-v4.8.2) (2026-04-28)
+
+
+### 🐛 Fix
+
+* **iptables:** improve IPv6 detection logic ([1f84b40](https://github.com/jinndi/SKeen/commit/1f84b403ddc3fda04b03108d074ed5dbd756601f))
+
 ## [4.8.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.0...SKeen-v4.8.1) (2026-04-28)
 
 
