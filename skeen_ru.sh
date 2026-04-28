@@ -2358,11 +2358,19 @@ fw_test_chain() {
   # $2 — chain
   # $3 — iptables
 
-  echomsg "Проверка $3 $1 $2"
+  echomsg "Проверка $2"
 
   content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
   fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
+
+  if [ "$2" = "$CHAIN_TUN" ]; then
+    fw_test "$1" "$2" "$content" "ACCEPT .* opkgtun+" "Accept"
+    fw_test "nat" "POSTROUTING" \
+      "$(iptables-save | grep -E "POSTROUTING -o opkgtun+")" \
+      "MASQUERADE" "Masquerade"
+    return 0
+  fi
 
   fw_test "$1" "$2" "$content" "$BYPASS_NET_SET" "Excludes"
 
@@ -2370,17 +2378,13 @@ fw_test_chain() {
     fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK set"
   fi
 
-  # if [ "$1" = "mangle" ]; then
-  #   fw_test "$1" "$2" "$($3 -t "$1" -nvL PREROUTING 2>/dev/null)" "CONNMARK restore" "CONNMARK restore"
-  # fi
-
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
 
   if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
     fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS intercept"
   fi
 
-  if [ -n "$SKEEN_INTERCEPT_PORTS" ] || [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
+  if [ -n "$SKEEN_INTERCEPT_PORTS" ] || [ -n "$SKEEN_EXCLUDE_PORTS" ]; then
     # shellcheck disable=SC2015
     fw_test "$1" "$2" "$($3 -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport"
   fi
@@ -2399,13 +2403,13 @@ test_firewall() {
     echoerr "Тестирование доступно только когда $SKEEN_NAME запущен"
     press_any_key_to_menu "" 1
   else
-    import_firewall_vars
-  fi
+    if [ ! -f "$FIREWALL_HOOK_FILE" ]; then
+      echoerr "Файл по пути $FIREWALL_HOOK_FILE отсутствует!"
+      echomsg "Пожалуйста, перезагрузите $SINGBOX_NAME"
+      press_any_key_to_menu "" 1
+    fi
 
-  if [ ! -f "$FIREWALL_HOOK_FILE" ]; then
-    echoerr "Файл по пути $FIREWALL_HOOK_FILE отсутствует!"
-    echomsg "Пожалуйста, перезагрузите $SINGBOX_NAME"
-    press_any_key_to_menu "" 1
+    import_firewall_vars
   fi
 
   if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
@@ -2414,8 +2418,10 @@ test_firewall() {
     tables="mangle"
   elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
     tables="nat"
+  elif [ "$SKEEN_FIREWALL_MODE" = "tun" ]; then
+    tables="filter"
   else
-    echowarn "Тестирование доступно в режимах redirect, tproxy и hybrid"
+    echowarn "Тестирование доступно в режимах tun, redirect, tproxy и hybrid"
     press_any_key_to_menu "" 1
   fi
 
@@ -2424,15 +2430,19 @@ test_firewall() {
     press_any_key_to_menu "" 1
   fi
 
-  for iptables in $SKEEN_IPTABLES_LIST; do
-    [ "$iptables" = "ip6tables" ] && echo "$DELIMETER"
+  if [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
+    for iptables in $SKEEN_IPTABLES_LIST; do
+      [ "$iptables" = "ip6tables" ] && echo "$DELIMETER"
 
-    for table in $tables; do
-      fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
+      for table in $tables; do
+        fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
+      done
+
+      [ "$tables" != "nat" ] && fw_test_chain mangle "$CHAIN_OUTPUT" "$iptables"
     done
+  fi
 
-    [ "$tables" != "nat" ] && fw_test_chain mangle "$CHAIN_OUTPUT" "$iptables"
-  done
+  [ "$SKEEN_TUN_ENABLED" = "1" ] && fw_test_chain filter "$CHAIN_TUN" "iptables"
 
   press_any_key_to_menu
 }
