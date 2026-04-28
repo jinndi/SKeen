@@ -1043,7 +1043,7 @@ set_route_rules() {
     [ -f "$WAIT_ROUTE_FILE" ] || touch "$WAIT_ROUTE_FILE"
 
     local msg="Проверьте подключение к интернету"
-    [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg для политики ${POLICY_NAME:-unknown}"
+    [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg для политики ${SKEEN_POLICY_NAME:-unknown}"
 
     echoerr "$msg"
     logger_warning "$msg"
@@ -1742,6 +1742,7 @@ prepare_firewall() {
     echo "export SKEEN_TPROXY_NETWORK=\"$SKEEN_TPROXY_NETWORK\""
     echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
     echo "export SKEEN_FIREWALL_NETWORK=\"$SKEEN_FIREWALL_NETWORK\""
+    echo "export SKEEN_POLICY_NAME=\"$POLICY_NAME\""
     echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
     echo "export SKEEN_INTERCEPT_PORTS=\"$SKEEN_INTERCEPT_PORTS\""
@@ -2214,14 +2215,14 @@ status() {
     mem_peak="${2:-0}"
     threads="${3:-0}"
 
-    echo "Статус: $(green "запущен")"
+    echo "Статус: $(green "running")"
     echo "PID: $pid"
     echo "Время работы: $(proc_uptime "$pid")"
     echo "Память: $((mem_used / 1024)) MB (пиковая: $((mem_peak / 1024)) MB)"
     echo "Потоки: $threads"
     echo "Файловые дескрипторы: $(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l) (лимит: $(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null))"
   else
-    echo "Статус: $(red "остановлен")"
+    echo "Статус: $(red "stopped")"
   fi
 }
 
@@ -2735,10 +2736,10 @@ show_menu() {
   fi
 
   if is_running; then
-    running_status="$(green "работает")"
+    running_status="$(green "running")"
     running_text="Остановить"
   else
-    running_status="$(red "остановлен")"
+    running_status="$(red "stopped")"
     running_text="Запустить"
   fi
 
@@ -2769,6 +2770,8 @@ show_menu() {
     fi
 
     output="$output\n ${SINGBOX_NAME} DNS работает: $sb_dns_work_text"
+    [ -n "$SKEEN_POLICY_NAME" ] &&
+      output="$output\n Политика клиентов: $(cyan "$SKEEN_POLICY_NAME")"
     output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
     output="$output\n Сеть фаервола: $(cyan "$SKEEN_FIREWALL_NETWORK")"
     output="$output\n Версия IP фаервола: $ipv4 $ipv6"

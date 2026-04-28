@@ -1043,7 +1043,7 @@ set_route_rules() {
     [ -f "$WAIT_ROUTE_FILE" ] || touch "$WAIT_ROUTE_FILE"
 
     local msg="Check your internet connection"
-    [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg for policy ${POLICY_NAME:-unknown}"
+    [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg for policy ${SKEEN_POLICY_NAME:-unknown}"
 
     echoerr "$msg"
     logger_warning "$msg"
@@ -1742,6 +1742,7 @@ prepare_firewall() {
     echo "export SKEEN_TPROXY_NETWORK=\"$SKEEN_TPROXY_NETWORK\""
     echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
     echo "export SKEEN_FIREWALL_NETWORK=\"$SKEEN_FIREWALL_NETWORK\""
+    echo "export SKEEN_POLICY_NAME=\"$POLICY_NAME\""
     echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
     echo "export SKEEN_INTERCEPT_PORTS=\"$SKEEN_INTERCEPT_PORTS\""
@@ -2769,6 +2770,8 @@ show_menu() {
     fi
 
     output="$output\n ${SINGBOX_NAME} DNS working: $sb_dns_work_text"
+    [ -n "$SKEEN_POLICY_NAME" ] &&
+      output="$output\n Client policy:: $(cyan "$SKEEN_POLICY_NAME")"
     output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
     output="$output\n Firewall network: $(cyan "$SKEEN_FIREWALL_NETWORK")"
     output="$output\n Firewall IP ver.: $ipv4 $ipv6"
