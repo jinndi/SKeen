@@ -1,11 +1,12 @@
 // This is a partial configuration sing-box snippet for routing based on network interfaces.
 // It demonstrates how to bind specific outbounds to different network interfaces and how to configure routing rules accordingly.
+// Show network interfaces: skeen iface
 
 // RU ------------------------------------
 
 // Это фрагмент частичной конфигурации sing-box маршрутизации на основе сетевых интерфейсов.
 // Он демонстрирует, как привязать определенные исходящие соединения к различным сетевым интерфейсам и как соответствующим образом настроить правила маршрутизации.
-
+// Посмотреть названия интерфейсов: skeen iface
 {
   ...,
   "outbounds": [

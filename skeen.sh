@@ -1910,17 +1910,14 @@ apply_sysctl_network_tuning() {
       if [ "$NETWORK_IPV6" = "0" ]; then
         sysctl -w net.ipv6.conf.all.disable_ipv6=1
         sysctl -w net.ipv6.conf.default.disable_ipv6=1
-        sysctl -w net.ipv6.conf.lo.disable_ipv6=1
 
-        for proxy_iface in /proc/sys/net/ipv6/conf/t2s*; do
-          [ -e "$proxy_iface" ] || continue
-          proxy_iface=${proxy_iface##*/}
-          sysctl -w net.ipv6.conf."$proxy_iface".disable_ipv6=0
+        for iface_path in /sys/class/net/lo /sys/class/net/t2s* /sys/class/net/ezcfg0; do
+          [ -e "$iface_path" ] || continue
+          sysctl -w net.ipv6.conf."${iface_path##*/}".disable_ipv6=0
         done
       else
         sysctl -w net.ipv6.conf.all.disable_ipv6=0
         sysctl -w net.ipv6.conf.default.disable_ipv6=0
-        sysctl -w net.ipv6.conf.lo.disable_ipv6=0
 
         # Forwarding
         sysctl -w net.ipv6.conf.all.forwarding=1
@@ -2717,6 +2714,33 @@ sync_config() {
   echook "Configuration synced, then restart $SKEEN_NAME to apply the changes"
 }
 
+show_iface() {
+  check_tty
+  local G='\e[32m' R='\e[31m' W='\e[1m' N='\e[0m'
+
+  printf "  ${W}%-18s %-10s %-10s${N}\n" "INTERFACE" "IPv6" "LINK"
+  printf "  %-18s %-10s %-10s\n" "---------------" "---------" "----------"
+
+  for p in /sys/class/net/*; do
+    [ -e "$p" ] || continue
+    iface="${p##*/}"
+    v6_p="/proc/sys/net/ipv6/conf/$iface/disable_ipv6"
+
+    v6_val="-"; v6_c="$N"
+    if [ -f "$v6_p" ]; then
+      read -r v < "$v6_p" 2>/dev/null
+      if [ "$v" = "0" ]; then v6_val="on"; v6_c="$G"; else v6_val="off"; v6_c="$R"; fi
+    fi
+
+    read -r ln < "$p/operstate" 2>/dev/null || ln="?"
+    case "$ln" in
+      up) lc="$G" ;; down) lc="$R" ;; *) lc="$N" ;;
+    esac
+
+    printf "  %-18s %b%-10s%b %b%-10s%b\n" "$iface" "$v6_c" "$v6_val" "$N" "$lc" "$ln" "$N"
+  done
+}
+
 show_menu() {
   local autostart_status
   local running_status
@@ -2838,7 +2862,8 @@ Service Control:
   status  - Show status
 
 Information & Updates:
-  version - Show version(s)
+  version - Show versions
+  iface   - Show network interface table
   update  - Check and install updates
 
 Checks & Testing:
@@ -2891,6 +2916,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   reset) config_reset ;;
   clean) clean_cache ;;
   sync) sync_config "$2" ;;
+  iface) show_iface ;;
   tun)
     release_version_ge5 || exit 1
     case "$2" in

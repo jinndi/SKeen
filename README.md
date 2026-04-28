@@ -196,6 +196,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 | `kill` | Force stop | ✓ |
 | `status` | Show status | ✓ |
 | `version` | Show version(s) | ✓ |
+| `iface` | Show network interface table | - |
 | `update` | Check and install updates | - |
 | `test` | Test firewall rules | ✓ |
 | `deps` | Check dependencies | ✓ |
