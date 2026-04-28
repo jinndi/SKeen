@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.8.1"
+SKEEN_VERSION="4.8.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -976,13 +976,20 @@ loading_modules() {
 get_iptables_list() {
   local ipt_list=""
 
-  command -v iptables >/dev/null 2>&1 &&
-    [ -n "$(ip -4 addr show 2>/dev/null)" ] &&
-    ipt_list="${ipt_list:+$ipt_list }iptables"
+  if command -v iptables >/dev/null 2>&1 &&
+    [ -n "$(ip -4 addr show scope global 2>/dev/null)" ]; then
+    ipt_list="iptables"
+  fi
 
-  command -v ip6tables >/dev/null 2>&1 &&
-    [ -n "$(ip -6 addr show 2>/dev/null)" ] &&
-    ipt_list="${ipt_list:+$ipt_list }ip6tables"
+  local v6_disabled=1
+  [ -f /proc/sys/net/ipv6/conf/all/disable_ipv6 ] &&
+    read -r v6_disabled < /proc/sys/net/ipv6/conf/all/disable_ipv6
+
+  if [ "$v6_disabled" = "0" ] && command -v ip6tables >/dev/null 2>&1; then
+    if [ -n "$(ip -6 addr show scope global 2>/dev/null)" ]; then
+      ipt_list="${ipt_list:+$ipt_list }ip6tables"
+    fi
+  fi
 
   echo "$ipt_list"
 }
