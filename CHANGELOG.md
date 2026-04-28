@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.8.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.0...SKeen-v4.8.1) (2026-04-28)
+
+
+### ⚡ Perf
+
+* **tun:** configure txqueuelen for opkgtun devices ([534bdcf](https://github.com/jinndi/SKeen/commit/534bdcf4fef4ac1687c8a62fce12a7ab5647f631))
+
+
+### 🧰 Chore
+
+* **cli:** add iface command to display network interface table ([4abb671](https://github.com/jinndi/SKeen/commit/4abb6710d5a888f253e38a21940b1d80e4e45d4f))
+
 ## [4.8.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.5...SKeen-v4.8.0) (2026-04-28)
 
 
