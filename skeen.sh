@@ -1607,7 +1607,13 @@ prepare_firewall() {
 
   has_opkgtun="$(get_fw_mode_data "tun")"
   SKEEN_TUN_ENABLED="0"
-  [ -n "$has_opkgtun" ] && SKEEN_TUN_ENABLED="1"
+  if [ -n "$has_opkgtun" ]; then
+    SKEEN_TUN_ENABLED="1"
+    for i in /sys/class/net/opkgtun*; do
+      [ -e "$i" ] || continue
+      ip link set dev "${i##*/}" txqueuelen 2000
+    done
+  fi
 
   if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
     SKEEN_FIREWALL_MODE="tproxy"

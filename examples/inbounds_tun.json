@@ -35,9 +35,20 @@
       "interface_name": "opkgtun0",
       "address": "172.18.0.1/30", // NOT use IP v6 / Не используйте IP v6
       "auto_route": false,        // not enable default route to this tun / не включать маршрут по умолчанию к этому туннелю
-      "mtu": 1280,                // not less than 1200 and not more than 1500, otherwise there may be problems / не менее 1200 и не более 1500, иначе могут быть проблемы
+      "mtu": 1500,                // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
       "udp_timeout": "30s",       // UDP timeout, not needed to be too large / таймаут для UDP, не нужен слишком большой
       "stack": "system"           // NOT use gvisor !!! / НЕ используйте gvisor !!!
-    }
+    },
+    {
+      "type": "tun",
+      "tag": "tun2-in",
+      "interface_name": "opkgtun1",
+      "address": "172.19.0.1/30",
+      "auto_route": false,
+      "mtu": 1500,
+      "udp_timeout": "30s",
+      "stack": "system"
+    },
+    ...
   ]
 }
