@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.8.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.5...SKeen-v4.8.0) (2026-04-28)
+
+
+### 🚀 Feat
+
+* **firewall:** implement tun chain and rules management ([d49d2eb](https://github.com/jinndi/SKeen/commit/d49d2eb6192b3a68395c6ea69079869c0c921eb6))
+* **test:** restructure test logic for tun mode support and fix port exclusion check ([c125d6c](https://github.com/jinndi/SKeen/commit/c125d6c76f498d83e09387fa6793758048329e7b))
+
+
+### 🎨 Style
+
+* **menu:** add tun interface status display to menu output ([2e22a05](https://github.com/jinndi/SKeen/commit/2e22a057075d2befd2bc44f363749cb7e05e577d))
+* **menu:** export and display SKEEN_POLICY_NAME consistently ([10ee81c](https://github.com/jinndi/SKeen/commit/10ee81cd37b1f4d036408f7795306ff855122400))
+
 ## [4.7.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.7.4...SKeen-v4.7.5) (2026-04-27)
 
 
