@@ -2760,6 +2760,8 @@ show_menu() {
     output="$output\n ${SINGBOX_NAME} DNS working: $sb_dns_work_text"
     [ -n "$SKEEN_POLICY_NAME" ] &&
       output="$output\n Client policy:: $(cyan "$SKEEN_POLICY_NAME")"
+    [ "$SKEEN_TUN_ENABLED" = "1" ] &&
+      output="$output\n Uses OpkgTun: $(cyan "yes")"
     output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
     output="$output\n Firewall network: $(cyan "$SKEEN_FIREWALL_NETWORK")"
     output="$output\n Firewall IP ver.: $ipv4 $ipv6"

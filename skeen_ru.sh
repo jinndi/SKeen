@@ -2760,6 +2760,8 @@ show_menu() {
     output="$output\n ${SINGBOX_NAME} DNS работает: $sb_dns_work_text"
     [ -n "$SKEEN_POLICY_NAME" ] &&
       output="$output\n Политика клиентов: $(cyan "$SKEEN_POLICY_NAME")"
+    [ "$SKEEN_TUN_ENABLED" = "1" ] &&
+      output="$output\n Используется OpkgTun: $(cyan "да")"
     output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
     output="$output\n Сеть фаервола: $(cyan "$SKEEN_FIREWALL_NETWORK")"
     output="$output\n Версия IP фаервола: $ipv4 $ipv6"
