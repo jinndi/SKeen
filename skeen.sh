@@ -51,6 +51,7 @@ WAIT_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_route"
 BYPASS_NET_SET="skeen_bypass_net"
 CHAIN_PREROUTING="skeen"
 CHAIN_OUTPUT="skeen_mask"
+CHAIN_TUN="skeen_tun"
 TABLE_REDIRECT="nat"
 TABLE_TPROXY="mangle"
 TABLE_MARK="0x112"
@@ -815,7 +816,7 @@ get_fw_mode_param() {
 
     [ -z "$has_opkgtun" ] && return 0
 
-    echo "opkgtun"
+    echo "tun"
 
     return 0
   fi
@@ -1257,12 +1258,6 @@ add_tproxy_rules() {
     -p tcp -m socket --transparent -j ACCEPT
 
   for net in $SKEEN_TPROXY_NETWORK; do
-    # add_rule "$iptables" "$table" "$chain" \
-    #   -p "$net" -j MARK --set-mark "$TABLE_MARK"
-
-    # add_rule "$iptables" "$table" "$chain" \
-    #   -p "$net" -j CONNMARK --save-mark
-
     add_rule "$iptables" "$table" "$chain" \
       -p "$net" -j TPROXY --on-ip "$PROXY_IP" \
       --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
@@ -1364,14 +1359,6 @@ set_prerouting_rules() {
   local rule
   local chunk
   local proto
-
-  # if [ "$table" = "$TABLE_TPROXY" ]; then
-  #   rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
-  #   # shellcheck disable=SC2086
-  #   if ! $iptables -t "$table" -C PREROUTING $rule >/dev/null 2>&1; then
-  #     $iptables -t "$table" -I PREROUTING 1 $rule >/dev/null 2>&1
-  #   fi
-  # fi
 
   [ -n "$SKEEN_MARK_POLICY" ] &&
     connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
@@ -1580,16 +1567,20 @@ tun_list() {
   [ -z "$opkgtun_list" ] && echomsg "No OpkgTun interfaces found" || echo "$opkgtun_list"
 }
 
-get_tun_fw_rules() {
-  cat <<EOF
-if [ "\$type" = "iptables" ] && ! iptables -C INPUT -i opkgtun+ -j ACCEPT 2>/dev/null;
-then
-iptables -A INPUT -i opkgtun+ -j ACCEPT
-iptables -A FORWARD -i opkgtun+ -j ACCEPT
-iptables -A FORWARD -o opkgtun+ -j ACCEPT
-iptables -t nat -A POSTROUTING -o opkgtun+ -j MASQUERADE
-fi
-EOF
+set_tun_rules() {
+  apply_rule() {
+    table="$1"
+    shift
+
+    iptables -t "$table" -C "$@" 2>/dev/null || \
+    iptables -t "$table" -A "$@"
+  }
+
+  iptables -t filter -N "$CHAIN_TUN" 2>/dev/null
+  apply_rule filter INPUT -i opkgtun+ -j "$CHAIN_TUN"
+  apply_rule filter "$CHAIN_TUN" -i opkgtun+ -j ACCEPT
+  apply_rule filter "$CHAIN_TUN" -o opkgtun+ -j ACCEPT
+  apply_rule nat POSTROUTING -o opkgtun+ -j MASQUERADE
 }
 
 prepare_firewall() {
@@ -1597,7 +1588,6 @@ prepare_firewall() {
   local redirect_data
   local tproxy_data
   local has_opkgtun
-  local warn_msg
   local route_all
   local intercept_ports
   local exclude_ports
@@ -1616,6 +1606,8 @@ prepare_firewall() {
   for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT; do check_port "$port"; done
 
   has_opkgtun="$(get_fw_mode_data "tun")"
+  SKEEN_TUN_ENABLED="0"
+  [ -n "$has_opkgtun" ] && SKEEN_TUN_ENABLED="1"
 
   if [ -n "$SKEEN_TPROXY_PORT" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ]; then
     SKEEN_FIREWALL_MODE="tproxy"
@@ -1630,7 +1622,7 @@ prepare_firewall() {
     SKEEN_FIREWALL_MODE="none"
   fi
 
-  cyan " - Detected firewall mode: $SKEEN_FIREWALL_MODE"
+  cyan " - Detected firewall mode: $SKEEN_FIREWALL_MODE $has_opkgtun"
 
   [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && check_port
 
@@ -1638,11 +1630,9 @@ prepare_firewall() {
   if [ "$FIREWALL_INTERCEPT_DNS" = "1" ] && has_dns_servers; then
     cyan " - Detected use of DNS configuration"
 
-    warn_msg="the DNS configuration is not used"
-
     case "$SKEEN_FIREWALL_MODE" in
     tproxy | hybrid) SKEEN_DNS_ENABLED="1" ;;
-    *) echowarn "In '$SKEEN_FIREWALL_MODE' mode, $warn_msg" ;;
+    *) echowarn "In '$SKEEN_FIREWALL_MODE' mode DNS configuration is not used" ;;
     esac
   fi
 
@@ -1650,10 +1640,17 @@ prepare_firewall() {
     {
       echo "#!/bin/sh"
       echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
-      echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
+
+      echo "[ \"iptables\" = \"\$type\" ] || exit 0"
+      echo "echo \"nat|filter\" | grep -q \"\$table\" || exit 0"
+
+      echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table table\""
+
       echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
       echo "export SKEEN_DNS_ENABLED=\"$SKEEN_DNS_ENABLED\""
-      get_tun_fw_rules
+      echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
+
+      echo "$SKEEN_PROC apply_firewall netfilter"
     } >"$FIREWALL_HOOK_FILE"
 
     chmod +x "$FIREWALL_HOOK_FILE"
@@ -1733,9 +1730,24 @@ prepare_firewall() {
     echo "#!/bin/sh"
     echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
-    echo "[ -z \"\$(pidof \"$SINGBOX_PROC\")\" ] && exit 0"
+    echo "echo \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
 
-    [ -n "$has_opkgtun" ] && get_tun_fw_rules
+    local tun=""
+    [ $SKEEN_TUN_ENABLED = "1" ] && tun="|filter"
+    [ $SKEEN_FIREWALL_MODE = "tproxy" ] && tun="|filter|nat"
+    local redirect="${TABLE_REDIRECT}${tun}"
+    local hybrid="${TABLE_REDIRECT}|${TABLE_TPROXY}${tun}"
+    local tproxy="${TABLE_TPROXY}${tun}"
+
+    case "$SKEEN_FIREWALL_MODE" in
+    hybrid) echo "echo \"$hybrid\" | grep -q \"\$table\" || exit 0" ;;
+    tproxy) echo "echo \"$tproxy\" | grep -q \"\$table\" || exit 0" ;;
+    redirect) echo "echo \"$redirect\" | grep -q \"\$table\" || exit 0" ;;
+    tun) echo "echo \"$tun\" | grep -q \"\$table\" || exit 0" ;;
+    *) echo "exit 0" ;;
+    esac
+
+    echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table table\""
 
     echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
     echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
@@ -1748,17 +1760,7 @@ prepare_firewall() {
     echo "export SKEEN_INTERCEPT_PORTS=\"$SKEEN_INTERCEPT_PORTS\""
     echo "export SKEEN_EXCLUDE_PORTS=\"$SKEEN_EXCLUDE_PORTS\""
     echo "export SKEEN_DNS_ENABLED=\"$SKEEN_DNS_ENABLED\""
-
-    echo "echo \"\$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
-
-    case "$SKEEN_FIREWALL_MODE" in
-    hybrid) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && [ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
-    tproxy) echo "[ \"\$table\" != \"$TABLE_TPROXY\" ] && exit 0" ;;
-    redirect) echo "[ \"\$table\" != \"$TABLE_REDIRECT\" ] && exit 0" ;;
-    *) echo "exit 0" ;;
-    esac
-
-    echo "logger -p notice -t \"$SKEEN_NAME\" \"Updating \$type rules for \$table\""
+    echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
 
     echo "$SKEEN_PROC apply_firewall netfilter"
   } >"$FIREWALL_HOOK_FILE"
@@ -1775,6 +1777,9 @@ apply_firewall() {
   [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
 
   echomsg "Applying firewall rules..."
+
+  [ "$SKEEN_TUN_ENABLED" = "1" ] && set_tun_rules
+  [ "$SKEEN_FIREWALL_MODE" = "tun" ] && return 0
 
   for iptables in ${SKEEN_IPTABLES_LIST:-}; do
     if [ "$iptables" = "iptables" ]; then
@@ -1823,35 +1828,21 @@ apply_firewall() {
 }
 
 clean_firewall() {
-  local msg_ok
-  local ipt_cmd
-  local tbl
-  local set_name
-  local ip_ver
-
-  import_firewall_vars
-
-  [ -z "$SKEEN_FIREWALL_MODE" ] && return 0
-
   echomsg "Cleaning firewall rules..."
 
-  msg_ok="Firewall cleanup completed"
-
-  [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
-
-  # shellcheck disable=SC2086
-  iptables-save | grep "opkgtun+" | sed 's/-A//' | while read -r line; do iptables -D $line 2>/dev/null; done
+  # 1. tun cleanup
   while iptables -t nat -D POSTROUTING -o opkgtun+ -j MASQUERADE 2>/dev/null; do :; done
+  iptables -D INPUT -i opkgtun+ -j "$CHAIN_TUN" 2>/dev/null
+  iptables -F "$CHAIN_TUN" 2>/dev/null
+  iptables -X "$CHAIN_TUN" 2>/dev/null
 
-  [ "$SKEEN_FIREWALL_MODE" = "tun" ] && echook "$msg_ok" && return 0
-
+  # 2. remove chains
   clean_chain() {
     local iptables="$1"
     local table="$2"
     local chain="$3"
     local parent="$4"
-    local rule_num
-    local rule
+    local ip_ver set_name
 
     if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
       return 0
@@ -1868,36 +1859,33 @@ clean_firewall() {
       $iptables -w -t "$table" -D "$parent" "$rule_num" >/dev/null 2>&1
     done
 
-    # if [ "$table" = "mangle" ] && [ "$parent" = "PREROUTING" ]; then
-    #   rule="-m connmark ! --mark 0x0 -j CONNMARK --restore-mark"
-    #   # shellcheck disable=SC2086
-    #   while $iptables -w -t "$table" -D "$parent" $rule >/dev/null 2>&1; do :; done
-    # fi
-
     $iptables -w -t "$table" -X "$chain" >/dev/null 2>&1
   }
 
   for ipt_cmd in iptables ip6tables; do
-    for tbl in nat mangle; do
-      clean_chain "$ipt_cmd" "$tbl" "$CHAIN_PREROUTING" PREROUTING
-      clean_chain "$ipt_cmd" "$tbl" "$CHAIN_OUTPUT" OUTPUT
-    done
+    clean_chain "$ipt_cmd" nat "$CHAIN_PREROUTING" PREROUTING
+    clean_chain "$ipt_cmd" mangle "$CHAIN_PREROUTING" PREROUTING
+    clean_chain "$ipt_cmd" mangle "$CHAIN_OUTPUT" OUTPUT
   done
 
-  if command -v ip >/dev/null 2>&1; then
-    for ip_ver in 4 6; do
-      if ip -"$ip_ver" rule show | grep -q "fwmark $TABLE_MARK lookup $TABLE_ID"; then
-        ip -"$ip_ver" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1
-        ip -"$ip_ver" route flush table "$TABLE_ID" >/dev/null 2>&1
-      fi
+  # 3. routing cleanup
+  ip -4 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
+  ip -6 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
+  ip route flush table "$TABLE_ID" 2>/dev/null
 
+  # 4. ipset cleanup
+  if command -v ipset >/dev/null 2>&1; then
+    for ip_ver in 4 6; do
       set_name="${BYPASS_NET_SET}${ip_ver}"
-      ipset list "$set_name" >/dev/null 2>&1 &&
-        ipset flush "$set_name" && ipset destroy "$set_name"
+      ipset flush "$set_name" 2>/dev/null
+      ipset destroy "$set_name" 2>/dev/null
     done
   fi
 
-  echook "$msg_ok"
+  # 5. cleanup hook
+  rm -f "$FIREWALL_HOOK_FILE" 2>/dev/null
+
+  echook "Firewall cleanup completed"
 }
 
 apply_sysctl_network_tuning() {
