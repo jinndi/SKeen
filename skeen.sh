@@ -1265,12 +1265,14 @@ add_tproxy_rules() {
   local chain="${3:-}"
   local net
 
-  add_rule "$iptables" "$table" "$chain" \
-    -p tcp -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
-  add_rule "$iptables" "$table" "$chain" \
-    -p tcp -m socket --transparent -j ACCEPT
-
   for net in $SKEEN_TPROXY_NETWORK; do
+    if [ "$net" = "tcp" ]; then
+      add_rule "$iptables" "$table" "$chain" \
+        -p "$net" -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
+      add_rule "$iptables" "$table" "$chain" \
+        -p "$net" -m socket --transparent -j ACCEPT
+    fi
+
     add_rule "$iptables" "$table" "$chain" \
       -p "$net" -j TPROXY --on-ip "$PROXY_IP" \
       --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
