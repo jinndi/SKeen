@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.8.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.2...SKeen-v4.8.3) (2026-04-29)
+
+
+### 🐛 Fix
+
+* **iptables:** improve IPv6 detection logic for global addresses ([a53a774](https://github.com/jinndi/SKeen/commit/a53a774f11243822b1116496806e44c75b90c34d))
+
+
+### 🎨 Style
+
+* **i18n:** enhance test logging with iptables binary context ([1cc0be1](https://github.com/jinndi/SKeen/commit/1cc0be155aee85c34ac1176cc0f738dd0b143d3a))
+
+
+### 🛠 Refactor
+
+* **cli:** enhance network interface display with comprehensive system metrics (`iface` command) ([d7e2bc7](https://github.com/jinndi/SKeen/commit/d7e2bc7c4b81009fb56bd11d39d63f5656607740))
+
 ## [4.8.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.1...SKeen-v4.8.2) (2026-04-28)
 
 
