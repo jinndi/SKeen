@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.8.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.3...SKeen-v4.8.4) (2026-04-29)
+
+
+### 🛠 Refactor
+
+* **menu:** restructure conditional logic for firewall status display ([b063699](https://github.com/jinndi/SKeen/commit/b0636999044a8192a71b80688aee9941665e5fef))
+
+
+### 📦 Deps
+
+* replace ip with ip-full package for enhanced network functionality ([f4ecfc1](https://github.com/jinndi/SKeen/commit/f4ecfc10673bc8f7e835f3d9b824852dd9cb50ea))
+
 ## [4.8.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.2...SKeen-v4.8.3) (2026-04-29)
 
 
