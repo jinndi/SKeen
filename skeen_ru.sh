@@ -2374,7 +2374,7 @@ fw_test_chain() {
   # $2 — chain
   # $3 — iptables
 
-  echomsg "Проверка $2"
+  echomsg "Тест $3 $2"
 
   content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
