@@ -1369,17 +1369,12 @@ set_prerouting_rules() {
   local iptables="${1:-}"
   local table="${2:-}"
   local connmark_option
-  local ports
-  local dports_op
-  local rule
-  local chunk
-  local proto
+  local ports=""
+  local dports_op=""
+  local rule chunk proto
 
   [ -n "$SKEEN_MARK_POLICY" ] &&
     connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
-
-  ports=""
-  dports_op=""
 
   if [ -n "$SKEEN_INTERCEPT_PORTS" ]; then
     ports="$SKEEN_INTERCEPT_PORTS"
@@ -1402,6 +1397,13 @@ set_prerouting_rules() {
     return
   fi
 
+  local protos=""
+  case "${SKEEN_FIREWALL_MODE}:${table}" in
+  hybrid:nat | redirect:nat) protos="tcp" ;;
+  hybrid:mangle) protos="udp" ;;
+  tproxy:mangle) protos="tcp udp" ;;
+  esac
+
   ports="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
 
   # shellcheck disable=SC2086
@@ -1418,7 +1420,7 @@ set_prerouting_rules() {
     [ -z "$chunk" ] && break
 
     # shellcheck disable=SC2043
-    for proto in $SKEEN_FIREWALL_NETWORK; do
+    for proto in $protos; do
       rule="PREROUTING $connmark_option \
         -p $proto \
         -m conntrack ! --ctstate INVALID \
