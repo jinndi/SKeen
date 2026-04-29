@@ -20,7 +20,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-DEPENDENCIES="ndmc start-stop-daemon iptables ipset net-tools curl tar jsonfilter logger"
+DEPENDENCIES="ndmc start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
 
 ENTWARE_DIR="/opt"
 WORK_DIR="${ENTWARE_DIR}/etc/skeen"
