@@ -977,16 +977,22 @@ get_iptables_list() {
   local ipt_list=""
 
   if command -v iptables >/dev/null 2>&1 &&
-    [ -n "$(ip -4 addr show scope global 2>/dev/null)" ]; then
+     ip -4 addr show scope global | grep -q "inet "; then
     ipt_list="iptables"
   fi
 
   local v6_disabled=1
-  [ -f /proc/sys/net/ipv6/conf/all/disable_ipv6 ] &&
+  if [ -f /proc/sys/net/ipv6/conf/all/disable_ipv6 ]; then
     read -r v6_disabled < /proc/sys/net/ipv6/conf/all/disable_ipv6
+  fi
 
   if [ "$v6_disabled" = "0" ] && command -v ip6tables >/dev/null 2>&1; then
-    if [ -n "$(ip -6 addr show scope global 2>/dev/null)" ]; then
+    local real_v6
+    real_v6=$(ip -6 addr show scope global 2>/dev/null | \
+      grep -i 'inet6 [23]' | \
+      grep -ivE '2001:db8|2002:|2001:[0-3][0-9a-f]:')
+
+    if [ -n "$real_v6" ] && ip -6 route show default | grep -q "."; then
       ipt_list="${ipt_list:+$ipt_list }ip6tables"
     fi
   fi
