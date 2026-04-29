@@ -2729,29 +2729,48 @@ sync_config() {
 
 show_iface() {
   check_tty
-  local G='\e[32m' R='\e[31m' W='\e[1m' N='\e[0m'
 
-  printf "  ${W}%-18s %-10s %-10s${N}\n" "INTERFACE" "IPv6" "LINK"
-  printf "  %-18s %-10s %-10s\n" "---------------" "---------" "----------"
+  local G='\e[32m' R='\e[31m' W='\e[1m' N='\e[0m' Y='\e[33m' B='\e[36m' M='\e[35m'
+  local ip_data ln_data mt_data tf_data v6_flags
 
-  for p in /sys/class/net/*; do
-    [ -e "$p" ] || continue
-    iface="${p##*/}"
-    v6_p="/proc/sys/net/ipv6/conf/$iface/disable_ipv6"
+  printf "\n  ${W}%-10s %-4s %-5s %-6s %-10s %-10s${N}\n" "INTERFACE" "IPv6" "MTU" "LINK" "RX/TX (MB)" "IP ADDRESS"
+  printf "  %-10s %-4s %-5s %-6s %-10s %-10s\n" "----------" "----" "-----" "------" "----------" "----------"
 
-    v6_val="-"; v6_c="$N"
-    if [ -f "$v6_p" ]; then
-      read -r v < "$v6_p" 2>/dev/null
-      if [ "$v" = "0" ]; then v6_val="on"; v6_c="$G"; else v6_val="off"; v6_c="$R"; fi
-    fi
+  ip_data="$(ip -o addr show | awk '{print $2,$3,$4}' | cut -d/ -f1)"
+  ln_data="$(grep . /sys/class/net/*/operstate 2>/dev/null)"
+  mt_data="$(awk '{print FILENAME ":" $0}' /sys/class/net/*/mtu 2>/dev/null | sed 's|/sys/class/net/||;s|/mtu||')"
+  tf_data="$(cat /proc/net/dev | tail -n +3 | tr ':' ' ' | awk '{$1=$1;print}')"
+  v6_flags="$(awk '{print FILENAME ":" $0}' /proc/sys/net/ipv6/conf/*/disable_ipv6 2>/dev/null | sed 's|/proc/sys/net/ipv6/conf/||;s|/disable_ipv6||')"
 
-    read -r ln < "$p/operstate" 2>/dev/null || ln="?"
-    case "$ln" in
-      up) lc="$G" ;; down) lc="$R" ;; *) lc="$N" ;;
-    esac
-
-    printf "  %-18s %b%-10s%b %b%-10s%b\n" "$iface" "$v6_c" "$v6_val" "$N" "$lc" "$ln" "$N"
-  done
+  echo "$tf_data" | sort | awk -v g="$G" -v r="$R" -v n="$N" -v y="$Y" -v b="$B" -v m="$M" -v ipd="$ip_data" -v lnd="$ln_data" -v mtd="$mt_data" -v v6f="$v6_flags" '
+  BEGIN {
+    split(lnd, a_ln, "\n"); for (i in a_ln) { split(a_ln[i], t, /[\/:]/); link[t[5]] = t[7] }
+    split(mtd, a_mt, "\n"); for (i in a_mt) { split(a_mt[i], t, ":"); mtu[t[1]] = t[2] }
+    split(v6f, a_v6, "\n"); for (i in a_v6) { split(a_v6[i], t, ":"); v6_sys[t[1]] = t[2] }
+    split(ipd, i_arr, "\n"); for (x in i_arr) {
+      split(i_arr[x], t, " ")
+      if (t[2] == "inet") ip4[t[1]] = t[3]
+      if (t[2] == "inet6" && !ip6[t[1]]) ip6[t[1]] = t[3]
+    }
+  }
+  {
+    ifc = $1
+    rx = int($2/1048576); tx = int($10/1048576)
+    tr_p = rx "/" tx
+    v6_s = (v6_sys[ifc] == "0") ? g"on  "n : r"off "n
+    ln_raw = link[ifc]
+    if (ln_raw == "up") ln_s = g"up    "n
+    else if (ln_raw == "unknown") ln_s = n"unk   "n
+    else ln_s = r"down  "n
+    printf "  %-10s %s %s%-5s%s %s ", ifc, v6_s, b, (mtu[ifc] ? mtu[ifc] : "-"), n, ln_s
+    printf "%s%s%s/%s%s%s", b, rx, n, m, tx, n
+    pad = 10 - length(tr_p)
+    for (p=0; p<pad; p++) printf " "
+    printf " %s%s%s\n", y, (ip4[ifc] ? ip4[ifc] : "-"), n
+    if (ip6[ifc]) {
+      printf "                                          %s%s%s\n", b, ip6[ifc], n
+    }
+  }'
 }
 
 show_menu() {
