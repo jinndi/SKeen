@@ -1762,7 +1762,6 @@ prepare_firewall() {
     hybrid) echo "echo \"$hybrid\" | grep -q \"\$table\" || exit 0" ;;
     tproxy) echo "echo \"$tproxy\" | grep -q \"\$table\" || exit 0" ;;
     redirect) echo "echo \"$redirect\" | grep -q \"\$table\" || exit 0" ;;
-    tun) echo "echo \"$tun\" | grep -q \"\$table\" || exit 0" ;;
     *) echo "exit 0" ;;
     esac
 
