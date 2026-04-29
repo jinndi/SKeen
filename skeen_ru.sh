@@ -2777,10 +2777,10 @@ show_menu() {
   local autostart_status
   local running_status
   local running_text
-  local output
+  local output=""
   local version
-  local ipv4
-  local ipv6
+  local ipv4=""
+  local ipv6=""
   local sb_dns_work_text
 
   check_tty
@@ -2803,8 +2803,6 @@ show_menu() {
     running_text="Запустить"
   fi
 
-  output=""
-
   output="$output\n Версия ${SKEEN_NAME}: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
 
   version="$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
@@ -2815,31 +2813,28 @@ show_menu() {
 
   output="$output\n Автоматический запуск: $autostart_status"
 
-  ipv4=""
-  ipv6=""
-
-  if [ "$running_text" = "Остановить" ] &&
-    [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
-    echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
-    echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
-
+  if [ "$running_text" = "Остановить" ]; then
     if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
       sb_dns_work_text="$(green "да")"
     else
       sb_dns_work_text="$(red "нет")"
     fi
-
     output="$output\n ${SINGBOX_NAME} DNS работает: $sb_dns_work_text"
-    [ -n "$SKEEN_POLICY_NAME" ] &&
-      output="$output\n Политика клиентов: $(cyan "$SKEEN_POLICY_NAME")"
-    [ "$SKEEN_TUN_ENABLED" = "1" ] &&
-      output="$output\n Используется OpkgTun: $(cyan "да")"
-    output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
-    output="$output\n Сеть фаервола: $(cyan "$SKEEN_FIREWALL_NETWORK")"
-    output="$output\n Версия IP фаервола: $ipv4 $ipv6"
 
-  elif [ "$running_text" = "Остановить" ]; then
-    output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
+    if [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
+      echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
+      echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
+
+      [ -n "$SKEEN_POLICY_NAME" ] &&
+        output="$output\n Политика клиентов: $(cyan "$SKEEN_POLICY_NAME")"
+      [ "$SKEEN_TUN_ENABLED" = "1" ] &&
+        output="$output\n Используется OpkgTun: $(cyan "да")"
+      output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
+      output="$output\n Сеть фаервола: $(cyan "$SKEEN_FIREWALL_NETWORK")"
+      output="$output\n Версия IP фаервола: $ipv4 $ipv6"
+    else
+      output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
+    fi
   fi
 
   output="$output\n\n$(cyan "Выберите действие:")"
