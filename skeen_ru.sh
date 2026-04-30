@@ -47,11 +47,12 @@ SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 SINGBOX_SPACE_MB=128
 
 FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
-WAIT_ROUTE_FILE="${TMP_DIR}/${SKEEN_PROC}_wait_route"
+WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
 BYPASS_NET_SET="skeen_bypass_net"
 CHAIN_PREROUTING="skeen"
 CHAIN_OUTPUT="skeen_mask"
 CHAIN_TUN="skeen_tun"
+CHAIN_DNS="_NDM_HOTSPOT_DNSREDIR"
 TABLE_REDIRECT="nat"
 TABLE_TPROXY="mangle"
 TABLE_MARK="0x112"
@@ -187,6 +188,11 @@ create_skeen_config() {
       "port": [123, 137, 138, 139, 445],
       "ipv4_cidr": [],
       "ipv6_cidr": []
+    },
+    "redirect_dns": {
+      "enable": 0,
+      "to_port": "",
+      "use_policy": 1
     }
   }
 }
@@ -238,7 +244,10 @@ loading_config() {
       -e SERVICE_PROXY_PORT='@.service_proxy.port' \
       -e SERVICE_PROXY_USER='@.service_proxy.user' \
       -e SERVICE_PROXY_PASS='@.service_proxy.pass' \
-      -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns'
+      -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
+      -e FIREWALL_REDIRECT_DNS_ENABLE='@.firewall.redirect_dns.enable' \
+      -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
+      -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy'
   )"
 
   : "${AUTO_START_ENABLE:=1}"
@@ -255,6 +264,9 @@ loading_config() {
   : "${SERVICE_PROXY_USER:=}"
   : "${SERVICE_PROXY_PASS:=}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
+  : "${FIREWALL_REDIRECT_DNS_ENABLE:=0}"
+  : "${FIREWALL_REDIRECT_DNS_PORT:=}"
+  : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
 
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
     SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
@@ -953,9 +965,11 @@ load_module() {
 }
 
 loading_modules() {
-  local modules="xt_TPROXY.ko xt_socket.ko xt_multiport.ko xt_owner.ko"
+  local modules="${1:-}"
   local err_msg="Установите компонент роутера: «Модули ядра подсистемы Netfilter»"
   local module
+
+  [ -z "$modules" ] && modules="xt_TPROXY.ko xt_socket.ko xt_multiport.ko xt_owner.ko xt_comment.ko"
 
   MODULES_OS_DIR="${MODULES_OS_DIR}/$(uname -r)"
 
@@ -994,6 +1008,8 @@ get_iptables_list() {
 
     if [ -n "$real_v6" ] && ip -6 route show default | grep -q "."; then
       ipt_list="${ipt_list:+$ipt_list }ip6tables"
+    else
+      echowarn "IPv6 активен в конфиге ${SKEEN_NAME}, но внешнее IPv6 соединение отсутствует" >&2
     fi
   fi
 
@@ -1288,16 +1304,14 @@ add_redirect_rules() {
     -p tcp -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
 }
 
-set_iptables_rules() {
+set_chain_rules() {
   local iptables="${1:-}"
   local table="${2:-}"
   local chain="${3:-}"
-  local set_name
   local bp_rule_set
   local net
 
-  set_name="${BYPASS_NET_SET}${IP_VERSION}"
-  bp_rule_set="-m set --match-set $set_name dst -j RETURN"
+  bp_rule_set="-m set --match-set ${BYPASS_NET_SET}${IP_VERSION} dst -j RETURN"
 
   if [ "$chain" = "$CHAIN_PREROUTING" ] &&
     ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
@@ -1305,25 +1319,14 @@ set_iptables_rules() {
     $iptables -t "$table" -N "$chain" || return 0
 
     case "${SKEEN_FIREWALL_MODE}:${table}" in
-    hybrid:nat)
-      if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
-        add_rule "$iptables" "$table" "$chain" \
-          -p tcp --dport "$DNS_PORT" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
-      else
-        add_rule "$iptables" "$table" "$chain" -p tcp ! --dport "$DNS_PORT" -j RETURN
-      fi
-
-      # shellcheck disable=SC2086
-      add_rule "$iptables" "$table" "$chain" -p tcp $bp_rule_set
-      ;;
     hybrid:mangle | tproxy:mangle)
       for net in $SKEEN_TPROXY_NETWORK; do
-        if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
+        if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
           add_rule "$iptables" "$table" "$chain" \
             -p "$net" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
             --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
         else
-          add_rule "$iptables" "$table" "$chain" -p "$net" ! --dport "$DNS_PORT" -j RETURN
+          add_rule "$iptables" "$table" "$chain" -p "$net" --dport "$DNS_PORT" -j RETURN
         fi
 
         # shellcheck disable=SC2086
@@ -1397,11 +1400,10 @@ set_prerouting_rules() {
     return
   fi
 
-  local protos=""
+  local nets="tcp"
   case "${SKEEN_FIREWALL_MODE}:${table}" in
-  hybrid:nat | redirect:nat) protos="tcp" ;;
-  hybrid:mangle) protos="udp" ;;
-  tproxy:mangle) protos="tcp udp" ;;
+  hybrid:mangle) nets="udp" ;;
+  tproxy:mangle) nets="tcp udp" ;;
   esac
 
   ports="$(printf '%s\n' "$ports" | tr ', ' '\n' | sed '/^$/d')"
@@ -1420,9 +1422,9 @@ set_prerouting_rules() {
     [ -z "$chunk" ] && break
 
     # shellcheck disable=SC2043
-    for proto in $protos; do
+    for net in $nets; do
       rule="PREROUTING $connmark_option \
-        -p $proto \
+        -p $net \
         -m conntrack ! --ctstate INVALID \
         -m multiport $dports_op $chunk \
         -j $CHAIN_PREROUTING"
@@ -1645,33 +1647,80 @@ prepare_firewall() {
     SKEEN_FIREWALL_MODE="none"
   fi
 
-  cyan " - Обнаружен режим: $SKEEN_FIREWALL_MODE $has_opkgtun"
+  cyan " - Обнаружен режим фаервола: $SKEEN_FIREWALL_MODE $has_opkgtun"
 
   [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && check_port
 
-  SKEEN_DNS_ENABLED="0"
-  if [ "$FIREWALL_INTERCEPT_DNS" = "1" ] && has_dns_servers; then
-    cyan " - Обнаружена конфигурация DNS"
+  SKEEN_INTERCEPT_DNS_ENABLE="0"
+  SKEEN_REDIRECT_DNS_ENABLE="0"
+  SKEEN_REDIRECT_DNS_PORT=""
 
-    case "$SKEEN_FIREWALL_MODE" in
-    tproxy | hybrid) SKEEN_DNS_ENABLED="1" ;;
-    *) echowarn "В режиме '$SKEEN_FIREWALL_MODE' конфигурация DNS не используется" ;;
-    esac
+  if has_dns_servers; then
+    local msg_dns_detect=" - Обнаружена конфигурация DNS:"
+    if [ "$FIREWALL_REDIRECT_DNS_ENABLE" = "1" ]; then
+      if [ -z "$FIREWALL_REDIRECT_DNS_PORT" ]; then
+        echoerr "Включен редирект DNS, но порт не указан в конфигурации $SKEEN_NAME"
+        press_any_key_to_menu "" 1
+      fi
+      check_port "$FIREWALL_REDIRECT_DNS_PORT"
+      SKEEN_REDIRECT_DNS_ENABLE="1"
+      SKEEN_REDIRECT_DNS_PORT="$FIREWALL_REDIRECT_DNS_PORT"
+      SKEEN_REDIRECT_DNS_USE_POLICY="$FIREWALL_REDIRECT_DNS_USE_POLICY"
+      cyan "$msg_dns_detect redirect"
+    fi
+
+    if [ "$FIREWALL_REDIRECT_DNS_ENABLE" = "1" ] && [ "$FIREWALL_INTERCEPT_DNS" = "1" ]; then
+      echowarn "Включен редирект и перехват DNS, будет работать только редирект"
+    elif [ "$FIREWALL_INTERCEPT_DNS" = "1" ]; then
+      case "$SKEEN_FIREWALL_MODE" in
+      tproxy | hybrid)
+        SKEEN_INTERCEPT_DNS_ENABLE="1"
+        cyan "$msg_dns_detect intercept"
+      ;;
+      *) echowarn "В режиме '$SKEEN_FIREWALL_MODE' перехват DNS не работает" ;;
+      esac
+    fi
+  elif [ "$FIREWALL_REDIRECT_DNS_ENABLE" = "1" ] || [ "$FIREWALL_INTERCEPT_DNS" = "1" ]; then
+    echowarn "Заданы настройки DNS в ${SKEEN_NAME}, но $SINGBOX_NAME не нестроен"
   fi
 
-  if [ "$SKEEN_FIREWALL_MODE" = "tun" ]; then
+  if [ "$SKEEN_FIREWALL_MODE" = "tun" ] || {
+      [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ] &&
+      [ "$SKEEN_FIREWALL_MODE" = "none" ]
+  }; then
     {
       echo "#!/bin/sh"
       echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
-      echo "[ \"iptables\" = \"\$type\" ] || exit 0"
-      echo "echo \"nat|filter\" | grep -q \"\$table\" || exit 0"
+      local tables="nat|filter"
+      if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
+        tables="nat"
+        SKEEN_IPTABLES_LIST="$(get_iptables_list)"
+      else
+        SKEEN_IPTABLES_LIST="iptables"
+      fi
+
+      echo "[ \"$SKEEN_IPTABLES_LIST\" = \"\$type\" ] || exit 0"
+      echo "echo \"$tables\" | grep -q \"\$table\" || exit 0"
 
       echo "logger -p notice -t \"$SKEEN_NAME\" \"Обновление \$type правил \$table таблицы\""
 
       echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
-      echo "export SKEEN_DNS_ENABLED=\"$SKEEN_DNS_ENABLED\""
-      echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
+
+      [ "$SKEEN_FIREWALL_MODE" = "tun" ] &&
+        echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
+
+      echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
+
+      if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+        loading_modules xt_comment.ko
+        [ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ] &&
+          SKEEN_MARK_POLICY="$(get_mark_policy)"
+        echo "export SKEEN_REDIRECT_DNS_ENABLE=\"$SKEEN_REDIRECT_DNS_ENABLE\""
+        echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
+        echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
+        echo "export SKEEN_MARK_POLICY=\"${SKEEN_MARK_POLICY:-}\""
+      fi
 
       echo "$SKEEN_PROC apply_firewall netfilter"
     } >"$FIREWALL_HOOK_FILE"
@@ -1781,7 +1830,9 @@ prepare_firewall() {
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
     echo "export SKEEN_INTERCEPT_PORTS=\"$SKEEN_INTERCEPT_PORTS\""
     echo "export SKEEN_EXCLUDE_PORTS=\"$SKEEN_EXCLUDE_PORTS\""
-    echo "export SKEEN_DNS_ENABLED=\"$SKEEN_DNS_ENABLED\""
+    echo "export SKEEN_INTERCEPT_DNS_ENABLE=\"$SKEEN_INTERCEPT_DNS_ENABLE\""
+    echo "export SKEEN_REDIRECT_DNS_ENABLE=\"$SKEEN_REDIRECT_DNS_ENABLE\""
+    echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
     echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
 
     echo "$SKEEN_PROC apply_firewall netfilter"
@@ -1793,28 +1844,49 @@ prepare_firewall() {
 }
 
 apply_firewall() {
-  local iptables
-  local eth_subnet set_name
+  local check iptables eth_subnet set_name
+
+  check=$(echo "$SKEEN_IPTABLES_LIST" | sed 's/iptables//g; s/ip6tables//g; s/ //g')
+  if [ -n "$check" ] || [ -z "$SKEEN_IPTABLES_LIST" ]; then
+    local msg_err="Неизвестный iptables: ${iptables:-unknown}"
+    logger_error "$msg_err"
+    echoerr "$msg_err"
+    press_any_key_to_menu "" 1
+  fi
+
+  if [ "$SKEEN_FIREWALL_MODE" != "none" ] || [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+    echomsg "Применение правил фаервола..."
+  fi
+
+  if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+    local mark_option=""
+    [ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ] && [ -n "$SKEEN_MARK_POLICY" ] &&
+      mark_option="-m mark --mark $SKEEN_MARK_POLICY"
+
+    for iptables in $SKEEN_IPTABLES_LIST; do
+      for net in udp tcp; do
+        local args="$CHAIN_DNS -p $net -i br+ $mark_option -m pkttype --pkt-type unicast \
+          --dport 53 -j REDIRECT --to-ports $SKEEN_REDIRECT_DNS_PORT -m comment --comment skeen_dns"
+
+        # shellcheck disable=SC2086
+        if ! $iptables -t nat -C $args >/dev/null 2>&1; then
+          $iptables -t nat -I $args
+        fi
+      done
+    done
+  fi
 
   [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
-
-  echomsg "Применение правил фаервола..."
-
   [ "$SKEEN_TUN_ENABLED" = "1" ] && set_tun_rules
   [ "$SKEEN_FIREWALL_MODE" = "tun" ] && return 0
 
-  for iptables in ${SKEEN_IPTABLES_LIST:-}; do
+  for iptables in $SKEEN_IPTABLES_LIST; do
     if [ "$iptables" = "iptables" ]; then
       IP_VERSION="4"
       PROXY_IP="127.0.0.1"
     elif [ "$iptables" = "ip6tables" ]; then
       IP_VERSION="6"
       PROXY_IP="::1"
-    else
-      local msg_err="Неизвестный iptables: $iptables"
-      logger_error "$msg_err"
-      echoerr "$msg_err"
-      press_any_key_to_menu "" 1
     fi
 
     set_route_rules
@@ -1827,19 +1899,19 @@ apply_firewall() {
 
     if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
       for table in "$TABLE_TPROXY" "$TABLE_REDIRECT"; do
-        set_iptables_rules "$iptables" "$table" "$CHAIN_PREROUTING"
+        set_chain_rules "$iptables" "$table" "$CHAIN_PREROUTING"
         set_prerouting_rules "$iptables" "$table"
       done
     elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
-      set_iptables_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING"
+      set_chain_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING"
       set_prerouting_rules "$iptables" "$TABLE_TPROXY"
     elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
-      set_iptables_rules "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING"
+      set_chain_rules "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING"
       set_prerouting_rules "$iptables" "$TABLE_REDIRECT"
     fi
 
     if [ "$SKEEN_FIREWALL_MODE" != "redirect" ]; then
-      set_iptables_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_OUTPUT"
+      set_chain_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_OUTPUT"
       add_output_rules "$iptables" "$TABLE_TPROXY"
     fi
   done
@@ -1885,6 +1957,9 @@ clean_firewall() {
   }
 
   for ipt_cmd in iptables ip6tables; do
+    $ipt_cmd -w -t nat -S $CHAIN_DNS 2>/dev/null | \
+    sed -n "s/^-A /${ipt_cmd} -w -t nat -D /p" | grep "skeen_dns" | sh
+
     clean_chain "$ipt_cmd" nat "$CHAIN_PREROUTING" PREROUTING
     clean_chain "$ipt_cmd" mangle "$CHAIN_PREROUTING" PREROUTING
     clean_chain "$ipt_cmd" mangle "$CHAIN_OUTPUT" OUTPUT
@@ -2377,11 +2452,16 @@ fw_test_chain() {
   # $2 — chain
   # $3 — iptables
 
-  echomsg "Тест $3 $2"
+  cyan "Тест $1 $3 $2"
 
   content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
   fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
+
+  if [ "$2" = "$CHAIN_DNS" ]; then
+    fw_test "$1" "$2" "$content" "skeen_dns" "Redirect"
+    return 0
+  fi
 
   if [ "$2" = "$CHAIN_TUN" ]; then
     fw_test "$1" "$2" "$content" "ACCEPT .* opkgtun+" "Accept"
@@ -2394,12 +2474,12 @@ fw_test_chain() {
   fw_test "$1" "$2" "$content" "$BYPASS_NET_SET" "Excludes"
 
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
-    fw_test "$1" "$2" "$content" "CONNMARK" "CONNMARK set"
+    fw_test "$1" "$2" "$content" "CONNMARK" "Connmark"
   fi
 
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
 
-  if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
+  if [ "$1" = "mangle" ] && [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
     fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS intercept"
   fi
 
@@ -2408,7 +2488,7 @@ fw_test_chain() {
     fw_test "$1" "$2" "$($3 -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport"
   fi
 
-  if [ "$1" = "mangle" ]; then
+  if [ "$1" = "mangle" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcp" ]; then
     fw_test "$1" "$2" "$content" "socket" "Socket"
   fi
 
@@ -2439,19 +2519,24 @@ test_firewall() {
     tables="nat"
   elif [ "$SKEEN_FIREWALL_MODE" = "tun" ]; then
     tables="filter"
-  else
+  elif [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
     echowarn "Тестирование доступно в режимах tun, redirect, tproxy и hybrid"
+    echowarn "А также при заданных параметрах редиректа DNS"
     press_any_key_to_menu "" 1
   fi
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
-    echoerr "Утилита iptables не установлена"
+    echoerr "Утилита iptables не установлена?"
     press_any_key_to_menu "" 1
   fi
 
-  if [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
+  if [ "$SKEEN_FIREWALL_MODE" = "tun" ] || [ "$SKEEN_TUN_ENABLED" = "1" ]; then
+    fw_test_chain filter "$CHAIN_TUN" "iptables"
+  else
     for iptables in $SKEEN_IPTABLES_LIST; do
       [ "$iptables" = "ip6tables" ] && echo "$DELIMETER"
+
+      [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ] && fw_test_chain nat "$CHAIN_DNS" "$iptables"
 
       for table in $tables; do
         fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
@@ -2460,8 +2545,6 @@ test_firewall() {
       [ "$tables" != "nat" ] && fw_test_chain mangle "$CHAIN_OUTPUT" "$iptables"
     done
   fi
-
-  [ "$SKEEN_TUN_ENABLED" = "1" ] && fw_test_chain filter "$CHAIN_TUN" "iptables"
 
   press_any_key_to_menu
 }
@@ -2817,7 +2900,7 @@ show_menu() {
   output="$output\n Автоматический запуск: $autostart_status"
 
   if [ "$running_text" = "Остановить" ]; then
-    if [ "$SKEEN_DNS_ENABLED" = "1" ]; then
+    if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
       sb_dns_work_text="$(green "да")"
     else
       sb_dns_work_text="$(red "нет")"
