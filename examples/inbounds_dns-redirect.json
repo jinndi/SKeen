@@ -1,0 +1,37 @@
+// Configuration block example for routing DNS requests to sing-box.
+// Compatible with any mode, including SOCKS.
+// Requires the firewall.redirect_dns section to be configured in skeen.json;
+// note that firewall.intercept.dns will be ignored in this case.
+
+// Пример блока конфигурации для перенаправления DNS-запросов в sing-box.
+// Можно использовать в любых режимах, включая SOCKS.
+// Работает при активной секции firewall.redirect_dns в конфигурации skeen.json;
+// при этом параметр firewall.intercept.dns игнорируется.
+
+{
+  "inbounds": [
+    {
+      "type": "direct",
+      "tag": "dns-in",
+      "listen": "::",
+      "listen_port": 60053 // Any available port; must match the one specified in firewall.redirect_dns.to_port
+                           // Любой свободный порт, который также должен быть указан в firewall.redirect_dns.to_port
+    }
+  ],
+  // Don't forget about sniffing and hijack-dns // Не забудьте включить сниффинг и hijack-dns
+  ...,
+  "route": {
+    ...,
+    "rules": [
+      { "action": "sniff" },
+      {
+        "type": "logical",
+        "mode": "or",
+        "rules": [{ "protocol": "dns" }, { "port": 53 }],
+        "action": "hijack-dns"
+      },
+      ...,
+     ]
+    ...,
+  }
+}

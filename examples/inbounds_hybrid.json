@@ -1,4 +1,11 @@
-// Hybrid (TCP Redirect + UDP TProxy)
+// Hybrid mode (TCP Redirect + UDP TProxy)
+// DNS interception at early stage (firewall.intercept.dns)
+// or through redirection (firewall.redirect_dns in config, see inbounds_dns-redirect.json)
+
+// Гибридный режим (TCP Redirect + UDP TProxy)
+// DNS перехват на ранней стадии (firewall.intercept.dns)
+// или через редирект (firewall.redirect_dns в skeen.json конфигурации, см. inbounds_dns-redirect.json)
+
 {
   "inbounds": [
     {

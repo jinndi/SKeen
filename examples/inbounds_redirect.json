@@ -1,4 +1,9 @@
-// Redirect (TCP only, not recommended, sing-box DNS not working!)
+// Redirect mode (TCP only, not recommended)
+// DNS via redirect only (firewall.redirect_dns in skeen.json configuration, see inbounds_dns-redirect.json)
+
+// Редирект режим (Только TCP, не рекомендуется)
+// DNS только через редирект (firewall.redirect_dns в skeen.json конфигурации, см. inbounds_dns-redirect.json)
+
 {
   "inbounds": [
     {

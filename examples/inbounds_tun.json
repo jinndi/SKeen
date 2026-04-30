@@ -1,6 +1,6 @@
 // TUN OpkgTun KeeneticOS v5+
-// NOT recommended, CPU usage is ~20% higher TProxy
-// ! sing-box DNS not working
+// CPU usage is ~20% higher TProxy
+// DNS via redirect only (firewall.redirect_dns in skeen.json configuration, see inbounds_dns-redirect.json)
 
 // Create OpkgTun
 // skeen tun create 172.18.0.1 "SKeenTUN"
@@ -11,11 +11,12 @@
 // Delete OpkgTun
 // skeen tun delete "SKeenTUN"
 
-// RU ------------------------------------
+
+// RU -----------------------------------------------------------------------------------
 
 // TUN OpkgTun KeeneticOS v5+
-// НЕ рекомендуется, нагрузка на CPU примерно на 20% выше, чем у TProxy
-// ! DNS в sing-box не работает
+// Нагрузка на CPU примерно на 20% выше, чем у TProxy
+// DNS только через редирект (firewall.redirect_dns в skeen.json конфигурации, см. inbounds_dns-redirect.json)
 
 // Создать OpkgTun
 // skeen tun create 172.18.0.1 "SKeenTUN"
@@ -49,6 +50,6 @@
       "udp_timeout": "30s",
       "stack": "system"
     },
-    ...
+    ..., // and as many as needed / и столько, скольно нужно
   ]
 }
