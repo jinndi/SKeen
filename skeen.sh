@@ -918,73 +918,65 @@ check_port() {
 }
 
 is_owner_module_working() {
-  local chain="TEST_OWNER_CHAIN"
-  local result
+  [ -d "/sys/module/xt_owner" ] && return 0
 
-  iptables -w -t mangle -N "$chain" >/dev/null 2>&1 || true
+  iptables -w -t mangle -A OUTPUT -m owner --gid-owner 65534 -j RETURN >/dev/null 2>&1 && \
+  { iptables -w -t mangle -D OUTPUT -m owner --gid-owner 65534 >/dev/null 2>&1; return 0; }
 
-  iptables -w -t mangle -A "$chain" -m owner --gid-owner 65534 -j RETURN >/dev/null 2>&1
-  result=$?
-
-  iptables -w -t mangle -F "$chain" >/dev/null 2>&1 || true
-  iptables -w -t mangle -X "$chain" >/dev/null 2>&1 || true
-
-  return "$result"
+  return 1
 }
 
 load_module() {
-  local module="$1"
+  local module="${1:-}"
   local modname="${module%.ko}"
-  local path_os
-  local path_entware
 
-  if lsmod | grep -q "^$modname"; then
-    return 0
-  fi
+  [ -d "/sys/module/$modname" ] && return 0
 
-  path_os="${MODULES_OS_DIR}/${module}"
-  path_entware="${MODULES_ENTWARE_DIR}/${module}"
+  local path_os="${MODULES_OS_DIR}/${module}"
+  local path_entware="${MODULES_ENTWARE_DIR}/${module}"
+  local target_path=""
 
   if [ -f "$path_os" ]; then
-    insmod "$path_os" >/dev/null 2>&1
+    target_path="$path_os"
 
     if [ ! -f "$path_entware" ]; then
       mkdir -p "$MODULES_ENTWARE_DIR"
       cp "$path_os" "$path_entware" 2>/dev/null
     fi
-
-    return 0
+  elif [ -f "$path_entware" ]; then
+    target_path="$path_entware"
   fi
 
-  if [ -f "$path_entware" ]; then
-    insmod "$path_entware" >/dev/null 2>&1 && return 0
+  if [ -n "$target_path" ]; then
+    if insmod "$target_path" >/dev/null 2>&1; then
+      return 0
+    fi
   fi
 
-  echoerr "Module '$module' not found"
+  echoerr "Module '$module' not found or failed to load"
   return 1
 }
 
 loading_modules() {
-  local modules="${1:-}"
+  local modules="${1:-xt_TPROXY.ko xt_socket.ko xt_multiport.ko xt_owner.ko xt_comment.ko}"
   local err_msg="Please install router component: «Kernel modules for Netfilter»"
-  local module
+  local kernel_ver
 
-  [ -z "$modules" ] && modules="xt_TPROXY.ko xt_socket.ko xt_multiport.ko xt_owner.ko xt_comment.ko"
-
-  MODULES_OS_DIR="${MODULES_OS_DIR}/$(uname -r)"
+  kernel_ver="$(uname -r)"
+  MODULES_OS_DIR="${MODULES_OS_DIR}/${kernel_ver}"
 
   for module in $modules; do
     if [ "$module" = "xt_owner.ko" ] && is_owner_module_working; then
       continue
     fi
+
     if ! load_module "$module"; then
       echoerr "$err_msg"
       logger_error "$err_msg"
       press_any_key_to_menu "" 1
+      return 1
     fi
   done
-
-  return 0
 }
 
 get_iptables_list() {
@@ -1611,7 +1603,7 @@ prepare_firewall() {
   local intercept_ports
   local exclude_ports
 
-  echomsg "Preparing a firewall..."
+  echomsg "Preparing a firewall:"
 
   complete_msg="Firewall preparation is complete"
 
