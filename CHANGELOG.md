@@ -1,5 +1,28 @@
 # Changelog
 
+## [4.9.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.4...SKeen-v4.9.0) (2026-04-30)
+
+
+### 🚀 Feat
+
+* **firewall:** add DNS redirect configuration and rule management ([5802050](https://github.com/jinndi/SKeen/commit/5802050c097da7c91306eb83692778011cbf5cee))
+
+
+### 🐛 Fix
+
+* **tproxy:** correct protocol selection logic for prerouting rules ([2a9fc31](https://github.com/jinndi/SKeen/commit/2a9fc315e5c86d39c793e4981c46e1417d24f6be))
+
+
+### 🛠 Refactor
+
+* **kernel:** optimize module loading and owner module detection ([11041b9](https://github.com/jinndi/SKeen/commit/11041b9ba69655c6fa69a09e5eecb7a41136b944))
+* **tproxy:** restructure transparent proxy rule generation logic ([314ec63](https://github.com/jinndi/SKeen/commit/314ec63468fd9def616c8da7646ba70e91514983))
+
+
+### 🧰 Chore
+
+* **firewall:** remove unused case option from firewall preparation ([4ce8404](https://github.com/jinndi/SKeen/commit/4ce84049310cc5a2ea598f388bb776aa9d33728a))
+
 ## [4.8.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.3...SKeen-v4.8.4) (2026-04-29)
 
 
