@@ -270,7 +270,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
   },
   "firewall": {
     "intercept": {
-      "dns": 1,        // Intercept DNS req. via TProxy/Hybrid modes (0 = disabled)
+      "dns": 1,        // Intercept DNS req. via TProxy/Hybrid modes (0 = disabled),
+                       // ignored if redirect_dns is configured (see below)
       "port": []       // Ports to intercept (all if empty).
                        // Example: [ 80, 443, "1000:2000", "1500:5555" ]
     },
@@ -285,6 +286,11 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // Example: [ "192.87.1.0/24", "192.12.1.1" ]
       "ipv6_cidr": []  // Excluded IPv6 subnets for redirection.
                        // Example: [ "2001:db8::/32", "2001:db8::1" ]
+    },
+    "redirect_dns": {
+      "enable": 0,     // Set to 1 to enable DNS redirection before system rules
+      "to_port": "",   // The port to which DNS requests will be redirected
+      "use_policy": 1  // Use defined policy if configured (0 = disabled)
     }
   }
 }
