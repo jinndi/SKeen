@@ -94,6 +94,10 @@ Traffic enters this chain based on the router's policy `fwmark`. It follows this
 
 ---
 
+### Hybrid - utilizes combined rules for router proxying: `redirect` (TCP) and `tproxy` (UDP).
+
+---
+
 ### Router Proxying. `OUTPUT` chains named **skeen_mask**
 
 Depending on the firewall mode and router proxying settings (on/off), chains are created in both `nat` and `mangle` tables attached to the `OUTPUT` chain respectively.
@@ -105,6 +109,10 @@ Entry into these chains is restricted to processes not belonging to the `skeen` 
 
 * **MARK** - marks local outgoing traffic, which then enters `PREROUTING` where it is processed based on this mark. If policy-based routing is enabled in the SKeen config, it is processed via the **skeen** chain (added as a second instance after the main client chain), or simply directed to the client chain if proxying is configured without policies.
 * **CONNMARK save** - saves the mark to the entire connection (conntrack) for firewall "memory."
+
+3. `hybrid` mode utilizes combined rules for router proxying: `redirect` (TCP) and `tproxy` (UDP).
+
+4. In other modes, the `service_proxy` option can be configured in `skeen.json`, specifically for Sing-Box updates, SKeen script, and configuration synchronization via `skeen sync`.
 
 </details>
 
@@ -300,8 +308,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "use_policy": 1  // Use defined policy if configured (0 = disabled)
     },
     "proxy_router": 0  // If set to 1, all router services will be proxied.
-                       // Available in redirect, tproxy, and mixed modes;
-                       // port exceptions and interception rules will also apply.
+                       // Available in redirect, tproxy, and hybrid modes;
+                       // subnet exclusions, as well as port bypass and interception rules, are respected.
   }
 }
 
