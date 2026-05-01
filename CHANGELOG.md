@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.10.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.9.0...SKeen-v4.10.0) (2026-05-01)
+
+
+### 🚀 Feat
+
+* **firewall:** add proxy router option ([0d145a5](https://github.com/jinndi/SKeen/commit/0d145a5e51550fac9bf77aa29ea843aa0981086d))
+
+
+### 🐛 Fix
+
+* **firewall:** extend route rule bypass for tun and none modes ([3324b43](https://github.com/jinndi/SKeen/commit/3324b43a9007b741f7ad92d70c6ec456ea152d61)), closes [#151](https://github.com/jinndi/SKeen/issues/151)
+* **firewall:** skip route rule set when firewall mode is redirect ([0dc1f6e](https://github.com/jinndi/SKeen/commit/0dc1f6e19b7e30e15a988bef77d932d5603cc616))
+
+
+### 🛠 Refactor
+
+* **firewall:** consolidate port rule logic with unified dispatch system ([466aabe](https://github.com/jinndi/SKeen/commit/466aabe5b16dbf393ce5ed1c4a22b568cb7d768e))
+* simplify chain rule logic with case-based dispatch ([e31060e](https://github.com/jinndi/SKeen/commit/e31060e6c718c320c058bfdcf09f34d4807185ba))
+
 ## [4.9.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.8.4...SKeen-v4.9.0) (2026-04-30)
 
 
