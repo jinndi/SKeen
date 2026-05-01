@@ -68,36 +68,43 @@ The project intentionally does not include a dedicated management panel. This ap
   <summary>🧩 Architecture ?</summary>
 <br>
 
-### Redirect — Utilized in `redirect` and `hybrid` modes (TCP)
+### Redirect - utilized in `redirect` (TCP) and `hybrid` (TCP) modes, as well as for router-level proxying
 
-Uses a single `nat` chain — **skeen**:
+The PREROUTING chain in the `nat` table is used under the name **skeen**:
 
-Entry into this chain can be triggered by the router policy's `fwmark`, specific ports, or port exclusions. It follows this rule order:
+Traffic enters this chain based on the router's policy `fwmark`. It follows this rule order:
 
-* **RETURN**: Bypasses local, reserved, and user-defined addresses.
-* **REDIRECT**: Redirects TCP traffic to the Sing-Box `redirect` port.
-
-> DNS request interception via NAT is not available for Sing-Box in `redirect` mode.
+* **ACCEPT** - bypasses ports defined in `skeen.json` (only if the "work on selected ports" option is disabled).
+* **ACCEPT** - bypasses local, reserved, and user-defined addresses.
+* **REDIRECT** - redirects TCP traffic to the Sing-Box `redirect` port, including only those ports specified in the `skeen.json` settings.
 
 ---
 
-### TProxy — Utilized in `tproxy` and `hybrid` modes (UDP)
+### TProxy - utilized in `tproxy` (TCP & UDP) and `hybrid` (UDP) modes, as well as for router-level proxying
 
-Uses two base chains within the `mangle` table:
+The PREROUTING chain in the `mangle` table is used under the name **skeen**:
 
-#### 1. PREROUTING **skeen**
-Entry into this chain can be triggered by the router policy's `fwmark`, specific ports, or port exclusions. It follows this rule order:
+Traffic enters this chain based on the router's policy `fwmark`. It follows this rule order:
 
-* **DNS TPROXY**: TCP/UDP redirection of port 53 to the Sing-Box TProxy port (optional).
-* **RETURN**: Bypasses local, reserved, and user-defined addresses.
-* **MARK + ACCEPT SOCKET**: Fast path for established transparent sockets.
-* **TPROXY**: Directs remaining TCP/UDP traffic to the Sing-Box TProxy port.
+* **DNS TPROXY** - redirects TCP/UDP port 53 traffic to the Sing-Box TProxy port (optional, otherwise - ACCEPT).
+* **ACCEPT** - bypasses ports defined in `skeen.json` (only if the "work on selected ports" option is disabled).
+* **ACCEPT** - bypasses local, reserved, and user-defined addresses.
+* **TCP MARK + ACCEPT SOCKET** - a "fast path" for already established transparent sockets (socket transparent).
+* **TPROXY** - directs the remaining TCP/UDP traffic to the Sing-Box TProxy port, or only those ports specified in the `skeen.json` settings.
 
-#### 2. OUTPUT **skeen_mask**
-Entry into this chain is restricted to processes NOT belonging to the `skeen` group (to prevent proxy self-looping). It follows this rule order:
+---
 
-* **RETURN**: Bypasses local, reserved, and user-defined addresses.
-* **MARK**: Applies general marking for TCP/UDP traffic.
+### Router Proxying. `OUTPUT` chains named **skeen_mask**
+
+Depending on the firewall mode and router proxying settings (on/off), chains are created in both `nat` and `mangle` tables attached to the `OUTPUT` chain respectively.
+
+Entry into these chains is restricted to processes not belonging to the `skeen` group (to prevent proxy self-looping). It follows this rule order:
+
+1. `redirect` mode, `nat` table in `OUTPUT` named `skeen_mask`: mirrors the logic of the Redirect **skeen** chain.
+2. `tproxy` mode, `mangle` table in `OUTPUT` named `skeen_mask`: mirrors the logic of the TProxy chain, except for DNS rules and direct traffic redirection to Sing-Box. Instead, it concludes with:
+
+* **MARK** - marks local outgoing traffic, which then enters `PREROUTING` where it is processed based on this mark. If policy-based routing is enabled in the SKeen config, it is processed via the **skeen** chain (added as a second instance after the main client chain), or simply directed to the client chain if proxying is configured without policies.
+* **CONNMARK save** - saves the mark to the entire connection (conntrack) for firewall "memory."
 
 </details>
 
@@ -291,7 +298,10 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "enable": 0,     // Set to 1 to enable DNS redirection before system rules
       "to_port": "",   // The port to which DNS requests will be redirected
       "use_policy": 1  // Use defined policy if configured (0 = disabled)
-    }
+    },
+    "proxy_router": 0  // If set to 1, all router services will be proxied.
+                       // Available in redirect, tproxy, and mixed modes;
+                       // port exceptions and interception rules will also apply.
   }
 }
 
