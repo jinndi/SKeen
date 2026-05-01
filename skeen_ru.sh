@@ -193,7 +193,8 @@ create_skeen_config() {
       "enable": 0,
       "to_port": "",
       "use_policy": 1
-    }
+    },
+    "proxy_router": 0
   }
 }
 EOF
@@ -247,7 +248,8 @@ loading_config() {
       -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
       -e FIREWALL_REDIRECT_DNS_ENABLE='@.firewall.redirect_dns.enable' \
       -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
-      -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy'
+      -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
+      -e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router'
   )"
 
   : "${AUTO_START_ENABLE:=1}"
@@ -267,6 +269,7 @@ loading_config() {
   : "${FIREWALL_REDIRECT_DNS_ENABLE:=0}"
   : "${FIREWALL_REDIRECT_DNS_PORT:=}"
   : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
+  : "${FIREWALL_PROXY_ROUTER:=0}"
 
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
     SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
@@ -920,8 +923,14 @@ check_port() {
 is_owner_module_working() {
   [ -d "/sys/module/xt_owner" ] && return 0
 
-  iptables -w -t mangle -A OUTPUT -m owner --gid-owner 65534 -j RETURN >/dev/null 2>&1 && \
-  { iptables -w -t mangle -D OUTPUT -m owner --gid-owner 65534 >/dev/null 2>&1; return 0; }
+  if iptables -m owner --help 2>&1 | grep -q "owner match options"; then
+    return 0
+  fi
+
+  if iptables -w -t mangle -I OUTPUT 1 -m owner --gid-owner 65534 -j RETURN >/dev/null 2>&1; then
+    iptables -w -t mangle -D OUTPUT 1 >/dev/null 2>&1
+    return 0
+  fi
 
   return 1
 }
@@ -1045,7 +1054,7 @@ EOF
   [ -n "$mark" ] && echo "0x$mark"
 }
 
-set_route_rules() {
+check_and_set_route_rules() {
   check_default_route() {
     local target="1.1.1.1"
     [ "$IP_VERSION" = "6" ] && target="2606:4700:4700::1111"
@@ -1327,16 +1336,16 @@ add_skeen_rules() {
     fi
     ;;
   "redirect")
-      protos="tcp"
-      rule="-j REDIRECT --to-port $SKEEN_REDIRECT_PORT"
+    protos="tcp"
+    rule="-j REDIRECT --to-port $SKEEN_REDIRECT_PORT"
 
-      if [ -z "$ports" ]; then
-        # shellcheck disable=SC2086
-        add_rule "$iptables" "$table" "$chain" -p tcp $rule
-      else
-        apply_port_rules "$iptables" "$table" "$chain" "$ports" "$protos" "$rule"
-      fi
-      ;;
+    if [ -z "$ports" ]; then
+      # shellcheck disable=SC2086
+      add_rule "$iptables" "$table" "$chain" -p tcp $rule
+    else
+      apply_port_rules "$iptables" "$table" "$chain" "$ports" "$protos" "$rule"
+    fi
+    ;;
   esac
 }
 
@@ -1370,10 +1379,15 @@ set_chain_rules() {
     ;;
 
   "$CHAIN_OUTPUT")
-    add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_EXCLUDE_PORTS" "exclude"
-    for proto in $SKEEN_TPROXY_NETWORK; do
-      add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --set-mark "$TABLE_MARK"
-    done
+      add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_EXCLUDE_PORTS" "exclude"
+      if [ "$table" = "mangle" ]; then
+        for proto in $SKEEN_TPROXY_NETWORK; do
+          add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
+          add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
+        done
+      elif [ "$table" = "nat" ]; then
+        add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_INTERCEPT_PORTS" "redirect"
+      fi
     ;;
   esac
 }
@@ -1386,10 +1400,9 @@ set_prerouting_rule() {
   [ -n "$SKEEN_MARK_POLICY" ] &&
     connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
 
-  local rule="PREROUTING \
-    $connmark_option \
+  local rule="PREROUTING $connmark_option \
     -m conntrack ! --ctstate INVALID \
-    -j $CHAIN_PREROUTING"
+    -g $CHAIN_PREROUTING"
 
   # shellcheck disable=SC2086
   if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
@@ -1397,15 +1410,16 @@ set_prerouting_rule() {
   fi
 }
 
-set_output_rule() {
+set_output_router_rule() {
   local iptables="$1"
   local table="$2"
   local proto
 
   case "$SKEEN_FIREWALL_MODE" in
-  tproxy) proto='! -p icmp' ;;
-  hybrid) proto='-p udp' ;;
-  *) return 0 ;;
+    tproxy) proto='! -p icmp' ;;
+    hybrid) if [ "$table" = "nat" ]; then proto='-p tcp'; else proto='-p udp'; fi ;;
+    redirect) proto='-p tcp' ;;
+    *) return 0 ;;
   esac
 
   local rule="-m owner ! --gid-owner $SKEEN_PROC \
@@ -1413,8 +1427,31 @@ set_output_rule() {
 
   # shellcheck disable=SC2086
   if ! $iptables -t "$table" -C OUTPUT $rule >/dev/null 2>&1; then
-    $iptables -t "$table" -I OUTPUT $rule >/dev/null 2>&1
+    $iptables -t "$table" -A OUTPUT $rule
   fi
+}
+
+set_prerouting_router_rule() {
+  local iptables="${1:-}"
+  local table="${2:-}"
+
+  [ -z "$SKEEN_MARK_POLICY" ] && return 0
+
+  local rule="PREROUTING -m mark --mark $TABLE_MARK \
+    -m conntrack ! --ctstate INVALID -g $CHAIN_PREROUTING"
+
+  # shellcheck disable=SC2086
+  if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
+    $iptables -t "$table" -A $rule >/dev/null 2>&1
+  fi
+}
+
+set_proxy_router_rules()  {
+  local iptables="${1:-}"
+  local table="${2:-}"
+  set_chain_rules "$iptables" "$table" "$CHAIN_OUTPUT"
+  set_output_router_rule "$iptables" "$table"
+  [ "$table" != "nat" ] && set_prerouting_router_rule "$iptables" "$table"
 }
 
 release_version_ge5() {
@@ -1714,6 +1751,9 @@ prepare_firewall() {
   fi
   [ "$route_all" = 1 ] && echowarn "Маршрутизация для всего устройства"
 
+  SKEEN_PROXY_ROUTER="0"
+  [ "$FIREWALL_PROXY_ROUTER" = "1" ] && SKEEN_PROXY_ROUTER="1"
+
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
@@ -1791,6 +1831,7 @@ prepare_firewall() {
     echo "export SKEEN_REDIRECT_DNS_ENABLE=\"$SKEEN_REDIRECT_DNS_ENABLE\""
     echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
     echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
+    echo "export SKEEN_PROXY_ROUTER=\"$SKEEN_PROXY_ROUTER\""
 
     echo "$SKEEN_PROC apply_firewall netfilter"
   } >"$FIREWALL_HOOK_FILE"
@@ -1846,7 +1887,7 @@ apply_firewall() {
       PROXY_IP="::1"
     fi
 
-    set_route_rules
+    check_and_set_route_rules
 
     if [ -f "$WAIT_ROUTE_FILE" ]; then
       eth_subnet="$(get_eth_subnet "$IP_VERSION")"
@@ -1858,18 +1899,16 @@ apply_firewall() {
       for table in "$TABLE_TPROXY" "$TABLE_REDIRECT"; do
         set_chain_rules "$iptables" "$table" "$CHAIN_PREROUTING"
         set_prerouting_rule "$iptables" "$table"
+        [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$table"
       done
     elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
       set_chain_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING"
       set_prerouting_rule "$iptables" "$TABLE_TPROXY"
+      [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$TABLE_TPROXY"
     elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
       set_chain_rules "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING"
       set_prerouting_rule "$iptables" "$TABLE_REDIRECT"
-    fi
-
-    if [ "$SKEEN_FIREWALL_MODE" != "redirect" ]; then
-      set_chain_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_OUTPUT"
-      set_output_rule "$iptables" "$TABLE_TPROXY"
+      [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$TABLE_REDIRECT"
     fi
   done
 
@@ -1893,7 +1932,6 @@ clean_firewall() {
     local table="$2"
     local chain="$3"
     local parent="$4"
-    local ip_ver set_name
 
     if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
       return 0
@@ -1917,9 +1955,10 @@ clean_firewall() {
     $ipt_cmd -w -t nat -S $CHAIN_DNS 2>/dev/null | \
     sed -n "s/^-A /${ipt_cmd} -w -t nat -D /p" | grep "skeen_dns" | sh
 
-    clean_chain "$ipt_cmd" nat "$CHAIN_PREROUTING" PREROUTING
-    clean_chain "$ipt_cmd" mangle "$CHAIN_PREROUTING" PREROUTING
-    clean_chain "$ipt_cmd" mangle "$CHAIN_OUTPUT" OUTPUT
+    for table in nat mangle; do
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_PREROUTING" PREROUTING
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_OUTPUT" OUTPUT
+    done
   done
 
   # 3. routing cleanup
@@ -2409,7 +2448,10 @@ fw_test_chain() {
   # $2 — chain
   # $3 — iptables
 
-  cyan "Тест $1 $3 $2"
+  local ref="PREROUTING"
+  [ "$2" = "skeen_mask" ] && ref="OUTPUT"
+
+  cyan "Тест $ref $1 $2"
 
   content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
@@ -2428,10 +2470,22 @@ fw_test_chain() {
     return 0
   fi
 
-  fw_test "$1" "$2" "$content" "$BYPASS_NET_SET" "Excludes"
+  if [ -n "$SKEEN_EXCLUDE_PORTS" ]; then
+    # shellcheck disable=SC2015
+    fw_test "$1" "$2" "$content" "multiport" "Port bypass"
+  fi
+
+  fw_test "$1" "$2" "$content" "$BYPASS_NET_SET" "Subnet bypass"
 
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
-    fw_test "$1" "$2" "$content" "CONNMARK" "Connmark"
+    fw_test "$1" "$2" "$content" "MARK" "Mark set"
+    fw_test "$1" "$2" "$content" "CONNMARK" "Connmark save"
+  elif [ "$1" = "nat" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
+    if [ -z "$SKEEN_INTERCEPT_PORTS" ]; then
+      fw_test "$1" "$2" "$content" "redir" "Redirect all"
+    else
+      fw_test "$1" "$2" "$content" "dports .* redir" "Redirect ports"
+    fi
   fi
 
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
@@ -2440,16 +2494,15 @@ fw_test_chain() {
     fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS intercept"
   fi
 
-  if [ -n "$SKEEN_INTERCEPT_PORTS" ] || [ -n "$SKEEN_EXCLUDE_PORTS" ]; then
-    # shellcheck disable=SC2015
-    fw_test "$1" "$2" "$($3 -t "$1" -nvL 2>/dev/null)" "multiport" "Multiport"
-  fi
-
   if [ "$1" = "mangle" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcp" ]; then
-    fw_test "$1" "$2" "$content" "socket" "Socket"
+    fw_test "$1" "$2" "$content" "tcp .* socket" "Socket tcp"
   fi
 
-  fw_test "$1" "$2" "$content" "redir|redirect" "Redirect"
+  if [ -z "$SKEEN_INTERCEPT_PORTS" ]; then
+    fw_test "$1" "$2" "$content" "redir|redirect" "Redirect all"
+  else
+    fw_test "$1" "$2" "$content" "dports .* (redir|redirect)" "Redirect ports"
+  fi
 }
 
 test_firewall() {
@@ -2487,19 +2540,24 @@ test_firewall() {
     press_any_key_to_menu "" 1
   fi
 
-  if [ "$SKEEN_FIREWALL_MODE" = "tun" ] || [ "$SKEEN_TUN_ENABLED" = "1" ]; then
+  if [ "$SKEEN_FIREWALL_MODE" = "tun" ]; then
     fw_test_chain filter "$CHAIN_TUN" "iptables"
   else
     for iptables in $SKEEN_IPTABLES_LIST; do
       [ "$iptables" = "ip6tables" ] && echo "$DELIMETER"
+      yellow "Тестирование: $(cyan "$iptables")"
+      echo "$DELIMETER"
 
       [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ] && fw_test_chain nat "$CHAIN_DNS" "$iptables"
 
       for table in $tables; do
         fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
+        [ "$SKEEN_PROXY_ROUTER" = "1" ] &&
+          fw_test_chain "$table" "$CHAIN_OUTPUT" "$iptables"
       done
 
-      [ "$tables" != "nat" ] && fw_test_chain mangle "$CHAIN_OUTPUT" "$iptables"
+      [ "$SKEEN_TUN_ENABLED" = "1" ] && [ "$iptables" = "iptables" ] &&
+        fw_test_chain filter "$CHAIN_TUN" "iptables"
     done
   fi
 
