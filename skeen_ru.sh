@@ -1439,7 +1439,7 @@ set_prerouting_router_rule() {
 
   [ -z "$SKEEN_MARK_POLICY" ] && return 0
 
-  local rule="PREROUTING -m mark --mark $TABLE_MARK \
+  local rule="PREROUTING -m connmark --mark $TABLE_MARK \
     -m conntrack ! --ctstate INVALID -g $CHAIN_PREROUTING"
 
   # shellcheck disable=SC2086
