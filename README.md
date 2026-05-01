@@ -292,10 +292,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     },
     "exclude": {
       "port": [
-        123, 137,
-        138, 139,
-        445            // Ports excluded from redirect
-                       // (ignored if `intercept.port` is set)
+        "137:139",     // Ports excluded from redirect
+        445, 1900      // (ignored if `intercept.port` is set)
       ],
       "ipv4_cidr": [], // Excluded IPv4 subnets for redirection.
                        // Example: [ "192.87.1.0/24", "192.12.1.1" ]
