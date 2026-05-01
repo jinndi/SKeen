@@ -1386,6 +1386,7 @@ set_chain_rules() {
         for proto in $SKEEN_TPROXY_NETWORK; do
           add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
           add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
+          add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
         done
       elif [ "$table" = "nat" ]; then
         add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_INTERCEPT_PORTS" "redirect"
