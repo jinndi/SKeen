@@ -1084,7 +1084,9 @@ check_and_set_route_rules() {
     press_any_key_to_menu "" 1; return 1
   fi
 
-  [ "$SKEEN_FIREWALL_MODE" = "redirect" ] && return 0
+  case "$SKEEN_FIREWALL_MODE" in
+    redirect|tun|none) return 0 ;;
+  esac
 
   ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
   ip -"$IP_VERSION" route flush table "$TABLE_ID" >/dev/null 2>&1 || true
