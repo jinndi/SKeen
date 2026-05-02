@@ -1292,6 +1292,19 @@ add_skeen_rules() {
     port_match="-m set --match-set $PORT_INTERCEPT_SET dst"
 
   case "$type" in
+  "connmark")
+    local connmark_options=""
+
+    [ -n "$SKEEN_MARK_POLICY" ] &&
+      connmark_options="-m connmark ! --mark $SKEEN_MARK_POLICY"
+
+    [ "$SKEEN_PROXY_ROUTER" = "1" ] &&
+      connmark_options="$connmark_options -m connmark ! --mark $TABLE_MARK"
+
+    # shellcheck disable=SC2086
+    [ -n "$connmark_options" ] &&
+      add_rule "$iptables" "$table" "$chain" $connmark_options -j ACCEPT
+    ;;
   "exclude")
     if [ "$SKEEN_EXCLUDE_PORT" = "1" ]; then
       for p in tcp udp; do
@@ -1335,6 +1348,8 @@ set_chain_rules() {
   case "$chain" in
   "$CHAIN_PREROUTING")
     if [ "$table" = "mangle" ]; then
+      add_skeen_rules "$iptables" "$table" "$chain" "connmark"
+
       for proto in $SKEEN_TPROXY_NETWORK; do
         if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
           add_rule "$iptables" "$table" "$chain" \
@@ -1354,7 +1369,9 @@ set_chain_rules() {
     ;;
 
   "$CHAIN_OUTPUT")
+    add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
     add_skeen_rules "$iptables" "$table" "$chain" "exclude"
+
     if [ "$table" = "mangle" ]; then
       for proto in $SKEEN_TPROXY_NETWORK; do
         add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
@@ -1371,14 +1388,7 @@ set_chain_rules() {
 set_prerouting_rule() {
   local iptables="${1:-}"
   local table="${2:-}"
-  local connmark_option
-
-  [ -n "$SKEEN_MARK_POLICY" ] &&
-    connmark_option="-m connmark --mark $SKEEN_MARK_POLICY"
-
-  local rule="PREROUTING $connmark_option \
-    -m conntrack ! --ctstate INVALID \
-    -g $CHAIN_PREROUTING"
+  local rule="PREROUTING -m conntrack ! --ctstate INVALID -g $CHAIN_PREROUTING"
 
   # shellcheck disable=SC2086
   if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
@@ -1389,36 +1399,12 @@ set_prerouting_rule() {
 set_output_router_rule() {
   local iptables="$1"
   local table="$2"
-  local proto
 
-  case "$SKEEN_FIREWALL_MODE" in
-    tproxy) proto='! -p icmp' ;;
-    hybrid) if [ "$table" = "nat" ]; then proto='-p tcp'; else proto='-p udp'; fi ;;
-    redirect) proto='-p tcp' ;;
-    *) return 0 ;;
-  esac
-
-  local rule="-m owner ! --gid-owner $SKEEN_PROC \
-    -m conntrack ! --ctstate INVALID $proto -j $CHAIN_OUTPUT"
-
-  # shellcheck disable=SC2086
-  if ! $iptables -t "$table" -C OUTPUT $rule >/dev/null 2>&1; then
-    $iptables -t "$table" -A OUTPUT $rule
-  fi
-}
-
-set_prerouting_router_rule() {
-  local iptables="${1:-}"
-  local table="${2:-}"
-
-  [ -z "$SKEEN_MARK_POLICY" ] && return 0
-
-  local rule="PREROUTING -m connmark --mark $TABLE_MARK \
-    -m conntrack ! --ctstate INVALID -g $CHAIN_PREROUTING"
+  local rule="OUTPUT -m conntrack ! --ctstate INVALID -g $CHAIN_OUTPUT"
 
   # shellcheck disable=SC2086
   if ! $iptables -t "$table" -C $rule >/dev/null 2>&1; then
-    $iptables -t "$table" -A $rule >/dev/null 2>&1
+    $iptables -t "$table" -A $rule
   fi
 }
 
@@ -1427,7 +1413,6 @@ set_proxy_router_rules()  {
   local table="${2:-}"
   set_chain_rules "$iptables" "$table" "$CHAIN_OUTPUT"
   set_output_router_rule "$iptables" "$table"
-  [ "$table" != "nat" ] && set_prerouting_router_rule "$iptables" "$table"
 }
 
 release_version_ge5() {
