@@ -1555,7 +1555,7 @@ set_tun_rules() {
   apply_rule filter INPUT -i opkgtun+ -j "$CHAIN_TUN"
   apply_rule filter "$CHAIN_TUN" -i opkgtun+ -j ACCEPT
   apply_rule filter "$CHAIN_TUN" -o opkgtun+ -j ACCEPT
-  apply_rule nat POSTROUTING -o opkgtun+ -j MASQUERADE
+  apply_rule nat POSTROUTING -o opkgtun+ -j MASQUERADE -m comment --comment "$CHAIN_TUN"
 }
 
 prepare_firewall() {
@@ -1917,13 +1917,6 @@ apply_firewall() {
 clean_firewall() {
   echomsg "Очистка правил фаервола..."
 
-  # 1. tun cleanup
-  while iptables -t nat -D POSTROUTING -o opkgtun+ -j MASQUERADE 2>/dev/null; do :; done
-  iptables -D INPUT -i opkgtun+ -j "$CHAIN_TUN" 2>/dev/null
-  iptables -F "$CHAIN_TUN" 2>/dev/null
-  iptables -X "$CHAIN_TUN" 2>/dev/null
-
-  # 2. remove chains
   clean_chain() {
     local iptables="$1"
     local table="$2"
@@ -1941,22 +1934,29 @@ clean_firewall() {
     $iptables -w -t "$table" -X "$chain" 2>/dev/null
   }
 
+  # 1. tun rules
+  iptables -t nat -S POSTROUTING 2>/dev/null | \
+    grep "$CHAIN_TUN" | sed "s/^-A/iptables -w -t nat -D/" | sh 2>/dev/null
+  clean_chain "iptables" "filter" "$CHAIN_TUN" "INPUT"
+
   for ipt_cmd in iptables ip6tables; do
+    # 2. DNS redirect
     $ipt_cmd -w -t nat -S $CHAIN_DNS 2>/dev/null | \
     sed -n "s/^-A /${ipt_cmd} -w -t nat -D /p" | grep "skeen_dns" | sh
 
+    # 3. skeen PREROUTING & skeen_mask OUTPUT
     for table in nat mangle; do
       clean_chain "$ipt_cmd" "$table" "$CHAIN_PREROUTING" PREROUTING
       clean_chain "$ipt_cmd" "$table" "$CHAIN_OUTPUT" OUTPUT
     done
   done
 
-  # 3. routing cleanup
+  # 4. routing cleanup
   ip -4 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
   ip -6 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
   ip route flush table "$TABLE_ID" 2>/dev/null
 
-  # 4. ipset cleanup
+  # 5. ipset cleanup
   if command -v ipset >/dev/null 2>&1; then
     for ip_ver in 4 6; do
       set_name="${NET_EXCLUDE_SET}${ip_ver}"
@@ -1970,7 +1970,7 @@ clean_firewall() {
     done
   fi
 
-  # 5. cleanup hook
+  # 6. cleanup hook
   rm -f "$FIREWALL_HOOK_FILE" 2>/dev/null
 
   echook "Очистка фаервола завершена"
