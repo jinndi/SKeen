@@ -70,10 +70,11 @@ The project intentionally does not include a dedicated management panel. This ap
 
 ### Redirect - utilized in `redirect` (TCP) and `hybrid` (TCP) modes, as well as for router-level proxying
 
-The PREROUTING chain in the `nat` table is used under the name **skeen**:
+The goto PREROUTING chain in the `nat` table is used under the name **skeen**:
 
-Traffic enters this chain based on the router's policy `fwmark`. It follows this rule order:
+It follows this rule order:
 
+* **ACCEPT** - bypasses all router policies based on `fwmark`, except for those configured in skeen.json (optional).
 * **ACCEPT** - bypasses ports defined in `skeen.json` (only if the "work on selected ports" option is disabled).
 * **ACCEPT** - bypasses local, reserved, and user-defined addresses.
 * **REDIRECT** - redirects TCP traffic to the Sing-Box `redirect` port, including only those ports specified in the `skeen.json` settings.
@@ -82,10 +83,11 @@ Traffic enters this chain based on the router's policy `fwmark`. It follows this
 
 ### TProxy - utilized in `tproxy` (TCP & UDP) and `hybrid` (UDP) modes, as well as for router-level proxying
 
-The PREROUTING chain in the `mangle` table is used under the name **skeen**:
+The goto PREROUTING chain in the `mangle` table is used under the name **skeen**:
 
-Traffic enters this chain based on the router's policy `fwmark`. It follows this rule order:
+It follows this rule order:
 
+* **ACCEPT** - bypasses all router policies based on `fwmark`, except for those configured in skeen.json (optional).
 * **DNS TPROXY** - redirects TCP/UDP port 53 traffic to the Sing-Box TProxy port (optional, otherwise - ACCEPT).
 * **ACCEPT** - bypasses ports defined in `skeen.json` (only if the "work on selected ports" option is disabled).
 * **ACCEPT** - bypasses local, reserved, and user-defined addresses.
