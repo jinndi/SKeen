@@ -104,7 +104,7 @@ It follows this rule order:
 
 Depending on the firewall mode and router proxying settings (on/off), chains are created in both `nat` and `mangle` tables attached to the `OUTPUT` chain respectively.
 
-Entry into these chains is restricted to processes not belonging to the `skeen` group (to prevent proxy self-looping). It follows this rule order:
+Instead of filtering by router policies, it filters processes that do not belong to the `skeen` group (to prevent routing loops). The rules are applied in the following order:
 
 1. `redirect` mode, `nat` table in `OUTPUT` named `skeen_mask`: mirrors the logic of the Redirect **skeen** chain.
 2. `tproxy` mode, `mangle` table in `OUTPUT` named `skeen_mask`: mirrors the logic of the TProxy chain, except for DNS rules and direct traffic redirection to Sing-Box. Instead, it concludes with:
