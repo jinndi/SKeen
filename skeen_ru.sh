@@ -1350,8 +1350,9 @@ set_chain_rules() {
 
   case "$chain" in
   "$CHAIN_PREROUTING")
+    add_skeen_rules "$iptables" "$table" "$chain" "connmark"
+
     if [ "$table" = "mangle" ]; then
-      add_skeen_rules "$iptables" "$table" "$chain" "connmark"
 
       for proto in $SKEEN_TPROXY_NETWORK; do
         if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
@@ -2453,6 +2454,14 @@ fw_test_chain() {
   content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
   fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
+
+  if [ "$2" = "$CHAIN_PREROUTING" ] && [ -n "$SKEEN_MARK_POLICY" ]; then
+    fw_test "$1" "$2" "$content" "connmark match" "Connmark match"
+  fi
+
+  if [ "$2" = "$CHAIN_OUTPUT" ]; then
+    fw_test "$1" "$2" "$content" "owner" "Process owner"
+  fi
 
   if [ "$2" = "$CHAIN_DNS" ]; then
     fw_test "$1" "$2" "$content" "skeen_dns" "Redirect"
