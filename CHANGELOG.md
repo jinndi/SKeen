@@ -1,5 +1,34 @@
 # Changelog
 
+## [4.11.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.10.0...SKeen-v4.11.0) (2026-05-02)
+
+
+### 🚀 Feat
+
+* **firewall:** implement protocol-aware rule generation ([91b16a1](https://github.com/jinndi/SKeen/commit/91b16a15800591e351299f65c7c62bfee985240d))
+* **firewall:** use ipset for port lists ([1f4bde6](https://github.com/jinndi/SKeen/commit/1f4bde6894e3c3f4c479c214fadcd66511ca1c33))
+
+
+### 🐛 Fix
+
+* **firewall:** apply connmark rules unconditionally in PREROUTING chain ([91318a7](https://github.com/jinndi/SKeen/commit/91318a747a2f0fec6e9d7e8e7af1eeef2d12ee5a))
+* **firewall:** apply socket MARK and ACCEPT rules only for TCP in SKEEN_TPROXY_NETWORK ([271367a](https://github.com/jinndi/SKeen/commit/271367a0e2e3c592d7560d196457a6bf953f564f))
+* **firewall:** ensure TABLE_MARK filter only applies with active mark policy ([54f9c44](https://github.com/jinndi/SKeen/commit/54f9c44e26ee4577644e13c28201d25a3822f8d0))
+* **firewall:** improve cleanup reliability with comment-based rule removal ([ebdecd9](https://github.com/jinndi/SKeen/commit/ebdecd9959c7d21ad13dad792a4ab19c788b06d0))
+* **firewall:** use connmark instead of mark in PREROUTING router rule ([904d018](https://github.com/jinndi/SKeen/commit/904d0182d51be95746195fc1d16ea36119652444))
+
+
+### 🛠 Refactor
+
+* **firewall:** move mark and gid filters inside chains ([03e6f92](https://github.com/jinndi/SKeen/commit/03e6f9268513880e0f9d4c5f7f03947ae97d6ee5))
+* **firewall:** simplify chain cleanup using rule command output ([8833333](https://github.com/jinndi/SKeen/commit/8833333705af1be19886eab9087ad5855c5eb3b8))
+
+
+### 🧰 Chore
+
+* **config:** update default excluded ports format and values ([b050b7a](https://github.com/jinndi/SKeen/commit/b050b7a95779fe96cd9be271955d5caf0956a718))
+* **firewall:** add ACCEPT rule for marked TPROXY traffic in mangle table ([7bc8ea8](https://github.com/jinndi/SKeen/commit/7bc8ea80e4f06c0756e37b3a290ad8469dc7f308))
+
 ## [4.10.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.9.0...SKeen-v4.10.0) (2026-05-01)
 
 
