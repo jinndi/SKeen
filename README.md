@@ -77,7 +77,7 @@ It follows this rule order:
 * **ACCEPT** - bypasses all router policies based on `fwmark`, except for those configured in skeen.json (optional).
 * **ACCEPT** - bypasses ports defined in `skeen.json` (only if the "work on selected ports" option is disabled).
 * **ACCEPT** - bypasses local, reserved, and user-defined addresses.
-* **REDIRECT** - redirects TCP traffic to the Sing-Box `redirect` port, including only those ports specified in the `skeen.json` settings.
+* **REDIRECT** - redirects TCP traffic to the Sing-Box `redirect` port.
 
 ---
 
@@ -92,7 +92,7 @@ It follows this rule order:
 * **ACCEPT** - bypasses ports defined in `skeen.json` (only if the "work on selected ports" option is disabled).
 * **ACCEPT** - bypasses local, reserved, and user-defined addresses.
 * **TCP MARK + ACCEPT SOCKET** - a "fast path" for already established transparent sockets (socket transparent).
-* **TPROXY** - directs the remaining TCP/UDP traffic to the Sing-Box TProxy port, or only those ports specified in the `skeen.json` settings.
+* **TPROXY** - directs the remaining TCP/UDP traffic to the Sing-Box TProxy port.
 
 ---
 
