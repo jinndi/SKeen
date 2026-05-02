@@ -48,7 +48,9 @@ SINGBOX_SPACE_MB=128
 
 FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
 WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
-BYPASS_NET_SET="skeen_bypass_net"
+NET_EXCLUDE_SET="skeen_exclude_net"
+PORT_INTERCEPT_SET="skeen_intercept_port"
+PORT_EXCLUDE_SET="skeen_exclude_port"
 CHAIN_PREROUTING="skeen"
 CHAIN_OUTPUT="skeen_mask"
 CHAIN_TUN="skeen_tun"
@@ -967,7 +969,7 @@ load_module() {
 }
 
 loading_modules() {
-  local modules="${1:-xt_TPROXY.ko xt_socket.ko xt_multiport.ko xt_owner.ko xt_comment.ko}"
+  local modules="${1:-xt_TPROXY.ko xt_socket.ko xt_owner.ko xt_comment.ko ip_set_bitmap_port.ko}"
   local err_msg="Установите компонент роутера: «Модули ядра подсистемы Netfilter»"
   local kernel_ver
 
@@ -1142,70 +1144,69 @@ is_valid_ipv6() {
 get_validate_ports() {
   local label="${1:-}"
   local input="${2:-}"
-  local msg_err="Invalid ${label} port:"
   local valid_ports=""
   local invalid_ports=""
-  local ports
-  local p
-  local start
-  local end
+  local start end p
 
-  msg_err="Invalid ${label} port:"
-  valid_ports=""
-  invalid_ports=""
+  input=$(printf '%s' "$input" | tr ',\r' '  ')
 
-  ports="$(printf '%s\n' "$input" | tr ', ' '\n' | sed '/^$/d')"
+  for p in $input; do
+    [ -z "$p" ] && continue
 
-  for p in $ports; do
     case "$p" in
-    *:*)
-      start="${p%%:*}"
-      end="${p##*:}"
-      ;;
-    *)
-      start="$p"
-      end="$p"
-      ;;
+      *-*) start="${p%-*}"; end="${p#*-}" ;;
+      *:*) start="${p%:*}"; end="${p#*:}" ;;
+      *)   start="$p";      end="$p"      ;;
     esac
 
-    case "$start$end" in
-    *[!0-9]* | '')
-      invalid_ports="${invalid_ports:+$invalid_ports }$p"
-      continue
-      ;;
-    esac
+    start=$(printf '%s' "$start" | tr -cd '0-9')
+    end=$(printf '%s' "$end" | tr -cd '0-9')
 
-    if [ "$start" -lt 1 ] || [ "$end" -gt 65535 ] || [ "$start" -gt "$end" ]; then
+    if [ -z "$start" ] || [ -z "$end" ]; then
       invalid_ports="${invalid_ports:+$invalid_ports }$p"
       continue
     fi
 
-    valid_ports="${valid_ports:+$valid_ports }$p"
+    if [ "$start" -lt 1 ] || [ "$end" -gt 65535 ] || [ "$start" -gt "$end" ]; then
+      invalid_ports="${invalid_ports:+$invalid_ports }$p"
+    else
+      if [ "$start" -eq "$end" ]; then
+        valid_ports="${valid_ports:+$valid_ports }$start"
+      else
+        valid_ports="${valid_ports:+$valid_ports }$start-$end"
+      fi
+    fi
   done
 
   if [ -n "$invalid_ports" ]; then
-    logger_warning "$msg_err $invalid_ports"
-    is_tty && echowarn "$msg_err $invalid_ports"
+    local msg="Неверные $label порт(ы): $invalid_ports"
+    logger_warning "$msg"
+    is_tty && echowarn "$msg" >&2
   fi
 
   printf '%s' "$valid_ports"
 }
 
 get_eth_subnet() {
-  local _ip_v="${1:-}"
-  local addresses
+  local _ip_v="${1:-4}"
+  local addresses address line eth_ip
   local prefix_length="32"
-  local address
-  local eth_ip
 
   [ "$_ip_v" = "6" ] && prefix_length="128"
 
   addresses="$(get_net_check_hosts "$_ip_v")"
 
   for address in $addresses; do
-    eth_ip="$(ip -"$_ip_v" route get "$address" 2>/dev/null |
-      awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
-    [ -n "$eth_ip" ] && echo "${eth_ip}/${prefix_length}" && break
+    line="$(ip -"$_ip_v" route get "$address" 2>/dev/null)"
+    [ -z "$line" ] && continue
+
+    eth_ip=${line#*src }
+    eth_ip=${eth_ip%% *}
+
+    if [ -n "$eth_ip" ] && [ "$eth_ip" != "$line" ]; then
+      echo "${eth_ip}/${prefix_length}"
+      return 0
+    fi
   done
 }
 
@@ -1280,73 +1281,45 @@ add_rule() {
   $iptables -w -t "$table" -A "$chain" "$@" >/dev/null 2>&1
 }
 
-apply_port_rules() {
-  local iptables="${1:-}"
-  local table="${2:-}"
-  local chain="${3:-}"
-  local ports="${4:-}"
-  local protos="${5:-}"
-  local action="${6:-}"
-  local proto chunk
-
-  # shellcheck disable=SC2086
-  set -- $ports
-
-  while [ $# -gt 0 ]; do
-    chunk=""
-    local i=0
-
-    while [ $i -lt 7 ] && [ $# -gt 0 ]; do
-      chunk="${chunk}${chunk:+,}$1"
-      shift
-      i=$((i + 1))
-    done
-
-    for proto in $protos; do
-      # shellcheck disable=SC2086
-      add_rule "$iptables" "$table" "$chain" -p "$proto" -m multiport --dports "$chunk" $action
-    done
-  done
-}
-
 add_skeen_rules() {
   local iptables="${1:-}"
   local table="${2:-}"
   local chain="${3:-}"
-  local ports="${4:-}"
-  local type="${5:-}"
-  local protos rule
+  local type="${4:-}"
+  local port_match=""
+
+  [ "$SKEEN_INTERCEPT_PORT" = "1" ] &&
+    port_match="-m set --match-set $PORT_INTERCEPT_SET dst"
 
   case "$type" in
   "exclude")
-    protos="$SKEEN_FIREWALL_NETWORK"
-    [ -n "$ports" ] && apply_port_rules "$iptables" "$table" "$chain" "$ports" "$protos" "-j ACCEPT"
-    add_rule "$iptables" "$table" "$chain" -m set --match-set "${BYPASS_NET_SET}${IP_VERSION}" dst -j ACCEPT
+    if [ "$SKEEN_EXCLUDE_PORT" = "1" ]; then
+      for p in tcp udp; do
+        add_rule "$iptables" "$table" "$chain" \
+          -p "$p" -m set --match-set "$PORT_EXCLUDE_SET" dst -j ACCEPT
+      done
+    fi
+
+    add_rule "$iptables" "$table" "$chain" \
+      -m set --match-set "${NET_EXCLUDE_SET}${IP_VERSION}" dst -j ACCEPT
     ;;
   "tproxy")
-    protos="$SKEEN_TPROXY_NETWORK"
-    rule="-j TPROXY --on-ip $PROXY_IP --on-port $SKEEN_TPROXY_PORT --tproxy-mark $TABLE_MARK"
+    add_rule "$iptables" "$table" "$chain" \
+      -p tcp -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
+    add_rule "$iptables" "$table" "$chain" \
+      -p tcp -m socket --transparent -j ACCEPT
 
-    add_rule "$iptables" "$table" "$chain" -p tcp -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
-    add_rule "$iptables" "$table" "$chain" -p tcp -m socket --transparent -j ACCEPT
-
-    if [ -z "$ports" ]; then
+    for p in $SKEEN_TPROXY_NETWORK; do
       # shellcheck disable=SC2086
-      for p in $protos; do add_rule "$iptables" "$table" "$chain" -p "$p" $rule; done
-    else
-      apply_port_rules "$iptables" "$table" "$chain" "$ports" "$protos" "$rule"
-    fi
+      add_rule "$iptables" "$table" "$chain" \
+        -p "$p" $port_match -j TPROXY --on-ip "$PROXY_IP" \
+        --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
+    done
     ;;
   "redirect")
-    protos="tcp"
-    rule="-j REDIRECT --to-port $SKEEN_REDIRECT_PORT"
-
-    if [ -z "$ports" ]; then
-      # shellcheck disable=SC2086
-      add_rule "$iptables" "$table" "$chain" -p tcp $rule
-    else
-      apply_port_rules "$iptables" "$table" "$chain" "$ports" "$protos" "$rule"
-    fi
+    # shellcheck disable=SC2086
+    add_rule "$iptables" "$table" "$chain" \
+      -p tcp $port_match -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
     ;;
   esac
 }
@@ -1372,25 +1345,25 @@ set_chain_rules() {
         fi
       done
 
-      add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_EXCLUDE_PORTS" "exclude"
-      add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_INTERCEPT_PORTS" "tproxy"
-    else
-      add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_EXCLUDE_PORTS" "exclude"
-      add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_INTERCEPT_PORTS" "redirect"
+      add_skeen_rules "$iptables" "$table" "$chain" "exclude"
+      add_skeen_rules "$iptables" "$table" "$chain" "tproxy"
+    elif [ "$table" = "nat" ]; then
+      add_skeen_rules "$iptables" "$table" "$chain" "exclude"
+      add_skeen_rules "$iptables" "$table" "$chain" "redirect"
     fi
     ;;
 
   "$CHAIN_OUTPUT")
-      add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_EXCLUDE_PORTS" "exclude"
-      if [ "$table" = "mangle" ]; then
-        for proto in $SKEEN_TPROXY_NETWORK; do
-          add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
-          add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
-          add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
-        done
-      elif [ "$table" = "nat" ]; then
-        add_skeen_rules "$iptables" "$table" "$chain" "$SKEEN_INTERCEPT_PORTS" "redirect"
-      fi
+    add_skeen_rules "$iptables" "$table" "$chain" "exclude"
+    if [ "$table" = "mangle" ]; then
+      for proto in $SKEEN_TPROXY_NETWORK; do
+        add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
+        add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
+        add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
+      done
+    elif [ "$table" = "nat" ]; then
+      add_skeen_rules "$iptables" "$table" "$chain" "redirect"
+    fi
     ;;
   esac
 }
@@ -1764,36 +1737,71 @@ prepare_firewall() {
     press_any_key_to_menu "" 1
   fi
 
-  SKEEN_INTERCEPT_PORTS=""
-  SKEEN_EXCLUDE_PORTS=""
+  setup_port_set() {
+    local name_set="$1"
+    local ports="$2"
+
+    ipset create "$name_set" bitmap:port range 0-65535 -exist
+    ipset flush "$name_set"
+
+    if [ -n "$ports" ]; then
+      {
+        for p in $ports; do
+          printf "add %s %s\n" "$name_set" "$p"
+        done
+      } | ipset restore
+    fi
+  }
+
+  SKEEN_INTERCEPT_PORT="1"
+  SKEEN_EXCLUDE_PORT="0"
+
   intercept_ports="$(get_validate_ports "intercept" "$(json_get_array '@.firewall.intercept.port')")"
+
   if [ -n "$intercept_ports" ]; then
-    SKEEN_INTERCEPT_PORTS="$intercept_ports"
+    setup_port_set "$PORT_INTERCEPT_SET" "$intercept_ports"
+    ipset destroy "$PORT_EXCLUDE_SET" -exist 2>/dev/null
+
+    SKEEN_INTERCEPT_PORT="1"
+    SKEEN_EXCLUDE_PORT="0"
   else
     exclude_ports="$(get_validate_ports "exclude" "$(json_get_array '@.firewall.exclude.port')")"
-    [ -n "$exclude_ports" ] && SKEEN_EXCLUDE_PORTS="$exclude_ports"
+
+    if [ -n "$exclude_ports" ]; then
+      setup_port_set "$PORT_EXCLUDE_SET" "$exclude_ports"
+      SKEEN_EXCLUDE_PORT="1"
+    fi
+
+    ipset destroy "$PORT_INTERCEPT_SET" -exist 2>/dev/null
+    SKEEN_INTERCEPT_PORT="0"
   fi
 
-  setup_bypass_ipset() {
+  setup_net_ipset() {
     local ipver="$1"
     local family="$2"
-    local name_set="${BYPASS_NET_SET}${ipver}"
+    local name_set="${NET_EXCLUDE_SET}${ipver}"
+    local addresses
 
     ipset create "$name_set" hash:net family "$family" -exist
     ipset flush "$name_set"
 
-    get_exclude_addresses "$ipver" | tr ' ' '\n' | while read -r addr; do
-      [ -z "$addr" ] && continue
-      ipset add "$name_set" "$addr" -exist
-    done
+    addresses=$(get_exclude_addresses "$ipver")
+
+    if [ -n "$addresses" ]; then
+      {
+        for addr in $addresses; do
+          printf "add %s %s -exist\n" "$name_set" "$addr"
+        done
+      } | ipset restore
+    fi
   }
 
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
-    setup_bypass_ipset 4 inet
+    setup_net_ipset 4 inet
   fi
 
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
-    setup_bypass_ipset 6 inet6
+    setup_net_ipset 6 inet6
   fi
 
   [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
@@ -1828,8 +1836,8 @@ prepare_firewall() {
     echo "export SKEEN_POLICY_NAME=\"$POLICY_NAME\""
     echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
-    echo "export SKEEN_INTERCEPT_PORTS=\"$SKEEN_INTERCEPT_PORTS\""
-    echo "export SKEEN_EXCLUDE_PORTS=\"$SKEEN_EXCLUDE_PORTS\""
+    echo "export SKEEN_INTERCEPT_PORT=\"$SKEEN_INTERCEPT_PORT\""
+    echo "export SKEEN_EXCLUDE_PORT=\"$SKEEN_EXCLUDE_PORT\""
     echo "export SKEEN_INTERCEPT_DNS_ENABLE=\"$SKEEN_INTERCEPT_DNS_ENABLE\""
     echo "export SKEEN_REDIRECT_DNS_ENABLE=\"$SKEEN_REDIRECT_DNS_ENABLE\""
     echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
@@ -1894,7 +1902,7 @@ apply_firewall() {
 
     if [ -f "$WAIT_ROUTE_FILE" ]; then
       eth_subnet="$(get_eth_subnet "$IP_VERSION")"
-      set_name="${BYPASS_NET_SET}${IP_VERSION}"
+      set_name="${NET_EXCLUDE_SET}${IP_VERSION}"
       ipset add "$set_name" "$eth_subnet" -exist
     fi
 
@@ -1972,9 +1980,14 @@ clean_firewall() {
   # 4. ipset cleanup
   if command -v ipset >/dev/null 2>&1; then
     for ip_ver in 4 6; do
-      set_name="${BYPASS_NET_SET}${ip_ver}"
-      ipset flush "$set_name" 2>/dev/null
-      ipset destroy "$set_name" 2>/dev/null
+      set_name="${NET_EXCLUDE_SET}${ip_ver}"
+      ipset flush "$set_name" -exist 2>/dev/null
+      ipset destroy "$set_name" -exist 2>/dev/null
+    done
+
+    for port_set in "$PORT_EXCLUDE_SET" "$PORT_INTERCEPT_SET"; do
+      ipset flush "$port_set" -exist 2>/dev/null
+      ipset destroy "$port_set" -exist 2>/dev/null
     done
   fi
 
@@ -2473,38 +2486,40 @@ fw_test_chain() {
     return 0
   fi
 
-  if [ -n "$SKEEN_EXCLUDE_PORTS" ]; then
-    # shellcheck disable=SC2015
-    fw_test "$1" "$2" "$content" "multiport" "Port bypass"
+  if [ "$1" = "mangle" ] && [ "$2" != "$CHAIN_OUTPUT" ] && [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
+    fw_test "$1" "$2" "$content" "TPROXY .* dpt:${DNS_PORT}" "DNS intercept"
+  elif [ "$1" = "mangle" ] && [ "$2" != "$CHAIN_OUTPUT" ] && [ "$SKEEN_INTERCEPT_DNS_ENABLE" != "1" ]; then
+    fw_test "$1" "$2" "$content" "ACCEPT .* dpt:${DNS_PORT}" "DNS exclude"
   fi
 
-  fw_test "$1" "$2" "$content" "$BYPASS_NET_SET" "Subnet bypass"
+  if [ "$SKEEN_EXCLUDE_PORT" = "1" ]; then
+    # shellcheck disable=SC2015
+    fw_test "$1" "$2" "$content" "$PORT_EXCLUDE_SET" "Port exclude"
+  fi
+
+  fw_test "$1" "$2" "$content" "$NET_EXCLUDE_SET" "Subnet exclude"
 
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
     fw_test "$1" "$2" "$content" "MARK" "Mark set"
     fw_test "$1" "$2" "$content" "CONNMARK" "Connmark save"
   elif [ "$1" = "nat" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
-    if [ -z "$SKEEN_INTERCEPT_PORTS" ]; then
+    if [ "$SKEEN_INTERCEPT_PORT" != "1" ]; then
       fw_test "$1" "$2" "$content" "redir" "Redirect all"
     else
-      fw_test "$1" "$2" "$content" "dports .* redir" "Redirect ports"
+      fw_test "$1" "$2" "$content" "$PORT_INTERCEPT_SET .* redir" "Redirect ports"
     fi
   fi
 
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
 
-  if [ "$1" = "mangle" ] && [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
-    fw_test "$1" "$2" "$content" "dpt:!?${DNS_PORT}" "DNS intercept"
-  fi
-
   if [ "$1" = "mangle" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcp" ]; then
     fw_test "$1" "$2" "$content" "tcp .* socket" "Socket tcp"
   fi
 
-  if [ -z "$SKEEN_INTERCEPT_PORTS" ]; then
+  if [ "$SKEEN_INTERCEPT_PORT" != "1" ]; then
     fw_test "$1" "$2" "$content" "redir|redirect" "Redirect all"
   else
-    fw_test "$1" "$2" "$content" "dports .* (redir|redirect)" "Redirect ports"
+    fw_test "$1" "$2" "$content" "$PORT_INTERCEPT_SET .* (redir|redirect)" "Redirect ports"
   fi
 }
 
