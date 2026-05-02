@@ -1295,11 +1295,12 @@ add_skeen_rules() {
   "connmark")
     local connmark_options=""
 
-    [ -n "$SKEEN_MARK_POLICY" ] &&
+    if [ -n "$SKEEN_MARK_POLICY" ]; then
       connmark_options="-m connmark ! --mark $SKEEN_MARK_POLICY"
 
-    [ "$SKEEN_PROXY_ROUTER" = "1" ] &&
-      connmark_options="$connmark_options -m connmark ! --mark $TABLE_MARK"
+      [ "$SKEEN_PROXY_ROUTER" = "1" ] &&
+        connmark_options="$connmark_options -m connmark ! --mark $TABLE_MARK"
+    fi
 
     # shellcheck disable=SC2086
     [ -n "$connmark_options" ] &&
