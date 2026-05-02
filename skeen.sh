@@ -1318,12 +1318,14 @@ add_skeen_rules() {
       -m set --match-set "${NET_EXCLUDE_SET}${IP_VERSION}" dst -j ACCEPT
     ;;
   "tproxy")
-    add_rule "$iptables" "$table" "$chain" \
-      -p tcp -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
-    add_rule "$iptables" "$table" "$chain" \
-      -p tcp -m socket --transparent -j ACCEPT
-
     for p in $SKEEN_TPROXY_NETWORK; do
+      if [ "$p" = "tcp" ]; then
+        add_rule "$iptables" "$table" "$chain" \
+          -p "$p" -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
+        add_rule "$iptables" "$table" "$chain" \
+          -p "$p" -m socket --transparent -j ACCEPT
+      fi
+
       # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$chain" \
         -p "$p" $port_match -j TPROXY --on-ip "$PROXY_IP" \
