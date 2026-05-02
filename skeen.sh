@@ -1343,7 +1343,7 @@ set_chain_rules() {
   local table="${2:-}"
   local chain="${3:-}"
 
-  $iptables -t "$table" -nL "$chain" >/dev/null 2>&1 && return 0
+  $iptables -t "$table" -S "$chain" >/dev/null 2>&1 && return 0
   $iptables -t "$table" -N "$chain" || return 0
 
   case "$chain" in
@@ -1930,22 +1930,15 @@ clean_firewall() {
     local chain="$3"
     local parent="$4"
 
-    if ! $iptables -t "$table" -nL "$chain" >/dev/null 2>&1; then
+    if ! $iptables -t "$table" -S "$chain" >/dev/null 2>&1; then
       return 0
     fi
 
-    $iptables -w -t "$table" -F "$chain" >/dev/null 2>&1
+    $iptables -t "$table" -S "$parent" 2>/dev/null |
+      grep -w "$chain" | sed "s/^-A/$iptables -w -t $table -D/" | sh 2>/dev/null
 
-    while :; do
-      rule_num=$(
-        $iptables -w -t "$table" -nL "$parent" --line-numbers 2>/dev/null |
-          awk -v ch="$chain" '$0 ~ ch {print $1; exit}'
-      )
-      [ -z "$rule_num" ] && break
-      $iptables -w -t "$table" -D "$parent" "$rule_num" >/dev/null 2>&1
-    done
-
-    $iptables -w -t "$table" -X "$chain" >/dev/null 2>&1
+    $iptables -w -t "$table" -F "$chain" 2>/dev/null
+    $iptables -w -t "$table" -X "$chain" 2>/dev/null
   }
 
   for ipt_cmd in iptables ip6tables; do
