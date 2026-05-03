@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.11.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.1...SKeen-v4.11.2) (2026-05-03)
+
+
+### 🐛 Fix
+
+* **firewall:** improve DNS mode handling and iptables rule management ([aa4f19c](https://github.com/jinndi/SKeen/commit/aa4f19cc0c0b916c1ba9221a24bd4a48c2ae0eab))
+
 ## [4.11.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.0...SKeen-v4.11.1) (2026-05-03)
 
 
