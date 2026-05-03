@@ -2351,9 +2351,15 @@ update_core() {
 }
 
 update_skeen() {
-  if ! is_running && [ "$SERVICE_PROXY_ENABLE" = "1" ]; then
-    start || exit 1
-  elif [ "$SERVICE_PROXY_ENABLE" != "1" ]; then
+  local should_run="0"
+
+  if [ "$SERVICE_PROXY_ENABLE" = "1" ] || [ "$FIREWALL_PROXY_ROUTER" = "1" ]; then
+    should_run="1"
+  fi
+
+  if [ "$should_run" = "1" ]; then
+    if ! is_running; then start || exit 1; fi
+  elif is_running; then
     stop || exit 1
   fi
 
