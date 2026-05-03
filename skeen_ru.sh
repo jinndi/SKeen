@@ -1367,6 +1367,9 @@ add_skeen_rules() {
   "proxy_router")
     if [ "$table" = "mangle" ]; then
       for proto in $protocols; do
+        if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+          add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
+        fi
         add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
         add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
         add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT

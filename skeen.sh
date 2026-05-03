@@ -1367,6 +1367,9 @@ add_skeen_rules() {
   "proxy_router")
     if [ "$table" = "mangle" ]; then
       for proto in $protocols; do
+        if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+          add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
+        fi
         add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
         add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
         add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
@@ -2501,7 +2504,7 @@ fw_test_chain() {
     fw_test "$1" "$2" "$content" "skeen_dns" "DNS redirect"
     return 0
   fi
-iptables -w -t nat -S POSTROUTING
+
   if [ "$2" = "$CHAIN_TUN" ]; then
     fw_test "$1" "$2" "$content" "skeen_tun" "Accept"
     fw_test "nat" "POSTROUTING" "$($3 -w -t nat -S POSTROUTING 2>/dev/null)" "skeen_tun" "Masquerade"
