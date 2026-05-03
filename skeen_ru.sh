@@ -1878,15 +1878,15 @@ apply_firewall() {
     [ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ] && [ -n "$SKEEN_MARK_POLICY" ] &&
       mark_option="-m mark --mark $SKEEN_MARK_POLICY"
 
-    for iptables in $SKEEN_IPTABLES_LIST; do
-      for net in tcp udp; do
-        local args="$CHAIN_DNS -p $net -i br+ $mark_option -m pkttype --pkt-type unicast \
-          --dport $DNS_PORT -j REDIRECT --to-ports $SKEEN_REDIRECT_DNS_PORT \
-          -m comment --comment skeen_dns"
+    local args="-i br+ $mark_option -m pkttype --pkt-type unicast \
+      --dport $DNS_PORT -j REDIRECT --to-ports $SKEEN_REDIRECT_DNS_PORT \
+      -m comment --comment skeen_dns"
 
+    for iptables in $SKEEN_IPTABLES_LIST; do
+      for proto in tcp udp; do
         # shellcheck disable=SC2086
-        if ! $iptables -t nat -C $args >/dev/null 2>&1; then
-          $iptables -w -t nat -I $args
+        if ! $iptables -t nat -C "$CHAIN_DNS" -p "$proto" $args >/dev/null 2>&1; then
+          $iptables -w -t nat -I "$CHAIN_DNS" -p "$proto" $args
         fi
       done
     done
