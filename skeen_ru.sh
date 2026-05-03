@@ -1087,7 +1087,7 @@ check_and_set_route_rules() {
   fi
 
   case "$SKEEN_FIREWALL_MODE" in
-    redirect|tun|none) return 0 ;;
+    redirect|tun|dns|none) return 0 ;;
   esac
 
   ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
@@ -1433,6 +1433,10 @@ goto_chain_rules() {
   local rule="-m conntrack ! --ctstate INVALID -g $target_chain"
 
   for proto in $protocols; do
+    if ! $iptables -t "$table" -L "$target_chain" >/dev/null 2>&1; then
+      return
+    fi
+
     # shellcheck disable=SC2086
     if ! $iptables -t "$table" -C "$chain" -p "$proto" $rule >/dev/null 2>&1; then
       $iptables -w -t "$table" -A "$chain" -p "$proto" $rule
@@ -1655,6 +1659,7 @@ prepare_firewall() {
       SKEEN_REDIRECT_DNS_ENABLE="1"
       SKEEN_REDIRECT_DNS_PORT="$FIREWALL_REDIRECT_DNS_PORT"
       SKEEN_REDIRECT_DNS_USE_POLICY="$FIREWALL_REDIRECT_DNS_USE_POLICY"
+      [ "$SKEEN_FIREWALL_MODE" = "none" ] && SKEEN_FIREWALL_MODE="dns"
       cyan "$msg_dns_detect redirect"
     fi
 
@@ -1673,16 +1678,13 @@ prepare_firewall() {
     echowarn "Заданы настройки DNS в ${SKEEN_NAME}, но $SINGBOX_NAME не нестроен"
   fi
 
-  if [ "$SKEEN_FIREWALL_MODE" = "tun" ] || {
-      [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ] &&
-      [ "$SKEEN_FIREWALL_MODE" = "none" ]
-  }; then
+  if [ "$SKEEN_FIREWALL_MODE" = "tun" ] || [ "$SKEEN_FIREWALL_MODE" = "dns" ]; then
     {
       echo "#!/bin/sh"
       echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
       local tables="nat|filter"
-      if [ "$SKEEN_FIREWALL_MODE" = "none" ]; then
+      if [ "$SKEEN_FIREWALL_MODE" = "dns" ]; then
         tables="nat"
         SKEEN_IPTABLES_LIST="$(get_iptables_list)"
       else
@@ -1711,7 +1713,7 @@ prepare_firewall() {
         echo "export SKEEN_MARK_POLICY=\"${SKEEN_MARK_POLICY:-}\""
       fi
 
-      echo "$SKEEN_PROC apply_firewall netfilter"
+      echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
     } >"$FIREWALL_HOOK_FILE"
 
     chmod +x "$FIREWALL_HOOK_FILE"
@@ -1831,12 +1833,17 @@ prepare_firewall() {
 
     echo "echo \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
 
-    local tun=""
-    [ $SKEEN_TUN_ENABLED = "1" ] && tun="|filter"
-    [ $SKEEN_FIREWALL_MODE = "tproxy" ] && tun="|filter|nat"
-    local redirect="${TABLE_REDIRECT}${tun}"
-    local hybrid="${TABLE_REDIRECT}|${TABLE_TPROXY}${tun}"
-    local tproxy="${TABLE_TPROXY}${tun}"
+    local postfix_tables=""
+    if [ "$SKEEN_TUN_ENABLED" = "1" ]; then
+      postfix_tables="|filter"
+      [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && postfix_tables="|filter|nat"
+    elif [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+      postfix_tables="|nat"
+    fi
+
+    local redirect="${TABLE_REDIRECT}${postfix_tables}"
+    local hybrid="${TABLE_REDIRECT}|${TABLE_TPROXY}${postfix_tables}"
+    local tproxy="${TABLE_TPROXY}${postfix_tables}"
 
     case "$SKEEN_FIREWALL_MODE" in
     hybrid) echo "echo \"$hybrid\" | grep -q \"\$table\" || exit 0" ;;
@@ -1864,7 +1871,7 @@ prepare_firewall() {
     echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
     echo "export SKEEN_PROXY_ROUTER=\"$SKEEN_PROXY_ROUTER\""
 
-    echo "$SKEEN_PROC apply_firewall netfilter"
+    echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
   } >"$FIREWALL_HOOK_FILE"
 
   chmod +x "$FIREWALL_HOOK_FILE"
@@ -1872,7 +1879,19 @@ prepare_firewall() {
   echook "$complete_msg"
 }
 
+check_hook_table() {
+  local match="${1:-}"
+  local hook_table="${2:-}"
+
+  [ -z "$hook_table" ] && return 0
+
+  if [ -n "$match" ]; then
+    echo "$match" | grep -q "$hook_table" || return 1
+  fi
+}
+
 apply_firewall() {
+  local hook_table="${1:-}"
   local check iptables eth_subnet set_name
 
   check=$(echo "$SKEEN_IPTABLES_LIST" | sed 's/iptables//g; s/ip6tables//g; s/ //g')
@@ -1887,7 +1906,8 @@ apply_firewall() {
     echomsg "Применение правил фаервола..."
   fi
 
-  if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+  # DNS redirect
+  if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ] && check_hook_table "nat" "$hook_table"; then
     local mark_option=""
     [ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ] && [ -n "$SKEEN_MARK_POLICY" ] &&
       mark_option="-m mark --mark $SKEEN_MARK_POLICY"
@@ -1906,10 +1926,14 @@ apply_firewall() {
     done
   fi
 
-  [ "$SKEEN_FIREWALL_MODE" = "none" ] && return 0
-  [ "$SKEEN_TUN_ENABLED" = "1" ] && set_tun_rules
-  [ "$SKEEN_FIREWALL_MODE" = "tun" ] && return 0
+  # TUN
+  [ "$SKEEN_TUN_ENABLED" = "1" ] && check_hook_table "filter|nat" "$hook_table" && set_tun_rules
 
+  # Exclude modes && tables
+  echo "tun|dns|none" | grep -q "$SKEEN_FIREWALL_MODE" && return 0
+  check_hook_table "nat|mangle" "$hook_table" || return 0
+
+  # Redirect, Tproxy and Hybrid modes
   for iptables in $SKEEN_IPTABLES_LIST; do
     if [ "$iptables" = "iptables" ]; then
       IP_VERSION="4"
@@ -1931,17 +1955,18 @@ apply_firewall() {
 
     if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
       for table in "$TABLE_TPROXY" "$TABLE_REDIRECT"; do
+        ! check_hook_table "$table" "$hook_table" && continue
         protocols="$(get_protocols "$table")"
         set_chain_rules "$iptables" "$table" "$CHAIN_PREROUTING" "$protocols"
         goto_chain_rules "$iptables" "$table" PREROUTING "$CHAIN_PREROUTING" "$protocols"
         [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$table" "$protocols"
       done
-    elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
+    elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && check_hook_table "$TABLE_TPROXY" "$hook_table"; then
       protocols="$(get_protocols "$TABLE_TPROXY")"
       set_chain_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING" "$protocols"
       goto_chain_rules "$iptables" "$TABLE_TPROXY" PREROUTING "$CHAIN_PREROUTING" "$protocols"
       [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$TABLE_TPROXY" "$protocols"
-    elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ]; then
+    elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ] && check_hook_table "$TABLE_REDIRECT" "$hook_table"; then
       protocols="$(get_protocols "$TABLE_REDIRECT")"
       set_chain_rules "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING" "$protocols"
       goto_chain_rules "$iptables" "$TABLE_REDIRECT" PREROUTING "$CHAIN_PREROUTING" "$protocols"
@@ -3097,7 +3122,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     *) show_help | awk '/OpkgTun / {flag=1} flag' ;;
     esac
     ;;
-  apply_firewall) [ "$CALLER" = "netfilter" ] && apply_firewall ;;
+  apply_firewall) [ "$CALLER" = "netfilter" ] && apply_firewall "$3" ;;
   "") show_menu ;;
   help | *) show_help ;;
   esac
