@@ -1378,14 +1378,25 @@ add_skeen_rules() {
   esac
 }
 
+chain_exists() {
+  local iptables="${1:-}"
+  local table="${2:-}"
+  local chain="${3:-}"
+
+  $iptables -t "$table" -L "$chain" -n >/dev/null 2>&1
+}
+
 set_chain_rules() {
   local iptables="${1:-}"
   local table="${2:-}"
   local chain="${3:-}"
   local protocols="${4:-}"
 
-  $iptables -t "$table" -S "$chain" >/dev/null 2>&1 && return 0
-  $iptables -t "$table" -N "$chain" || return 0
+  if chain_exists "$iptables" "$table" "$chain"; then
+    return 0
+  elif ! $iptables -t "$table" -N "$chain"; then
+    return 0
+  fi
 
   case "$chain" in
   "$CHAIN_PREROUTING")
@@ -1949,7 +1960,7 @@ clean_firewall() {
     local chain="$3"
     local parent="$4"
 
-    if ! $iptables -t "$table" -S "$chain" >/dev/null 2>&1; then
+    if ! chain_exists "$iptables" "$table" "$chain"; then
       return 0
     fi
 
