@@ -107,8 +107,9 @@ Depending on the firewall mode and router proxying settings (on/off), chains are
 Instead of filtering by router policies, it filters processes that do not belong to the `skeen` group (to prevent routing loops). The rules are applied in the following order:
 
 1. `redirect` mode, `nat` table in `OUTPUT` named `skeen_mask`: mirrors the logic of the Redirect **skeen** chain.
-2. `tproxy` mode, `mangle` table in `OUTPUT` named `skeen_mask`: mirrors the logic of the TProxy chain, except for DNS rules and direct traffic redirection to Sing-Box. Instead, it concludes with:
+2. `tproxy` mode, `mangle` table in `OUTPUT` chain named `skeen_mask`: Similar to the TProxy chain rules, with the exception of the absence of DNS redirection and rules for direct traffic routing to Sing-Box. Instead, it concludes with:
 
+* **ACCEPT 53 PORT** - to prevent subsequent rules from executing, only if the `redirect_dns` function is enabled in the SKeen configuration.
 * **MARK** - marks local outgoing traffic, which then enters `PREROUTING` where it is processed based on this mark. If policy-based routing is enabled in the SKeen config, it is processed via the **skeen** chain (added as a second instance after the main client chain), or simply directed to the client chain if proxying is configured without policies.
 * **CONNMARK save** - saves the mark to the entire connection (conntrack) for firewall "memory."
 
