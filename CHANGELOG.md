@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.11.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.0...SKeen-v4.11.1) (2026-05-03)
+
+
+### 🐛 Fix
+
+* **redirect_dns:** add conditional DNS acceptance rule based on SKEEN_REDIRECT_DNS_ENABLE flag ([bb985f1](https://github.com/jinndi/SKeen/commit/bb985f1495332e197e70523aaa46a34104c6ec85))
+* **update:** extend service control logic to include FIREWALL_PROXY_ROUTER flag ([fcb7a36](https://github.com/jinndi/SKeen/commit/fcb7a3606b9eac73af702a554b62bed6c609cb64))
+
+
+### 🛠 Refactor
+
+* **firewall:** extract chain existence check into reusable function ([d240820](https://github.com/jinndi/SKeen/commit/d240820cf9b3114a09b1abbeb197af6828786b29))
+* **firewall:** separate protocol parameter in DNS redirect rules ([74de9d2](https://github.com/jinndi/SKeen/commit/74de9d26c7d8f5cd25db4487dee534542881fff6))
+
 ## [4.11.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.10.0...SKeen-v4.11.0) (2026-05-02)
 
 
