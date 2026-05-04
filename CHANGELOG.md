@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.11.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.3...SKeen-v4.11.4) (2026-05-04)
+
+
+### 🐛 Fix
+
+* **update:** streamline update logic for SKeen script ([dd5ab0e](https://github.com/jinndi/SKeen/commit/dd5ab0ecf86a6a1c898a323e2dc08e04a55e3923))
+
 ## [4.11.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.2...SKeen-v4.11.3) (2026-05-04)
 
 
