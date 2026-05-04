@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.11.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.2...SKeen-v4.11.3) (2026-05-04)
+
+
+### 🐛 Fix
+
+* **update:** correct version variable scope and naming consistency ([d2c5cdc](https://github.com/jinndi/SKeen/commit/d2c5cdc27048a3c678e5e4eb4214cd148148ee1b))
+
 ## [4.11.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.1...SKeen-v4.11.2) (2026-05-03)
 
 
