@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.11.2"
+SKEEN_VERSION="4.11.3"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -478,7 +478,7 @@ install_dependencies() {
 }
 
 download_singbox() {
-  local version="${1:-}"
+  local version="${1:-$latest_version}"
   local pkg_url
 
   if [ -z "$version" ]; then
@@ -502,7 +502,7 @@ download_singbox() {
     echook "Downloaded $PKG_NAME successfully"
   else
     echoerr "Failed to download $PKG_NAME"
-    [ -n "$version" ] && return 1 || exit 1
+    [ -n "$latest_version" ] && return 1 || exit 1
   fi
 }
 
@@ -2368,7 +2368,7 @@ update_core() {
   check_free_space
   get_os_release
   get_architecture
-  download_singbox "$latest" || return 1
+  download_singbox || return 1
   if is_running; then stop || exit 1; fi
   install_singbox
   create_singbox_config
@@ -2402,20 +2402,19 @@ ask_and_update() {
   local api="${3:-}"
   local update_fn="${4:-}"
   local releases="${5:-}"
-  local current
-  local latest
-  local opt
+  local current_version opt
+  latest_version=""
 
   echomsg "Checking $name for updates..."
 
-  current=$(get_current_version "$proc")
-  [ -z "$current" ] && current="not installed"
-  latest=$(get_latest_version "$api")
-  [ -z "$latest" ] && echoerr "Failed to fetch the latest version" && return 1
+  current_version=$(get_current_version "$proc")
+  [ -z "$current_version" ] && current_version="not installed"
+  latest_version=$(get_latest_version "$api")
+  [ -z "$latest_version" ] && echoerr "Failed to fetch the latest version" && return 1
 
-  if [ "$latest" != "$current" ]; then
-    printf '%s %s\n' "$(cyan "Current version ${name}:")" "$(red "$current")"
-    printf '%s %s\n' "$(cyan "New version is available:")" "$(green "$latest")"
+  if [ "$current_version" != "$latest_version" ]; then
+    printf '%s %s\n' "$(cyan "Current version ${name}:")" "$(red "$current_version")"
+    printf '%s %s\n' "$(cyan "New version is available:")" "$(green "$latest_version")"
     printf '%s %s\n' "$(cyan "More details:")" "$(green "$releases")"
 
     while :; do
@@ -2433,7 +2432,7 @@ ask_and_update() {
       esac
     done
   else
-    echook "The latest $name version $latest is already installed"
+    echook "The latest $name version $latest_version is already installed"
   fi
 
   return 0
@@ -2451,9 +2450,9 @@ check_updates() {
   # sing-box
   ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
     update_core "https://github.com/SagerNet/sing-box/releases"
-  if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest" ]; then
+  if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest_version" ]; then
     while :; do
-      printf "Download %s %s? [y/n] (default: n): " "$SINGBOX_NAME" "$latest" >/dev/tty
+      printf "Download %s %s? [y/n] (default: n): " "$SINGBOX_NAME" "$latest_version" >/dev/tty
       read -r optt </dev/tty
       [ -z "$optt" ] && optt=n
 
@@ -2471,7 +2470,7 @@ check_updates() {
   # skeen
   ask_and_update "$SKEEN_NAME" "$SKEEN_PROC" "$SKEEN_API_URL" \
     update_skeen "https://github.com/jinndi/SKeen/releases"
-  [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest" ] && update_skeen
+  [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest_version" ] && update_skeen
 
   [ "$CALLER" != "menu" ] && exit 0
 
