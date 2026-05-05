@@ -137,6 +137,14 @@ The following are intentionally **excluded** from the bypass list (local network
 
 </details>
 
+<details>
+  <summary>📟 Installation to internal memory?</summary>
+<br>
+
+This is highly discouraged. It’s a great way to wear out your device’s flash memory and force an early upgrade to a new one. SKeen will never support this option. At the very least, you need a router with a USB port and a flash drive larger than 256 MB.
+
+</details>
+
 ### 🚀 Features
 
   - TProxy/Redirect/Hybrid/Tun/DNS modes ✓
