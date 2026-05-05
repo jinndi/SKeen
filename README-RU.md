@@ -124,6 +124,26 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
 </details>
 
 <details>
+<summary>🚫 ADGuard Home?</summary>
+<br>
+
+DNS-модуль в Sing-box - это ключевая часть его работы. Он используется для:
+
+- исключения DNS-утечек;
+- сокрытия DNS-запросов от провайдера;
+- обхода блокировок на уровне DNS.
+
+Решает ли такие задачи ADGuard Home?
+Короткий ответ - нет.
+
+ADGuard Home в первую очередь отвечает за фильтрацию (реклама, трекеры), но не обеспечивает полноценную приватность и корректный обход блокировок.
+
+Решает ли Sing-box задачи ADGuard Home?
+Да - Sing-box также поддерживает DNS-фильтрацию и может полностью заменить ADGuard Home.
+
+</details>
+
+<details>
   <summary>🕵️‍♂️ FakeIP ?</summary>
 <br>
 

@@ -138,6 +138,26 @@ The following are intentionally **excluded** from the bypass list (local network
 </details>
 
 <details>
+<summary>🚫 ADGuard Home?</summary>
+<br>
+
+The DNS module in Sing-box is a core part of how it operates. It is used for:
+
+- preventing DNS leaks;
+- hiding DNS queries from your ISP;
+- bypassing DNS-level blocking.
+
+Does ADGuard Home solve these problems?
+Short answer - no.
+
+ADGuard Home is primarily designed for filtering (ads, trackers), but it does not provide full privacy or reliable censorship bypass.
+
+Does Sing-box cover the functionality of ADGuard Home?
+Yes - Sing-box also supports DNS filtering and can fully replace ADGuard Home.
+
+</details>
+
+<details>
   <summary>📟 Installation to internal memory?</summary>
 <br>
 
