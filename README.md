@@ -68,6 +68,8 @@ The project intentionally does not include a dedicated management panel. This ap
   <summary>🧩 Architecture ?</summary>
 <br>
 
+> **Note:** The architecture is inspired by a [Chinese article](https://lhy.life/20231012-sing-box-tproxy/) on configuring a transparent proxy (TProxy).
+
 ### Redirect - utilized in `redirect` (TCP) and `hybrid` (TCP) modes, as well as for router-level proxying
 
 The goto PREROUTING chain in the `nat` table is used under the name **skeen**:
@@ -75,7 +77,7 @@ The goto PREROUTING chain in the `nat` table is used under the name **skeen**:
 It follows this rule order:
 
 * **ACCEPT** - bypasses all router policies based on `fwmark`, except for those configured in skeen.json (optional).
-* **ACCEPT** - bypasses ports defined in `skeen.json` (only if the "work on selected ports" option is disabled).
+* **ACCEPT** — bypasses ports specified in `skeen.json` if "selected ports mode" is disabled; otherwise, it filters traffic strictly for the specified ports.
 * **ACCEPT** - bypasses local, reserved, and user-defined addresses.
 * **REDIRECT** - redirects TCP traffic to the Sing-Box `redirect` port.
 
@@ -88,11 +90,13 @@ The goto PREROUTING chain in the `mangle` table is used under the name **skeen**
 It follows this rule order:
 
 * **ACCEPT** - bypasses all router policies based on `fwmark`, except for those configured in skeen.json (optional).
-* **DNS TPROXY** - redirects TCP/UDP port 53 traffic to the Sing-Box TProxy port (optional, otherwise - ACCEPT).
-* **ACCEPT** - bypasses ports defined in `skeen.json` (only if the "work on selected ports" option is disabled).
+* **TPROXY DNS** - redirects TCP/UDP port 53 traffic to the Sing-Box TProxy port (optional, otherwise - ACCEPT).
+* **ACCEPT** — bypasses ports specified in `skeen.json` if "selected ports mode" is disabled; otherwise, it filters traffic strictly for the specified ports.
 * **ACCEPT** - bypasses local, reserved, and user-defined addresses.
 * **TCP MARK + ACCEPT SOCKET** - a "fast path" for already established transparent sockets (socket transparent).
 * **TPROXY** - directs the remaining TCP/UDP traffic to the Sing-Box TProxy port.
+
+> **Note:** Local subnets (listed in the source code) are already excluded from proxying. However, if you need to exclude specific ports, you must specify them manually in `skeen.json` or within the `sing-box` configuration itself.
 
 ---
 
