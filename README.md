@@ -138,13 +138,16 @@ The following are intentionally **excluded** from the bypass list (local network
 </details>
 
 ### 🚀 Features
-- TProxy/Redirect/Hybrid modes ✓
-- IPv4 and IPv6 supports ✓
-- Sing-box DNS module working ✓
-- Sing-box fakeip working ✓
-- Zashboard via Clash API configured ✓
-- Network settings optimization ✓
-- Commands working via the router's Web CLI ✓
+
+  - TProxy/Redirect/Hybrid/Tun/DNS modes ✓
+  - IPv4 and IPv6 support ✓
+  - Functional Sing-box DNS module ✓
+  - Functional Sing-box fakeip ✓
+  - Zashboard configured via Clash API ✓
+  - Network settings optimization ✓
+  - Commands accessible via router WEB CLI ✓
+  - Configuration sync via GUI.for.SingBox plugin ✓
+  - Optional proxying for the router itself ✓
 
 ### 📋 Requirements
 - Entware installed and configured on **non-internal memory**

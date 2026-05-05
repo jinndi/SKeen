@@ -139,13 +139,15 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
 
 ### 🚀 Особенности
 
-  - Режимы TProxy/Redirect/Hybrid ✓
+  - Режимы TProxy/Redirect/Hybrid/Tun/DNS ✓
   - Поддержка IPv4 и IPv6 ✓
-  - Работающий модуль Sing-box DNS ✓
-  - Работающий Sing-box fakeip ✓
+  - Рабочий модуль Sing-box DNS ✓
+  - Рабочий Sing-box fakeip ✓
   - Настроенный Zashboard через Clash API ✓
   - Оптимизация сетевых настроек ✓
-  - Команды работающие через WEB CLI роутера ✓
+  - Команды, работающие через WEB CLI роутера ✓
+  - Синхронизация конфигурации через плагин к GUI.for.SingBox ✓
+  - Опциональное проксирование самого роутера ✓
 
 ### 📋 Требования
 
