@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.11.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.4...SKeen-v4.11.5) (2026-05-06)
+
+
+### 🛠 Refactor
+
+* **network:** optimize network stack and conntrack limits (if enable network.tuning) ([3a57427](https://github.com/jinndi/SKeen/commit/3a57427b94d980db7645163ac09647fc4faa8824))
+
 ## [4.11.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.3...SKeen-v4.11.4) (2026-05-04)
 
 
