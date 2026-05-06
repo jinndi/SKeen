@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.11.4"
+SKEEN_VERSION="4.11.5"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -2042,15 +2042,43 @@ clean_firewall() {
 }
 
 apply_sysctl_network_tuning() {
+  get_connection_tracking() {
+    local is_tuning="${1:-}"
+    local mem_mb ct_max
+    mem_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+
+    if [ "$mem_mb" -le 128 ]; then
+      ct_max=8192
+    elif [ "$mem_mb" -le 256 ]; then
+      ct_max=16384
+    elif [ "$mem_mb" -le 512 ]; then
+      ct_max=32768
+    else
+      ct_max=65536
+    fi
+
+    if [ -n "$is_tuning" ] && [ "$is_tuning" != "0" ]; then
+      ct_max=$(( (ct_max * 15) / 10 ))
+    fi
+
+    echo "$ct_max"
+  }
+
   {
-    # IPv4 Forwarding & TProxy Support
-    sysctl -w net.ipv4.ip_forward=1                  # Enable IPv4 routing
-    sysctl -w net.ipv4.conf.all.src_valid_mark=0     # Accept TProxy marked packets
-    sysctl -w net.ipv4.conf.lo.route_localnet=1      # Allow lo local routing (TProxy)
-    sysctl -w net.ipv4.conf.all.send_redirects=0     # Disable ICMP redirects globally
-    sysctl -w net.ipv4.conf.default.send_redirects=0 # Disable ICMP redirects by default
-    sysctl -w net.ipv4.conf.all.route_localnet=1     # Allow TPROXY to route packets via 127.0.0.1
-    sysctl -w net.ipv4.ip_nonlocal_bind=1            # Allow processes to bind to any IP
+    local ct_max
+
+    # TProxy/TUN (needed for TUN/TProxy)
+    sysctl -w net.ipv4.ip_forward=1               # Enable IPv4 routing
+    sysctl -w net.ipv4.conf.all.src_valid_mark=0  # Accept TProxy marked packets
+    sysctl -w net.ipv4.conf.all.rp_filter=0       # Disable reverse path filtering
+    sysctl -w net.ipv4.conf.default.rp_filter=0   # same for new interfaces
+    sysctl -w net.ipv4.conf.all.route_localnet=1  # Allow TPROXY to route packets via 127.0.0.1
+    sysctl -w net.ipv4.conf.lo.route_localnet=1   # Allow lo local routing (TProxy)
+    sysctl -w net.ipv4.ip_nonlocal_bind=1         # Allow processes to bind to any IP
+
+    # Max tracked connections
+    ct_max="$(get_connection_tracking)"
+    sysctl -w net.netfilter.nf_conntrack_max="$ct_max"
 
     # IPv6 support
     if [ -f /proc/net/if_inet6 ]; then
@@ -2074,49 +2102,54 @@ apply_sysctl_network_tuning() {
 
     [ "$NETWORK_TUNING" != "1" ] && return 0
 
-    # Network Buffers (TCP/UDP)
-    sysctl -w net.core.rmem_max=6291456    # Max TCP/UDP receive buffer
-    sysctl -w net.core.wmem_max=6291456    # Max TCP/UDP send buffer
-    sysctl -w net.core.rmem_default=229376 # Default receive buffer
-    sysctl -w net.core.wmem_default=229376 # Default send buffer
-
     # Interface Queues
-    sysctl -w net.core.netdev_max_backlog=4096 # Max packets queued on interface
+    sysctl -w net.core.netdev_max_backlog=2000 # Max packets queued on interface
     sysctl -w net.core.somaxconn=512           # Max pending TCP connections
 
-    # Connection Tracking
-    sysctl -w net.netfilter.nf_conntrack_max=50000                   # Max tracked connections
-    sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=600 # TCP established timeout
-    sysctl -w net.netfilter.nf_conntrack_udp_timeout=60              # UDP timeout without data
-    sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=180      # UDP timeout with data
-    sysctl -w net.netfilter.nf_conntrack_checksum=0                  # Skip checksum validation
-
-    # TCP/UDP Memory & Buffers
-    sysctl -w net.ipv4.tcp_moderate_rcvbuf=1         # autotuning
-    sysctl -w net.ipv4.tcp_mem="8192 16384 32768"    # TCP memory thresholds
-    sysctl -w net.ipv4.udp_mem="8192 16384 32768"    # UDP memory thresholds
-    sysctl -w net.ipv4.tcp_rmem="4096 87380 6291456" # TCP per-socket read buffer min/def/max
-    sysctl -w net.ipv4.tcp_wmem="4096 65536 6291456" # TCP per-socket write buffer min/def/max
-    sysctl -w net.ipv4.udp_rmem_min=16384            # Min UDP receive buffer
-    sysctl -w net.ipv4.udp_wmem_min=16384            # Min UDP send buffer
-    sysctl -w net.ipv4.tcp_limit_output_bytes=262144 # Limit per-socket output burst
-
-    # TCP Behavior / Optimizations
-    sysctl -w net.ipv4.tcp_syncookies=1        # Enable SYN cookies (SYN flood protection)
-    sysctl -w net.ipv4.tcp_tw_reuse=1          # Allow reuse of TIME_WAIT sockets
-    sysctl -w net.ipv4.tcp_fin_timeout=15      # Shorten FIN timeout
-    sysctl -w net.ipv4.tcp_keepalive_time=600  # TCP keepalive interval
-    sysctl -w net.ipv4.tcp_keepalive_probes=5  # Keepalive probes count
+    # Keep Alive
+    sysctl -w net.ipv4.tcp_keepalive_time=60   # TCP keepalive interval
+    sysctl -w net.ipv4.tcp_keepalive_probes=6  # Keepalive probes count
     sysctl -w net.ipv4.tcp_keepalive_intvl=10  # Keepalive interval between probes
-    sysctl -w net.ipv4.tcp_timestamps=0        # Disable TCP timestamps for performance
-    sysctl -w net.ipv4.tcp_sack=1              # Enable selective ACKs
+
+    ct_max="$(get_connection_tracking "1")"
+
+    sysctl -w net.netfilter.nf_conntrack_max="$ct_max"                # Max tracked connections
+    sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=1800 # TCP established timeout
+    sysctl -w net.netfilter.nf_conntrack_udp_timeout=60               # UDP timeout without data
+    sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=180       # UDP timeout with data
+    sysctl -w net.netfilter.nf_conntrack_checksum=0                   # Disable checksum validation
+
+    # Latency / TCP Behavior
+    sysctl -w net.ipv4.tcp_fastopen=3      # Enable TCP Fast Open
+    sysctl -w net.ipv4.tcp_mtu_probing=1   # Enable TCP MTU probing
+    sysctl -w net.ipv4.tcp_slow_start_after_idle=0  # keep TCP speed after idle
+    sysctl -w net.ipv4.tcp_sack=1          # Enable selective ACKs
+    sysctl -w net.ipv4.tcp_syncookies=1    # Enable SYN cookies (SYN flood protection)
+    sysctl -w net.ipv4.tcp_tw_reuse=1      # Allow reuse of TIME_WAIT sockets
+    sysctl -w net.ipv4.tcp_fin_timeout=15  # Shorten FIN timeout
+    sysctl -w net.ipv4.tcp_timestamps=1    # Enable TCP timestamps for performance
     sysctl -w net.ipv4.tcp_max_syn_backlog=512 # Max SYN backlog
     sysctl -w net.ipv4.tcp_max_tw_buckets=8192 # Max TIME_WAIT sockets
-    sysctl -w net.ipv4.tcp_fastopen=3          # Enable TCP Fast Open
-    sysctl -w net.ipv4.tcp_mtu_probing=0       # Disable TCP MTU probing
-
-    # Local Ports
     sysctl -w net.ipv4.ip_local_port_range="10000 60001" # Set ephemeral port range
+
+    case "$(uname -m)" in
+      aarch64|arm*) ;;
+      *) return 0 ;;
+    esac
+
+    ## Only for ARM
+
+    # Network Buffers
+    sysctl -w net.core.rmem_max=4194304    # Max TCP/UDP receive buffer
+    sysctl -w net.core.wmem_max=4194304    # Max TCP/UDP send buffer
+    sysctl -w net.core.rmem_default=229376 # Default receive buffer
+    sysctl -w net.core.wmem_default=229376 # Default send buffer
+    sysctl -w net.ipv4.tcp_moderate_rcvbuf=1         # autotuning
+    sysctl -w net.ipv4.tcp_rmem="4096 87380 4194304" # TCP per-socket read buffer min/def/max
+    sysctl -w net.ipv4.tcp_wmem="4096 65536 4194304" # TCP per-socket write buffer min/def/max
+    sysctl -w net.ipv4.udp_rmem_min=8192             # Min UDP receive buffer
+    sysctl -w net.ipv4.udp_wmem_min=8192             # Min UDP send buffer
+    sysctl -w net.ipv4.tcp_limit_output_bytes=262144 # Limit per-socket output burst
   } >/dev/null 2>&1
 }
 
