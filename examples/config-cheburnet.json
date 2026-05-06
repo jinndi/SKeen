@@ -18,6 +18,9 @@
           "common.dot.dns.yandex.net": [
             "77.88.8.8", "77.88.8.1",
             "2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff"
+          ],
+          "ntc.party": [
+            "130.255.77.28"
           ]
         }
       },
@@ -71,6 +74,11 @@
         "protocol": "bittorent",
         "disable_cache": true,
         "server": "dns-proxy"
+      },
+      {
+        "action": "route",
+        "domain_suffix": "ntc.party",
+        "server": "dns-hosts"
       },
       {
         "action": "route",
