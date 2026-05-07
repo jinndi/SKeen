@@ -20,27 +20,23 @@ jobs:
         run: |
           sudo apt install shfmt -y
 
-          shfmt -s -mn skeen.sh > skeen
-          shfmt -s -mn skeen_ru.sh > skeen_ru
+          shfmt -s -mn skeen.sh > skeen_min
+          shfmt -s -mn skeen_ru.sh > skeen_ru_min
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          mkdir temp_static
-          cp skeen skeen_ru temp_static/
-
           if git fetch origin static; then
-            git checkout static
+            git checkout -f static
           else
             git checkout --orphan static
+            git rm -rf .
           fi
 
-          find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name 'README.md' -not -name 'sing-box' -exec rm -rf {} +
+          mv skeen_min skeen
+          mv skeen_ru_min skeen_ru
 
-          cp temp_static/skeen .
-          cp temp_static/skeen_ru .
-
-          if [ -n "$(git status --porcelain)" ]; then
+          if [ -n "$(git status --porcelain skeen skeen_ru)" ]; then
             git add skeen skeen_ru
             git commit -m "dist: update optimized scripts $(date +'%Y-%m-%d %H:%M')"
             git push origin static
