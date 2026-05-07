@@ -192,6 +192,65 @@ ADGuard Home в первую очередь отвечает за фильтра
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru | sh
 ```
 
+<details>
+  <summary>⚠️ Не устанавливается? (кликнуть)</summary>
+<br>
+
+Если основной способ загрузки недоступен, воспользуйтесь одним из вариантов ниже:
+
+**`Авто-подбор зеркала (рекомендуется):`**
+
+```
+t="--connect-timeout 3"; s="skeen"; c="curl -sfL"; \
+m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://raw.githack.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh
+```
+
+Либо выберите конкретное зеркало вручную:
+
+**`CDN jsDelivr`**
+
+```
+m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`CDN Statically`**
+
+```
+m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`CDN Githack`**
+
+```
+m="https://raw.githack.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`Proxy GHFast`**
+
+```
+m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`Proxy GHProxy`**
+
+```
+m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`Proxy GH-Proxy (alt)`**
+
+```
+m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+</details>
+
+
 **Настройте SKeen**. Его файл конфигурации находится по адресу `/opt/etc/skeen/skeen.json`.
 
 **Настройте JSON-файл(ы) конфигурации sing-box**, расположенные в директории `/opt/etc/skeen/config/`. В этой директории уже подготовлены примеры файлов. Либо используйте собственный одиночный файл конфигурации, включив режим `sing_config.enable`.

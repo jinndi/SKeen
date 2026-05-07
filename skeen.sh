@@ -481,7 +481,7 @@ download_singbox() {
   local version="${1:-$latest_version}"
   local pkg_url
 
-  if [ -z "$version" ]; then
+  if [ -z "$version" ] && [ -z "$MIRROR" ]; then
     echomsg "Fetching the latest version..."
     version="$(get_latest_version "$SINGBOX_API_URL")"
     [ -z "$version" ] && echoerr "Failed to fetch the latest version" && exit 1
@@ -489,8 +489,13 @@ download_singbox() {
     echook "Latest version is $version"
   fi
 
-  PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
-  pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${version}/${PKG_NAME}"
+  if [ -z "$MIRROR" ]; then
+    PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
+    pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${version}/${PKG_NAME}"
+  else
+    PKG_NAME="sing-box_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
+    pkg_url="${MIRROR}sing-box/${PKG_NAME}"
+  fi
 
   echomsg "Downloading ${PKG_NAME}..."
 
@@ -639,6 +644,10 @@ download_skeen_script() {
 
   [ -f "$SKEEN_SCRIPT" ] && mv "$SKEEN_SCRIPT" "$backup_script"
 
+  if [ -n "$MIRROR" ]; then
+    SKEEN_SCRIPT_URL="${MIRROR}skeen"
+  fi
+
   # shellcheck disable=SC2086
   if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
     rm -f "$SKEEN_SCRIPT"
@@ -680,6 +689,15 @@ is_running() {
 }
 
 install() {
+  MIRROR="${MIRROR:-}"
+
+  if [ -n "$MIRROR" ]; then
+    case "$MIRROR" in
+    https://*static/ | http://*static/) echomsg "Using mirror: $MIRROR"; ;;
+    *) exiterr "Mirror URL must start with http(s):// and end with static/"; ;;
+    esac
+  fi
+
   check_free_space
   get_os_release
   get_architecture
@@ -701,6 +719,8 @@ install() {
   echomsg "Configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
 
   echook "Installation completed"
+
+  MIRROR=""
 
   press_any_key_to_menu
 }

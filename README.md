@@ -191,6 +191,64 @@ This is highly discouraged. It’s a great way to wear out your device’s flash
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 ```
 
+<details>
+  <summary>⚠️ Installation failed? (click to expand)</summary>
+<br>
+
+If the primary download method is unavailable, use one of the options below:
+
+**`Automatic mirror selection (recommended):`**
+
+```
+t="--connect-timeout 3"; s="skeen"; c="curl -sfL"; \
+m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://raw.githack.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
+m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh
+```
+
+Or choose a specific mirror manually:
+
+**`CDN jsDelivr`**
+
+```
+m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`CDN Statically`**
+
+```
+m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`CDN Githack`**
+
+```
+m="https://raw.githack.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`Proxy GHFast`**
+
+```
+m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`Proxy GHProxy`**
+
+```
+m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+**`Proxy GH-Proxy (alt)`**
+
+```
+m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR=$m sh
+```
+
+</details>
+
 **Configure SKeen**. Its configuration file is located at `/opt/etc/skeen/skeen.json`.
 
 **Configure the sing-box JSON configuration file(s)** located in the `/opt/etc/skeen/config/` directory. Example configuration files are already provided there. Alternatively, you can use your own single configuration file by enabling the `sing_config.enable` mode.
