@@ -409,6 +409,28 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 
 ```
 
+Additional configuration notes:
+
+**`network.ipv6`** - should only be enabled if your ISP has provided an IPv6 address for internet access.
+**`network.tuning`** - when this option is enabled, the script applies a set of Linux kernel parameters (sysctl) adapted for the operation of high-performance proxy services (sing-box) on Keenetic routers.
+
+| Category | Change | Result |
+| :--- | :--- | :--- |
+| **Network Capacity** | Increases connection limits (`conntrack`) by 1.5x | Allows the router to handle more simultaneous sessions without table overflows. |
+| **Memory Cleanup** | Optimized TCP (1800s) and UDP (60/180s) timeouts | The system removes inactive entries more efficiently, freeing up RAM. |
+| **Tunnel Reliability** | TCP Keep-Alive interval set to 60 seconds | Faster detection of "dead" proxy tunnels and immediate reconnections. |
+| **Session Retention** | Increased timeouts for TCP (1200s → 1800s) and UDP (30s → 60s) | Prevents active connection drops during brief periods of traffic inactivity. |
+| **TCP Speed** | Disabled `slow_start_after_idle` | Maintains maximum transfer speeds even after short bursts of inactivity. |
+| **Responsiveness** | Enabled TCP Fast Open, SACK, and Timestamps | Accelerates connection handshakes and reduces overall latency. |
+| **Data Throughput** | Enabled MTU Probing (`tcp_mtu_probing=1`) | Automatically detects optimal packet size, preventing sites from hanging or "freezing". |
+| **Packet Queues** | Increased system queues (`backlog`, `somaxconn`) | Prevents packet loss during sudden traffic spikes or heavy loads. |
+| **Security** | Enabled SYN Cookies and port reuse | Enhances network security and improves ephemeral port allocation. |
+| **ARM Buffers** | Optimized `rmem`/`wmem` buffers (ARM Only) | Boosts peak throughput for high-end models like Giga, Ultra, and Hero. |
+
+To reset the settings to their defaults, simply set `network.tuning` to `0` and reboot your router.
+
+**`network.check`** - specify only those IP addresses or domain names that are guaranteed to be reachable (pingable) in your network to ensure the script can verify the connection and start services successfully after a router reboot.
+
 ## ⚖️ Credits & Legal
 
 * **SKeen** is licensed under the [MIT](https://github.com/jinndi/SKeen/blob/main/LICENSE) License.
