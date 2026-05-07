@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.12.0"
+SKEEN_VERSION="4.12.1"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -989,7 +989,7 @@ load_module() {
 }
 
 loading_modules() {
-  local modules="${1:-xt_TPROXY.ko xt_socket.ko xt_multiport.ko xt_owner.ko xt_comment.ko}"
+  local modules="${1:-xt_TPROXY.ko xt_socket.ko xt_owner.ko xt_comment.ko ip_set_bitmap_port.ko}"
   local err_msg="Please install router component: «Kernel modules for Netfilter»"
   local kernel_ver
 
