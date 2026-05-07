@@ -14,7 +14,7 @@ NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
 MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.11.5"
+SKEEN_VERSION="4.12.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -396,14 +396,19 @@ echook "Все зависимости установлены"
 download_singbox(){
 local version="${1:-$latest_version}"
 local pkg_url
-if [ -z "$version" ];then
+if [ -z "$version" ]&&[ -z "$MIRROR" ];then
 echomsg "Получение последней версии..."
 version="$(get_latest_version "$SINGBOX_API_URL")"
 [ -z "$version" ]&&echoerr "Не удалось получить версию"&&exit 1
 echook "Последняя версия: $version"
 fi
+if [ -z "$MIRROR" ];then
 PKG_NAME="sing-box_${version}_${PKG_OS}_$PKG_ARCH$PKG_SUFFIX"
 pkg_url="https://github.com/SagerNet/sing-box/releases/download/v$version/$PKG_NAME"
+else
+PKG_NAME="sing-box_${PKG_OS}_$PKG_ARCH$PKG_SUFFIX"
+pkg_url="${MIRROR}sing-box/$PKG_NAME"
+fi
 echomsg "Загрузка $PKG_NAME..."
 mkdir -p "$TMP_DIR"
 cd "$TMP_DIR"||exit 1
@@ -513,6 +518,9 @@ local action="${1:-}"
 local backup_script="$SKEEN_SCRIPT.backup"
 echomsg "Загрузка скрипта $SKEEN_NAME..."
 [ -f "$SKEEN_SCRIPT" ]&&mv "$SKEEN_SCRIPT" "$backup_script"
+if [ -n "$MIRROR" ];then
+SKEEN_SCRIPT_URL="${MIRROR}skeen_ru"
+fi
 if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL";then
 rm -f "$SKEEN_SCRIPT"
 [ -f "$backup_script" ]&&mv "$backup_script" "$SKEEN_SCRIPT"
@@ -543,6 +551,13 @@ is_running(){
 pidof "$SINGBOX_PROC" >/dev/null 2>&1
 }
 install(){
+MIRROR="${MIRROR:-}"
+if [ -n "$MIRROR" ];then
+case "$MIRROR" in
+https://*static/|http://*static/)echomsg "Используем зеркало: $MIRROR";;
+*)exiterr "URL зеркала должен начинаться с http(s):// и заканчиваться на static/"
+esac
+fi
 check_free_space
 get_os_release
 get_architecture
@@ -560,6 +575,7 @@ echomsg "Настройте $SINGBOX_NAME: отредактировав $CONFIG_
 fi
 echomsg "Настройте $SKEEN_NAME: отредактировав $SKEEN_CONFIG"
 echook "Установка завершена"
+MIRROR=""
 press_any_key_to_menu
 }
 uninstall(){
