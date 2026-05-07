@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.12.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.5...SKeen-v4.12.0) (2026-05-07)
+
+
+### 🚀 Feat
+
+* **install:** add mirror support for installation ([ec763c2](https://github.com/jinndi/SKeen/commit/ec763c28098a2b131c033481a86834a6c452856d))
+
+
+### 🤖 CI/CD
+
+* add mirror-sb workflow for static branch synchronization ([df9bb8e](https://github.com/jinndi/SKeen/commit/df9bb8e46b3d6de2fda6cf1a07619a8a2bec3766))
+* **mirror-sb:** filter OpenWrt packages by target architecture ([df1dab9](https://github.com/jinndi/SKeen/commit/df1dab9d3e0653d980bf90bdcfb4ac1ef2e6b939))
+* **sync-static-branch:** preserve .git and sing-box directories during cleanup ([874bae7](https://github.com/jinndi/SKeen/commit/874bae7aaf318d2469c5481fe89abe42fb3ccb95))
+* **sync-static-branch:** prevent README.md deletion during static branch sync ([243e85f](https://github.com/jinndi/SKeen/commit/243e85f4c4e0f7332ba6e820378bfab2efc0e555))
+* update checkout action to v4 and add sync-static-branch workflow ([eb8ffca](https://github.com/jinndi/SKeen/commit/eb8ffca6343bf279d8409466fbb028215bd948b3))
+
 ## [4.11.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.4...SKeen-v4.11.5) (2026-05-06)
 
 
