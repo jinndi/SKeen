@@ -1,0 +1,48 @@
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+name: sync-static-branch
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare and Push to Static Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt install shfmt -y
+
+          shfmt -s -mn skeen.sh > skeen
+          shfmt -s -mn skeen_ru.sh > skeen_ru
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          mkdir temp_static
+          cp skeen skeen_ru temp_static/
+
+          if git fetch origin static; then
+            git checkout static
+          else
+            git checkout --orphan static
+          fi
+
+          git rm -rf . --ignore-unmatch
+          cp temp_static/skeen .
+          cp temp_static/skeen_ru .
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add skeen skeen_ru
+            git commit -m "dist: update optimized scripts $(date +'%Y-%m-%d %H:%M')"
+            git push origin static
+          else
+            echo "No changes to commit"
+          fi
