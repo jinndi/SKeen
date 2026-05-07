@@ -1,4 +1,4 @@
-name: Mirror sing-box IPK
+name: Mirror sing-box
 on:
   workflow_dispatch:
 

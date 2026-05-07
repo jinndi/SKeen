@@ -4,7 +4,7 @@ on:
 permissions:
   contents: write
 
-name: sync-static-branch
+name: Sync static branch
 
 jobs:
   build-and-push:
