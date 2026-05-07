@@ -29,7 +29,11 @@ jobs:
             exit 0
           fi
 
-          DOWNLOAD_URLS=$(echo "$RELEASE_DATA" | grep '"browser_download_url":' | sed -E 's/.*"([^"]+)".*/\1/' | grep 'openwrt' | grep '\.ipk$')
+          DOWNLOAD_URLS=$(echo "$RELEASE_DATA" | \
+            grep '"browser_download_url":' | sed -E 's/.*"([^"]+)".*/\1/' | \
+            grep 'openwrt' | \
+            grep '\.ipk$' | \
+            grep -E 'aarch64|mipsel_|mips_')
 
           rm -f sing-box/*.ipk
 
