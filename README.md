@@ -351,6 +351,12 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 
 ```
 
+## ⚖️ Credits & Legal
+
+* **SKeen** is licensed under the [MIT](https://github.com/jinndi/SKeen/blob/main/LICENSE) License.
+* **sing-box Core:** This project utilizes binary distributions of [sing-box](https://github.com/SagerNet/sing-box), which is licensed under **GPLv3**.
+* In accordance with the GPLv3 license, we acknowledge the original authors. SKeen provides the scripts and configuration logic (the "wrapper"), while the core functionality is handled by the official sing-box binaries.
+
 ### 🔗 Useful links
 - Sync plugin: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
 - Sing-box schema: [https://gist.github.com/artiga033/fea992d95ad44dc8d024b229223b1002](https://gist.github.com/artiga033/fea992d95ad44dc8d024b229223b1002)

@@ -351,6 +351,12 @@ exec /opt/etc/init.d/S51dropbear start
 }
 ```
 
+## ⚖️ Авторы и правовая информация
+
+* **SKeen** распространяется под лицензией [MIT](https://github.com/jinndi/SKeen/blob/main/LICENSE).
+* **Ядро sing-box:** В данном проекте используются бинарные сборки [sing-box](https://github.com/SagerNet/sing-box), которые распространяются под лицензией **GPLv3**.
+* В соответствии с требованиями лицензии GPLv3, мы выражаем признательность оригинальным авторам. SKeen предоставляет скрипты и логику конфигурации («обёртку»), в то время как основной функционал обеспечивается официальными бинарными файлами sing-box.
+
 ### 🔗 Полезные ссылки
 
   - Плагин синхронизации: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
