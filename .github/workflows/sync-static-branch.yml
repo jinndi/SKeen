@@ -40,6 +40,9 @@ jobs:
             git add skeen skeen_ru
             git commit -m "dist: update optimized scripts $(date +'%Y-%m-%d %H:%M')"
             git push origin static
+
+            curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/skeen"
+            curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/skeen_ru"
           else
             echo "No changes to commit"
           fi
