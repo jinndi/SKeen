@@ -35,7 +35,7 @@ jobs:
             git checkout --orphan static
           fi
 
-          find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name 'sing-box' -exec rm -rf {} +
+          find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name 'README.md' -not -name 'sing-box' -exec rm -rf {} +
 
           cp temp_static/skeen .
           cp temp_static/skeen_ru .
