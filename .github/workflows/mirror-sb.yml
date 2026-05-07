@@ -1,0 +1,56 @@
+name: Mirror sing-box IPK
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror-ipk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout static branch
+        uses: actions/checkout@v4
+        with:
+          ref: static
+
+      - name: Download and Rename IPK
+        id: sync
+        run: |
+          RELEASE_DATA=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
+          LATEST_TAG=$(echo "$RELEASE_DATA" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+          mkdir -p sing-box
+          [ -f "sing-box/version.txt" ] && CURRENT_VER=$(cat sing-box/version.txt) || CURRENT_VER="none"
+
+          if [ "$LATEST_TAG" = "$CURRENT_VER" ]; then
+            echo "Version $LATEST_TAG is already mirrored."
+            echo "updated=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          DOWNLOAD_URLS=$(echo "$RELEASE_DATA" | grep '"browser_download_url":' | sed -E 's/.*"([^"]+)".*/\1/' | grep 'openwrt' | grep '\.ipk$')
+
+          rm -f sing-box/*.ipk
+
+          for url in $DOWNLOAD_URLS; do
+            ORIGINAL_NAME="${url##*/}"
+            NEW_NAME=$(echo "$ORIGINAL_NAME" | sed -E 's/sing-box_[0-9]+\.[0-9]+\.[0-9]+_/sing-box_/')
+
+            echo "Downloading $ORIGINAL_NAME as $NEW_NAME"
+            curl -Ls "$url" -o "sing-box/$NEW_NAME"
+          done
+
+          echo "$LATEST_TAG" > sing-box/version.txt
+          echo "updated=true" >> $GITHUB_OUTPUT
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Commit and Push
+        if: steps.sync.outputs.updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add sing-box/
+          git commit -m "chore: mirror sing-box ipk ${{ steps.sync.outputs.tag }}"
+          git push origin static
