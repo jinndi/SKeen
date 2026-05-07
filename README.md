@@ -200,13 +200,13 @@ If the primary download method is unavailable, use one of the options below:
 **`Automatic mirror selection (recommended):`**
 
 ```
-t="--connect-timeout 3"; s="skeen"; c="curl -sfL"; \
+( t="--connect-timeout 3"; s="skeen"; c="curl -sfL"; \
 m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh || \
 m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
 m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
 m="https://raw.githack.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
 m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
-m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh
+m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh )
 ```
 
 Or choose a specific mirror manually:

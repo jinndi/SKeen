@@ -201,13 +201,13 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru | sh
 **`Авто-подбор зеркала (рекомендуется):`**
 
 ```
-t="--connect-timeout 3"; s="skeen"; c="curl -sfL"; \
+( t="--connect-timeout 3"; s="skeen"; c="curl -sfL"; \
 m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh || \
 m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
 m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
 m="https://raw.githack.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
 m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c $t "${m}$s" | MIRROR=$m sh || \
-m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh
+m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c $t "${m}$s" | MIRROR=$m sh )
 ```
 
 Либо выберите конкретное зеркало вручную:
