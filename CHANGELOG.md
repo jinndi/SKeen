@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.12.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.0...SKeen-v4.12.1) (2026-05-07)
+
+
+### 🐛 Fix
+
+* **en:** add ip_set_bitmap_port module to loading_modules function ([32ae011](https://github.com/jinndi/SKeen/commit/32ae011bdc7f3d3205b6002391aae5a858e31426))
+
 ## [4.12.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.11.5...SKeen-v4.12.0) (2026-05-07)
 
 
