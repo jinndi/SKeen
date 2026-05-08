@@ -72,29 +72,57 @@ The project intentionally does not include a dedicated management panel. This ap
 
 ### Redirect - utilized in `redirect` (TCP) and `hybrid` (TCP) modes, as well as for router-level proxying
 
-The goto PREROUTING chain in the `nat` table is used under the name **skeen**:
+The `goto` `PREROUTING` chain in the `nat` table is used under the name **`skeen`**:
 
-It follows this rule order:
+Workflow Algorithm:
 
-* **ACCEPT** - bypasses all router policies based on `fwmark`, except for those configured in skeen.json (optional).
-* **ACCEPT** — bypasses ports specified in `skeen.json` if "selected ports mode" is disabled; otherwise, it filters traffic strictly for the specified ports.
-* **ACCEPT** - bypasses local, reserved, and user-defined addresses.
-* **REDIRECT** - redirects TCP traffic to the Sing-Box `redirect` port.
+**Policy Bypass 🛡**
+  * `connmark match ! 0xffffaaa ... ACCEPT`
+  * **Essence:** Skip packets that do not have the router policy mark (optional).
+
+**Excluded Ports 🚫**
+  * `match-set skeen_exclude_port dst ACCEPT`
+  * **Essence:** If ports are specified in `skeen.json` that should not be proxied (or, conversely, only specific ports are allowed), traffic is either sent directly or continues for further checks.
+
+**Address Bypass 🌍**
+  * `match-set skeen_exclude_net4 dst ACCEPT`
+  * **Essence:** Ignore the router’s local network, reserved subnets, and the user-defined IP whitelist. Packets to these resources bypass the proxy.
+
+**TCP Redirect Hijack 🕸**
+  * `REDIRECT --to-ports 65082`
+  * **Essence:** Final stretch. All remaining TCP traffic is forcibly redirected to the local Sing-Box port. Unlike TProxy, this uses classic NAT-based port redirection.
 
 ---
 
 ### TProxy - utilized in `tproxy` (TCP & UDP) and `hybrid` (UDP) modes, as well as for router-level proxying
 
-The goto PREROUTING chain in the `mangle` table is used under the name **skeen**:
+The `goto` `PREROUTING` chain in the `mangle` table is used under the name **`skeen`**:
 
-It follows this rule order:
+Workflow Algorithm:
 
-* **ACCEPT** - bypasses all router policies based on `fwmark`, except for those configured in skeen.json (optional).
-* **TPROXY DNS** - redirects TCP/UDP port 53 traffic to the Sing-Box TProxy port (optional, otherwise - ACCEPT).
-* **ACCEPT** — bypasses ports specified in `skeen.json` if "selected ports mode" is disabled; otherwise, it filters traffic strictly for the specified ports.
-* **ACCEPT** - bypasses local, reserved, and user-defined addresses.
-* **TCP MARK + ACCEPT SOCKET** - a "fast path" for already established transparent sockets (socket transparent).
-* **TPROXY** - directs the remaining TCP/UDP traffic to the Sing-Box TProxy port.
+**Policy Bypass 🛡**
+  * `connmark match ! 0xffffaaa ... ACCEPT`
+  * **Essence:** Skip packets that do not have the router policy mark and the proxy mark (both are optional).
+
+**DNS TProxy 🔍**
+  * `udp dpt:53 TPROXY redirect 127.0.0.1:65082`
+  * **Essence:** Intercept DNS requests on the fly and send them directly to the Sing-Box TProxy port. Works if `firewall.redirect_dns` is not enabled in the `skeen.json` config; otherwise just `ACCEPT` to let packets continue through the tables.
+
+**Excluded Ports 🚫**
+  * `match-set skeen_exclude_port dst ACCEPT`
+  * **Essence:** If ports are specified in `skeen.json` that should not be proxied (or, conversely, only specific ports are allowed), traffic is either sent directly or continues for further checks.
+
+**Address Bypass 🌍**
+  * `match-set skeen_exclude_net4 dst ACCEPT`
+  * **Essence:** Ignore the router’s local network, reserved subnets, and the user-defined IP whitelist. Packets to these resources bypass the proxy.
+
+**Socket Fast Path (TCP) 🚀**
+  * `socket --transparent MARK set 0x112` + `ACCEPT`
+  * **Essence:** Speed-up magic. If the system already has an open transparent socket for the packet, we simply apply a mark and pass it directly to the socket, bypassing heavy checks.
+
+**Final TProxy Hijack 🕸**
+  * `TPROXY redirect 127.0.0.1:65082 mark 0x112`
+  * **Essence:** Final stage. All remaining TCP/UDP traffic that did not match any exclusions is forcibly redirected to the Sing-Box TProxy port.
 
 > **Note:** Local subnets (listed in the source code) are already excluded from proxying. However, if you need to exclude specific ports, you must specify them manually in `skeen.json` or within the `sing-box` configuration itself.
 
@@ -111,11 +139,27 @@ Depending on the firewall mode and router proxying settings (on/off), chains are
 Instead of filtering by router policies, it filters processes that do not belong to the `skeen` group (to prevent routing loops). The rules are applied in the following order:
 
 1. `redirect` mode, `nat` table in `OUTPUT` named `skeen_mask`: mirrors the logic of the Redirect **skeen** chain.
-2. `tproxy` mode, `mangle` table in `OUTPUT` chain named `skeen_mask`: Similar to the TProxy chain rules, with the exception of the absence of DNS redirection and rules for direct traffic routing to Sing-Box. Instead, it concludes with:
+2. `tproxy` mode, `mangle` table in `OUTPUT` named `skeen_mask`. Logic flow:
 
-* **ACCEPT 53 PORT** - to prevent subsequent rules from executing, only if the `redirect_dns` function is enabled in the SKeen configuration.
-* **MARK** - marking of local outbound traffic. This traffic will enter the `PREROUTING` stage, where it will be processed by the `skeen` chain according to this mark.
-* **CONNMARK save** - saves the mark to the entire connection (conntrack) for firewall "memory."
+**Anti-Loop (GID skeen) 🛡**
+  * `owner GID match skeen ACCEPT`
+  * **Core Logic:** If the packet was generated by `sing-box` itself, it is bypassed and sent directly to the WAN. Without this rule, the router would fall into an infinite routing loop.
+
+**DNS Hijack (Port 53) 🔍**
+  * `udp dpt:53 MARK set 0x112` + `ACCEPT`
+  * **Core Logic:** If the router itself attempts a DNS resolution, we apply the `0x112` mark. This triggers a kernel "reroute check" to send the request to Sing-Box. Note: the mark is applied only if `firewall.redirect_dns` is not set in `skeen.json`; otherwise, it performs a simple `ACCEPT` without marking.
+
+**Exclusions (ipset) ⚡️**
+  * `match-set skeen_exclude_port dst ACCEPT` - Ignores user-defined ports.
+  * `match-set skeen_exclude_net4 dst ACCEPT` - Bypasses local networks, reserved ranges, and custom subnets defined in `skeen.json`.
+
+**Catch-all (Remaining Traffic) 🕸**
+  * `MARK set 0x112` - Marks everything that didn't match the lists above.
+  * `CONNMARK save` - Saves the mark into the connection context so the firewall "remembers" this flow.
+  * **Outcome:** All other router-generated traffic (updates, utilities, scripts) is diverted to routing table 112, and subsequently to TProxy.
+
+> **How it works internally:**
+> When a packet receives the `0x112` MARK in the `OUTPUT` chain, the kernel performs a **Reroute Check**. It matches the `ip rule from all fwmark 0x112 lookup 112` and redirects the packet to the loopback interface (`lo`). There, it is intercepted by the `PREROUTING` chain, which performs the final `TPROXY` redirection to the Sing-Box port.
 
 3. `hybrid` mode utilizes combined rules for router proxying: `redirect` (TCP) and `tproxy` (UDP).
 

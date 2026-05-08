@@ -31,7 +31,7 @@ MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.12.1"
+SKEEN_VERSION="4.12.2"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -1384,19 +1384,23 @@ add_skeen_rules() {
     add_rule "$iptables" "$table" "$chain" \
       -p "$protocols" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
     ;;
-  "proxy_router")
-    if [ "$table" = "mangle" ]; then
-      for proto in $protocols; do
-        if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
-          add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
-        fi
-        add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
-        add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
-        add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
-      done
-    elif [ "$table" = "nat" ]; then
-      add_skeen_rules "$iptables" "$table" "$chain" "redirect" "$protocols"
-    fi
+  "proxy_router_owner")
+    add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
+    ;;
+  "proxy_router_dns")
+    for proto in $protocols; do
+      if [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
+        add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j MARK --set-mark "$TABLE_MARK"
+      fi
+      add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
+    done
+    ;;
+  "proxy_router_mark")
+    for proto in $protocols; do
+      add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
+      add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
+      add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
+    done
     ;;
   esac
 }
@@ -1436,9 +1440,16 @@ set_chain_rules() {
     ;;
 
   "$CHAIN_OUTPUT")
-    add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
-    add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
-    add_skeen_rules "$iptables" "$table" "$chain" "proxy_router" "$protocols"
+    add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_owner" "$protocols"
+
+    if [ "$table" = "mangle" ]; then
+      add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_dns" "$protocols"
+      add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
+      add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_mark" "$protocols"
+    elif [ "$table" = "nat" ]; then
+      add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
+      add_skeen_rules "$iptables" "$table" "$chain" "redirect" "$protocols"
+    fi
     ;;
   esac
 }
