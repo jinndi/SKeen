@@ -114,7 +114,7 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
 2. Режим `tproxy`, таблица `mangle` в `OUTPUT` с именем `skeen_mask`: аналогично правилам TProxy цепочки, за исключением отсутствия DNS редиректа и правил прямого направления трафика в Sing-Box. Вместо этого в конце идет:
 
 * **ACCEPT 53 PORT** - чтобы правила ниже не сработали, только если включена функция `redirect_dns` в конфигурации SKeen
-* **MARK** - маркировка локального исходящего трафика. Этот трафик попадет в `PREROUTING`, где будет обработан по данной метке. Если включена маршрутизация по политике в конфиге SKeen, обработка идет через цепочку `skeen` (добавленную вторым экземпляром после основной для клиентов), либо через обычную клиентскую цепочку, если проксирование настроено без политик.
+* **MARK** - маркировка локального исходящего трафика. Этот трафик попадет в `PREROUTING`, где будет обработан по данной метке цепочкой `skeen`.
 * **CONNMARK save** - сохранение метки всего соединения (conntrack) для «памяти» фаервола.
 
 3. Режим `hybrid` использует смешанные правила для проксирования роутера: `redirect` (TCP) и `tproxy` (UDP).
@@ -207,7 +207,8 @@ m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c "${m}${s}" | MIRROR="$
 m="https://raw.githack.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
 m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
 m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
-m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh )
+m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
+echo "Ошибка: Не удалось загрузить скрипт. Ни один из серверов не доступен." )
 ```
 
 Либо выберите конкретное зеркало вручную:

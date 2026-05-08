@@ -114,7 +114,7 @@ Instead of filtering by router policies, it filters processes that do not belong
 2. `tproxy` mode, `mangle` table in `OUTPUT` chain named `skeen_mask`: Similar to the TProxy chain rules, with the exception of the absence of DNS redirection and rules for direct traffic routing to Sing-Box. Instead, it concludes with:
 
 * **ACCEPT 53 PORT** - to prevent subsequent rules from executing, only if the `redirect_dns` function is enabled in the SKeen configuration.
-* **MARK** - marks local outgoing traffic, which then enters `PREROUTING` where it is processed based on this mark. If policy-based routing is enabled in the SKeen config, it is processed via the **skeen** chain (added as a second instance after the main client chain), or simply directed to the client chain if proxying is configured without policies.
+* **MARK** - marking of local outbound traffic. This traffic will enter the `PREROUTING` stage, where it will be processed by the `skeen` chain according to this mark.
 * **CONNMARK save** - saves the mark to the entire connection (conntrack) for firewall "memory."
 
 3. `hybrid` mode utilizes combined rules for router proxying: `redirect` (TCP) and `tproxy` (UDP).
@@ -206,7 +206,8 @@ m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c "${m}${s}" | MIRROR="$
 m="https://raw.githack.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
 m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
 m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
-m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh )
+m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
+echo "Error: Connection failed. Check your network or try again later." )
 ```
 
 Or choose a specific mirror manually:
@@ -417,9 +418,8 @@ Additional configuration notes:
 | Category | Change | Result |
 | :--- | :--- | :--- |
 | **Network Capacity** | Increases connection limits (`conntrack`) by 1.5x | Allows the router to handle more simultaneous sessions without table overflows. |
-| **Memory Cleanup** | Optimized TCP (1800s) and UDP (60/180s) timeouts | The system removes inactive entries more efficiently, freeing up RAM. |
-| **Tunnel Reliability** | TCP Keep-Alive interval set to 60 seconds | Faster detection of "dead" proxy tunnels and immediate reconnections. |
 | **Session Retention** | Increased timeouts for TCP (1200s → 1800s) and UDP (30s → 60s) | Prevents active connection drops during brief periods of traffic inactivity. |
+| **Tunnel Reliability** | TCP Keep-Alive interval set to 60 seconds | Faster detection of "dead" proxy tunnels and immediate reconnections. |
 | **TCP Speed** | Disabled `slow_start_after_idle` | Maintains maximum transfer speeds even after short bursts of inactivity. |
 | **Responsiveness** | Enabled TCP Fast Open, SACK, and Timestamps | Accelerates connection handshakes and reduces overall latency. |
 | **Data Throughput** | Enabled MTU Probing (`tcp_mtu_probing=1`) | Automatically detects optimal packet size, preventing sites from hanging or "freezing". |
