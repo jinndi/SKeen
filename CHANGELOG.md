@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.12.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.1...SKeen-v4.12.2) (2026-05-08)
+
+
+### 🐛 Fix
+
+* **firewall:** correct DNS TProxy marking logic (OUTPUT chain) and refactor iptables rules ([27de934](https://github.com/jinndi/SKeen/commit/27de934e417f9183f2a593a4d2d4694a1343c6a1))
+
 ## [4.12.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.0...SKeen-v4.12.1) (2026-05-07)
 
 
