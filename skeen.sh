@@ -2439,6 +2439,14 @@ update_core() {
 }
 
 update_skeen() {
+  local should_run="0"
+  if [ "$SERVICE_PROXY_ENABLE" = "1" ] || [ "$FIREWALL_PROXY_ROUTER" = "1" ]; then
+    should_run="1"
+  fi
+  if [ "$should_run" = "1" ]; then
+    if ! is_running; then start || press_any_key_to_menu "" 1; fi
+  elif is_running; then stop || press_any_key_to_menu "" 1; fi
+
   if download_skeen_script "update"; then
     echook "$SKEEN_NAME has been successfully updated"
     is_update_skeen=1
@@ -2517,14 +2525,6 @@ check_updates() {
       esac
     done
   fi
-
-  local should_run="0"
-  if [ "$SERVICE_PROXY_ENABLE" = "1" ] || [ "$FIREWALL_PROXY_ROUTER" = "1" ]; then
-    should_run="1"
-  fi
-  if [ "$should_run" = "1" ]; then
-    if ! is_running; then start || press_any_key_to_menu "" 1; fi
-  elif is_running; then stop || press_any_key_to_menu "" 1; fi
 
   # skeen
   ask_and_update "$SKEEN_NAME" "$SKEEN_PROC" "$SKEEN_API_URL" \
