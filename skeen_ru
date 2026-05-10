@@ -14,7 +14,7 @@ NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
 MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.12.2"
+SKEEN_VERSION="4.12.3"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -136,7 +136,7 @@ cat <<EOF >"$SKEEN_CONFIG"
   "network": {
     "ipv6": 1,
     "tuning": 0,
-    "check": ["1.1.1.1", "ya.ru", "223.5.5.5"],
+    "check": ["1.1.1.1", "ya.ru", "223.5.5.5"]
   },
   "sing_config":{
     "enable": 0,
@@ -854,11 +854,9 @@ local target="1.1.1.1"
 if [ "$IP_VERSION" = "6" ]&&! ip -6 route show default 2>/dev/null|grep -q .;then
 return 0
 fi
-if [ -n "$SKEEN_MARK_POLICY" ];then
-ip -"$IP_VERSION" route get "$target" mark "$SKEEN_MARK_POLICY" 2>/dev/null|grep -Eq "via|dev"
-else
-ip -"$IP_VERSION" route get "$target" 2>/dev/null|grep -Eq "via|dev"
-fi
+local mark_arg=""
+[ -n "$SKEEN_MARK_POLICY" ]&&mark_arg="mark $SKEEN_MARK_POLICY"
+ip -"$IP_VERSION" route get "$target" $mark_arg 2>/dev/null|grep -Eq "via|dev"
 }
 if ! check_default_route;then
 [ -f "$WAIT_ROUTE_FILE" ]||touch "$WAIT_ROUTE_FILE"
@@ -954,26 +952,22 @@ is_tty&&echowarn "$msg" >&2
 fi
 printf '%s' "$valid_ports"
 }
-get_eth_subnet(){
-local _ip_v="${1:-4}"
-local addresses address line eth_ip
+get_all_wan_ips(){
+local version="$1"
 local prefix_length="32"
-[ "$_ip_v" = "6" ]&&prefix_length="128"
-addresses="$(get_net_check_hosts "$_ip_v")"
-for address in $addresses;do
-line="$(ip -"$_ip_v" route get "$address" 2>/dev/null)"
-[ -z "$line" ]&&continue
-eth_ip=${line#*src }
-eth_ip=${eth_ip%% *}
-if [ -n "$eth_ip" ]&&[ "$eth_ip" != "$line" ];then
-echo "$eth_ip/$prefix_length"
-return 0
-fi
-done
+[ "$version" = "6" ]&&prefix_length="128"
+local interfaces
+interfaces=$(ip -"$version" route show table all 2>/dev/null|awk '/default/ {for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}'|sort -u)
+[ -z "$interfaces" ]&&return 0
+local result
+result=$(echo "$interfaces"|while read -r dev;do
+[ -z "$dev" ]&&continue
+ip -"$version" addr show "$dev" scope global 2>/dev/null|awk -v pref="$prefix_length" '/inet/ {split($2,a,"/"); print a[1] "/" pref}'
+done|sort -u|tr '\n' ' ')
+echo "$result"|xargs
 }
 get_exclude_addresses(){
 local ip_v="${1:-}"
-local eth_subnet
 local reserved_subnets
 local user_exclude
 local prefix_length_default
@@ -991,7 +985,7 @@ else
 reserved_subnets="$RESERVED_IPV6"
 user_exclude="$(json_get_array '@.firewall.exclude.ipv6_cidr')"
 fi
-all_list="$(get_eth_subnet "$ip_v")"
+all_list="$(get_all_wan_ips "$ip_v")"
 while IFS= read -r line;do
 [ -z "$line" ]&&continue
 case "$line" in
@@ -1520,7 +1514,7 @@ fi
 }
 apply_firewall(){
 local hook_table="${1:-}"
-local check iptables eth_subnet set_name
+local check iptables eth_subnets set_name
 check=$(echo "$SKEEN_IPTABLES_LIST"|sed 's/iptables//g; s/ip6tables//g; s/ //g')
 if [ -n "$check" ]||[ -z "$SKEEN_IPTABLES_LIST" ];then
 local msg_err="Неизвестный iptables: ${iptables:-unknown}"
@@ -1558,9 +1552,11 @@ PROXY_IP="::1"
 fi
 check_and_set_route_rules
 if [ -f "$WAIT_ROUTE_FILE" ];then
-eth_subnet="$(get_eth_subnet "$IP_VERSION")"
+eth_subnets="$(get_all_wan_ips "$IP_VERSION")"
 set_name="$NET_EXCLUDE_SET$IP_VERSION"
-ipset add "$set_name" "$eth_subnet" -exist
+for ip in $eth_subnets;do
+ipset add "$set_name" "$ip" -exist
+done
 fi
 local protocols=""
 if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ];then
