@@ -1085,11 +1085,10 @@ check_and_set_route_rules() {
       return 0
     fi
 
-    if [ -n "$SKEEN_MARK_POLICY" ]; then
-      ip -"$IP_VERSION" route get "$target" mark "$SKEEN_MARK_POLICY" 2>/dev/null | grep -Eq "via|dev"
-    else
-      ip -"$IP_VERSION" route get "$target" 2>/dev/null | grep -Eq "via|dev"
-    fi
+    local mark_arg=""
+    [ -n "$SKEEN_MARK_POLICY" ] && mark_arg="mark $SKEEN_MARK_POLICY"
+    # shellcheck disable=SC2086
+    ip -"$IP_VERSION" route get "$target" $mark_arg 2>/dev/null | grep -Eq "via|dev"
   }
 
   if ! check_default_route; then
@@ -1207,32 +1206,29 @@ get_validate_ports() {
   printf '%s' "$valid_ports"
 }
 
-get_eth_subnet() {
-  local _ip_v="${1:-4}"
-  local addresses address line eth_ip
+get_all_wan_ips() {
+  local version="$1"
   local prefix_length="32"
+  [ "$version" = "6" ] && prefix_length="128"
 
-  [ "$_ip_v" = "6" ] && prefix_length="128"
+  local interfaces
+  interfaces=$(ip -"$version" route show table all 2>/dev/null | \
+    awk '/default/ {for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}' | sort -u)
 
-  addresses="$(get_net_check_hosts "$_ip_v")"
+  [ -z "$interfaces" ] && return 0
 
-  for address in $addresses; do
-    line="$(ip -"$_ip_v" route get "$address" 2>/dev/null)"
-    [ -z "$line" ] && continue
+  local result
+  result=$(echo "$interfaces" | while read -r dev; do
+    [ -z "$dev" ] && continue
+    ip -"$version" addr show "$dev" scope global 2>/dev/null | \
+      awk -v pref="$prefix_length" '/inet/ {split($2,a,"/"); print a[1] "/" pref}'
+  done | sort -u | tr '\n' ' ')
 
-    eth_ip=${line#*src }
-    eth_ip=${eth_ip%% *}
-
-    if [ -n "$eth_ip" ] && [ "$eth_ip" != "$line" ]; then
-      echo "${eth_ip}/${prefix_length}"
-      return 0
-    fi
-  done
+  echo "$result" | xargs
 }
 
 get_exclude_addresses() {
   local ip_v="${1:-}"
-  local eth_subnet
   local reserved_subnets
   local user_exclude
   local prefix_length_default
@@ -1253,7 +1249,7 @@ get_exclude_addresses() {
     user_exclude="$(json_get_array '@.firewall.exclude.ipv6_cidr')"
   fi
 
-  all_list="$(get_eth_subnet "$ip_v")"
+  all_list="$(get_all_wan_ips "$ip_v")"
 
   while IFS= read -r line; do
     [ -z "$line" ] && continue
@@ -1923,7 +1919,7 @@ check_hook_table() {
 
 apply_firewall() {
   local hook_table="${1:-}"
-  local check iptables eth_subnet set_name
+  local check iptables eth_subnets set_name
 
   check=$(echo "$SKEEN_IPTABLES_LIST" | sed 's/iptables//g; s/ip6tables//g; s/ //g')
   if [ -n "$check" ] || [ -z "$SKEEN_IPTABLES_LIST" ]; then
@@ -1977,9 +1973,12 @@ apply_firewall() {
     check_and_set_route_rules
 
     if [ -f "$WAIT_ROUTE_FILE" ]; then
-      eth_subnet="$(get_eth_subnet "$IP_VERSION")"
+      eth_subnets="$(get_all_wan_ips "$IP_VERSION")"
       set_name="${NET_EXCLUDE_SET}${IP_VERSION}"
-      ipset add "$set_name" "$eth_subnet" -exist
+
+      for ip in $eth_subnets; do
+        ipset add "$set_name" "$ip" -exist
+      done
     fi
 
     local protocols=""
