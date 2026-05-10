@@ -168,7 +168,7 @@ create_skeen_config() {
   "network": {
     "ipv6": 1,
     "tuning": 0,
-    "check": ["1.1.1.1", "ya.ru", "223.5.5.5"],
+    "check": ["1.1.1.1", "ya.ru", "223.5.5.5"]
   },
   "sing_config":{
     "enable": 0,
