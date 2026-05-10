@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.12.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.2...SKeen-v4.12.3) (2026-05-10)
+
+
+### 🐛 Fix
+
+* **config:** remove trailing comma from network check array [#163](https://github.com/jinndi/SKeen/issues/163) ([e8c1d33](https://github.com/jinndi/SKeen/commit/e8c1d33077ee89dba35e6bb3de4acba685eecd4a))
+* **firewall:** handle multiple WAN IPs in exclusion sets ([97b5777](https://github.com/jinndi/SKeen/commit/97b577741917f94177f2ceaad28a443d3e6440b9))
+
 ## [4.12.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.1...SKeen-v4.12.2) (2026-05-08)
 
 
