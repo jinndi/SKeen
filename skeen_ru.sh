@@ -2509,9 +2509,9 @@ check_updates() {
   # sing-box
   ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
     update_core "https://github.com/SagerNet/sing-box/releases"
-  if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest_verson" ]; then
+  if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest_version" ]; then
     while :; do
-      printf "Загрузить %s %s? [y/n] (по умолчанию: n): " "$SINGBOX_NAME" "$latest_verson" >/dev/tty
+      printf "Загрузить %s %s? [y/n] (по умолчанию: n): " "$SINGBOX_NAME" "$latest_version" >/dev/tty
       read -r optt </dev/tty
       [ -z "$optt" ] && optt=n
 
@@ -2529,7 +2529,7 @@ check_updates() {
   # skeen
   ask_and_update "$SKEEN_NAME" "$SKEEN_PROC" "$SKEEN_API_URL" \
     update_skeen "https://github.com/jinndi/SKeen/releases"
-  [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest_verson" ] && update_skeen
+  [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest_version" ] && update_skeen
 
   [ "$CALLER" != "menu" ] && exit 0
 
