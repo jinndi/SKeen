@@ -209,6 +209,19 @@ This is highly discouraged. It’s a great way to wear out your device’s flash
 
 </details>
 
+<details>
+  <summary>🔀 Multi-WAN Mode?</summary>
+<br>
+
+When Multi-WAN is enabled, sing-box's own outbound traffic may "hop" between different providers. Since most proxy protocols (VLESS, VMess, Shadowsocks) are highly sensitive to client IP changes within a single session, the connection becomes extremely unstable. For proper operation, you must strictly bind sing-box to a single internet channel.
+
+An example of how to bind a connection to a specific interface can be found in the `examples` folder, in the `multi-interface-routing.json` file.
+
+> [!NOTE]
+> Selecting a provider in the SKeen policy has no effect by default without setting a policy mark in the routing or within the **outbounds** of the **sing-box** configuration. You can select any connection, but be aware: by default, the internet gateway specified in the default policy will be used, unless you have bound all or selected connections (**outbound**) to a specific interface.
+
+</details>
+
 ### 🚀 Features
 
   - TProxy/Redirect/Hybrid/Tun/DNS modes ✓
