@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.12.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.3...SKeen-v4.12.4) (2026-05-11)
+
+
+### 🐛 Fix
+
+* **update:** correct typo in latest_version variable references ([41badf9](https://github.com/jinndi/SKeen/commit/41badf973ff8cf5eb87e1bac42a937de597a0ffb))
+* **update:** streamline update logic for service proxy handling ([afec1e1](https://github.com/jinndi/SKeen/commit/afec1e161597ac4a8dc3068b059a7c7e4aa3d242))
+
+
+### 🧰 Chore
+
+* **test:** add DNS handling in mangle chain for OUTPUT chain ([d2a8066](https://github.com/jinndi/SKeen/commit/d2a8066d00b6927a7c5b1cb856881c83d53818bc))
+
 ## [4.12.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.2...SKeen-v4.12.3) (2026-05-10)
 
 
