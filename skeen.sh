@@ -2600,10 +2600,19 @@ fw_test_chain() {
     return 0
   fi
 
-  if [ "$1" = "mangle" ] && [ "$2" != "$CHAIN_OUTPUT" ] && [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
-    fw_test "$1" "$2" "$content" "TPROXY .* dpt:${DNS_PORT}" "DNS intercept"
-  elif [ "$1" = "mangle" ] && [ "$2" != "$CHAIN_OUTPUT" ] && [ "$SKEEN_INTERCEPT_DNS_ENABLE" != "1" ]; then
-    fw_test "$1" "$2" "$content" "ACCEPT .* dpt:${DNS_PORT}" "DNS exclude"
+  if [ "$1" = "mangle" ]; then
+    if [ "$2" = "$CHAIN_PREROUTING" ]; then
+      if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
+        fw_test "$1" "$2" "$content" "TPROXY .* dpt:${DNS_PORT}" "DNS intercept"
+      else
+        fw_test "$1" "$2" "$content" "ACCEPT .* dpt:${DNS_PORT}" "DNS exclude"
+      fi
+    elif [ "$2" = "$CHAIN_OUTPUT" ]; then
+      if [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
+        fw_test "$1" "$2" "$content" "MARK .* dpt:${DNS_PORT} MARK" "DNS mark"
+      fi
+      fw_test "$1" "$2" "$content" "ACCEPT .* dpt:${DNS_PORT}" "DNS exclude"
+    fi
   fi
 
   if [ "$SKEEN_INTERCEPT_PORT" = "1" ]; then
