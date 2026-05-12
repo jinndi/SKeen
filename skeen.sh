@@ -2593,6 +2593,11 @@ fw_test_chain() {
 
   content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
 
+  if [ "$1" = "mangle" ] && [ "$2" = "INPUT" ]; then
+    fw_test "$1" "$2" "$content" "skeen_keendns" "KeenDNS accept"
+    return 0
+  fi
+
   fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
 
   if [ "$2" = "$CHAIN_PREROUTING" ] && [ -n "$SKEEN_MARK_POLICY" ]; then
@@ -2701,6 +2706,7 @@ test_firewall() {
 
       for table in $tables; do
         fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
+        [ "$table" = "mangle" ] && fw_test_chain "$table" INPUT "$iptables"
         [ "$SKEEN_PROXY_ROUTER" = "1" ] &&
           fw_test_chain "$table" "$CHAIN_OUTPUT" "$iptables"
       done
