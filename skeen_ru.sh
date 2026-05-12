@@ -221,6 +221,10 @@ json_get_array() {
 }
 
 rci() {
+  curl -kfsS "${RCI}/${1:-}" 2>/dev/null || echo ""
+}
+
+rci_post() {
   curl -kfsS -X POST \
     -H "Content-Type: application/json" \
     -d "${2:-{}}" \
@@ -923,14 +927,7 @@ check_port() {
   local port="${1:-}"
   local msg_err
 
-  if [ -z "$port" ] && iptables -t mangle -nvL INPUT --line-numbers | grep -q 'tcp dpt:443'; then
-    msg_err="HTTPS порт 443 используется сервисами Keenetic"
-    echoerr "$msg_err"
-    logger_error "$msg_err"
-    echoerr "TProxy требует свободный порт"
-    echoerr "Освободите его на странице 'Пользователи и доступ' веб-интерфейса роутера"
-    press_any_key_to_menu "" 1
-  elif [ -n "$port" ]; then
+  if [ -n "$port" ]; then
     if netstat -lnt 2>/dev/null | grep -q ":$port\s"; then
       msg_err="Порт $port занят. Освободите его и попробуйте снова"
       echoerr "$msg_err"
@@ -1050,7 +1047,7 @@ get_mark_policy() {
   local mark_val
 
   if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_NAME" ]; then
-    json_policy="$(rci show/ip/policy)"
+    json_policy="$(rci_post show/ip/policy)"
 
     descriptions="$(printf '%s' "$json_policy" | jsonfilter -e '$.policy.*.description')"
     marks_list="$(printf '%s' "$json_policy" | jsonfilter -e '$.policy.*.mark')"
@@ -1333,6 +1330,17 @@ add_skeen_rules() {
     [ -n "$connmark_options" ] &&
       add_rule "$iptables" "$table" "$chain" $connmark_options -j ACCEPT
     ;;
+  "intercept_dns")
+    for proto in $protocols; do
+      if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
+        add_rule "$iptables" "$table" "$chain" \
+          -p "$proto" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
+          --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
+      else
+        add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
+      fi
+    done
+  ;;
   "exclude_set")
     if [ "$SKEEN_EXCLUDE_PORT" = "1" ]; then
       for proto in $protocols; do
@@ -1349,17 +1357,6 @@ add_skeen_rules() {
     add_rule "$iptables" "$table" "$chain" \
       -m set --match-set "${NET_EXCLUDE_SET}${IP_VERSION}" dst -j ACCEPT
     ;;
-  "intercept_dns")
-    for proto in $protocols; do
-      if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
-        add_rule "$iptables" "$table" "$chain" \
-          -p "$proto" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
-          --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
-      else
-        add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
-      fi
-    done
-  ;;
   "tproxy")
     for proto in $protocols; do
       if [ "$proto" = "tcp" ]; then
@@ -1375,6 +1372,20 @@ add_skeen_rules() {
         --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
     done
     ;;
+  "keendns_accept")
+    local k_port
+    k_port="$(rci ip/http | jsonfilter -e '@.ssl.port' 2>/dev/null)"
+    [ -z "$k_port" ] && return 0
+
+    local rule="-m mark --mark $TABLE_MARK -j ACCEPT -m comment --comment skeen_keendns"
+
+    for proto in $protocols; do
+      # shellcheck disable=SC2086
+      if ! $iptables -t "$table" -C "$chain" -p "$proto" --dport "$k_port" $rule >/dev/null 2>&1; then
+        $iptables -w -t "$table" -I "$chain" -p "$proto" --dport "$k_port" $rule
+      fi
+    done
+  ;;
   "redirect")
     # shellcheck disable=SC2086
     add_rule "$iptables" "$table" "$chain" \
@@ -1429,6 +1440,7 @@ set_chain_rules() {
       add_skeen_rules "$iptables" "$table" "$chain" "intercept_dns" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "tproxy" "$protocols"
+      add_skeen_rules "$iptables" "$table" "INPUT" "keendns_accept" "$protocols"
     elif [ "$table" = "nat" ]; then
       add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "redirect" "$protocols"
@@ -1668,8 +1680,6 @@ prepare_firewall() {
   fi
 
   cyan " - Обнаружен режим фаервола: $SKEEN_FIREWALL_MODE $has_opkgtun"
-
-  [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && check_port
 
   SKEEN_INTERCEPT_DNS_ENABLE="0"
   SKEEN_REDIRECT_DNS_ENABLE="0"
@@ -2039,19 +2049,23 @@ clean_firewall() {
     $ipt_cmd -w -t nat -S $CHAIN_DNS 2>/dev/null | \
     sed -n "s/^-A /${ipt_cmd} -w -t nat -D /p" | grep "skeen_dns" | sh 2>/dev/null
 
-    # 3. skeen PREROUTING & skeen_mask OUTPUT
+    # 3. KeenDNS accept
+    $ipt_cmd -w -t mangle -S INPUT 2>/dev/null | \
+    sed -n "s/^-A /${ipt_cmd} -w -t mangle -D /p" | grep "skeen_keendns" | sh 2>/dev/null
+
+    # 4. skeen PREROUTING & skeen_mask OUTPUT
     for table in nat mangle; do
       clean_chain "$ipt_cmd" "$table" "$CHAIN_PREROUTING" PREROUTING
       clean_chain "$ipt_cmd" "$table" "$CHAIN_OUTPUT" OUTPUT
     done
   done
 
-  # 4. routing cleanup
+  # 5. routing cleanup
   ip -4 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
   ip -6 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
   ip route flush table "$TABLE_ID" 2>/dev/null
 
-  # 5. ipset cleanup
+  # 6. ipset cleanup
   if command -v ipset >/dev/null 2>&1; then
     for ip_ver in 4 6; do
       set_name="${NET_EXCLUDE_SET}${ip_ver}"
@@ -2065,7 +2079,7 @@ clean_firewall() {
     done
   fi
 
-  # 6. cleanup hook
+  # 7. cleanup hook
   rm -f "$FIREWALL_HOOK_FILE" 2>/dev/null
 
   echook "Очистка фаервола завершена"

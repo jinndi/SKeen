@@ -217,8 +217,17 @@ When Multi-WAN is enabled, sing-box's own outbound traffic may "hop" between dif
 
 An example of how to bind a connection to a specific interface can be found in the `examples` folder, in the `multi-interface-routing.json` file.
 
-> [!NOTE]
-> Selecting a provider in the SKeen policy has no effect by default without setting a policy mark in the routing or within the **outbounds** of the **sing-box** configuration. You can select any connection, but be aware: by default, the internet gateway specified in the default policy will be used, unless you have bound all or selected connections (**outbound**) to a specific interface.
+> **Note:** Selecting a provider in the SKeen policy has no effect by default without setting a policy mark in the routing or within the **outbounds** of the **sing-box** configuration. You can select any connection, but be aware: by default, the internet gateway specified in the default policy will be used, unless you have bound all or selected connections (**outbound**) to a specific interface.
+
+</details>
+
+<details>
+  <summary>🏠 KeenDNS in TProxy mode?</summary>
+<br>
+
+If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from your local network in **TProxy** mode, you must configure a `hosts` type DNS server in your **sing-box** configuration (see `examples/keendns-tproxy-local-access.json` for a configuration example). If internet access is enabled, no additional settings are required.
+
+> **Note:** Changing the HTTPS port in the web interface takes effect only after a subsequent router reboot. This is unrelated to SKeen and is a known bug in the firmware itself.
 
 </details>
 

@@ -1,0 +1,33 @@
+// This example demonstrates how to configure KeenDNS to resolve a specific domain
+// to a local IP address using a custom DNS server with the "hosts" type.
+// It also shows how to route DNS queries for that domain to the local DNS server.
+// Can be used to access a KeenDNS domain name from the local network when using TProxy.
+
+// Этот пример демонстрирует, как настроить KeenDNS для разрешения конкретного доменного имени
+// в локальный IP-адрес с использованием пользовательского DNS-сервера типа «hosts».
+// Он также показывает, как перенаправить DNS-запросы для этого домена на локальный DNS-сервер.
+// Может быть полезеным для доступа к доменному имени KeenDNS из локальной сети при использовании TProxy
+
+{
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns-hosts", // Add a local DNS server with hosts type
+        "type": "hosts",    // Добавить локальный DNS-сервер типа hosts
+        "predefined": {
+          "your-name.netcraze.pro": [ // Map the domain to a local IP address
+            "192.168.1.1"             // Сопоставить домен с локальным IP-адресом
+          ]
+        }
+      }
+    ],
+    "rules": [
+      {
+        "domain_suffix": [         // Add a rule to route DNS queries for the specified domain suffix to the local DNS server
+          "your-name.netcraze.pro" // Добавить правило для маршрутизации DNS-запросов для указанного суффикса домена на локальный DNS-сервер
+        ],
+        "server": "dns-hosts"
+      }
+    ]
+  }
+}
