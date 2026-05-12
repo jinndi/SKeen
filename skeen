@@ -14,7 +14,7 @@ NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
 MODULES_OS_DIR="/lib/modules"
 MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.12.4"
+SKEEN_VERSION="4.13.0"
 SKEEN_PROC="skeen"
 SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
@@ -182,6 +182,9 @@ fi
 jsonfilter -i "$SKEEN_CONFIG" -e "$path"|tr -d '[],"'
 }
 rci(){
+curl -kfsS "$RCI/${1:-}" 2>/dev/null||echo ""
+}
+rci_post(){
 curl -kfsS -X POST \
 -H "Content-Type: application/json" \
 -d "${2:-{}}" \
@@ -728,14 +731,7 @@ return 1
 check_port(){
 local port="${1:-}"
 local msg_err
-if [ -z "$port" ]&&iptables -t mangle -nvL INPUT --line-numbers|grep -q 'tcp dpt:443';then
-msg_err="HTTPS Port 443 is in use by Keenetic services."
-echoerr "$msg_err"
-logger_error "$msg_err"
-echoerr "TProxy requires a free port to work."
-echoerr "Please free it on the 'Users and Access' page of the router web interface"
-press_any_key_to_menu "" 1
-elif [ -n "$port" ];then
+if [ -n "$port" ];then
 if netstat -lnt 2>/dev/null|grep -q ":$port\s";then
 msg_err="Port $port is in use. Free it and try running again"
 echoerr "$msg_err"
@@ -828,7 +824,7 @@ local description
 local desc_lower
 local mark_val
 if [ "$POLICY_ENABLE" = "1" ]&&[ -n "$POLICY_NAME" ];then
-json_policy="$(rci show/ip/policy)"
+json_policy="$(rci_post show/ip/policy)"
 descriptions="$(printf '%s' "$json_policy"|jsonfilter -e '$.policy.*.description')"
 marks_list="$(printf '%s' "$json_policy"|jsonfilter -e '$.policy.*.mark')"
 [ -n "$descriptions" ]&&[ -n "$marks_list" ]||return
@@ -1049,6 +1045,17 @@ connmark_options="-m connmark ! --mark $SKEEN_MARK_POLICY"
 fi
 [ -n "$connmark_options" ]&&add_rule "$iptables" "$table" "$chain" $connmark_options -j ACCEPT
 ;;
+"intercept_dns")for proto in $protocols
+do
+if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ];then
+add_rule "$iptables" "$table" "$chain" \
+-p "$proto" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
+--on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
+else
+add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
+fi
+done
+;;
 "exclude_set")if
 [ "$SKEEN_EXCLUDE_PORT" = "1" ]
 then
@@ -1065,17 +1072,6 @@ fi
 add_rule "$iptables" "$table" "$chain" \
 -m set --match-set "$NET_EXCLUDE_SET$IP_VERSION" dst -j ACCEPT
 ;;
-"intercept_dns")for proto in $protocols
-do
-if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ];then
-add_rule "$iptables" "$table" "$chain" \
--p "$proto" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
---on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
-else
-add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
-fi
-done
-;;
 "tproxy")for proto in $protocols
 do
 if [ "$proto" = "tcp" ];then
@@ -1087,6 +1083,16 @@ fi
 add_rule "$iptables" "$table" "$chain" \
 -p "$proto" -j TPROXY --on-ip "$PROXY_IP" \
 --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
+done
+;;
+"keendns_accept")local k_port
+k_port="$(rci ip/http|jsonfilter -e '@.ssl.port' 2>/dev/null)"
+[ -z "$k_port" ]&&return 0
+local rule="-m mark --mark $TABLE_MARK -j ACCEPT -m comment --comment skeen_keendns"
+for proto in $protocols;do
+if ! $iptables -t "$table" -C "$chain" -p "$proto" --dport "$k_port" $rule >/dev/null 2>&1;then
+$iptables -w -t "$table" -I "$chain" -p "$proto" --dport "$k_port" $rule
+fi
 done
 ;;
 "redirect")add_rule "$iptables" "$table" "$chain" \
@@ -1132,6 +1138,7 @@ if [ "$table" = "mangle" ];then
 add_skeen_rules "$iptables" "$table" "$chain" "intercept_dns" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "tproxy" "$protocols"
+add_skeen_rules "$iptables" "$table" "INPUT" "keendns_accept" "$protocols"
 elif [ "$table" = "nat" ];then
 add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "redirect" "$protocols"
@@ -1317,7 +1324,6 @@ else
 SKEEN_FIREWALL_MODE="none"
 fi
 cyan " - Detected firewall mode: $SKEEN_FIREWALL_MODE $has_opkgtun"
-[ "$SKEEN_FIREWALL_MODE" = "tproxy" ]&&check_port
 SKEEN_INTERCEPT_DNS_ENABLE="0"
 SKEEN_REDIRECT_DNS_ENABLE="0"
 SKEEN_REDIRECT_DNS_PORT=""
@@ -1600,6 +1606,7 @@ iptables -t nat -S POSTROUTING 2>/dev/null|grep "$CHAIN_TUN"|sed "s/^-A/iptables
 clean_chain "iptables" "filter" "$CHAIN_TUN" "INPUT"
 for ipt_cmd in iptables ip6tables;do
 $ipt_cmd -w -t nat -S $CHAIN_DNS 2>/dev/null|sed -n "s/^-A /$ipt_cmd -w -t nat -D /p"|grep "skeen_dns"|sh 2>/dev/null
+$ipt_cmd -w -t mangle -S INPUT 2>/dev/null|sed -n "s/^-A /$ipt_cmd -w -t mangle -D /p"|grep "skeen_keendns"|sh 2>/dev/null
 for table in nat mangle;do
 clean_chain "$ipt_cmd" "$table" "$CHAIN_PREROUTING" PREROUTING
 clean_chain "$ipt_cmd" "$table" "$CHAIN_OUTPUT" OUTPUT
@@ -2005,6 +2012,10 @@ local ref="PREROUTING"
 [ "$2" = "skeen_mask" ]&&ref="OUTPUT"
 cyan "Test $ref $1 $2"
 content="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
+if [ "$1" = "mangle" ]&&[ "$2" = "INPUT" ];then
+fw_test "$1" "$2" "$content" "skeen_keendns" "KeenDNS accept"
+return 0
+fi
 fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
 if [ "$2" = "$CHAIN_PREROUTING" ]&&[ -n "$SKEEN_MARK_POLICY" ];then
 fw_test "$1" "$2" "$content" "connmark match" "Connmark match"
@@ -2093,6 +2104,7 @@ echo "$DELIMETER"
 [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]&&fw_test_chain nat "$CHAIN_DNS" "$iptables"
 for table in $tables;do
 fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
+[ "$table" = "mangle" ]&&fw_test_chain "$table" INPUT "$iptables"
 [ "$SKEEN_PROXY_ROUTER" = "1" ]&&fw_test_chain "$table" "$CHAIN_OUTPUT" "$iptables"
 done
 [ "$SKEEN_TUN_ENABLED" = "1" ]&&[ "$iptables" = "iptables" ]&&fw_test_chain filter "$CHAIN_TUN" "iptables"
