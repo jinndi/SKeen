@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.13.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.4...SKeen-v4.13.0) (2026-05-12)
+
+
+### 🚀 Feat
+
+* add KeenDNS local access support for TProxy mode ([79ee414](https://github.com/jinndi/SKeen/commit/79ee4141417b947969bce7244eadadb9f04a7076))
+
+
+### 🧰 Chore
+
+* **test:** add KeenDNS accept rule verification in mangle INPUT chain ([8599100](https://github.com/jinndi/SKeen/commit/859910039c80d3890bef40d406cd3f9bce5c5d7a))
+
 ## [4.12.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.3...SKeen-v4.12.4) (2026-05-11)
 
 
