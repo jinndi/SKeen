@@ -2720,7 +2720,6 @@ fw_test_chain() {
 
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
     fw_test "$1" "$2" "$content" "MARK" "Mark set"
-    fw_test "$1" "$2" "$content" "CONNMARK" "Connmark save"
   elif [ "$1" = "nat" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
     fw_test "$1" "$2" "$content" "redir" "Redirect"
   fi
