@@ -1321,6 +1321,18 @@ add_skeen_rules() {
   local type="${4:-}"
   local protocols="${5:-}"
 
+  add_conntrack_mark() {
+    local proto="${1:-}"
+
+    if [ "$proto" = "tcp" ]; then
+      add_rule "$iptables" "$table" "$chain" \
+        -p "$proto" -m conntrack --ctstate NEW,RELATED -j CONNMARK --set-mark "$TABLE_MARK"
+    else
+      add_rule "$iptables" "$table" "$chain" \
+        -p "$proto" -m connmark ! --mark "$TABLE_MARK" -j CONNMARK --set-mark "$TABLE_MARK"
+    fi
+  }
+
   case "$type" in
   "exclude_connmark")
     local connmark_options=""
@@ -1343,6 +1355,9 @@ add_skeen_rules() {
       add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j ACCEPT
       add_rule "$iptables" "$table" "$chain" -p tcp -m socket --transparent -g "$CHAIN_DIVERT"
     fi
+    ;;
+  "ctdir_reply")
+    add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
     ;;
   "intercept_dns")
     for proto in $protocols; do
@@ -1373,9 +1388,10 @@ add_skeen_rules() {
     ;;
   "tproxy")
     for proto in $protocols; do
+      add_conntrack_mark "$proto"
       # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$chain" \
-        -p "$proto" -j TPROXY --on-ip "$PROXY_IP" \
+        -p "$proto" -m connmark --mark "$TABLE_MARK" -j TPROXY --on-ip "$PROXY_IP" \
         --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
     done
     ;;
@@ -1394,9 +1410,10 @@ add_skeen_rules() {
     done
   ;;
   "redirect")
+    add_conntrack_mark "$protocols"
     # shellcheck disable=SC2086
     add_rule "$iptables" "$table" "$chain" \
-      -p "$protocols" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+      -p "$protocols" -m connmark --mark "$TABLE_MARK" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
     ;;
   "proxy_router_owner")
     add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
@@ -1411,8 +1428,10 @@ add_skeen_rules() {
     ;;
   "proxy_router_mark")
     for proto in $protocols; do
-      add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
-      add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
+      add_conntrack_mark "$proto"
+
+      add_rule "$iptables" "$table" "$chain" \
+        -p "$proto" -m connmark --mark "$TABLE_MARK" -j MARK --set-mark "$TABLE_MARK"
       add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
     done
     ;;
@@ -1456,11 +1475,13 @@ set_chain_rules() {
 
     if [ "$table" = "mangle" ]; then
       add_skeen_rules "$iptables" "$table" "$chain" "socket" "$protocols"
+      add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "intercept_dns" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "tproxy" "$protocols"
       add_skeen_rules "$iptables" "$table" "INPUT" "keendns_accept" "$protocols"
     elif [ "$table" = "nat" ]; then
+      add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "redirect" "$protocols"
     fi
@@ -1468,6 +1489,7 @@ set_chain_rules() {
 
   "$CHAIN_OUTPUT")
     add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_owner" "$protocols"
+    add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
 
     if [ "$table" = "mangle" ]; then
       add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_dns" "$protocols"
