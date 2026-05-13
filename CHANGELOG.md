@@ -1,5 +1,29 @@
 # Changelog
 
+## [4.14.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.13.0...SKeen-v4.14.0) (2026-05-13)
+
+
+### 🚀 Feat
+
+* **firewall:** add configurable conntrack marking feature ([61e078f](https://github.com/jinndi/SKeen/commit/61e078f580de3c2d9f3698a9036d517ca4a654f4))
+* migrate from ndmc to full RCI API for router communication (refactor `tun` commans + Available via Web CLI) ([92b3c38](https://github.com/jinndi/SKeen/commit/92b3c38b868661a36218f652036f7fce8241f2eb))
+* **tproxy:** add socket-based traffic diversion with dedicated chain ([e8aa094](https://github.com/jinndi/SKeen/commit/e8aa094611103692586882afca989acf81ce43d8))
+
+
+### 🛠 Refactor
+
+* **scripts:** make configuration variables readonly for immutability ([3455ff9](https://github.com/jinndi/SKeen/commit/3455ff9089e6b45331d0a6bcfe31cf96cc1a0705))
+
+
+### ⚡ Perf
+
+* **firewall:** optimize with directional filtering and connection marking ([8fefd39](https://github.com/jinndi/SKeen/commit/8fefd39a22d1da25e415dfd89e5853a1556769b2))
+
+
+### 🧰 Chore
+
+* **test:** remove CONNMARK validation from chain tests ([a7ec9ed](https://github.com/jinndi/SKeen/commit/a7ec9edceb9a8b63b5b073bb7c8887369b384029))
+
 ## [4.13.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.12.4...SKeen-v4.13.0) (2026-05-12)
 
 
