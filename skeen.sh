@@ -196,7 +196,8 @@ create_skeen_config() {
       "to_port": "",
       "use_policy": 1
     },
-    "proxy_router": 0
+    "proxy_router": 0,
+    "use_conntrack": 0
   }
 }
 EOF
@@ -263,7 +264,8 @@ loading_config() {
       -e FIREWALL_REDIRECT_DNS_ENABLE='@.firewall.redirect_dns.enable' \
       -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
       -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
-      -e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router'
+      -e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router' \
+      -e FIREWALL_USE_CONNTRACK='@.firewall.use_conntrack'
   )"
 
   : "${AUTO_START_ENABLE:=1}"
@@ -284,6 +286,7 @@ loading_config() {
   : "${FIREWALL_REDIRECT_DNS_PORT:=}"
   : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
   : "${FIREWALL_PROXY_ROUTER:=0}"
+  : "${FIREWALL_USE_CONNTRACK:=0}"
 
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
     SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
@@ -1320,8 +1323,12 @@ add_skeen_rules() {
   local chain="${3:-}"
   local type="${4:-}"
   local protocols="${5:-}"
+  local connmark_match_opt=""
 
   add_conntrack_mark() {
+    [ "$SKEEN_USE_CONNMARK" != "1" ] && return
+    connmark_match_opt="-m connmark --mark $TABLE_MARK"
+
     local proto="${1:-}"
 
     if [ "$proto" = "tcp" ]; then
@@ -1357,6 +1364,7 @@ add_skeen_rules() {
     fi
     ;;
   "ctdir_reply")
+    [ "$SKEEN_USE_CONNMARK" != "1" ] && return
     add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
     ;;
   "intercept_dns")
@@ -1391,7 +1399,7 @@ add_skeen_rules() {
       add_conntrack_mark "$proto"
       # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$chain" \
-        -p "$proto" -m connmark --mark "$TABLE_MARK" -j TPROXY --on-ip "$PROXY_IP" \
+        -p "$proto" $connmark_match_opt -j TPROXY --on-ip "$PROXY_IP" \
         --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
     done
     ;;
@@ -1413,7 +1421,7 @@ add_skeen_rules() {
     add_conntrack_mark "$protocols"
     # shellcheck disable=SC2086
     add_rule "$iptables" "$table" "$chain" \
-      -p "$protocols" -m connmark --mark "$TABLE_MARK" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+      -p "$protocols" $connmark_match_opt -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
     ;;
   "proxy_router_owner")
     add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
@@ -1429,9 +1437,9 @@ add_skeen_rules() {
   "proxy_router_mark")
     for proto in $protocols; do
       add_conntrack_mark "$proto"
-
+      # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$chain" \
-        -p "$proto" -m connmark --mark "$TABLE_MARK" -j MARK --set-mark "$TABLE_MARK"
+        -p "$proto" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
       add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
     done
     ;;
@@ -1843,6 +1851,9 @@ prepare_firewall() {
   SKEEN_PROXY_ROUTER="0"
   [ "$FIREWALL_PROXY_ROUTER" = "1" ] && SKEEN_PROXY_ROUTER="1"
 
+  SKEEN_USE_CONNMARK="0"
+  [ "$FIREWALL_USE_CONNTRACK" = "1" ] && SKEEN_USE_CONNMARK="1"
+
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
@@ -1962,7 +1973,7 @@ prepare_firewall() {
     echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
     echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
     echo "export SKEEN_PROXY_ROUTER=\"$SKEEN_PROXY_ROUTER\""
-
+    echo "export SKEEN_USE_CONNMARK=\"$SKEEN_USE_CONNMARK\""
     echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
   } >"$FIREWALL_HOOK_FILE"
 
@@ -2660,6 +2671,10 @@ fw_test_chain() {
     fw_test "$1" "$2" "$content" "connmark match" "Connmark match"
   fi
 
+  if [ "$2" = "$CHAIN_PREROUTING" ] && [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
+    fw_test "$1" "$2" "$content" "$CHAIN_DIVERT" "Socket accept"
+  fi
+
   if [ "$2" = "$CHAIN_OUTPUT" ]; then
     fw_test "$1" "$2" "$content" "owner" "Process owner"
   fi
@@ -2674,6 +2689,8 @@ fw_test_chain() {
     fw_test "nat" "POSTROUTING" "$($3 -w -t nat -S POSTROUTING 2>/dev/null)" "skeen_tun" "Masquerade"
     return 0
   fi
+
+  [ "$SKEEN_USE_CONNMARK" = "1" ] && fw_test "$1" "$2" "$content" "ctdir REPLY" "REPLY accept"
 
   if [ "$1" = "mangle" ]; then
     if [ "$2" = "$CHAIN_PREROUTING" ]; then
@@ -2699,6 +2716,8 @@ fw_test_chain() {
 
   fw_test "$1" "$2" "$content" "$NET_EXCLUDE_SET" "Subnet exclude"
 
+  [ "$SKEEN_USE_CONNMARK" = "1" ] && fw_test "$1" "$2" "$content" "CONNMARK" "Connmark set"
+
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
     fw_test "$1" "$2" "$content" "MARK" "Mark set"
     fw_test "$1" "$2" "$content" "CONNMARK" "Connmark save"
@@ -2707,10 +2726,6 @@ fw_test_chain() {
   fi
 
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
-
-  if [ "$1" = "mangle" ] && [ "$SKEEN_TPROXY_NETWORK" = "tcp" ]; then
-    fw_test "$1" "$2" "$content" "tcp .* socket" "Socket tcp"
-  fi
 
   fw_test "$1" "$2" "$content" "redir|redirect" "Redirect"
 }
