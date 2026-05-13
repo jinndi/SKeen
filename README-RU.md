@@ -104,6 +104,10 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   * `connmark match ! 0xffffaaa ... ACCEPT`
   * **Суть:** Пропускаем пакеты, которые не имеют метки политики роутера и метки прокси (обе опциональны).
 
+**Socket Fast Path (TCP) 🚀**
+  * `match socket --transparent` -> `MARK set 0x112 + ACCEPT`
+  * **Суть:** Магия для ускорения. Если для пакета уже есть открытый прозрачный сокет в системе, мы просто вешаем метку и пропускаем его сразу к сокету, минуя тяжелые проверки.
+
 **DNS TProxy 🔍**
   * `udp dpt:53 TPROXY redirect 127.0.0.1:65082`
   * **Суть:** Перехватываем DNS-запросы на лету и кидаем их сразу в TProxy порт Sing-Box. Работает, если в конфиге `skeen.json` не включен `firewall.redirect_dns`, иначе просто `ACCEPT` для пропуска дальше по таблицам.
@@ -115,10 +119,6 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
 **Address Bypass 🌍**
   * `match-set skeen_exclude_net4 dst ACCEPT`
   * **Суть:** Игнорим локалку роутера, зарезервированные подсети и пользовательский белый список IP. Пакеты к этим ресурсам идут мимо прокси.
-
-**Socket Fast Path (TCP) 🚀**
-  * `socket --transparent MARK set 0x112` + `ACCEPT`
-  * **Суть:** Магия для ускорения. Если для пакета уже есть открытый прозрачный сокет в системе, мы просто вешаем метку и пропускаем его сразу к сокету, минуя тяжелые проверки.
 
 **Final TProxy Hijack 🕸**
   * `TPROXY redirect 127.0.0.1:65082 mark 0x112`

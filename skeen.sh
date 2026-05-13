@@ -52,6 +52,7 @@ readonly PORT_INTERCEPT_SET="skeen_intercept_port"
 readonly PORT_EXCLUDE_SET="skeen_exclude_port"
 readonly CHAIN_PREROUTING="skeen"
 readonly CHAIN_OUTPUT="skeen_mask"
+readonly CHAIN_DIVERT="skeen_divert"
 readonly CHAIN_TUN="skeen_tun"
 readonly CHAIN_DNS="_NDM_HOTSPOT_DNSREDIR"
 readonly TABLE_REDIRECT="nat"
@@ -1335,6 +1336,14 @@ add_skeen_rules() {
     [ -n "$connmark_options" ] &&
       add_rule "$iptables" "$table" "$chain" $connmark_options -j ACCEPT
     ;;
+  "socket")
+    if echo "$protocols" | grep -q "tcp"; then
+      ! safe_chain_create "$iptables" "$table" "$CHAIN_DIVERT" && return
+      add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j MARK --set-mark "$TABLE_MARK"
+      add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j ACCEPT
+      add_rule "$iptables" "$table" "$chain" -p tcp -m socket --transparent -g "$CHAIN_DIVERT"
+    fi
+    ;;
   "intercept_dns")
     for proto in $protocols; do
       if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
@@ -1364,13 +1373,6 @@ add_skeen_rules() {
     ;;
   "tproxy")
     for proto in $protocols; do
-      if [ "$proto" = "tcp" ]; then
-        add_rule "$iptables" "$table" "$chain" \
-          -p "$proto" -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
-        add_rule "$iptables" "$table" "$chain" \
-          -p "$proto" -m socket --transparent -j ACCEPT
-      fi
-
       # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$chain" \
         -p "$proto" -j TPROXY --on-ip "$PROXY_IP" \
@@ -1425,23 +1427,35 @@ chain_exists() {
   $iptables -t "$table" -L "$chain" -n >/dev/null 2>&1
 }
 
+safe_chain_create() {
+  local iptables="$1"
+  local table="$2"
+  local chain="$3"
+
+  if chain_exists "$iptables" "$table" "$chain"; then
+    return 1
+  elif ! $iptables -t "$table" -N "$chain"; then
+    return 1
+  else
+    $iptables -t "$table" -F "$chain"
+    return 0
+  fi
+}
+
 set_chain_rules() {
   local iptables="${1:-}"
   local table="${2:-}"
   local chain="${3:-}"
   local protocols="${4:-}"
 
-  if chain_exists "$iptables" "$table" "$chain"; then
-    return 0
-  elif ! $iptables -t "$table" -N "$chain"; then
-    return 0
-  fi
+  ! safe_chain_create "$iptables" "$table" "$chain" && return
 
   case "$chain" in
   "$CHAIN_PREROUTING")
     add_skeen_rules "$iptables" "$table" "$chain" "exclude_connmark" "$protocols"
 
     if [ "$table" = "mangle" ]; then
+      add_skeen_rules "$iptables" "$table" "$chain" "socket" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "intercept_dns" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "tproxy" "$protocols"
@@ -2075,6 +2089,7 @@ clean_firewall() {
     # 4. skeen PREROUTING & skeen_mask OUTPUT
     for table in nat mangle; do
       clean_chain "$ipt_cmd" "$table" "$CHAIN_PREROUTING" PREROUTING
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_DIVERT" PREROUTING
       clean_chain "$ipt_cmd" "$table" "$CHAIN_OUTPUT" OUTPUT
     done
   done

@@ -104,6 +104,10 @@ Workflow Algorithm:
   * `connmark match ! 0xffffaaa ... ACCEPT`
   * **Essence:** Skip packets that do not have the router policy mark and the proxy mark (both are optional).
 
+**Socket Fast Path (TCP) 🚀**
+  * `match socket --transparent` -> `MARK set 0x112 + ACCEPT`
+  * **Essence:** Speed-up magic. If the system already has an open transparent socket for the packet, we simply apply a mark and pass it directly to the socket, bypassing heavy checks.
+
 **DNS TProxy 🔍**
   * `udp dpt:53 TPROXY redirect 127.0.0.1:65082`
   * **Essence:** Intercept DNS requests on the fly and send them directly to the Sing-Box TProxy port. Works if `firewall.redirect_dns` is not enabled in the `skeen.json` config; otherwise just `ACCEPT` to let packets continue through the tables.
@@ -115,10 +119,6 @@ Workflow Algorithm:
 **Address Bypass 🌍**
   * `match-set skeen_exclude_net4 dst ACCEPT`
   * **Essence:** Ignore the router’s local network, reserved subnets, and the user-defined IP whitelist. Packets to these resources bypass the proxy.
-
-**Socket Fast Path (TCP) 🚀**
-  * `socket --transparent MARK set 0x112` + `ACCEPT`
-  * **Essence:** Speed-up magic. If the system already has an open transparent socket for the packet, we simply apply a mark and pass it directly to the socket, bypassing heavy checks.
 
 **Final TProxy Hijack 🕸**
   * `TPROXY redirect 127.0.0.1:65082 mark 0x112`
