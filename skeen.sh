@@ -11,8 +11,7 @@
 # exit on error or unset variable
 # set -e -u
 
-PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-export PATH
+readonly PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 ACTION="${1:-}"
 CALLER="${2:-}"
@@ -20,52 +19,52 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-DEPENDENCIES="start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
+readonly DEPENDENCIES="start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
 
-ENTWARE_DIR="/opt"
-WORK_DIR="${ENTWARE_DIR}/etc/skeen"
-CONFIG_DIR="${WORK_DIR}/config"
-TMP_DIR="${ENTWARE_DIR}/tmp"
-NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
-MODULES_OS_DIR="/lib/modules"
-MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
+readonly ENTWARE_DIR="/opt"
+readonly WORK_DIR="${ENTWARE_DIR}/etc/skeen"
+readonly CONFIG_DIR="${WORK_DIR}/config"
+readonly TMP_DIR="${ENTWARE_DIR}/tmp"
+readonly NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
+readonly MODULES_OS_DIR="/lib/modules"
+readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
-SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.13.0"
-SKEEN_PROC="skeen"
-SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
-SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
-SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
-SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
-SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
+readonly SKEEN_NAME="SKeen"
+readonly SKEEN_VERSION="4.13.0"
+readonly SKEEN_PROC="skeen"
+readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
+readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
+readonly SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
+readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
+readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 
-SINGBOX_NAME="Sing-box"
-SINGBOX_PROC="skeen-box"
+readonly SINGBOX_NAME="Sing-box"
+readonly SINGBOX_PROC="skeen-box"
 SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
-SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
-SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
-SINGBOX_SPACE_MB=128
+readonly SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
+readonly SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
+readonly SINGBOX_SPACE_MB=128
 
-FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
-WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
-NET_EXCLUDE_SET="skeen_exclude_net"
-PORT_INTERCEPT_SET="skeen_intercept_port"
-PORT_EXCLUDE_SET="skeen_exclude_port"
-CHAIN_PREROUTING="skeen"
-CHAIN_OUTPUT="skeen_mask"
-CHAIN_TUN="skeen_tun"
-CHAIN_DNS="_NDM_HOTSPOT_DNSREDIR"
-TABLE_REDIRECT="nat"
-TABLE_TPROXY="mangle"
-TABLE_MARK="0x112"
-TABLE_ID="112"
-DNS_PORT=53
+readonly FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
+readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
+readonly NET_EXCLUDE_SET="skeen_exclude_net"
+readonly PORT_INTERCEPT_SET="skeen_intercept_port"
+readonly PORT_EXCLUDE_SET="skeen_exclude_port"
+readonly CHAIN_PREROUTING="skeen"
+readonly CHAIN_OUTPUT="skeen_mask"
+readonly CHAIN_TUN="skeen_tun"
+readonly CHAIN_DNS="_NDM_HOTSPOT_DNSREDIR"
+readonly TABLE_REDIRECT="nat"
+readonly TABLE_TPROXY="mangle"
+readonly TABLE_MARK="0x112"
+readonly TABLE_ID="112"
+readonly DNS_PORT=53
 
-RCI="http://127.0.0.1:79/rci"
+readonly RCI="http://127.0.0.1:79/rci"
 
 # IETF/IANA IPv4 Special-Purpose Address Registry
 # https://www.iana.org/assignments/iana-ipv4-special-registry/
-RESERVED_IPV4="
+readonly RESERVED_IPV4="
 0.0.0.0/8          # 'This host on this network' (RFC 1122)
 10.0.0.0/8         # Private-Use (RFC 1918)
 100.64.0.0/10      # Shared Address Space (RFC 6598)
@@ -88,7 +87,7 @@ RESERVED_IPV4="
 
 # IETF/IANA IPv6 Special-Purpose Address Registry
 # https://www.iana.org/assignments/iana-ipv6-special-registry/
-RESERVED_IPV6="
+readonly RESERVED_IPV6="
 ::/128             # Unspecified Address (RFC 4291)
 ::1/128            # Loopback Address (RFC 4291)
 ::/96              # Zero-prefix / IPv4-compatible (RFC 4291, best practice)
@@ -109,7 +108,7 @@ fe80::/10          # Link-Local Unicast (RFC 4291)
 ff00::/8           # Multicast (RFC 4291)
 "
 
-DELIMETER="------------------------------------------------"
+readonly DELIMETER="------------------------------------------------"
 
 is_tty() {
   [ -t 1 ] || [ -t 2 ]
@@ -968,7 +967,7 @@ load_module() {
 
   [ -d "/sys/module/$modname" ] && return 0
 
-  local path_os="${MODULES_OS_DIR}/${module}"
+  local path_os="${MODULES_OS_DIR}/${KERNEL_OS_V}/${module}"
   local path_entware="${MODULES_ENTWARE_DIR}/${module}"
   local target_path=""
 
@@ -996,10 +995,8 @@ load_module() {
 loading_modules() {
   local modules="${1:-xt_TPROXY.ko xt_socket.ko xt_owner.ko xt_comment.ko ip_set_bitmap_port.ko}"
   local err_msg="Please install router component: «Kernel modules for Netfilter»"
-  local kernel_ver
 
-  kernel_ver="$(uname -r)"
-  MODULES_OS_DIR="${MODULES_OS_DIR}/${kernel_ver}"
+  KERNEL_OS_V="$(uname -r)"
 
   for module in $modules; do
     if [ "$module" = "xt_owner.ko" ] && is_owner_module_working; then
