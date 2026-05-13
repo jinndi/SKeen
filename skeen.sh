@@ -20,7 +20,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-DEPENDENCIES="ndmc start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
+DEPENDENCIES="start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
 
 ENTWARE_DIR="/opt"
 WORK_DIR="${ENTWARE_DIR}/etc/skeen"
@@ -221,14 +221,22 @@ json_get_array() {
 }
 
 rci() {
-  curl -kfsS "${RCI}/${1:-}" 2>/dev/null || echo ""
+  curl -kfsS "${RCI}/${1:-}" 2>/dev/null
 }
 
 rci_post() {
-  curl -kfsS -X POST \
-    -H "Content-Type: application/json" \
-    -d "${2:-{}}" \
-    "${RCI}/${1:-}" 2>/dev/null || echo ""
+  local payload="${2:-}"
+  set -- -kfsS -X POST -H "Content-Type: application/json" "${RCI}/${1:-}"
+
+  if [ -n "$payload" ]; then
+    printf '%s' "$payload" | curl "$@" -d @- 2>/dev/null
+  else
+    curl "$@" -d "{}" 2>/dev/null
+  fi
+}
+
+rci_delete() {
+  curl -kfsS -X DELETE "${RCI}/${1:-}"
 }
 
 loading_config() {
@@ -1494,9 +1502,8 @@ set_proxy_router_rules()  {
 
 release_version_ge5() {
   local major
+  major=$(rci_post show/version | jsonfilter -e '@.release' 2>/dev/null | cut -d'.' -f1)
 
-  check_tty
-  major=$(ndmc -c show version | awk -F'[:.]' '/release:/ {gsub(/ /,"",$2); print $2}')
   if [ "$major" -lt 5 ]; then
     echoerr "Release version KeeneticOS is lower than 5" && return 1
   fi
@@ -1506,9 +1513,6 @@ tun_create() {
   local opkgtun_ip="${1:-}"
   local opkgtun_desc="${2:-}"
   local opkgtun_name="OpkgTun0"
-  local inface_list
-  local opkgtun_ids
-  local opkgtun_name_lower
 
   if [ -z "$opkgtun_ip" ] || [ -z "$opkgtun_desc" ]; then
     echomsg "Use the following format to create an OpkgTun interface:"
@@ -1519,66 +1523,71 @@ tun_create() {
   case "$opkgtun_desc" in
   [!A-Za-z0-9_-]*)
     exiterr "Invalid name, allowed characters: A–Z, a–z, 0–9, _ and -"
+    return
     ;;
   esac
 
   if ! is_valid_ipv4 "$opkgtun_ip"; then
-    echoerr "Invalid IPv4 address specified"
+    echoerr "Invalid IPv4 address specified: $opkgtun_ip"
     return
   fi
   opkgtun_ip="${opkgtun_ip%%/*}"
 
-  inface_list="$(ndmc -c show interface)"
+  local interface_data inface_list iface description address
+  interface_data="$(rci_post show/interface)"
+  inface_list=$(echo "$interface_data" | jsonfilter -e '$.interface[*].id' | grep 'OpkgTun' | sort -u)
 
-  if echo "$inface_list" |
-    grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"; then
-    echoerr "Interface named \"$opkgtun_desc\" already exists"
-    return
-  fi
+  for iface in $inface_list; do
+    description=$(echo "$interface_data" | jsonfilter -e "@.interface['$iface'].description")
+    address=$(echo "$interface_data" | jsonfilter -e "@.interface['$iface'].address")
 
-  if echo "$inface_list" |
-    awk -v ip="$opkgtun_ip" '/^[[:space:]]*address:/ {
-        sub(/.*: */, "", $0)
-        if ($0 == ip) found=1
-    }
-    END { exit !found }'; then
-    exiterr "IP address $opkgtun_ip is already in use"
-  fi
+    if [ "$description" = "$opkgtun_desc" ]; then
+      echoerr "Interface named '$opkgtun_desc' already exists"
+      return
+    fi
 
-  opkgtun_ids="$(echo "$inface_list" |
-    grep 'id:[[:space:]]*OpkgTun' |
-    awk -F'OpkgTun' '{print $2}')"
+    if [ "$address" = "$opkgtun_ip" ]; then
+      echoerr "IP address '$opkgtun_ip' is already in use"
+      return
+    fi
+  done
 
-  if [ -n "$opkgtun_ids" ]; then
-    local i=0
-    while printf '%s\n' "$opkgtun_ids" | grep -qx "$i"; do
-      i=$((i + 1))
-    done
-    opkgtun_name="OpkgTun${i}"
-  fi
+  local opkgtun_ids id opkg_index
 
-  opkgtun_name_lower=$(echo "$opkgtun_name" | tr '[:upper:]' '[:lower:]')
+  opkgtun_ids=$(echo "$inface_list" | sed 's/OpkgTun//' | sort -nu)
 
-  tun_delete_msg() {
-    tun_delete "$opkgtun_desc"
-    exiterr "Failed to set ${1} the interface"
+  opkg_index=0
+  for id in $opkgtun_ids; do
+    if [ "$id" -eq "$opkg_index" ]; then
+      opkg_index=$((opkg_index + 1))
+    else
+      break
+    fi
+  done
+  opkgtun_name="OpkgTun${opkg_index}"
+
+  local payload='[{"interface":{"'"$opkgtun_name"'":{"description":"'"$opkgtun_desc"'"}}},
+  {"interface":{"'"$opkgtun_name"'":{"ip":{"address":{"address":"'"$opkgtun_ip"'","mask":"255.255.255.255"}}}}},
+  {"interface":{"'"$opkgtun_name"'":{"ip":{"tcp":{"adjust-mss":{"pmtu":true}}}}}},
+  {"ip":{"route":{"default":true,"gateway":"'"$opkgtun_ip"'","interface":"'"$opkgtun_name"'"}}},
+  {"interface":{"'"$opkgtun_name"'":{"ip":{"global":{"auto":true}}}}},
+  {"interface":{"'"$opkgtun_name"'":{"up":true}}},
+  {"system":{"configuration":{"save":true}}}]'
+
+  rci_post "" "$payload" >/dev/null 2>&1 || {
+    echoerr "Failed to create interface: $opkgtun_desc" && return
+    release_version_ge5
   }
 
-  ndmc -c interface "$opkgtun_name" || { echoerr "Failed to create the interface" && return; }
-  ndmc -c interface "$opkgtun_name" description "$opkgtun_desc" || tun_delete_msg "description"
-  ndmc -c interface "$opkgtun_name" ip address "${opkgtun_ip}/32" || tun_delete_msg "ip address"
-  ndmc -c interface "$opkgtun_name" ip tcp adjust-mss pmtu || tun_delete_msg "ip tcp adjust-mss pmtu"
-  ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name" || tun_delete_msg "ip route default"
-  ndmc -c interface "$opkgtun_name" ip global auto || tun_delete_msg "ip global auto"
-  ndmc -c interface "$opkgtun_name" up && ndmc -c system configuration save
+  local opkgtun_name_lower
+  opkgtun_name_lower="$(echo "$opkgtun_name" | tr '[:upper:]' '[:lower:]')"
 
-  echook "OpkgTun interface named \"$opkgtun_desc\" was created successfully"
+  echook "OpkgTun interface named '$opkgtun_desc' was created successfully"
   echo "Use the name $(green "\"$opkgtun_name_lower\"") for the $(yellow "\"interface_name\"") field in the tun configuration"
 }
 
 tun_delete() {
-  local opkgtun_desc="${1:-8888}"
-  local opkgtun_name
+  local opkgtun_desc="${1:-}"
 
   if [ -z "$opkgtun_desc" ]; then
     echoerr "Please specify the name of the OpkgTun interface to delete"
@@ -1586,36 +1595,49 @@ tun_delete() {
     return
   fi
 
-  if ndmc -c show interface |
-    grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$"; then
-    opkgtun_name=$(ndmc -c show interface | awk -v d="$opkgtun_desc" '
-      /^[[:space:]]*interface-name:/ { iface=$0; sub(/.*: */, "", iface) }
-      /^[[:space:]]*description:/   { desc=$0; sub(/.*: */, "", desc); if(desc==d){print iface; exit} }')
+  local interface_data inface_list iface description
+  interface_data="$(rci_post show/interface)"
+  inface_list=$(echo "$interface_data" | jsonfilter -e '$.interface[*].id' | grep 'OpkgTun' | sort -u)
 
-    case "$opkgtun_name" in
-    OpkgTun[0-9]*)
-      ndmc -c no interface "$opkgtun_name" || { echoerr "Failed to delete the interface" && return; }
-      ndmc -c system configuration save
-      echook "Interface \"$opkgtun_name\" has been successfully deleted"
-      ;;
-    *)
-      echoerr "Interface name: \"$opkgtun_name\" not OpkgTun"
-      echoerr "You can only delete an OpkgTun interface"
-      ;;
-    esac
-  else
-    echoerr "Interface named $opkgtun_desc does not exist"
-  fi
+  for iface in $inface_list; do
+    description="$(echo "$interface_data" | jsonfilter -e "@.interface['$iface'].description")"
+
+    if [ "$opkgtun_desc" = "$description" ]; then
+      rci_delete "interface/${iface}" >/dev/null 2>&1 || {
+        echoerr "Error removing interface: $opkgtun_desc" && return
+        release_version_ge5
+      }
+      rci_post "system/configuration/save" >/dev/null 2>&1
+
+      echook "Interface '$opkgtun_desc' was successfully deleted"
+      return
+    fi
+  done
+
+  echoerr "OpkgTun interface with name '$opkgtun_desc' does not exist"
 }
 
 tun_list() {
-  local opkgtun_list
-  opkgtun_list="$(
-    ndmc -c show interface | awk '/^Interface, name = "OpkgTun/ { print_block=1 }
-      print_block { print }
-      /^Interface, name =/ && $0 !~ /^Interface, name = "OpkgTun/ { print_block=0 }'
-  )"
-  [ -z "$opkgtun_list" ] && echomsg "No OpkgTun interfaces found" || echo "$opkgtun_list"
+  local interface_data inface_list iface description address
+
+  interface_data="$(rci_post show/interface)"
+  inface_list=$(echo "$interface_data" | jsonfilter -e '$.interface[*].id' | grep 'OpkgTun' | sort -u)
+
+  [ -z "$inface_list" ] && echomsg "No OpkgTun interfaces found" && return
+
+  is_tty && printf "\n  \033[1m%-10s | %-10s | %-15s\033[0m\n" "IFACE" "IP ADDRESS" "NAME"
+  is_tty && printf "  %-10s-|-%-10s-|-%-15s\n" "----------" "----------" "---------------"
+
+  for iface in $inface_list; do
+    description=$(echo "$interface_data" | jsonfilter -e "$.interface['$iface'].description")
+    address=$(echo "$interface_data" | jsonfilter -e "$.interface['$iface'].address")
+
+    [ -z "$description" ] && description="-"
+    [ -z "$address" ] && address="-"
+
+    printf "  %-10s | %-10s | %-15s\n" "$iface" "$address" "$description"
+  done
+  is_tty && echo ""
 }
 
 set_tun_rules() {
@@ -3201,7 +3223,6 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   sync) sync_config "$2" ;;
   iface) show_iface ;;
   tun)
-    release_version_ge5 || exit 1
     case "$2" in
     create) tun_create "$3" "$4" ;;
     delete) tun_delete "$3" ;;

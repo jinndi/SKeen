@@ -396,7 +396,7 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 3 - принимает URL JSON-конфигурации Sing-box в качестве второго параметра (HTTP или HTTPS), необязательно указывать, если прописан адрес в `sing_config.sync_url`
 
 
-| Менеджер OpkgTun (KeeneticOS v5+, только через SSH) |
+| Менеджер OpkgTun (KeeneticOS v5+, + WEB CLI) |
 | :--- |
 | `skeen tun create <ipv4> <name>` — Создать интерфейс с IP-адресом и именем |
 | `skeen tun delete <name>` — Удалить интерфейс по имени |
