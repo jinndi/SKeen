@@ -1,48 +1,48 @@
 #!/bin/sh
-PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-export PATH
+readonly PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ACTION="${1:-}"
 CALLER="${2:-}"
 [ -z "$CALLER" ]&&CALLER="cli"
 [ -z "$ACTION" ]&&CALLER="menu"
-DEPENDENCIES="ndmc start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
-ENTWARE_DIR="/opt"
-WORK_DIR="$ENTWARE_DIR/etc/skeen"
-CONFIG_DIR="$WORK_DIR/config"
-TMP_DIR="$ENTWARE_DIR/tmp"
-NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
-MODULES_OS_DIR="/lib/modules"
-MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
-SKEEN_NAME="SKeen"
-SKEEN_VERSION="4.13.0"
-SKEEN_PROC="skeen"
-SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
-SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen"
-SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
-SKEEN_CONFIG="$WORK_DIR/$SKEEN_PROC.json"
-SKEEN_AUTOSTART_SCRIPT="$ENTWARE_DIR/etc/init.d/S99SKeen"
-SINGBOX_NAME="Sing-box"
-SINGBOX_PROC="skeen-box"
+readonly DEPENDENCIES="start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
+readonly ENTWARE_DIR="/opt"
+readonly WORK_DIR="$ENTWARE_DIR/etc/skeen"
+readonly CONFIG_DIR="$WORK_DIR/config"
+readonly TMP_DIR="$ENTWARE_DIR/tmp"
+readonly NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
+readonly MODULES_OS_DIR="/lib/modules"
+readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
+readonly SKEEN_NAME="SKeen"
+readonly SKEEN_VERSION="4.14.0"
+readonly SKEEN_PROC="skeen"
+readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
+readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
+readonly SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
+readonly SKEEN_CONFIG="$WORK_DIR/$SKEEN_PROC.json"
+readonly SKEEN_AUTOSTART_SCRIPT="$ENTWARE_DIR/etc/init.d/S99SKeen"
+readonly SINGBOX_NAME="Sing-box"
+readonly SINGBOX_PROC="skeen-box"
 SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
-SINGBOX_BIN="$ENTWARE_DIR/bin/$SINGBOX_PROC"
-SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
-SINGBOX_SPACE_MB=128
-FIREWALL_HOOK_FILE="$NETFILTER_DIR/${SKEEN_PROC}_firewall.sh"
-WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
-NET_EXCLUDE_SET="skeen_exclude_net"
-PORT_INTERCEPT_SET="skeen_intercept_port"
-PORT_EXCLUDE_SET="skeen_exclude_port"
-CHAIN_PREROUTING="skeen"
-CHAIN_OUTPUT="skeen_mask"
-CHAIN_TUN="skeen_tun"
-CHAIN_DNS="_NDM_HOTSPOT_DNSREDIR"
-TABLE_REDIRECT="nat"
-TABLE_TPROXY="mangle"
-TABLE_MARK="0x112"
-TABLE_ID="112"
-DNS_PORT=53
-RCI="http://127.0.0.1:79/rci"
-RESERVED_IPV4="
+readonly SINGBOX_BIN="$ENTWARE_DIR/bin/$SINGBOX_PROC"
+readonly SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
+readonly SINGBOX_SPACE_MB=128
+readonly FIREWALL_HOOK_FILE="$NETFILTER_DIR/${SKEEN_PROC}_firewall.sh"
+readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
+readonly NET_EXCLUDE_SET="skeen_exclude_net"
+readonly PORT_INTERCEPT_SET="skeen_intercept_port"
+readonly PORT_EXCLUDE_SET="skeen_exclude_port"
+readonly CHAIN_PREROUTING="skeen"
+readonly CHAIN_OUTPUT="skeen_mask"
+readonly CHAIN_DIVERT="skeen_divert"
+readonly CHAIN_TUN="skeen_tun"
+readonly CHAIN_DNS="_NDM_HOTSPOT_DNSREDIR"
+readonly TABLE_REDIRECT="nat"
+readonly TABLE_TPROXY="mangle"
+readonly TABLE_MARK="0x112"
+readonly TABLE_ID="112"
+readonly DNS_PORT=53
+readonly RCI="http://127.0.0.1:79/rci"
+readonly RESERVED_IPV4="
 0.0.0.0/8          # 'This host on this network' (RFC 1122)
 10.0.0.0/8         # Private-Use (RFC 1918)
 100.64.0.0/10      # Shared Address Space (RFC 6598)
@@ -62,7 +62,7 @@ RESERVED_IPV4="
 240.0.0.0/4        # Reserved for Future Use (RFC 1112)
 255.255.255.255/32 # Direct Delegation AS112 Service (RFC7534)
 "
-RESERVED_IPV6="
+readonly RESERVED_IPV6="
 ::/128             # Unspecified Address (RFC 4291)
 ::1/128            # Loopback Address (RFC 4291)
 ::/96              # Zero-prefix / IPv4-compatible (RFC 4291, best practice)
@@ -82,7 +82,7 @@ RESERVED_IPV6="
 fe80::/10          # Link-Local Unicast (RFC 4291)
 ff00::/8           # Multicast (RFC 4291)
 "
-DELIMETER="------------------------------------------------"
+readonly DELIMETER="------------------------------------------------"
 is_tty(){
 [ -t 1 ]||[ -t 2 ]
 ret=$?
@@ -164,7 +164,8 @@ cat <<EOF >"$SKEEN_CONFIG"
       "to_port": "",
       "use_policy": 1
     },
-    "proxy_router": 0
+    "proxy_router": 0,
+    "use_conntrack": 0
   }
 }
 EOF
@@ -182,13 +183,19 @@ fi
 jsonfilter -i "$SKEEN_CONFIG" -e "$path"|tr -d '[],"'
 }
 rci(){
-curl -kfsS "$RCI/${1:-}" 2>/dev/null||echo ""
+curl -kfsS "$RCI/${1:-}" 2>/dev/null
 }
 rci_post(){
-curl -kfsS -X POST \
--H "Content-Type: application/json" \
--d "${2:-{}}" \
-"$RCI/${1:-}" 2>/dev/null||echo ""
+local payload="${2:-}"
+set -- -kfsS -X POST -H "Content-Type: application/json" "$RCI/${1:-}"
+if [ -n "$payload" ];then
+printf '%s' "$payload"|curl "$@" -d @- 2>/dev/null
+else
+curl "$@" -d "{}" 2>/dev/null
+fi
+}
+rci_delete(){
+curl -kfsS -X DELETE "$RCI/${1:-}"
 }
 loading_config(){
 if [ ! -f "$SKEEN_CONFIG" ];then
@@ -212,7 +219,8 @@ eval "$(jsonfilter -i "$SKEEN_CONFIG" \
 -e FIREWALL_REDIRECT_DNS_ENABLE='@.firewall.redirect_dns.enable' \
 -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
 -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
--e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router')"
+-e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router' \
+-e FIREWALL_USE_CONNTRACK='@.firewall.use_conntrack')"
 : "${AUTO_START_ENABLE:=1}"
 : "${AUTO_START_DELAY:=0}"
 : "${POLICY_ENABLE:=1}"
@@ -231,6 +239,7 @@ eval "$(jsonfilter -i "$SKEEN_CONFIG" \
 : "${FIREWALL_REDIRECT_DNS_PORT:=}"
 : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
 : "${FIREWALL_PROXY_ROUTER:=0}"
+: "${FIREWALL_USE_CONNTRACK:=0}"
 if [ "$SING_CONFIG_ENABLE" = "1" ];then
 SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
 fi
@@ -756,7 +765,7 @@ load_module(){
 local module="${1:-}"
 local modname="${module%.ko}"
 [ -d "/sys/module/$modname" ]&&return 0
-local path_os="$MODULES_OS_DIR/$module"
+local path_os="$MODULES_OS_DIR/$KERNEL_OS_V/$module"
 local path_entware="$MODULES_ENTWARE_DIR/$module"
 local target_path=""
 if [ -f "$path_os" ];then
@@ -779,9 +788,7 @@ return 1
 loading_modules(){
 local modules="${1:-xt_TPROXY.ko xt_socket.ko xt_owner.ko xt_comment.ko ip_set_bitmap_port.ko}"
 local err_msg="Please install router component: «Kernel modules for Netfilter»"
-local kernel_ver
-kernel_ver="$(uname -r)"
-MODULES_OS_DIR="$MODULES_OS_DIR/$kernel_ver"
+KERNEL_OS_V="$(uname -r)"
 for module in $modules;do
 if [ "$module" = "xt_owner.ko" ]&&is_owner_module_working;then
 continue
@@ -1037,6 +1044,19 @@ local table="${2:-}"
 local chain="${3:-}"
 local type="${4:-}"
 local protocols="${5:-}"
+local connmark_match_opt=""
+add_conntrack_mark(){
+[ "$SKEEN_USE_CONNMARK" != "1" ]&&return
+connmark_match_opt="-m connmark --mark $TABLE_MARK"
+local proto="${1:-}"
+if [ "$proto" = "tcp" ];then
+add_rule "$iptables" "$table" "$chain" \
+-p "$proto" -m conntrack --ctstate NEW,RELATED -j CONNMARK --set-mark "$TABLE_MARK"
+else
+add_rule "$iptables" "$table" "$chain" \
+-p "$proto" -m connmark ! --mark "$TABLE_MARK" -j CONNMARK --set-mark "$TABLE_MARK"
+fi
+}
 case "$type" in
 "exclude_connmark")local connmark_options=""
 if [ -n "$SKEEN_MARK_POLICY" ];then
@@ -1044,6 +1064,18 @@ connmark_options="-m connmark ! --mark $SKEEN_MARK_POLICY"
 [ "$SKEEN_PROXY_ROUTER" = "1" ]&&connmark_options="$connmark_options -m connmark ! --mark $TABLE_MARK"
 fi
 [ -n "$connmark_options" ]&&add_rule "$iptables" "$table" "$chain" $connmark_options -j ACCEPT
+;;
+"socket")if
+echo "$protocols"|grep -q "tcp"
+then
+! safe_chain_create "$iptables" "$table" "$CHAIN_DIVERT"&&return
+add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j MARK --set-mark "$TABLE_MARK"
+add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j ACCEPT
+add_rule "$iptables" "$table" "$chain" -p tcp -m socket --transparent -g "$CHAIN_DIVERT"
+fi
+;;
+"ctdir_reply")[ "$SKEEN_USE_CONNMARK" != "1" ]&&return
+add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
 ;;
 "intercept_dns")for proto in $protocols
 do
@@ -1074,14 +1106,9 @@ add_rule "$iptables" "$table" "$chain" \
 ;;
 "tproxy")for proto in $protocols
 do
-if [ "$proto" = "tcp" ];then
+add_conntrack_mark "$proto"
 add_rule "$iptables" "$table" "$chain" \
--p "$proto" -m socket --transparent -j MARK --set-mark "$TABLE_MARK"
-add_rule "$iptables" "$table" "$chain" \
--p "$proto" -m socket --transparent -j ACCEPT
-fi
-add_rule "$iptables" "$table" "$chain" \
--p "$proto" -j TPROXY --on-ip "$PROXY_IP" \
+-p "$proto" $connmark_match_opt -j TPROXY --on-ip "$PROXY_IP" \
 --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
 done
 ;;
@@ -1095,8 +1122,9 @@ $iptables -w -t "$table" -I "$chain" -p "$proto" --dport "$k_port" $rule
 fi
 done
 ;;
-"redirect")add_rule "$iptables" "$table" "$chain" \
--p "$protocols" -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+"redirect")add_conntrack_mark "$protocols"
+add_rule "$iptables" "$table" "$chain" \
+-p "$protocols" $connmark_match_opt -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
 ;;
 "proxy_router_owner")add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
 ;;
@@ -1110,8 +1138,9 @@ done
 ;;
 "proxy_router_mark")for proto in $protocols
 do
-add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
-add_rule "$iptables" "$table" "$chain" -p "$proto" -j CONNMARK --save-mark
+add_conntrack_mark "$proto"
+add_rule "$iptables" "$table" "$chain" \
+-p "$proto" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
 add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
 done
 esac
@@ -1122,29 +1151,42 @@ local table="${2:-}"
 local chain="${3:-}"
 $iptables -t "$table" -L "$chain" -n >/dev/null 2>&1
 }
+safe_chain_create(){
+local iptables="$1"
+local table="$2"
+local chain="$3"
+if chain_exists "$iptables" "$table" "$chain";then
+return 1
+elif ! $iptables -t "$table" -N "$chain";then
+return 1
+else
+$iptables -t "$table" -F "$chain"
+return 0
+fi
+}
 set_chain_rules(){
 local iptables="${1:-}"
 local table="${2:-}"
 local chain="${3:-}"
 local protocols="${4:-}"
-if chain_exists "$iptables" "$table" "$chain";then
-return 0
-elif ! $iptables -t "$table" -N "$chain";then
-return 0
-fi
+! safe_chain_create "$iptables" "$table" "$chain"&&return
 case "$chain" in
 "$CHAIN_PREROUTING")add_skeen_rules "$iptables" "$table" "$chain" "exclude_connmark" "$protocols"
 if [ "$table" = "mangle" ];then
+add_skeen_rules "$iptables" "$table" "$chain" "socket" "$protocols"
+add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "intercept_dns" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "tproxy" "$protocols"
 add_skeen_rules "$iptables" "$table" "INPUT" "keendns_accept" "$protocols"
 elif [ "$table" = "nat" ];then
+add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "redirect" "$protocols"
 fi
 ;;
 "$CHAIN_OUTPUT")add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_owner" "$protocols"
+add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
 if [ "$table" = "mangle" ];then
 add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_dns" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
@@ -1180,8 +1222,7 @@ goto_chain_rules "$iptables" "$table" OUTPUT "$CHAIN_OUTPUT" "$protocols"
 }
 release_version_ge5(){
 local major
-check_tty
-major=$(ndmc -c show version|awk -F'[:.]' '/release:/ {gsub(/ /,"",$2); print $2}')
+major=$(rci_post show/version|jsonfilter -e '@.release' 2>/dev/null|cut -d'.' -f1)
 if [ "$major" -lt 5 ];then
 echoerr "Release version KeeneticOS is lower than 5"&&return 1
 fi
@@ -1190,9 +1231,6 @@ tun_create(){
 local opkgtun_ip="${1:-}"
 local opkgtun_desc="${2:-}"
 local opkgtun_name="OpkgTun0"
-local inface_list
-local opkgtun_ids
-local opkgtun_name_lower
 if [ -z "$opkgtun_ip" ]||[ -z "$opkgtun_desc" ];then
 echomsg "Use the following format to create an OpkgTun interface:"
 echomsg "skeen tun create <ipv4> <name>"
@@ -1200,79 +1238,94 @@ return
 fi
 case "$opkgtun_desc" in
 [!A-Za-z0-9_-]*)exiterr "Invalid name, allowed characters: A–Z, a–z, 0–9, _ and -"
+return
 esac
 if ! is_valid_ipv4 "$opkgtun_ip";then
-echoerr "Invalid IPv4 address specified"
+echoerr "Invalid IPv4 address specified: $opkgtun_ip"
 return
 fi
 opkgtun_ip="${opkgtun_ip%%/*}"
-inface_list="$(ndmc -c show interface)"
-if echo "$inface_list"|grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$";then
-echoerr "Interface named \"$opkgtun_desc\" already exists"
+local interface_data inface_list iface description address
+interface_data="$(rci_post show/interface)"
+inface_list=$(echo "$interface_data"|jsonfilter -e '$.interface[*].id'|grep 'OpkgTun'|sort -u)
+for iface in $inface_list;do
+description=$(echo "$interface_data"|jsonfilter -e "@.interface['$iface'].description")
+address=$(echo "$interface_data"|jsonfilter -e "@.interface['$iface'].address")
+if [ "$description" = "$opkgtun_desc" ];then
+echoerr "Interface named '$opkgtun_desc' already exists"
 return
 fi
-if echo "$inface_list"|awk -v ip="$opkgtun_ip" '/^[[:space:]]*address:/ {
-        sub(/.*: */, "", $0)
-        if ($0 == ip) found=1
-    }
-    END { exit !found }';then
-exiterr "IP address $opkgtun_ip is already in use"
+if [ "$address" = "$opkgtun_ip" ];then
+echoerr "IP address '$opkgtun_ip' is already in use"
+return
 fi
-opkgtun_ids="$(echo "$inface_list"|grep 'id:[[:space:]]*OpkgTun'|awk -F'OpkgTun' '{print $2}')"
-if [ -n "$opkgtun_ids" ];then
-local i=0
-while printf '%s\n' "$opkgtun_ids"|grep -qx "$i";do
-i=$((i+1))
 done
-opkgtun_name="OpkgTun$i"
+local opkgtun_ids id opkg_index
+opkgtun_ids=$(echo "$inface_list"|sed 's/OpkgTun//'|sort -nu)
+opkg_index=0
+for id in $opkgtun_ids;do
+if [ "$id" -eq "$opkg_index" ];then
+opkg_index=$((opkg_index+1))
+else
+break
 fi
-opkgtun_name_lower=$(echo "$opkgtun_name"|tr '[:upper:]' '[:lower:]')
-tun_delete_msg(){
-tun_delete "$opkgtun_desc"
-exiterr "Failed to set $1 the interface"
+done
+opkgtun_name="OpkgTun$opkg_index"
+local payload='[{"interface":{"'"$opkgtun_name"'":{"description":"'"$opkgtun_desc"'"}}},
+  {"interface":{"'"$opkgtun_name"'":{"ip":{"address":{"address":"'"$opkgtun_ip"'","mask":"255.255.255.255"}}}}},
+  {"interface":{"'"$opkgtun_name"'":{"ip":{"tcp":{"adjust-mss":{"pmtu":true}}}}}},
+  {"ip":{"route":{"default":true,"gateway":"'"$opkgtun_ip"'","interface":"'"$opkgtun_name"'"}}},
+  {"interface":{"'"$opkgtun_name"'":{"ip":{"global":{"auto":true}}}}},
+  {"interface":{"'"$opkgtun_name"'":{"up":true}}},
+  {"system":{"configuration":{"save":true}}}]'
+rci_post "" "$payload" >/dev/null 2>&1||{
+echoerr "Failed to create interface: $opkgtun_desc"&&return
+release_version_ge5
 }
-ndmc -c interface "$opkgtun_name"||{ echoerr "Failed to create the interface"&&return;}
-ndmc -c interface "$opkgtun_name" description "$opkgtun_desc"||tun_delete_msg "description"
-ndmc -c interface "$opkgtun_name" ip address "$opkgtun_ip/32"||tun_delete_msg "ip address"
-ndmc -c interface "$opkgtun_name" ip tcp adjust-mss pmtu||tun_delete_msg "ip tcp adjust-mss pmtu"
-ndmc -c ip route default "$opkgtun_ip" "$opkgtun_name"||tun_delete_msg "ip route default"
-ndmc -c interface "$opkgtun_name" ip global auto||tun_delete_msg "ip global auto"
-ndmc -c interface "$opkgtun_name" up&&ndmc -c system configuration save
-echook "OpkgTun interface named \"$opkgtun_desc\" was created successfully"
+local opkgtun_name_lower
+opkgtun_name_lower="$(echo "$opkgtun_name"|tr '[:upper:]' '[:lower:]')"
+echook "OpkgTun interface named '$opkgtun_desc' was created successfully"
 echo "Use the name $(green "\"$opkgtun_name_lower\"") for the $(yellow '"interface_name"') field in the tun configuration"
 }
 tun_delete(){
-local opkgtun_desc="${1:-8888}"
-local opkgtun_name
+local opkgtun_desc="${1:-}"
 if [ -z "$opkgtun_desc" ];then
 echoerr "Please specify the name of the OpkgTun interface to delete"
 echomsg "skeen tun delete <name>"
 return
 fi
-if ndmc -c show interface|grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$";then
-opkgtun_name=$(ndmc -c show interface|awk -v d="$opkgtun_desc" '
-      /^[[:space:]]*interface-name:/ { iface=$0; sub(/.*: */, "", iface) }
-      /^[[:space:]]*description:/   { desc=$0; sub(/.*: */, "", desc); if(desc==d){print iface; exit} }')
-case "$opkgtun_name" in
-OpkgTun[0-9]*)ndmc -c no interface "$opkgtun_name"||{
-echoerr "Failed to delete the interface"&&return
+local interface_data inface_list iface description
+interface_data="$(rci_post show/interface)"
+inface_list=$(echo "$interface_data"|jsonfilter -e '$.interface[*].id'|grep 'OpkgTun'|sort -u)
+for iface in $inface_list;do
+description="$(echo "$interface_data"|jsonfilter -e "@.interface['$iface'].description")"
+if [ "$opkgtun_desc" = "$description" ];then
+rci_delete "interface/$iface" >/dev/null 2>&1||{
+echoerr "Error removing interface: $opkgtun_desc"&&return
+release_version_ge5
 }
-ndmc -c system configuration save
-echook "Interface \"$opkgtun_name\" has been successfully deleted"
-;;
-*)echoerr "Interface name: \"$opkgtun_name\" not OpkgTun"
-echoerr "You can only delete an OpkgTun interface"
-esac
-else
-echoerr "Interface named $opkgtun_desc does not exist"
+rci_post "system/configuration/save" >/dev/null 2>&1
+echook "Interface '$opkgtun_desc' was successfully deleted"
+return
 fi
+done
+echoerr "OpkgTun interface with name '$opkgtun_desc' does not exist"
 }
 tun_list(){
-local opkgtun_list
-opkgtun_list="$(ndmc -c show interface|awk '/^Interface, name = "OpkgTun/ { print_block=1 }
-      print_block { print }
-      /^Interface, name =/ && $0 !~ /^Interface, name = "OpkgTun/ { print_block=0 }')"
-[ -z "$opkgtun_list" ]&&echomsg "No OpkgTun interfaces found"||echo "$opkgtun_list"
+local interface_data inface_list iface description address
+interface_data="$(rci_post show/interface)"
+inface_list=$(echo "$interface_data"|jsonfilter -e '$.interface[*].id'|grep 'OpkgTun'|sort -u)
+[ -z "$inface_list" ]&&echomsg "No OpkgTun interfaces found"&&return
+is_tty&&printf "\n  \033[1m%-10s | %-10s | %-15s\033[0m\n" "IFACE" "IP ADDRESS" "NAME"
+is_tty&&printf "  %-10s-|-%-10s-|-%-15s\n" "----------" "----------" "---------------"
+for iface in $inface_list;do
+description=$(echo "$interface_data"|jsonfilter -e "$.interface['$iface'].description")
+address=$(echo "$interface_data"|jsonfilter -e "$.interface['$iface'].address")
+[ -z "$description" ]&&description="-"
+[ -z "$address" ]&&address="-"
+printf "  %-10s | %-10s | %-15s\n" "$iface" "$address" "$description"
+done
+is_tty&&echo ""
 }
 set_tun_rules(){
 apply_rule(){
@@ -1410,6 +1463,8 @@ fi
 [ "$route_all" = 1 ]&&echowarn "Routing for the entire device"
 SKEEN_PROXY_ROUTER="0"
 [ "$FIREWALL_PROXY_ROUTER" = "1" ]&&SKEEN_PROXY_ROUTER="1"
+SKEEN_USE_CONNMARK="0"
+[ "$FIREWALL_USE_CONNTRACK" = "1" ]&&SKEEN_USE_CONNMARK="1"
 SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 if [ -z "$SKEEN_IPTABLES_LIST" ];then
 echoerr "No supported iptables found for the firewall mode?"
@@ -1505,6 +1560,7 @@ echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
 echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
 echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
 echo "export SKEEN_PROXY_ROUTER=\"$SKEEN_PROXY_ROUTER\""
+echo "export SKEEN_USE_CONNMARK=\"$SKEEN_USE_CONNMARK\""
 echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
 } >"$FIREWALL_HOOK_FILE"
 chmod +x "$FIREWALL_HOOK_FILE"
@@ -1609,6 +1665,7 @@ $ipt_cmd -w -t nat -S $CHAIN_DNS 2>/dev/null|sed -n "s/^-A /$ipt_cmd -w -t nat -
 $ipt_cmd -w -t mangle -S INPUT 2>/dev/null|sed -n "s/^-A /$ipt_cmd -w -t mangle -D /p"|grep "skeen_keendns"|sh 2>/dev/null
 for table in nat mangle;do
 clean_chain "$ipt_cmd" "$table" "$CHAIN_PREROUTING" PREROUTING
+clean_chain "$ipt_cmd" "$table" "$CHAIN_DIVERT" PREROUTING
 clean_chain "$ipt_cmd" "$table" "$CHAIN_OUTPUT" OUTPUT
 done
 done
@@ -2020,6 +2077,9 @@ fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
 if [ "$2" = "$CHAIN_PREROUTING" ]&&[ -n "$SKEEN_MARK_POLICY" ];then
 fw_test "$1" "$2" "$content" "connmark match" "Connmark match"
 fi
+if [ "$2" = "$CHAIN_PREROUTING" ]&&[ "$SKEEN_FIREWALL_MODE" = "tproxy" ];then
+fw_test "$1" "$2" "$content" "$CHAIN_DIVERT" "Socket accept"
+fi
 if [ "$2" = "$CHAIN_OUTPUT" ];then
 fw_test "$1" "$2" "$content" "owner" "Process owner"
 fi
@@ -2032,6 +2092,7 @@ fw_test "$1" "$2" "$content" "skeen_tun" "Accept"
 fw_test "nat" "POSTROUTING" "$($3 -w -t nat -S POSTROUTING 2>/dev/null)" "skeen_tun" "Masquerade"
 return 0
 fi
+[ "$SKEEN_USE_CONNMARK" = "1" ]&&fw_test "$1" "$2" "$content" "ctdir REPLY" "REPLY accept"
 if [ "$1" = "mangle" ];then
 if [ "$2" = "$CHAIN_PREROUTING" ];then
 if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ];then
@@ -2052,16 +2113,13 @@ elif [ "$SKEEN_EXCLUDE_PORT" = "1" ];then
 fw_test "$1" "$2" "$content" "$PORT_EXCLUDE_SET" "Port exclude"
 fi
 fw_test "$1" "$2" "$content" "$NET_EXCLUDE_SET" "Subnet exclude"
+[ "$SKEEN_USE_CONNMARK" = "1" ]&&fw_test "$1" "$2" "$content" "CONNMARK" "Connmark set"
 if [ "$1" = "mangle" ]&&[ "$2" = "$CHAIN_OUTPUT" ];then
 fw_test "$1" "$2" "$content" "MARK" "Mark set"
-fw_test "$1" "$2" "$content" "CONNMARK" "Connmark save"
 elif [ "$1" = "nat" ]&&[ "$2" = "$CHAIN_OUTPUT" ];then
 fw_test "$1" "$2" "$content" "redir" "Redirect"
 fi
 [ "$2" = "$CHAIN_OUTPUT" ]&&return 0
-if [ "$1" = "mangle" ]&&[ "$SKEEN_TPROXY_NETWORK" = "tcp" ];then
-fw_test "$1" "$2" "$content" "tcp .* socket" "Socket tcp"
-fi
 fw_test "$1" "$2" "$content" "redir|redirect" "Redirect"
 }
 test_firewall(){
@@ -2519,8 +2577,7 @@ reset)config_reset;;
 clean)clean_cache;;
 sync)sync_config "$2";;
 iface)show_iface;;
-tun)release_version_ge5||exit 1
-case "$2" in
+tun)case "$2" in
 create)tun_create "$3" "$4";;
 delete)tun_delete "$3";;
 list)tun_list;;
