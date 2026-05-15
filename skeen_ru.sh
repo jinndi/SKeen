@@ -11,7 +11,7 @@
 # exit on error or unset variable
 # set -e -u
 
-readonly PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 ACTION="${1:-}"
 CALLER="${2:-}"
@@ -39,9 +39,9 @@ readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 
 readonly SINGBOX_NAME="Sing-box"
-readonly SINGBOX_PROC="skeen-box"
+SINGBOX_PROC="skeen-box"
 SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
-readonly SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
+SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
 readonly SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 readonly SINGBOX_SPACE_MB=128
 
@@ -168,7 +168,11 @@ create_skeen_config() {
   "network": {
     "ipv6": 1,
     "tuning": 0,
-    "check": ["1.1.1.1", "ya.ru", "223.5.5.5"]
+    "check": ["vk.com", "ya.ru", "223.5.5.5"]
+  },
+  "sing_binary": {
+    "enable": ${SING_BINARY_ENABLE:-0},
+    "path": "/opt/bin/sing-box"
   },
   "sing_config":{
     "enable": 0,
@@ -240,26 +244,113 @@ rci_delete() {
   curl -kfsS -X DELETE "${RCI}/${1:-}"
 }
 
-loading_config() {
-  if [ ! -f "$SKEEN_CONFIG" ]; then
-    create_skeen_config
-  fi
+create_skeen_config_if_needed() {
+  [ ! -f "$SKEEN_CONFIG" ] && create_skeen_config
+}
+
+get_auto_start_config() {
+  create_skeen_config_if_needed
 
   eval "$(
     jsonfilter -i "$SKEEN_CONFIG" \
       -e AUTO_START_ENABLE='@.auto_start.enable' \
-      -e AUTO_START_DELAY='@.auto_start.delay' \
+      -e AUTO_START_DELAY='@.auto_start.delay'
+  )"
+  : "${AUTO_START_ENABLE:=1}"
+  : "${AUTO_START_DELAY:=0}"
+}
+
+get_sing_binary_config() {
+  create_skeen_config_if_needed
+
+  eval "$(
+    jsonfilter -i "$SKEEN_CONFIG" \
+      -e SING_BINARY_ENABLE='@.sing_binary.enable' \
+      -e SING_BINARY_PATH='@.sing_binary.path'
+  )"
+
+  : "${SING_BINARY_ENABLE:=0}"
+  : "${SING_BINARY_PATH:=/opt/bin/sing-box}"
+
+  if [ "$SING_BINARY_ENABLE" = "1" ]; then
+    pidof "skeen-box" 2>/dev/null && killall -9 "skeen-box" 2>/dev/null
+
+    SINGBOX_PROC="$(basename "$SING_BINARY_PATH")"
+    SINGBOX_BIN="$SING_BINARY_PATH"
+
+    local path_bin
+    path_bin="$(command -v "$SINGBOX_PROC")"
+    if [ -z "$path_bin" ] && [ -f "$SINGBOX_BIN" ]; then
+      PATH="$(dirname "$SINGBOX_BIN"):${PATH}"
+    fi
+
+    if [ -f "$SINGBOX_BIN" ] && [ ! -x "$SINGBOX_BIN" ]; then
+      chmod +x "$SINGBOX_BIN" 2>/dev/null || true
+    fi
+  else
+    pidof "$SING_BINARY_PATH" 2>/dev/null && killall -9 "$SING_BINARY_PATH" 2>/dev/null ||
+      pidof "sing-box" 2>/dev/null && killall -9 "sing-box" 2>/dev/null
+  fi
+}
+
+get_sing_args_config() {
+  create_skeen_config_if_needed
+
+  local default_config_path="/opt/etc/skeen/config.json"
+
+  SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
+  : "${SING_CONFIG_ENABLE:=0}"
+
+  SING_CONFIG_PATH="$default_config_path"
+  SING_CONFIG_ARGS="-C $CONFIG_DIR"
+
+  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+    SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
+    : "${SING_CONFIG_PATH:=$default_config_path}"
+    SING_CONFIG_ARGS="-c $SING_CONFIG_PATH"
+
+    SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
+  fi
+}
+
+get_service_proxy_config() {
+  create_skeen_config_if_needed
+
+  eval "$(
+    jsonfilter -i "$SKEEN_CONFIG" \
+      -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
+      -e SERVICE_PROXY_PORT='@.service_proxy.port' \
+      -e SERVICE_PROXY_USER='@.service_proxy.user' \
+      -e SERVICE_PROXY_PASS='@.service_proxy.pass'
+  )"
+  : "${SERVICE_PROXY_ENABLE:=0}"
+  : "${SERVICE_PROXY_PORT:=}"
+  : "${SERVICE_PROXY_USER:=}"
+  : "${SERVICE_PROXY_PASS:=}"
+}
+
+get_network_config() {
+  create_skeen_config_if_needed
+
+  eval "$(
+    jsonfilter -i "$SKEEN_CONFIG" \
+      -e NETWORK_IPV6='@.network.ipv6' \
+      -e NETWORK_TUNING='@.network.tuning'
+  )"
+
+  : "${NETWORK_IPV6:=1}"
+  : "${NETWORK_TUNING:=0}"
+}
+
+get_firewall_config() {
+  create_skeen_config_if_needed
+
+  eval "$(
+    jsonfilter -i "$SKEEN_CONFIG" \
       -e POLICY_ENABLE='@.policy.enable' \
       -e POLICY_NAME='@.policy.name' \
       -e NETWORK_IPV6='@.network.ipv6' \
       -e NETWORK_TUNING='@.network.tuning' \
-      -e SING_CONFIG_ENABLE='@.sing_config.enable' \
-      -e SING_CONFIG_PATH='@.sing_config.path' \
-      -e SING_CONFIG_SYNC_URL='@.sing_config.sync_url' \
-      -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
-      -e SERVICE_PROXY_PORT='@.service_proxy.port' \
-      -e SERVICE_PROXY_USER='@.service_proxy.user' \
-      -e SERVICE_PROXY_PASS='@.service_proxy.pass' \
       -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
       -e FIREWALL_REDIRECT_DNS_ENABLE='@.firewall.redirect_dns.enable' \
       -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
@@ -268,42 +359,29 @@ loading_config() {
       -e FIREWALL_USE_CONNTRACK='@.firewall.use_conntrack'
   )"
 
-  : "${AUTO_START_ENABLE:=1}"
-  : "${AUTO_START_DELAY:=0}"
   : "${POLICY_ENABLE:=1}"
   : "${POLICY_NAME:=SKeen}"
   : "${NETWORK_IPV6:=1}"
   : "${NETWORK_TUNING:=0}"
-  : "${SING_CONFIG_ENABLE:=0}"
-  : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
-  : "${SING_CONFIG_SYNC_URL:=}"
-  : "${SERVICE_PROXY_ENABLE:=0}"
-  : "${SERVICE_PROXY_PORT:=}"
-  : "${SERVICE_PROXY_USER:=}"
-  : "${SERVICE_PROXY_PASS:=}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
   : "${FIREWALL_REDIRECT_DNS_ENABLE:=0}"
   : "${FIREWALL_REDIRECT_DNS_PORT:=}"
   : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
   : "${FIREWALL_PROXY_ROUTER:=0}"
   : "${FIREWALL_USE_CONNTRACK:=0}"
-
-  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
-    SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
-  fi
 }
 
-load_proxy_options() {
+get_curl_proxy_options() {
   local err_template
 
-  [ "$CALLER" != "menu" ] && loading_config
+  get_service_proxy_config
 
   CURL_PROXY_OPTIONS="--connect-timeout 5 --max-time 720"
   if [ "$SERVICE_PROXY_ENABLE" = "1" ]; then
     err_template="Прокси-сервис включен, но"
     if [ -z "$SERVICE_PROXY_PORT" ]; then
       exiterr "$err_template 'service_proxy.port' не задан"
-    elif ! is_running; then
+    elif get_sing_binary_config && ! is_running; then
       exiterr "$err_template $SINGBOX_NAME не запущен"
     elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
       exiterr "$err_template процесс не слушает на порту ${SERVICE_PROXY_PORT}"
@@ -313,8 +391,6 @@ load_proxy_options() {
         CURL_PROXY_OPTIONS="${CURL_PROXY_OPTIONS} --proxy-user ${SERVICE_PROXY_USER}:${SERVICE_PROXY_PASS}"
       fi
     fi
-  else
-    SING_CONFIG_SYNC_URL=""
   fi
 }
 
@@ -322,12 +398,12 @@ get_current_version() {
   local proc="${1:-}"
 
   case "$proc" in
-  "$SINGBOX_PROC")
+  "sing")
     if [ -f "$SINGBOX_BIN" ]; then
       $SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs
     fi
     ;;
-  "$SKEEN_PROC") echo "$SKEEN_VERSION" ;;
+  "skeen") echo "$SKEEN_VERSION" ;;
   esac
 }
 
@@ -376,6 +452,23 @@ get_os_release() {
     PKG_OS="openwrt"
     PKG_SUFFIX=".ipk"
   fi
+}
+
+ask_install_singbox() {
+  while :; do
+    printf "Вы можете отказаться от установки %s из официального репозитория\n" "$SINGBOX_NAME"
+    printf "и вместо этого настроить использование собственного экземпляра программы.\n"
+    printf "Пропустить установку %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
+    read -r opt </dev/tty
+
+    opt=${opt:-n}
+
+    case $opt in
+    y | Y) SING_BINARY_ENABLE=1; break ;;
+    n | N) SING_BINARY_ENABLE=0; break ;;
+    *) echoerr "Пожалуйста, введите y (да) или n (нет)." ;;
+    esac
+  done
 }
 
 arch_elf() {
@@ -713,19 +806,26 @@ install() {
     esac
   fi
 
-  check_free_space
   get_os_release
-  get_architecture
+  ask_install_singbox
+  if [ "$SING_BINARY_ENABLE" != "1" ]; then
+    check_free_space
+    get_architecture
+    download_singbox
+    install_singbox
+  fi
   install_dependencies
-  download_singbox
-  install_singbox
   create_singbox_config
   create_autostart_script
   create_skeen_group
   download_skeen_script
   create_skeen_config
 
-  "$SINGBOX_BIN" version
+  if [ "$SING_BINARY_ENABLE" != "1" ]; then
+    "$SINGBOX_BIN" version
+  elif [ ! -f /opt/bin/sing-box ]; then
+    echomsg "Укажите путь к бинарному файлу $SINGBOX_NAME в $SKEEN_CONFIG"
+  fi
 
   if [ "$SING_CONFIG_ENABLE" != "1" ] && [ -d "$CONFIG_DIR" ]; then
     echomsg "Настройте $SINGBOX_NAME: отредактировав $CONFIG_DIR"
@@ -743,10 +843,14 @@ install() {
 uninstall() {
   echomsg "Удаление ${SKEEN_NAME}..."
 
+  get_sing_binary_config
+
   is_running && stop
 
-  echomsg "Удаление файла $SINGBOX_NAME..."
-  rm -f "$SINGBOX_BIN"
+  if [ "$SINGBOX_PROC" = 'skeen-box' ]; then
+    echomsg "Удаление файла $SINGBOX_NAME..."
+    rm -f "$SINGBOX_BIN"
+  fi
 
   echomsg "Удаление скрипта автозапуска..."
   rm -f "$SKEEN_AUTOSTART_SCRIPT"
@@ -1710,6 +1814,8 @@ prepare_firewall() {
 
   complete_msg="Подготовка фаервола завершена"
 
+  get_sing_args_config
+
   redirect_data="$(get_fw_mode_data "redirect")"
   SKEEN_REDIRECT_PORT="$(echo "$redirect_data" | cut -d'|' -f1)"
 
@@ -1743,6 +1849,8 @@ prepare_firewall() {
   fi
 
   cyan " - Обнаружен режим фаервола: $SKEEN_FIREWALL_MODE $has_opkgtun"
+
+  get_firewall_config
 
   SKEEN_INTERCEPT_DNS_ENABLE="0"
   SKEEN_REDIRECT_DNS_ENABLE="0"
@@ -2191,6 +2299,8 @@ apply_sysctl_network_tuning() {
     ct_max="$(get_connection_tracking)"
     sysctl -w net.netfilter.nf_conntrack_max="$ct_max"
 
+    get_network_config
+
     # IPv6 support
     if [ -f /proc/net/if_inet6 ]; then
       if [ "$NETWORK_IPV6" = "0" ]; then
@@ -2288,6 +2398,7 @@ start_singbox() {
   # shellcheck disable=SC3045
   ulimit -n "$(get_ulimit_n)" || exiterr "Не удалось установить ulimit -n"
 
+  get_sing_args_config
   # shellcheck disable=SC2086
   start-stop-daemon -S -b -x $SINGBOX_PROC -c root:$SKEEN_PROC -- $SINGBOX_ARGS
   status_start=$?
@@ -2317,13 +2428,15 @@ start_singbox() {
 }
 
 start() {
+  get_sing_binary_config
+
   if [ ! -f "$SINGBOX_BIN" ]; then
     echoerr "$SINGBOX_NAME не найден, сначала установите его"
     press_any_key_to_menu "" 1
   fi
 
   if [ "$CALLER" = "init" ]; then
-    loading_config
+    get_auto_start_config
     if [ "$AUTO_START_ENABLE" = "0" ]; then
       return 0
     else
@@ -2343,8 +2456,6 @@ start() {
   fi
 
   check_config && echo "$DELIMETER"
-
-  [ "$CALLER" != "init" ] && loading_config
 
   create_skeen_group
   [ $? -eq 2 ] && echo "$DELIMETER"
@@ -2367,11 +2478,14 @@ stop_singbox() {
 
   echomsg "Остановка ${SINGBOX_NAME}..."
 
+  get_sing_binary_config
+
   if ! is_running; then
     echook "$SINGBOX_NAME уже остановлен"
     return 0
   fi
 
+  # shellcheck disable=SC2086
   start-stop-daemon -K -x $SINGBOX_PROC >/dev/null
   status_stop=$?
 
@@ -2410,6 +2524,8 @@ stop() {
 }
 
 kill_proc() {
+  get_sing_binary_config
+
   if ! is_running; then
     echook "$SINGBOX_NAME не запущен"
     return 0
@@ -2421,11 +2537,11 @@ kill_proc() {
 }
 
 version() {
-  local sk_version
-  local sb_version
+  local sk_version sb_version
 
-  sk_version="$(get_current_version "$SKEEN_PROC")"
-  sb_version="$(get_current_version "$SINGBOX_PROC")"
+  get_sing_binary_config
+  sk_version="$(get_current_version "skeen")"
+  sb_version="$(get_current_version "sing")"
   if [ "$CALLER" = "cli" ]; then
     echo "$DELIMETER"
     printf "${SKEEN_NAME}: %s\n" "$(cyan "v${sk_version}")"
@@ -2438,6 +2554,8 @@ version() {
 }
 
 switch_state() {
+  get_sing_binary_config
+
   if is_running; then
     stop
   else
@@ -2488,7 +2606,8 @@ status() {
   local mem_peak
   local threads
 
-  pid="$(pidof $SINGBOX_PROC)"
+  get_sing_binary_config
+  pid="$(pidof "$SINGBOX_PROC")"
 
   if [ -n "$pid" ]; then
     # shellcheck disable=SC2046
@@ -2521,6 +2640,9 @@ update_core() {
 
 update_skeen() {
   local should_run="0"
+
+  get_service_proxy_config
+  get_firewall_config
   if [ "$SERVICE_PROXY_ENABLE" = "1" ] || [ "$FIREWALL_PROXY_ROUTER" = "1" ]; then
     should_run="1"
   fi
@@ -2585,30 +2707,33 @@ check_updates() {
 
   is_update_skeen=0
 
-  load_proxy_options
+  get_sing_binary_config
+  get_curl_proxy_options
 
   # sing-box
-  ask_and_update "$SINGBOX_NAME" "$SINGBOX_PROC" "$SINGBOX_API_URL" \
-    update_core "https://github.com/SagerNet/sing-box/releases"
-  if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest_version" ]; then
-    while :; do
-      printf "Загрузить %s %s? [y/n] (по умолчанию: n): " "$SINGBOX_NAME" "$latest_version" >/dev/tty
-      read -r optt </dev/tty
-      [ -z "$optt" ] && optt=n
+  if [ "$SING_BINARY_ENABLE" != "1" ]; then
+    ask_and_update "$SINGBOX_NAME" "sing" "$SINGBOX_API_URL" \
+      update_core "https://github.com/SagerNet/sing-box/releases"
+    if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest_version" ]; then
+      while :; do
+        printf "Загрузить %s %s? [y/n] (по умолчанию: n): " "$SINGBOX_NAME" "$latest_version" >/dev/tty
+        read -r optt </dev/tty
+        [ -z "$optt" ] && optt=n
 
-      case $optt in
-      y | Y)
-        update_core
-        break
-        ;;
-      n | N) break ;;
-      *) echoerr "Неверный вариант" ;;
-      esac
-    done
+        case $optt in
+        y | Y)
+          update_core
+          break
+          ;;
+        n | N) break ;;
+        *) echoerr "Неверный вариант" ;;
+        esac
+      done
+    fi
   fi
 
   # skeen
-  ask_and_update "$SKEEN_NAME" "$SKEEN_PROC" "$SKEEN_API_URL" \
+  ask_and_update "$SKEEN_NAME" "skeen" "$SKEEN_API_URL" \
     update_skeen "https://github.com/jinndi/SKeen/releases"
   [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest_version" ] && update_skeen
 
@@ -2732,6 +2857,7 @@ fw_test_chain() {
 test_firewall() {
   local tables
 
+  get_sing_binary_config
   if ! is_running; then
     echoerr "Тестирование доступно только когда $SKEEN_NAME запущен"
     press_any_key_to_menu "" 1
@@ -2955,54 +3081,42 @@ clean_cache() {
   echook "Кэш очищен. Перезапустите $SKEEN_NAME для применения изменений"
 }
 
-get_sing_args_config() {
-  SING_CONFIG_ARGS="-C $CONFIG_DIR"
-  SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
-  : "${SING_CONFIG_ENABLE:=0}"
-  SING_CONFIG_PATH="/opt/etc/skeen/config.json"
-  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
-    SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
-    : "${SING_CONFIG_PATH:=/opt/etc/skeen/config.json}"
-    SING_CONFIG_ARGS="-c $SING_CONFIG_PATH"
-    SINGBOX_ARGS="run -D $WORK_DIR $SING_CONFIG_ARGS"
+check_skeen_config() {
+  echomsg "Проверка конфигурации $SKEEN_NAME..."
+  if jsonfilter -i "$SKEEN_CONFIG" -e '@.auto_start' >/dev/null; then
+    echook "$SKEEN_NAME JSON корректен"
+  else
+    local err_msg="$SKEEN_NAME конфигурация не корректна"
+    echoerr "$err_msg"
+    [ "$CALLER" != "menu" ] && logger_error "$err_msg"
+    exit 0
+  fi
+}
+
+check_sing_config() {
+  if get_sing_binary_config && [ -f "$SINGBOX_BIN" ]; then
+    echomsg "Проверка конфигурации $SINGBOX_NAME..."
+
+    # shellcheck disable=SC2086
+    if get_sing_args_config && $SINGBOX_PROC check $SING_CONFIG_ARGS; then
+      echook "Конфигурация $SINGBOX_NAME корректна"
+    else
+      local err_msg="$SINGBOX_NAME конфигурация не корректна"
+      echoerr "$err_msg"
+      [ "$CALLER" != "menu" ] && logger_error "$err_msg"
+      press_any_key_to_menu "" "1"
+    fi
   fi
 }
 
 check_config() {
-  local msg_err="Проверка конфигурации не удалась"
-  local is_error=0
-
-  if [ -f "$SINGBOX_BIN" ]; then
-    echomsg "Проверка конфигурации $SINGBOX_NAME..."
-
-    get_sing_args_config
-
-    # shellcheck disable=SC2086
-    if $SINGBOX_PROC check $SING_CONFIG_ARGS; then
-      echook "Конфигурация $SINGBOX_NAME корректна"
-    else
-      is_error=1
-      echoerr "$msg_err"
-    fi
-  fi
-
-  echomsg "Проверка конфигурации $SKEEN_NAME..."
-  if jsonfilter -i "$SKEEN_CONFIG" -e '@.firewall' >/dev/null 2>&1; then
-    echook "$SKEEN_NAME JSON корректен"
-  else
-    is_error=1
-    echoerr "$msg_err"
-  fi
-
-  if [ $is_error -eq 1 ] && [ "$CALLER" = "menu" ]; then
-    press_any_key_to_menu
-  elif [ $is_error -eq 1 ]; then
-    logger_error "$msg"
-    exit 1
-  fi
+  check_skeen_config
+  check_sing_config
 }
 
 format_config() {
+  get_sing_binary_config
+
   if [ -f "$SINGBOX_BIN" ]; then
     echomsg "Форматирование конфигурации ${SINGBOX_NAME}..."
 
@@ -3020,16 +3134,21 @@ format_config() {
 }
 
 sync_config() {
-  local address="${1:-$SING_CONFIG_SYNC_URL}"
+  local address="${1:-}"
   local config_tmp="${TMP_DIR}/sing_config_tmp.json"
 
-  load_proxy_options
-
   if [ -z "$address" ]; then
-    echoerr "Адрес для синхронизации не указан" && return 1
-  elif ! echo "$address" | grep -qE '^https?://'; then
+    local sync_url=""
+    sync_url="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.sync_url')"
+
+    [ -z "$sync_url" ] && echoerr "Адрес для синхронизации не указан" && return 1
+  fi
+
+  if ! echo "$address" | grep -qE '^https?://'; then
     echoerr "URL должен начинаться с http:// или https://" && return 1
   fi
+
+  get_curl_proxy_options
 
   # shellcheck disable=SC2086
   if ! curl $CURL_PROXY_OPTIONS -fsL "$address" -o "$config_tmp"; then
@@ -3110,10 +3229,11 @@ show_menu() {
   local sb_dns_work_text
 
   check_tty
-  loading_config
+  check_skeen_config && printf "\033[1A\033[2K\033[1A\033[2K"
   import_firewall_vars
-
   show_header
+  get_auto_start_config
+  get_sing_binary_config
 
   if [ "$AUTO_START_ENABLE" = "1" ]; then
     autostart_status="$(green "да")"
@@ -3129,10 +3249,10 @@ show_menu() {
     running_text="Запустить"
   fi
 
-  output="$output\n Версия ${SKEEN_NAME}: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
+  output="$output\n Версия ${SKEEN_NAME}: $(cyan "v$(get_current_version "skeen")")"
 
-  version="$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
-  [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
+  version="$(cyan "v$(get_current_version "sing")")"
+  [ "$version" = "$(cyan "v")" ] && version="$(red "не установлен")"
   output="$output\n Версия ${SINGBOX_NAME}: ${version}"
 
   output="$output\n Состояние ${SINGBOX_NAME}: $running_status"
