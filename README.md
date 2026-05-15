@@ -231,7 +231,7 @@ Yes - Sing-box also supports DNS filtering and can fully replace ADGuard Home.
   <summary>📟 Installation to internal memory?</summary>
 <br>
 
-This is highly discouraged. It’s a great way to wear out your device’s flash memory and force an early upgrade to a new one. SKeen will never support this option. At the very least, you need a router with a USB port and a flash drive larger than 256 MB.
+This is highly discouraged. From a manufacturer's perspective, this is a sure way to wear out your device's memory faster, forcing an early replacement. This option will never be added to SKeen; however, nothing stops you from skipping the **sing-box** installation and using your own binary.
 
 </details>
 
@@ -341,6 +341,9 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 ```
 
 </details>
+
+> [!NOTE]
+> You will be prompted to install `sing-box` from the official repository or skip it to manually configure a custom binary in `/opt/etc/skeen/skeen.json` later.
 
 **Configure SKeen**. Its configuration file is located at `/opt/etc/skeen/skeen.json`.
 
@@ -457,6 +460,11 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "77.88.8.8",
       "223.5.5.5"
     ]                  // Domains or IPs V4 for connectivity tests (max 3)
+  },
+  "sing_binary": {
+    "enable": 0,       // If set to 1, a custom sing-box binary will be used;
+                       // you will be responsible for its updates and removal
+    "path": ""         // Full path to the binary (defaults to /opt/bin/sing-box)
   },
   "sing_config":{
     "enable": 0,       // If set to 1, a single sing-box configuration file
