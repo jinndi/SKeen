@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.14.0"
+readonly SKEEN_VERSION="4.15.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -3249,9 +3249,9 @@ show_menu() {
     running_text="Start"
   fi
 
-  output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "$SKEEN_PROC")")"
+  output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "skeen")")"
 
-  version="$(cyan "v$(get_current_version "$SINGBOX_PROC")")"
+  version="$(cyan "v$(get_current_version "sing")")"
   [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
   output="$output\n $SINGBOX_NAME version: ${version}"
 
