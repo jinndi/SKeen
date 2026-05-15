@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.15.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.14.0...SKeen-v4.15.0) (2026-05-15)
+
+
+### 🚀 Feat
+
+* **core:** add configurable sing-box binary and refactor config loading ([13ce21f](https://github.com/jinndi/SKeen/commit/13ce21f325885ed883bafb8b318b2ca8084eba02))
+
+
+### 🧰 Chore
+
+* **examples:** update sing-box configs and generated templates ([786b630](https://github.com/jinndi/SKeen/commit/786b630ad9d4e4a0a43139864be51aae0f09f643))
+
 ## [4.14.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.13.0...SKeen-v4.14.0) (2026-05-13)
 
 
