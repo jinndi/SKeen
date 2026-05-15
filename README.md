@@ -270,7 +270,7 @@ If you have disabled internet access to your subdomain in the "Domain Name" sect
   - Optional proxying for the router itself ✓
 
 ### 📋 Requirements
-- Entware installed and configured on **non-internal memory**
+- Entware installed and configured
 - Netfilter Subsystem Kernel Module installed
 - `curl` installed via `opkg install curl`
 - Recommended: at least 256 MB of RAM and an ARM processor to unlock full potential
@@ -489,7 +489,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     },
     "exclude": {
       "port": [
-        "137:139",     // Ports excluded from redirect
+        123, "137:139",// Ports excluded from redirect
         445, 1900      // (ignored if `intercept.port` is set)
       ],
       "ipv4_cidr": [], // Excluded IPv4 subnets for redirection.
