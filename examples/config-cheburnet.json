@@ -115,20 +115,13 @@
   },
   "inbounds": [
     {
-      "type": "redirect",
-      "tag": "redirect-in",
-      "listen": "::",
-      "listen_port": 65081,
-      "tcp_fast_open": true
-    },
-    {
       "type": "tproxy",
       "tag": "tproxy-in",
       "listen": "::",
       "listen_port": 65082,
-      "udp_timeout": "3m0s",
+      "tcp_fast_open": true,
       "udp_fragment": true,
-      "network": "udp"
+      "udp_timeout": "1m0s"
     },
     {
       "type": "socks",

@@ -37,20 +37,13 @@
   },
   "inbounds": [
     {
-      "type": "redirect",
-      "tag": "redirect-in",
-      "listen": "::",
-      "listen_port": 65081,
-      "tcp_fast_open": true
-    },
-    {
       "type": "tproxy",
       "tag": "tproxy-in",
       "listen": "::",
       "listen_port": 65082,
-      "udp_timeout": "3m0s",
+      "tcp_fast_open": true,
       "udp_fragment": true,
-      "network": "udp"
+      "udp_timeout": "1m0s"
     }
   ],
   "outbounds": [
@@ -59,7 +52,7 @@
       "type": "selector",
       "default": "auto",
       "interrupt_exist_connections": true,
-      "outbounds": ["direct", "auto", "vless-out", "naive-out"]
+      "outbounds": ["direct", "auto", "vless-out"]
     },
     { "tag": "direct", "type": "direct" },
     {
@@ -69,7 +62,7 @@
       "interval": "5m",
       "tolerance": 100,
       "interrupt_exist_connections": true,
-      "outbounds": ["vless-out", "naive-out"]
+      "outbounds": ["vless-out"]
     },
     {
       "tag": "vless-out",
@@ -82,21 +75,7 @@
       "tls": {
         "enabled": true,
         "server_name": "example.com",
-        "utls": { "enabled": true, "fingerprint": "firefox" }
-      }
-    },
-    {
-      "tag": "naive-out",
-      "type": "naive",
-      "username": "jinndi",
-      "password": "mypass",
-      "quic": true,
-      "quic_congestion_control": "bbr",
-      "server": "example.com",
-      "server_port": 10443,
-      "tls": {
-        "enabled": true,
-        "server_name": "example.com"
+        "utls": { "enabled": true, "fingerprint": "qq" }
       }
     }
   ],

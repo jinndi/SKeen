@@ -1,8 +1,8 @@
-// TProxy only mode (TCP & UDP) HTTPS port 443 must be freed in the router (Users and Access section)
+// TProxy only mode (TCP & UDP)
 // DNS interception at early stage (firewall.intercept.dns)
 // or through redirection (firewall.redirect_dns in config, see inbounds_dns-redirect.json)
 
-// Только TProxy режим (TCP и UDP) требует освобождения 443 HTTPS порта в роутере (Пользователи и доступ)
+// Только TProxy режим (TCP и UDP)
 // DNS перехват на ранней стадии (firewall.intercept.dns)
 // или через редирект (firewall.redirect_dns в skeen.json конфигурации, см. inbounds_dns-redirect.json)
 
@@ -15,7 +15,7 @@
       "listen_port": 65082,
       "tcp_fast_open": true,
       "udp_fragment": true,
-      "udp_timeout": "3m0s"
+      "udp_timeout": "1m0s"
     }
   ]
 }

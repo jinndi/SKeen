@@ -19,16 +19,7 @@
     {
       "tag": "vless-out",
       "type": "vless",
-      "uuid": "00000000-0000-0000-0000-00000000000",
-      "flow": "xtls-rprx-vision",
-      "packet_encoding": "xudp",
-      "server": "example.com",
-      "server_port": 443,
-      "tls": {
-        "enabled": true,
-        "server_name": "example.com",
-        "utls": { "enabled": true, "fingerprint": "qq" }
-      },
+      ...,
       "bind_interface": "ppp1" // Bind the vless outbound to the PPP1 interface / Привязать исходящий трафик VLESS к интерфейсу PPP1
     }
   ],

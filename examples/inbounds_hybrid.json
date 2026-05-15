@@ -20,7 +20,7 @@
       "tag": "tproxy-in",
       "listen": "::",
       "listen_port": 65082,
-      "udp_timeout": "3m0s",
+      "udp_timeout": "1m0s",
       "udp_fragment": true,
       "network": "udp"
     }

@@ -37,8 +37,8 @@
       "address": "172.18.0.1/30", // NOT use IP v6 / Не используйте IP v6
       "auto_route": false,        // not enable default route to this tun / не включать маршрут по умолчанию к этому туннелю
       "mtu": 1500,                // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
-      "udp_timeout": "30s",       // UDP timeout, not needed to be too large / таймаут для UDP, не нужен слишком большой
-      "stack": "system"           // NOT use gvisor !!! / НЕ используйте gvisor !!!
+      "udp_timeout": "1m",        // UDP timeout, not needed to be too large / таймаут для UDP, не нужен слишком большой
+      "stack": "mixed"            // NOT use gvisor value !!! / НЕ используйте значение gvisor !!!
     },
     {
       "type": "tun",
@@ -47,8 +47,8 @@
       "address": "172.19.0.1/30",
       "auto_route": false,
       "mtu": 1500,
-      "udp_timeout": "30s",
-      "stack": "system"
+      "udp_timeout": "1m",
+      "stack": "mixed"
     },
     ..., // and as many as needed / и столько, скольно нужно
   ]
