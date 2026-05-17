@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.16.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.15.0...SKeen-v4.16.0) (2026-05-17)
+
+
+### 🚀 Feat
+
+* **core:** refactor add_skeen_rules() to use sub-chains with connmark enable ([d67fc17](https://github.com/jinndi/SKeen/commit/d67fc1796aa4464434818aa77621e38729a92840))
+
+
+### 🧰 Chore
+
+* cleanup chains & fw test patterns ([c4cbe7c](https://github.com/jinndi/SKeen/commit/c4cbe7c07c89583e6edb37c968553cd116076825))
+
 ## [4.15.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.14.0...SKeen-v4.15.0) (2026-05-15)
 
 
