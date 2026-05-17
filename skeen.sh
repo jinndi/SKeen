@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.16.1"
+readonly SKEEN_VERSION="4.16.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -1482,7 +1482,7 @@ add_skeen_rules() {
       ! safe_chain_create "$iptables" "$table" "$CHAIN_DNS_PRE" && return
       for proto in $protocols; do
         add_conntrack_mark "$proto" "$CHAIN_DNS_PRE"
-        add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j "$CHAIN_DNS_PRE"
+        add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -g "$CHAIN_DNS_PRE"
       done
       chain="$CHAIN_DNS_PRE"
     fi
@@ -1519,7 +1519,7 @@ add_skeen_rules() {
       ! safe_chain_create "$iptables" "$table" "$CHAIN_TPROXY" && return
       for proto in $protocols; do
         add_conntrack_mark "$proto" "$CHAIN_TPROXY"
-        add_rule "$iptables" "$table" "$chain" -p "$proto" -j "$CHAIN_TPROXY"
+        add_rule "$iptables" "$table" "$chain" -p "$proto" -g "$CHAIN_TPROXY"
       done
       chain="$CHAIN_TPROXY"
     fi
@@ -1549,12 +1549,12 @@ add_skeen_rules() {
     if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
       if ! safe_chain_create "$iptables" "$table" "$CHAIN_REDIRECT"; then
         if [ "$chain" = "$CHAIN_OUTPUT" ]; then
-          add_rule "$iptables" "$table" "$chain" -p "$protocols" -j "$CHAIN_REDIRECT"
+          add_rule "$iptables" "$table" "$chain" -p "$protocols" -g "$CHAIN_REDIRECT"
         fi
         return
       fi
       add_conntrack_mark "$protocols" "$CHAIN_REDIRECT"
-      add_rule "$iptables" "$table" "$chain" -p "$protocols" -j "$CHAIN_REDIRECT"
+      add_rule "$iptables" "$table" "$chain" -p "$protocols" -g "$CHAIN_REDIRECT"
       chain="$CHAIN_REDIRECT"
     fi
     # shellcheck disable=SC2086
