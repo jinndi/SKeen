@@ -1478,7 +1478,7 @@ add_skeen_rules() {
     add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
     ;;
   "intercept_dns")
-    if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
+    if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] && [ "$SKEEN_USE_CONNMARK" = "1" ]; then
       ! safe_chain_create "$iptables" "$table" "$CHAIN_DNS_PRE" && return
       for proto in $protocols; do
         add_conntrack_mark "$proto" "$CHAIN_DNS_PRE"
