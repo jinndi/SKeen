@@ -364,7 +364,7 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 /opt/
 ├── bin/
 │   ├── skeen              # Скрипт управления SKeen
-│   └── skeen-box          # Бинарный файл sing-box
+│   └── skeen-box          # Бинарный файл sing-box (если не пропустили установку)
 ├── etc/
 │   ├── init.d/
 │   │   └── S99SKeen       # Скрипт автозапуска

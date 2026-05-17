@@ -363,7 +363,7 @@ Manage the package further using the `skeen` command.
 /opt/
 ├── bin/
 │   ├── skeen              # SKeen management script
-│   └── skeen-box          # sing-box binary
+│   └── skeen-box          # sing-box binary (if you didn't skip the installation)
 ├── etc/
 │   ├── init.d/
 │   │   └── S99SKeen       # Autostart script
