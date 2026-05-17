@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.16.0"
+readonly SKEEN_VERSION="4.16.1"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -1484,7 +1484,7 @@ add_skeen_rules() {
         add_conntrack_mark "$proto" "$CHAIN_DNS_PRE"
         add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j "$CHAIN_DNS_PRE"
       done
-      [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] && chain="$CHAIN_DNS_PRE"
+      chain="$CHAIN_DNS_PRE"
     fi
 
     for proto in $protocols; do
@@ -2877,19 +2877,16 @@ fw_test_chain() {
   [ "$SKEEN_USE_CONNMARK" = "1" ] && fw_test "$1" "$2" "$content" "ctdir REPLY" "REPLY accept"
 
   if [ "$1" = "mangle" ]; then
-    if [ "$2" = "$CHAIN_PREROUTING" ]; then
-      if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
-        fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "DNS intercept"
-      else
-        fw_test "$1" "$2" "$content" "ACCEPT .* dpt:${DNS_PORT}" "DNS exclude"
-      fi
-    elif [ "$2" = "$CHAIN_OUTPUT" ]; then
-      if [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
-        fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "DNS mark"
-      else
-        fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "DNS exclude"
-      fi
-    fi
+    case "$2" in
+    "$CHAIN_PREROUTING")
+      [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] && comment="DNS intercept" || comment="DNS exclude"
+      fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "$comment"
+      ;;
+    "$CHAIN_OUTPUT")
+      [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ] && comment="DNS mark" || comment="DNS exclude"
+      fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "$comment"
+      ;;
+    esac
   fi
 
   if [ "$SKEEN_INTERCEPT_PORT" = "1" ]; then
