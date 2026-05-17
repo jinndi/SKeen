@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.0...SKeen-v4.16.1) (2026-05-17)
+
+
+### 🐛 Fix
+
+* always apply DNS_PRE chain in add_skeen_rules + reduce clean_chain duplication & tighten fw tests ([2e94edf](https://github.com/jinndi/SKeen/commit/2e94edf6a6ede404cecb038e869356afe10df7c6))
+
 ## [4.16.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.15.0...SKeen-v4.16.0) (2026-05-17)
 
 
