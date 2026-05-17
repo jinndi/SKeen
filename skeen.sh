@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.15.0"
+readonly SKEEN_VERSION="4.16.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -2282,15 +2282,15 @@ clean_firewall() {
 
     # 4. skeen PREROUTING & skeen_mask OUTPUT
     for table in nat mangle; do
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_PREROUTING" PREROUTING
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_DIVERT" PREROUTING
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_DNS_PRE" PREROUTING
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_TPROXY" PREROUTING
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_REDIRECT" PREROUTING
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_OUTPUT" OUTPUT
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_DNS_OUT" OUTPUT
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_MARK_OUT" OUTPUT
-      clean_chain "$ipt_cmd" "$table" "$CHAIN_REDIRECT" OUTPUT
+      # PREROUTING chains
+      for ch in "$CHAIN_PREROUTING" "$CHAIN_DIVERT" "$CHAIN_DNS_PRE" "$CHAIN_TPROXY" "$CHAIN_REDIRECT"; do
+        clean_chain "$ipt_cmd" "$table" "$ch" PREROUTING
+      done
+
+      # OUTPUT chains
+      for ch in "$CHAIN_OUTPUT" "$CHAIN_DNS_OUT" "$CHAIN_MARK_OUT" "$CHAIN_REDIRECT"; do
+        clean_chain "$ipt_cmd" "$table" "$ch" OUTPUT
+      done
     done
   done
 
@@ -2879,15 +2879,16 @@ fw_test_chain() {
   if [ "$1" = "mangle" ]; then
     if [ "$2" = "$CHAIN_PREROUTING" ]; then
       if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
-        fw_test "$1" "$2" "$content" "TPROXY .* dpt:${DNS_PORT}" "DNS intercept"
+        fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "DNS intercept"
       else
         fw_test "$1" "$2" "$content" "ACCEPT .* dpt:${DNS_PORT}" "DNS exclude"
       fi
     elif [ "$2" = "$CHAIN_OUTPUT" ]; then
       if [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
-        fw_test "$1" "$2" "$content" "MARK .* dpt:${DNS_PORT} MARK" "DNS mark"
+        fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "DNS mark"
+      else
+        fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "DNS exclude"
       fi
-      fw_test "$1" "$2" "$content" "ACCEPT .* dpt:${DNS_PORT}" "DNS exclude"
     fi
   fi
 
@@ -2900,17 +2901,19 @@ fw_test_chain() {
 
   fw_test "$1" "$2" "$content" "$NET_EXCLUDE_SET" "Subnet exclude"
 
-  [ "$SKEEN_USE_CONNMARK" = "1" ] && fw_test "$1" "$2" "$content" "CONNMARK" "Connmark set"
-
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
-    fw_test "$1" "$2" "$content" "MARK" "Mark set"
+    fw_test "$1" "$2" "$content" "$CHAIN_MARK_OUT" "Mark set"
   elif [ "$1" = "nat" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
-    fw_test "$1" "$2" "$content" "redir" "Redirect"
+    fw_test "$1" "$2" "$content" "redir|$CHAIN_REDIRECT" "TCP Redirect"
   fi
 
   [ "$2" = "$CHAIN_OUTPUT" ] && return 0
 
-  fw_test "$1" "$2" "$content" "redir|redirect" "Redirect"
+  if [ "$1" = "mangle" ]; then
+    fw_test "$1" "$2" "$content" "redirect|$CHAIN_TPROXY" "TProxy redirect"
+  elif [ "$1" = "nat" ]; then
+    fw_test "$1" "$2" "$content" "redir|$CHAIN_REDIRECT" "TCP Redirect"
+  fi
 }
 
 test_firewall() {
