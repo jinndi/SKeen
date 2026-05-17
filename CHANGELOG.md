@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.16.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.1...SKeen-v4.16.2) (2026-05-17)
+
+
+### 🐛 Fix
+
+* enhance DNS interception condition in add_skeen_rules ([0238ef3](https://github.com/jinndi/SKeen/commit/0238ef38a2ff7b37eaf01463a7beea9acf27003d))
+* update SKeen version to 4.16.2 and adjust rule addition in add_skeen_rules ([8f998ba](https://github.com/jinndi/SKeen/commit/8f998bad5260ad6ac1cbfde9b207c65aacb6f7ac))
+
 ## [4.16.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.0...SKeen-v4.16.1) (2026-05-17)
 
 
