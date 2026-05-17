@@ -55,6 +55,11 @@ readonly CHAIN_OUTPUT="skeen_mask"
 readonly CHAIN_DIVERT="skeen_divert"
 readonly CHAIN_TUN="skeen_tun"
 readonly CHAIN_DNS="_NDM_HOTSPOT_DNSREDIR"
+readonly CHAIN_DNS_PRE="skeen_dns_pre"
+readonly CHAIN_DNS_OUT="skeen_dns_out"
+readonly CHAIN_TPROXY="skeen_tproxy"
+readonly CHAIN_REDIRECT="skeen_redirect"
+readonly CHAIN_MARK_OUT="skeen_mark_out"
 readonly TABLE_REDIRECT="nat"
 readonly TABLE_TPROXY="mangle"
 readonly TABLE_MARK="0x112"
@@ -1434,6 +1439,7 @@ add_skeen_rules() {
     connmark_match_opt="-m connmark --mark $TABLE_MARK"
 
     local proto="${1:-}"
+    local chain="${2:-$chain}"
 
     if [ "$proto" = "tcp" ]; then
       add_rule "$iptables" "$table" "$chain" \
@@ -1472,10 +1478,20 @@ add_skeen_rules() {
     add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
     ;;
   "intercept_dns")
+    if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
+      ! safe_chain_create "$iptables" "$table" "$CHAIN_DNS_PRE" && return
+      for proto in $protocols; do
+        add_conntrack_mark "$proto" "$CHAIN_DNS_PRE"
+        add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j "$CHAIN_DNS_PRE"
+      done
+      [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] && chain="$CHAIN_DNS_PRE"
+    fi
+
     for proto in $protocols; do
       if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
+        # shellcheck disable=SC2086
         add_rule "$iptables" "$table" "$chain" \
-          -p "$proto" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
+          -p "$proto" $connmark_match_opt --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
           --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
       else
         add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
@@ -1499,8 +1515,16 @@ add_skeen_rules() {
       -m set --match-set "${NET_EXCLUDE_SET}${IP_VERSION}" dst -j ACCEPT
     ;;
   "tproxy")
+    if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
+      ! safe_chain_create "$iptables" "$table" "$CHAIN_TPROXY" && return
+      for proto in $protocols; do
+        add_conntrack_mark "$proto" "$CHAIN_TPROXY"
+        add_rule "$iptables" "$table" "$chain" -p "$proto" -j "$CHAIN_TPROXY"
+      done
+      chain="$CHAIN_TPROXY"
+    fi
+
     for proto in $protocols; do
-      add_conntrack_mark "$proto"
       # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$chain" \
         -p "$proto" $connmark_match_opt -j TPROXY --on-ip "$PROXY_IP" \
@@ -1522,7 +1546,17 @@ add_skeen_rules() {
     done
   ;;
   "redirect")
-    add_conntrack_mark "$protocols"
+    if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
+      if ! safe_chain_create "$iptables" "$table" "$CHAIN_REDIRECT"; then
+        if [ "$chain" = "$CHAIN_OUTPUT" ]; then
+          add_rule "$iptables" "$table" "$chain" -p "$protocols" -j "$CHAIN_REDIRECT"
+        fi
+        return
+      fi
+      add_conntrack_mark "$protocols" "$CHAIN_REDIRECT"
+      add_rule "$iptables" "$table" "$chain" -p "$protocols" -j "$CHAIN_REDIRECT"
+      chain="$CHAIN_REDIRECT"
+    fi
     # shellcheck disable=SC2086
     add_rule "$iptables" "$table" "$chain" \
       -p "$protocols" $connmark_match_opt -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
@@ -1531,21 +1565,40 @@ add_skeen_rules() {
     add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
     ;;
   "proxy_router_dns")
-    for proto in $protocols; do
-      if [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
-        add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j MARK --set-mark "$TABLE_MARK"
+    if [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
+      ! safe_chain_create "$iptables" "$table" "$CHAIN_DNS_OUT" && return
+      if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
+        for proto in $protocols; do
+          add_conntrack_mark "$proto" "$CHAIN_DNS_OUT"
+        done
       fi
+      for proto in $protocols; do
+        add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -g "$CHAIN_DNS_OUT"
+      done
+      chain="$CHAIN_DNS_OUT"
+      # shellcheck disable=SC2086
+      add_rule "$iptables" "$table" "$chain" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
+    fi
+
+    for proto in $protocols; do
       add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
     done
     ;;
   "proxy_router_mark")
+    ! safe_chain_create "$iptables" "$table" "$CHAIN_MARK_OUT" && return
+    if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
+      for proto in $protocols; do
+        add_conntrack_mark "$proto" "$CHAIN_MARK_OUT"
+      done
+    fi
     for proto in $protocols; do
-      add_conntrack_mark "$proto"
-      # shellcheck disable=SC2086
-      add_rule "$iptables" "$table" "$chain" \
-        -p "$proto" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
-      add_rule "$iptables" "$table" "$chain" -p "$proto" -j ACCEPT
+      add_rule "$iptables" "$table" "$chain" -p "$proto" -g "$CHAIN_MARK_OUT"
     done
+    chain="$CHAIN_MARK_OUT"
+    # shellcheck disable=SC2086
+    add_rule "$iptables" "$table" "$chain" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
+    # shellcheck disable=SC2086
+    add_rule "$iptables" "$table" "$chain" -j ACCEPT
     ;;
   esac
 }
@@ -2231,7 +2284,13 @@ clean_firewall() {
     for table in nat mangle; do
       clean_chain "$ipt_cmd" "$table" "$CHAIN_PREROUTING" PREROUTING
       clean_chain "$ipt_cmd" "$table" "$CHAIN_DIVERT" PREROUTING
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_DNS_PRE" PREROUTING
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_TPROXY" PREROUTING
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_REDIRECT" PREROUTING
       clean_chain "$ipt_cmd" "$table" "$CHAIN_OUTPUT" OUTPUT
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_DNS_OUT" OUTPUT
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_MARK_OUT" OUTPUT
+      clean_chain "$ipt_cmd" "$table" "$CHAIN_REDIRECT" OUTPUT
     done
   done
 
