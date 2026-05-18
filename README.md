@@ -508,6 +508,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "use_conntrack": 0 // If set to 1, enables Netfilter conntrack for state matching.
                        // Pros: Better performance and stability for TCP/UDP.
                        // Cons: Increased RAM usage.
+                       // Available in redirect, tproxy, and hybrid modes;
   }
 }
 

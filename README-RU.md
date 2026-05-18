@@ -509,6 +509,7 @@ exec /opt/etc/init.d/S51dropbear start
     "use_conntrack": 0 // Если 1, использовать Netfilter conntrack для сопоставления.
                        // Плюсы: Выше производительность и стабильность TCP/UDP.
                        // Минусы: Повышенное потребление ОЗУ.
+                       // Доступно в режимах redirect, tproxy и hybrid;
   }
 }
 ```
