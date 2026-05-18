@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.3...SKeen-v4.16.4) (2026-05-18)
+
+
+### 🐛 Fix
+
+* **iptables:** Fix iptables sub-chains reset when `use_conntrack` is enabled + update iptables chain handling to use -w flag and new helper functions ([bcec90e](https://github.com/jinndi/SKeen/commit/bcec90ea6f530f6f9b7deb19afaeda3706f776d3))
+
 ## [4.16.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.2...SKeen-v4.16.3) (2026-05-18)
 
 
