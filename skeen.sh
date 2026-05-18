@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.16.2"
+readonly SKEEN_VERSION="4.16.3"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -1608,7 +1608,7 @@ chain_exists() {
   local table="${2:-}"
   local chain="${3:-}"
 
-  $iptables -t "$table" -L "$chain" -n >/dev/null 2>&1
+  $iptables -t "$table" -S "$chain" >/dev/null 2>&1
 }
 
 safe_chain_create() {
@@ -1616,14 +1616,15 @@ safe_chain_create() {
   local table="$2"
   local chain="$3"
 
+  [ -z "$iptables" ] || [ -z "$chain" ] && return 1
+
   if chain_exists "$iptables" "$table" "$chain"; then
     return 1
-  elif ! $iptables -t "$table" -N "$chain"; then
+  elif ! $iptables -w -t "$table" -N "$chain"; then
     return 1
-  else
-    $iptables -t "$table" -F "$chain"
-    return 0
   fi
+
+  return 0
 }
 
 set_chain_rules() {
@@ -1678,7 +1679,7 @@ goto_chain_rules() {
   local rule="-m conntrack ! --ctstate INVALID -g $target_chain"
 
   for proto in $protocols; do
-    if ! $iptables -t "$table" -L "$target_chain" >/dev/null 2>&1; then
+    if ! $iptables -t "$table" -S "$target_chain" >/dev/null 2>&1; then
       return
     fi
 
