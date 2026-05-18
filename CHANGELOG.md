@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.3](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.2...SKeen-v4.16.3) (2026-05-18)
+
+
+### 🐛 Fix
+
+* update iptables commands for chain existence checks ([ea0582d](https://github.com/jinndi/SKeen/commit/ea0582d84d5b8cb78255befbbcfd7b74eda67296))
+
 ## [4.16.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.1...SKeen-v4.16.2) (2026-05-17)
 
 
