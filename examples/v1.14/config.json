@@ -1,0 +1,138 @@
+// Стандартная конфигурация для шаблонов по умолчанию при выходе версии sing-box 1.14
+
+// 1. Пожалуйста, скорректируйте шаблон в соответствии с вашей ситуацией.
+// Лучший шаблон - тот, который вам больше всего подходит.
+// Если у вас нет особых требований, вы можете скопировать всё дословно.
+
+// 2. Это решение обеспечивает обход RU IP-адресов, а также неизвестных доменных имён, IP-адреса которых географически расположены в России.
+// Дополнительно предотвращает утечки DNS-запросов и обеспечивает эффективную маршрутизацию трафика.
+
+// 3. Рекомендуется установить параметр `client_subnet` в диапазон IP-адресов DNS-сервера по умолчанию,
+// назначенного вашим текущим провайдером широкополосного доступа
+// (это можно проверить на странице вашего роутера, или обратившись к общедоступному каталогу DNS).
+// Например, если DNS-сервер по умолчанию - 77.88.8.8, вы можете установить его на 77.88.8.0/24.
+
+// 4. Для работы селектора «🏴‍☠️ Торрент» убедитесь, что в торрент-клиенте для подключения к пирам выбран протокол «только TCP»
+// и в настройках приватности не установлено принудительное шифрование.
+// Скорость при прямом подключении создаёт нагрузку на процессор, сопоставимую с работой без маршрутизации трафика через sing-box.
+// При этом решение сохраняет работоспособность в любых окружениях.
+
+// 5. Узел GLOBAL используется для выбора узла DIRECT либо селектора выбора узлов в качестве обходного маршрута для загрузки rule_set,
+// zashboard и обработки DNS-запросов проксируемого трафика.
+
+
+{
+  "log": { "disabled": false, "level": "debug", "output": "", "timestamp": false },
+
+  "dns": {
+    "servers": [
+      {
+        "tag": "hosts", "type": "hosts",
+        "predefined": {
+          "one.one.one.one": [ "1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001" ],
+          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1", "2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff" ],
+          "my.netcraze.pro": [ "192.168.1.1" ]
+        }
+      },
+      { "tag": "dns_local", "type": "local" },
+      { "tag": "dns_resolver", "type": "udp", "server": "77.88.8.8" },
+      { "tag": "dns_proxy", "type": "tls", "server": "one.one.one.one", "domain_resolver": "hosts", "detour": "GLOBAL"},
+      { "tag": "dns_direct", "type": "https", "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
+    ],
+
+    "rules": [
+      { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "clash_mode": "Direct", "server": "dns_direct" },
+      { "clash_mode": "Global", "server": "dns_proxy" },
+      { "rule_set": [ "private" ], "server": "dns_local" },
+      { "rule_set": [ "adguard" ], "action": "predefined" },
+      { "rule_set": [ "fakeip_filter", "trackerslist" ], "server": "dns_direct" },
+      { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "rule_set": [ "ru" ], "server": "dns_direct" },
+      { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
+      { "match_response": true, "rule_set": [ "ru_ip" ], "action": "respond" },
+      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" }
+    ],
+
+    "final": "dns_proxy",
+    "strategy": "prefer_ipv4",
+    "optimistic": true,
+    "reverse_mapping": true
+  },
+
+  "inbounds": [
+    { "tag": "tproxy-in", "type": "tproxy", "listen": "::", "listen_port": 65082, "tcp_fast_open": true, "udp_fragment": true, "udp_timeout": "1m0s" }
+  ],
+
+  "outbounds": [
+    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
+    { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
+    { "tag": "🕹️ Игры", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
+    { "tag": "🤖 AI", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
+    { "tag": "🔌 Провайдер", "type": "selector", "outbounds": [ "DIRECT" ] },
+    { "tag": "DIRECT", "type": "direct" },
+    { "tag": "GLOBAL", "type": "selector", "outbounds": [  "🌍 Выбор узла", "DIRECT"], "default": "🌍 Выбор узла", "interrupt_exist_connections": true },
+
+    {
+      "tag": "🆚 vless узел",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example.com",
+      "server_port": 443,
+      "tls": { "enabled": true, "server_name": "example.com", "utls": { "enabled": true, "fingerprint": "qq" } }
+    },
+
+    { "tag": "⚡️ Авто", "type": "urltest", "outbounds": [ "vless-out" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
+  ],
+
+  "http_clients": [ { "tag": "detour_global", "detour": "GLOBAL" } ],
+
+  "route": {
+    "final": "🌍 Выбор узла",
+    "auto_detect_interface": true,
+    "default_domain_resolver": "dns_resolver",
+    "default_http_client": "detour_global",
+
+    "rules": [
+      { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
+      { "clash_mode": "Global", "outbound": "🌍 Выбор узла" },
+      { "action": "sniff" },
+      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "rule_set": [ "private" ], "outbound": "🔌 Провайдер" },
+      { "protocol": "bittorrent", "outbound": "🏴‍☠️ Торрент" },
+      { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
+      { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
+      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
+      { "rule_set": [ "ru" ], "outbound": "🔌 Провайдер" },
+      { "ip_is_private": true, "outbound": "🔌 Провайдер" },
+      { "rule_set": [ "ru_ip" ], "outbound": "🔌 Провайдер" }
+    ],
+
+    "rule_set": [
+      { "tag": "adguard", "type": "remote", "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs" },
+      { "tag": "private", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/private.srs" },
+      { "tag": "fakeip_filter", "type": "remote", "url": "https://github.com/jinndi/fakeip-filter-srs/releases/latest/download/fakeip-filter.srs" },
+      { "tag": "trackerslist", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-public-tracker.srs" },
+      { "tag": "games", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-games.srs" },
+      { "tag": "ai", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ai-chat-!cn.srs" },
+      { "tag": "proxy", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/russia/runetfreedom/sing-box/rule-set-geosite/geosite-ru-blocked.srs" },
+      { "tag": "ru", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs" },
+      { "tag": "ru_ip", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/ru.srs" }
+    ]
+  },
+
+  "experimental": {
+    "cache_file": { "enabled": true, "path": "cache.db", "store_fakeip": true, "store_dns": true },
+
+    "clash_api": {
+      "external_controller": "0.0.0.0:9999",
+      "external_ui": "zashboard",
+      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
+      "external_ui_download_detour": "GLOBAL",
+      "default_mode": "Rule"
+    }
+  }
+}
