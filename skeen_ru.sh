@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.16.4"
+readonly SKEEN_VERSION="4.16.5"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -3216,10 +3216,9 @@ sync_config() {
   local config_tmp="${TMP_DIR}/sing_config_tmp.json"
 
   if [ -z "$address" ]; then
-    local sync_url=""
-    sync_url="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.sync_url')"
+    address="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.sync_url')"
 
-    [ -z "$sync_url" ] && echoerr "Адрес для синхронизации не указан" && return 1
+    [ -z "$address" ] && echoerr "Адрес для синхронизации не указан" && return 1
   fi
 
   if ! echo "$address" | grep -qE '^https?://'; then
