@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.16.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.4...SKeen-v4.16.5) (2026-05-24)
+
+
+### 🐛 Fix
+
+* **sync:** validate sync_url and address format in sync command ([4ae362e](https://github.com/jinndi/SKeen/commit/4ae362e5a9f940bea70872c6b1bf2db9c6fc3a82))
+
 ## [4.16.4](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.3...SKeen-v4.16.4) (2026-05-18)
 
 
