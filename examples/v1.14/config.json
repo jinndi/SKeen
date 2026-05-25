@@ -72,7 +72,7 @@
     { "tag": "🤖 AI", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
     { "tag": "🔌 Провайдер", "type": "selector", "outbounds": [ "DIRECT" ] },
     { "tag": "DIRECT", "type": "direct" },
-    { "tag": "GLOBAL", "type": "selector", "outbounds": [  "🌍 Выбор узла", "DIRECT"], "default": "🌍 Выбор узла", "interrupt_exist_connections": true },
+    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Выбор узла", "🔌 Провайдер" ], "default": "🌍 Выбор узла", "interrupt_exist_connections": true },
 
     {
       "tag": "🆚 vless узел",
@@ -85,7 +85,7 @@
       "tls": { "enabled": true, "server_name": "example.com", "utls": { "enabled": true, "fingerprint": "qq" } }
     },
 
-    { "tag": "⚡️ Авто", "type": "urltest", "outbounds": [ "vless-out" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
+    { "tag": "⚡️ Авто", "type": "urltest", "outbounds": [ "🆚 vless узел" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
   ],
 
   "http_clients": [ { "tag": "detour_global", "detour": "GLOBAL" } ],
