@@ -81,7 +81,7 @@
     { "tag": "DIRECT", "type": "direct" },
     { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Выбор узла" ], "interrupt_exist_connections": true },
 
-    { "tag": "⚡️ Авто 🌍", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
+    { "tag": "⚡️ Авто 🌍", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true },
     { "tag": "⚡️ Авто 🇷🇺", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
   ],
 
