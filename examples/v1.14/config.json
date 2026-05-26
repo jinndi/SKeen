@@ -68,7 +68,7 @@
   ],
 
   "outbounds": [
-    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
+    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "🔌 Провайдер", "interrupt_exist_connections": true },
     { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
     { "tag": "🕹️ Игры", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
     { "tag": "🤖 AI", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },

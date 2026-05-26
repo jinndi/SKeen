@@ -49,7 +49,6 @@
     "rules": [
       { "preferred_by": [ "hosts" ], "server": "hosts" },
       { "clash_mode": "Direct", "server": "dns_direct" },
-      { "clash_mode": "Global", "server": "dns_proxy" },
       { "rule_set": [ "private", "ip_geo_detect" ], "server": "dns_local" },
       { "rule_set": [ "adguard" ], "action": "predefined" },
       { "rule_set": [ "fakeip_filter", "trackerslist" ], "server": "dns_direct" },
@@ -57,7 +56,8 @@
       { "rule_set": [ "ru", "cheburnet" ], "server": "dns_direct" },
       { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
       { "match_response": true, "rule_set": [ "ru_ip" ], "action": "respond" },
-      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" }
+      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "clash_mode": "Global", "server": "dns_proxy" }
     ],
 
     "final": "dns_proxy",

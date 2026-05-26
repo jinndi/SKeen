@@ -167,7 +167,7 @@ let allProxyTags = singboxProxies.map(p => p.tag)
 
 // 4. Находим и заполняем outbounds группы селекторов/urltest нашего шаблона
 // (тут нужно отредактировать, если вы меняли предложенный шаблон на свои группы селекторов/urltest)
-config.outbounds.find(p => p.tag === '🌍 Выбор узла')?.outbounds?.push('⚡️ Авто', '🔌 Провайдер', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🌍 Выбор узла')?.outbounds?.push('🔌 Провайдер', '⚡️ Авто', ...allProxyTags)
 config.outbounds.find(p => p.tag === '🏴‍☠️ Торрент')?.outbounds?.push('⚡️ Авто', '🔌 Провайдер', ...allProxyTags)
 config.outbounds.find(p => p.tag === '🕹️ Игры')?.outbounds?.push('⚡️ Авто', '🔌 Провайдер', ...allProxyTags)
 config.outbounds.find(p => p.tag === '🤖 AI')?.outbounds?.push('⚡️ Авто', '🔌 Провайдер', ...allProxyTags)
