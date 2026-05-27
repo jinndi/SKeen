@@ -229,7 +229,7 @@ Yes - Sing-box also supports DNS filtering and can fully replace ADGuard Home.
 
 [Multi ULTIMATE - Aggressive protection by hagezi](https://github.com/hagezi/dns-blocklists#closed_book-multi-ultimate---aggressive-protection-) (not Mini) takes [~2 MB in memory](https://github.com/KaringX/karing-ruleset/blob/sing/AdGuard/HostlistsRegistry/hagezi_ultimate.srs), while [in AdGuard it takes ~6 MB](https://github.com/KaringX/karing-ruleset/blob/sing/AdGuard/HostlistsRegistry/hagezi_ultimate.txt).
 
-The total memory consumption of sing-box is ~29 MB, including this `rule_set` and other necessary rules which can be found in the `examples` -> `v1.14` folder.
+The total memory consumption of sing-box is ~29 MB along with this `rule_set` and other necessary rules (see the `examples` -> `v1.14` folder). This overhead depends less on the size of the `.srs` file itself and more on the number of active connections.
 
 <img width="145" height="154" alt="image" src="https://github.com/user-attachments/assets/a19f092e-524b-4352-9a20-e51202cde0a8" />
 
