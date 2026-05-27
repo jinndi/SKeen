@@ -211,6 +211,14 @@ ADGuard Home в первую очередь отвечает за фильтра
 Решает ли Sing-box задачи ADGuard Home?
 Да - Sing-box также поддерживает DNS-фильтрацию и может полностью заменить ADGuard Home.
 
+**А что по потреблению памяти?**
+
+[Multi ULTIMATE - Aggressive protection от hagezi](https://github.com/hagezi/dns-blocklists#closed_book-multi-ultimate---aggressive-protection-) (не Mini) - [занимает в памяти ~2 МБ](https://github.com/KaringX/karing-ruleset/blob/sing/AdGuard/HostlistsRegistry/hagezi_ultimate.srs), при этом [в AdGuard — ~6 МБ](https://github.com/KaringX/karing-ruleset/blob/sing/AdGuard/HostlistsRegistry/hagezi_ultimate.txt).
+
+Общее потребление памяти sing-box составляет ~26 МБ вместе с этим `rule_set` и другими необходимыми правилами, которые можно посмотреть в папке `examples` -> `v1.14`.
+
+<img width="145" height="154" alt="image" src="https://github.com/user-attachments/assets/a19f092e-524b-4352-9a20-e51202cde0a8" />
+
 </details>
 
 <details>
