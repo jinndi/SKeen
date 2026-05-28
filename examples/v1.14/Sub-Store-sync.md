@@ -104,6 +104,7 @@
       { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
       { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
       { "protocol": [ "stun" ], "action": "reject" },
+      { "rule_set": [ "ip_geo_detect"], "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
       { "rule_set": [ "private", "cheburnet" ], "outbound": "🔌 Провайдер" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Торрент" },
