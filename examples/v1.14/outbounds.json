@@ -1,0 +1,349 @@
+// Примеры узлов из 14 экземпляров
+// Сочетание протоколов: VLESS Reality / Hysteria2 / Trojan / TUIC / Shadowsocks / Trojan / anyTLS / Naive
+// Несколько методов передачи данных: TCP / HTTP / gRPC / h2mux (мультиплексирование) / QUIC
+
+{
+  // ── tag01: VLESS Reality + vision + xudp ──
+  // Основной узел, подмена отпечатка TLS, Chrome, управление потоком xtls-rprx-vision
+  {
+    "type": "vless",
+    "tag": "tag01",
+    "connect_timeout": "5s",
+    "tcp_fast_open": true,
+    "tcp_keep_alive": "30s",
+    "tcp_keep_alive_interval": "5s",
+    "udp_fragment": true,
+    "server": "your-domain.com",
+    "server_port": 00000,
+    "uuid": "00000000-0000-0000-0000-000000000001",
+    "flow": "xtls-rprx-vision",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      },
+      "reality": {
+        "enabled": true,
+        "public_key": "REPLACE_WITH_YOUR_REALITY_PUBLIC_KEY_1"
+      }
+    },
+    "packet_encoding": "xudp"
+  },
+
+  // ── tag02: Hysteria2 ──
+  // Высокоскоростной протокол на основе QUIC, переход через порт 51000:52000
+  // Привязка сертификата (certificate_public_key_sha256) для предотвращения атак типа «человек посередине»
+  {
+    "type": "hysteria2",
+    "tag": "tag01",
+    "connect_timeout": "5s",
+    "tcp_fast_open": true,
+    "tcp_keep_alive": "30s",
+    "tcp_keep_alive_interval": "5s",
+    "udp_fragment": true,
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "server_ports": "00000:00000",
+    "hop_interval": "30s",
+    "hop_interval_max": "1m0s",
+    "up_mbps": 200,
+    "down_mbps": 1000,
+    "password": "00000000-0000-0000-0000-000000000001",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "alpn": "h3",
+      "certificate_public_key_sha256": "REPLACE_WITH_YOUR_CERT_SHA256_BASE64=="
+    },
+    "stream_receive_window": 0,
+    "connection_receive_window": 0
+  },
+
+  // ── tag03: VLESS Reality + gRPC + xudp ──
+  // VLESS работает на транспортном уровне gRPC, и service_name="grpc" маскируется под трафик gRPC.
+  {
+    "type": "vless",
+    "tag": "tag03",
+    "connect_timeout": "5s",
+    "tcp_fast_open": true,
+    "tcp_keep_alive": "30s",
+    "tcp_keep_alive_interval": "5s",
+    "udp_fragment": true,
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "uuid": "00000000-0000-0000-0000-000000000001",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      },
+      "reality": {
+        "enabled": true,
+        "public_key": "REPLACE_WITH_YOUR_REALITY_PUBLIC_KEY_1"
+      }
+    },
+    "transport": {
+      "type": "grpc",
+      "service_name": "grpc"
+    },
+    "packet_encoding": "xudp"
+  },
+
+  // ── tag04: Троян + TLS ──
+  // Классический протокол троянской программы, шифрование TLS, привязка сертификатов для предотвращения атак типа «человек посередине».
+  {
+    "type": "trojan",
+    "tag": "tag04",
+    "connect_timeout": "5s",
+    "tcp_fast_open": true,
+    "tcp_keep_alive": "30s",
+    "tcp_keep_alive_interval": "5s",
+    "udp_fragment": true,
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "password": "00000000-0000-0000-0000-000000000001",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "certificate_public_key_sha256": "REPLACE_WITH_YOUR_CERT_SHA256_BASE64=="
+    }
+  },
+
+  // ── tag05: Теневые носки 2022 ──
+  // Новый стандарт SS (2022-blake3-aes-128-gcm) с защитой от повторного воспроизведения.
+  {
+    "type": "shadowsocks",
+    "tag": "pkpk05",
+    "connect_timeout": "5s",
+    "tcp_fast_open": true,
+    "tcp_keep_alive": "30s",
+    "tcp_keep_alive_interval": "5s",
+    "udp_fragment": true,
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "method": "2022-blake3-aes-128-gcm",
+    "password": "REPLACE_WITH_YOUR_SS2022_PASSWORD_1=="
+  },
+
+  // ── tag06: VLESS Reality + vision + h2mux multiplexing + Brutal rate control ──
+  // h2mux: Мультиплексирует несколько потоков по одному соединению, уменьшая накладные расходы на установление соединения.
+  // Brutal: Фиксированная скорость отправки 1000 Мбит/с вверх/вниз.
+  {
+    "type": "vless",
+    "tag": "tag06",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "uuid": "00000000-0000-0000-0000-000000000002",
+    "flow": "xtls-rprx-vision",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "firefox"
+      },
+      "reality": {
+        "enabled": true,
+        "public_key": "REPLACE_WITH_YOUR_REALITY_PUBLIC_KEY_2"
+      }
+    },
+    "multiplex": {
+      "protocol": "h2mux",
+      "max_connections": 8,
+      "min_streams": 16,
+      "brutal": {
+        "up_mbps": 1000,
+        "down_mbps": 1000
+      }
+    }
+  },
+
+  // ── tag07: TUIC ──
+  // Протокол TUIC (на основе QUIC), управление перегрузкой BBR, собственная UDP-ретрансляция
+  // QUIC+TLS, ALPN=h3, маскирующийся под HTTP/3
+  {
+    "type": "tuic",
+    "tag": "tag07",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "uuid": "00000000-0000-0000-0000-000000000002",
+    "password": "00000000-0000-0000-0000-000000000002",
+    "congestion_control": "bbr",
+    "udp_relay_mode": "native",
+    "heartbeat": "10s",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "alpn": "h3",
+      "certificate_public_key_sha256": "REPLACE_WITH_YOUR_CERT_SHA256_BASE64=="
+    },
+    "stream_receive_window": 0,
+    "connection_receive_window": 0
+  },
+
+  // ── tag08: Shadowsocks 2022 + мультиплексирование h2mux ──
+  // Стандарт SS 2022 + h2mux + заполнение (заполнение скрывает характеристики трафика) + Жесткое управление скоростью
+  {
+    "type": "shadowsocks",
+    "tag": "tag08",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "method": "2022-blake3-aes-128-gcm",
+    "password": "REPLACE_WITH_YOUR_SS2022_PASSWORD_2==",
+    "multiplex": {
+      "enabled": true,
+      "protocol": "h2mux",
+      "max_connections": 8,
+      "min_streams": 16,
+      "padding": true,
+      "brutal": {
+        "up_mbps": 1000,
+        "down_mbps": 1000
+      }
+    }
+  },
+
+  // ── tag09: Trojan + TLS + h2mux + Brutal ──
+  // Определение TLS-отпечатков для Firefox, привязка сертификатов, мультиплексирование h2mux
+  {
+    "type": "trojan",
+    "tag": "tag09",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "password": "00000000-0000-0000-0000-000000000002",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "certificate_public_key_sha256": "REPLACE_WITH_YOUR_CERT_SHA256_BASE64==",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "firefox"
+      }
+    },
+    "multiplex": {
+      "enabled": true,
+      "protocol": "h2mux",
+      "max_connections": 8,
+      "min_streams": 16,
+      "padding": true,
+      "brutal": {
+        "up_mbps": 1000,
+        "down_mbps": 1000
+      }
+    }
+  },
+
+  // ── tag10: VLESS Reality + HTTP Transmission ──
+  // VLESS работает поверх HTTP-транспорта, маскируясь под обычный HTTP-трафик.
+  {
+    "type": "vless",
+    "tag": "tag10",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "uuid": "00000000-0000-0000-0000-000000000002",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "firefox"
+      },
+      "reality": {
+        "enabled": true,
+        "public_key": "REPLACE_WITH_YOUR_REALITY_PUBLIC_KEY_2"
+      }
+    },
+    "transport": {
+      "type": "http"
+    }
+  },
+
+  // ── tag11: VLESS Reality + gRPC ──
+  // VLESS работает на основе gRPC-транспорта, маскируясь под gRPC-поток.
+  {
+    "type": "vless",
+    "tag": "tag11",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "uuid": "00000000-0000-0000-0000-000000000002",
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "firefox"
+      },
+      "reality": {
+        "enabled": true,
+        "public_key": "REPLACE_WITH_YOUR_REALITY_PUBLIC_KEY_2"
+      }
+    },
+    "transport": {
+      "type": "grpc",
+      "service_name": "grpc"
+    }
+  },
+
+  // ── tag12: anyTLS ──
+  // протокол anyTLS, подмена отпечатка TLS, Firefox, привязка сертификата
+  // Управление неактивными сессиями: проверка каждые 30 секунд, тайм-аут 30 секунд, поддержание минимум 5 неактивных сессий.
+  {
+    "type": "anytls",
+    "tag": "tag12",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "tls": {
+      "enabled": true,
+      "server_name": "addons.mozilla.org",
+      "certificate_public_key_sha256": "REPLACE_WITH_YOUR_CERT_SHA256_BASE64==",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "firefox"
+      }
+    },
+    "password": "00000000-0000-0000-0000-000000000002",
+    "idle_session_check_interval": "30s",
+    "idle_session_timeout": "30s",
+    "min_idle_session": 5
+  },
+
+  // ── tag13: NaiveProxy (режим TCP) ──
+  // Протокол NaiveProxy (протокол прокси Chrome), туннелирование TLS+HTTP/2
+  // udp_over_tcp: true — трафик UDP передается через TCP-туннель
+  {
+    "type": "naive",
+    "tag": "tag13",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "username": "00000000-0000-0000-0000-000000000002",
+    "password": "00000000-0000-0000-0000-000000000002",
+    "udp_over_tcp": true,
+    "tls": {
+      "enabled": true,
+      "server_name": "your-domain.com"
+    }
+  },
+
+  // ── tag14: NaiveProxy (режим QUIC) ──
+  // Тот же сервер, что и в tag13, но использует QUIC для передачи данных + управление перегрузкой BBR
+  // udp_over_tcp: false — QUIC имеет встроенную поддержку UDP
+  {
+    "type": "naive",
+    "tag": "tag14",
+    "server": "your-domain.com",
+    "server_port": 0000,
+    "username": "00000000-0000-0000-0000-000000000002",
+    "password": "00000000-0000-0000-0000-000000000002",
+    "udp_over_tcp": false,
+    "quic": true,
+    "quic_congestion_control": "bbr",
+    "tls": {
+      "enabled": true,
+      "server_name": "your-domain.com"
+    }
+  }
+}

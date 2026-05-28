@@ -1,5 +1,7 @@
 ## Пример синхронизации конфигурации с помощью Sub-Store
 
+**Спешиал фор Россия**
+
 Чтобы обеспечить стабильную работу в условиях современной интернет-цензуры, пора уже забыть про наивную веру в один собственный сервер с XHTTP. Гораздо эффективнее использовать пул из десятков или сотен прокси-узлов, собранных из кучи разных подписок. Беспомощный формат «добавить одну ссылочку вида `vless://` через очередной веб-интерфейсик» в текущих реалиях - это путь в тупик при первом же чихе на ТСПУ, оставляющий вас вообще без связи. И если вас это безумие ещё почему-то не коснулось, то это лишь вопрос времени. Именно для гибкого управления огромным пулом прокси узлов и необходим `Sub-Store`.
 
 Помимо конструирования конфигов и их локальной синхронизации с помощью программы `GUI.for.SingBox` и моего плагина [sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen), вы также можете настроить удалённую синхронизацию конфигурации sing-box из `Sub-Store` с помощью команды `skeen sync`.
@@ -25,7 +27,7 @@
 
 ```jsonc
 {
-  "log": { "disabled": false, "level": "debug", "output": "", "timestamp": false },
+  "log": { "disabled": false, "level": "fatal", "output": "", "timestamp": false },
 
   "dns": {
     "servers": [
@@ -38,70 +40,82 @@
         }
       },
       { "tag": "dns_local", "type": "local" },
-      { "tag": "dns_resolver", "type": "udp", "server": "77.88.8.8" },
-      { "tag": "dns_proxy", "type": "tls", "server": "one.one.one.one", "domain_resolver": "hosts", "detour": "GLOBAL"},
       { "tag": "dns_direct", "type": "https", "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_proxy", "type": "tls", "server": "one.one.one.one", "domain_resolver": "hosts", "detour": "GLOBAL"},
       { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
     ],
 
     "rules": [
       { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "rule_set": [ "ip_geo_detect"], "action": "reject" },
       { "clash_mode": "Direct", "server": "dns_direct" },
-      { "clash_mode": "Global", "server": "dns_proxy" },
       { "rule_set": [ "private" ], "server": "dns_local" },
-      { "rule_set": [ "adguard" ], "action": "predefined" },
-      { "rule_set": [ "fakeip_filter", "trackerslist" ], "server": "dns_direct" },
+      { "rule_set": [ "fakeip_filter" ], "server": "dns_direct" },
+      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
+      { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
+      { "rule_set": [ "trackerslist" ], "server": "dns_direct" },
       { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "rule_set": [ "adguard" ], "action": "predefined" },
       { "rule_set": [ "ru" ], "server": "dns_direct" },
       { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
       { "match_response": true, "rule_set": [ "ru_ip" ], "action": "respond" },
-      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" }
+      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "clash_mode": "Global", "server": "dns_proxy" }
     ],
 
     "final": "dns_proxy",
     "strategy": "prefer_ipv4",
-    "optimistic": true,
+    "timeout": "3s",
+    "cache_capacity": 16384,
+    "optimistic": { "enabled": true, "timeout": "1h0m0s" },
     "reverse_mapping": true
   },
+
+  "http_clients": [
+    { "tag": "global_client", "version": 2, "detour": "GLOBAL", "stream_receive_window": 0, "connection_receive_window": 0 },
+    { "tag": "direct_client", "version": 2, "detour": "DIRECT", "stream_receive_window": 0, "connection_receive_window": 0 }
+  ],
 
   "inbounds": [
     { "tag": "tproxy-in", "type": "tproxy", "listen": "::", "listen_port": 65082, "tcp_fast_open": true, "udp_fragment": true, "udp_timeout": "1m0s" }
   ],
 
   "outbounds": [
-    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🕹️ Игры", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🤖 AI", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [ ], "default": "🆚 vless узел 🌍", "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Россия", "type": "selector", "outbounds": [ ], "default": "⚡️ Авто 🇷🇺", "interrupt_exist_connections": true },
+    { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [ ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
+    { "tag": "🕹️ Игры", "type": "selector", "outbounds": [ ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
+    { "tag": "🤖 AI", "type": "selector", "outbounds": [ ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
     { "tag": "🔌 Провайдер", "type": "selector", "outbounds": [ "DIRECT" ] },
 
-    { "tag": "DIRECT", "type": "direct" },
-    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Выбор узла", "🔌 Провайдер" ], "default": "🌍 Выбор узла", "interrupt_exist_connections": true },
+    { "tag": "DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
+    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Выбор узла" ], "interrupt_exist_connections": true },
 
-    { "tag": "⚡️ Авто", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
+    { "tag": "⚡️ Авто 🌍", "type": "urltest", "outbounds": [ ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true },
+    { "tag": "⚡️ Авто 🇷🇺", "type": "urltest", "outbounds": [ ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
   ],
 
-  "http_clients": [ { "tag": "detour_global", "detour": "GLOBAL" } ],
-
   "route": {
-    "final": "🌍 Выбор узла",
-    "auto_detect_interface": true,
-    "default_domain_resolver": "dns_resolver",
-    "default_http_client": "detour_global",
-
     "rules": [
-      { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
-      { "clash_mode": "Global", "outbound": "🌍 Выбор узла" },
-      { "action": "sniff" },
+      { "network": "icmp", "outbound": "🔌 Провайдер" },
+      { "action": "sniff", "timeout": "500ms" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
-      { "rule_set": [ "private" ], "outbound": "🔌 Провайдер" },
+      { "port": [ 853, 5353 ], "action": "reject" },
+      { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
+      { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
+      { "protocol": [ "stun" ], "action": "reject" },
+      { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
+      { "rule_set": [ "private", "cheburnet" ], "outbound": "🔌 Провайдер" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Торрент" },
+      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
       { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
-      { "rule_set": [ "ru" ], "outbound": "🔌 Провайдер" },
+      { "rule_set": [ "ru", "ru_ip" ], "outbound": "🇷🇺 Россия" },
       { "ip_is_private": true, "outbound": "🔌 Провайдер" },
-      { "rule_set": [ "ru_ip" ], "outbound": "🔌 Провайдер" }
+      { "ip_cidr": ["198.18.0.0/15",  "fc00::/18"], "outbound": "🌍 Выбор узла" },
+      { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
+      { "action": "resolve" },
+      { "clash_mode": "Global", "outbound": "🌍 Выбор узла" }
     ],
 
     "rule_set": [
@@ -112,20 +126,37 @@
       { "tag": "games", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-games.srs" },
       { "tag": "ai", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ai-chat-!cn.srs" },
       { "tag": "proxy", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/russia/runetfreedom/sing-box/rule-set-geosite/geosite-ru-blocked.srs" },
+      { "tag": "ip_geo_detect", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ip-geo-detect.srs" },
+      { "tag": "cheburnet", "type": "remote", "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs" },
       { "tag": "ru", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs" },
       { "tag": "ru_ip", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/ru.srs" }
-    ]
+    ],
+
+    "final": "🌍 Выбор узла",
+    "auto_detect_interface": true,
+    "default_domain_resolver": "dns_direct",
+    "default_http_client": "global_client"
   },
 
   "experimental": {
-    "cache_file": { "enabled": true, "path": "cache.db", "store_fakeip": true, "store_dns": true },
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "cache_id": "",
+      "store_fakeip": true,
+      "store_dns": true
+    },
 
     "clash_api": {
       "external_controller": "0.0.0.0:9999",
       "external_ui": "zashboard",
       "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
-      "external_ui_download_detour": "GLOBAL",
       "default_mode": "Rule"
+    },
+
+    "debug": {
+      "gc_percent": 100,
+      "memory_limit": "200MB"
     }
   }
 }
@@ -135,13 +166,14 @@
 
 
 ```javascript
-//// Указываем имя вашей подписки/коллекции
-const subName = "mysub"
+//// Указываем имена ваших подписок/коллекций
+// ВАЖНО: Теги прокси-узлов из подписок не должны дублироваться!
+const subName = "mysub" // для зарубежных прокси
+const subNameRU = "mysub_ru" // для российских прокси
 
 ////////////////////////////////////////////////////////////
 
-// 1. Загружаем прокси из подписки/коллекции
-// (по аналогии можно повторить блок если необходимо использовать дополнительные ссылки)
+// 1. Загружаем прокси из подписок/коллекций
 let singboxProxies = []
 try {
   singboxProxies = await produceArtifact({
@@ -152,6 +184,18 @@ try {
   })
 } catch (e) {
   throw new Error(`Не удалось загрузить подписку '${subName}'. Проверьте имя во вкладке подписки.`)
+}
+// дополнительно для RU серверов
+let singboxProxiesRU = []
+try {
+  singboxProxiesRU = await produceArtifact({
+    type: "collection", // если у вас подписка замените на 'subscription'
+    name: subNameRU,
+    platform: "sing-box",
+    produceType: "internal"
+  })
+} catch (e) {
+  throw new Error(`Не удалось загрузить подписку '${subNameRU}'. Проверьте имя во вкладке подписки.`)
 }
 
 // 2. Парсим шаблон (вставленный ранее как основа конфига)
@@ -164,29 +208,33 @@ try {
 
 // 3. Извлекаем только имена (теги) всех прокси, чтобы добавить их в группы
 let allProxyTags = singboxProxies.map(p => p.tag)
+let allProxyTagsRU = singboxProxies.map(p => p.tag)
 
 // 4. Находим и заполняем outbounds группы селекторов/urltest нашего шаблона
 // (тут нужно отредактировать, если вы меняли предложенный шаблон на свои группы селекторов/urltest)
-config.outbounds.find(p => p.tag === '🌍 Выбор узла')?.outbounds?.push('🔌 Провайдер', '⚡️ Авто', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🏴‍☠️ Торрент')?.outbounds?.push('⚡️ Авто', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🕹️ Игры')?.outbounds?.push('⚡️ Авто', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🤖 AI')?.outbounds?.push('⚡️ Авто', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '⚡️ Авто')?.outbounds?.push(...allProxyTags)
+config.outbounds.find(p => p.tag === '🌍 Выбор узла')?.outbounds?.push('⚡️ Авто 🌍', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🇷🇺 Россия')?.outbounds?.push('⚡️ Авто 🇷🇺', '🔌 Провайдер', ...allProxyTagsRU)
+config.outbounds.find(p => p.tag === '🏴‍☠️ Торрент')?.outbounds?.push('⚡️ Авто 🌍', '🔌 Провайдер', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🕹️ Игры')?.outbounds?.push('⚡️ Авто 🌍', '🔌 Провайдер', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🤖 AI')?.outbounds?.push('⚡️ Авто 🌍', '🔌 Провайдер', ...allProxyTags)
+config.outbounds.find(p => p.tag === '⚡️ Авто 🌍')?.outbounds?.push(...allProxyTags)
+config.outbounds.find(p => p.tag === '⚡️ Авто 🇷🇺')?.outbounds?.push(...allProxyTagsRU)
 
 // 5. Добавляем в самый конец сами узлы прокси-серверов из подписки/коллекции
-config.outbounds.push(...singboxProxies)
+config.outbounds.push(...singboxProxies, ...singboxProxiesRU)
 
 // 6. Результат отдаем дальше
 $content = JSON.stringify(config, null, 2)
 ```
 
-В этом шаблоне требуется только укзатаь имя ранее созданной подписки/коллекции в начале:
+В этом шаблоне требуется только укзатаь имя ранее созданных подписок/коллекций в начале:
 
 ```javascript
-const subName = "mysub"
+const subName = "mysub" // для зарубежных прокси
+const subNameRU = "mysub_ru" // для российских прокси
 ```
 
-И проверьте в пункте 1 (Загружаем прокси из подписки/коллекции) - там должно быть `type: "collection"`, или укажите `"subscription"`, если у вас тип «подписка».
+И проверьте в пункте 1 (Загружаем прокси из подписок/коллекций) - там должно быть `type: "collection"`, или укажите `"subscription"`, если у вас тип «подписка».
 
 После чего сохраните ваш файл кнопкой **Сохранить** внизу.
 

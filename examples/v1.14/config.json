@@ -1,30 +1,8 @@
-//// Стандартная конфигурация для шаблонов по умолчанию при выходе версии sing-box 1.14
-
-// 1. Пожалуйста, скорректируйте шаблон в соответствии с вашей ситуацией.
-// Лучший шаблон - тот, который вам больше всего подходит.
-// Если у вас нет особых требований, вы можете скопировать всё дословно.
-
-// 2. Это решение обеспечивает обход RU IP-адресов, а также неизвестных доменных имён, IP-адреса которых географически расположены в России.
-// Дополнительно предотвращает утечки DNS-запросов и обеспечивает эффективную маршрутизацию трафика.
-
-// 3. Рекомендуется установить параметр `client_subnet` в диапазон IP-адресов DNS-сервера по умолчанию,
-// назначенного вашим текущим провайдером широкополосного доступа
-// (это можно проверить на странице вашего роутера, или обратившись к общедоступному каталогу DNS).
-// Например, если DNS-сервер по умолчанию - 77.88.8.8, вы можете установить его на 77.88.8.0/24.
-
-// 4. Для работы селектора «🏴‍☠️ Торрент» убедитесь, что в торрент-клиенте для подключения к пирам выбран протокол «только TCP»
-// и в настройках приватности не установлено принудительное шифрование.
-// Скорость при прямом подключении создаёт нагрузку на процессор, сопоставимую с работой без маршрутизации трафика через sing-box.
-// При этом решение сохраняет работоспособность в любых окружениях.
-
-// 5. Узел GLOBAL используется для выбора узла DIRECT либо селектора выбора узлов в качестве обходного маршрута для загрузки rule_set,
-// zashboard и обработки DNS-запросов проксируемого трафика.
-
-// 6. Заполнять узлы и синхронизировать сам конфиг через "skeen sync" можно, настроив Sub-Store (смотрите файл Sub-Store-sync.md)
-
+//// Конфигурация для шаблонов по умолчанию при выходе версии sing-box 1.14
+// Чебурнет здесь. C комментариями смотрите файл config-commented.json
 
 {
-  "log": { "disabled": false, "level": "debug", "output": "", "timestamp": false },
+  "log": { "disabled": false, "level": "fatal", "output": "", "timestamp": false },
 
   "dns": {
     "servers": [
@@ -37,47 +15,59 @@
         }
       },
       { "tag": "dns_local", "type": "local" },
-      { "tag": "dns_resolver", "type": "udp", "server": "77.88.8.8" },
-      { "tag": "dns_proxy", "type": "tls", "server": "one.one.one.one", "domain_resolver": "hosts", "detour": "GLOBAL"},
       { "tag": "dns_direct", "type": "https", "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_proxy", "type": "tls", "server": "one.one.one.one", "domain_resolver": "hosts", "detour": "GLOBAL"},
       { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
     ],
 
     "rules": [
       { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "rule_set": [ "ip_geo_detect"], "action": "reject" },
       { "clash_mode": "Direct", "server": "dns_direct" },
-      { "clash_mode": "Global", "server": "dns_proxy" },
       { "rule_set": [ "private" ], "server": "dns_local" },
-      { "rule_set": [ "adguard" ], "action": "predefined" },
-      { "rule_set": [ "fakeip_filter", "trackerslist" ], "server": "dns_direct" },
+      { "rule_set": [ "fakeip_filter" ], "server": "dns_direct" },
+      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
+      { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
+      { "rule_set": [ "trackerslist" ], "server": "dns_direct" },
       { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "rule_set": [ "adguard" ], "action": "predefined" },
       { "rule_set": [ "ru" ], "server": "dns_direct" },
       { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
       { "match_response": true, "rule_set": [ "ru_ip" ], "action": "respond" },
-      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" }
+      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "clash_mode": "Global", "server": "dns_proxy" }
     ],
 
     "final": "dns_proxy",
     "strategy": "prefer_ipv4",
-    "optimistic": true,
+    "timeout": "3s",
+    "cache_capacity": 16384,
+    "optimistic": { "enabled": true, "timeout": "1h0m0s" },
     "reverse_mapping": true
   },
+
+  "http_clients": [
+    { "tag": "global_client", "version": 2, "detour": "GLOBAL", "stream_receive_window": 0, "connection_receive_window": 0 },
+    { "tag": "direct_client", "version": 2, "detour": "DIRECT", "stream_receive_window": 0, "connection_receive_window": 0 }
+  ],
 
   "inbounds": [
     { "tag": "tproxy-in", "type": "tproxy", "listen": "::", "listen_port": 65082, "tcp_fast_open": true, "udp_fragment": true, "udp_timeout": "1m0s" }
   ],
 
   "outbounds": [
-    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "🔌 Провайдер", "interrupt_exist_connections": true },
-    { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
-    { "tag": "🕹️ Игры", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
-    { "tag": "🤖 AI", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто", "🆚 vless узел" ], "default": "⚡️ Авто", "interrupt_exist_connections": true },
+    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [ "⚡️ Авто 🌍", "🆚 vless узел 🌍" ], "default": "🆚 vless узел 🌍", "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Россия", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто 🇷🇺", "🆚 vless узел 🇷🇺" ], "default": "⚡️ Авто 🇷🇺", "interrupt_exist_connections": true },
+    { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто 🌍", "🆚 vless узел 🌍" ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
+    { "tag": "🕹️ Игры", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто 🌍", "🆚 vless узел 🌍" ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
+    { "tag": "🤖 AI", "type": "selector", "outbounds": [ "🔌 Провайдер", "⚡️ Авто 🌍", "🆚 vless узел 🌍" ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
     { "tag": "🔌 Провайдер", "type": "selector", "outbounds": [ "DIRECT" ] },
-    { "tag": "DIRECT", "type": "direct" },
-    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Выбор узла", "🔌 Провайдер" ], "default": "🌍 Выбор узла", "interrupt_exist_connections": true },
+
+    { "tag": "DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
+    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Выбор узла" ], "interrupt_exist_connections": true },
 
     {
-      "tag": "🆚 vless узел",
+      "tag": "🆚 vless узел 🌍",
       "type": "vless",
       "uuid": "00000000-0000-0000-0000-00000000000",
       "flow": "xtls-rprx-vision",
@@ -86,35 +76,42 @@
       "server_port": 443,
       "tls": { "enabled": true, "server_name": "example.com", "utls": { "enabled": true, "fingerprint": "qq" } }
     },
+    {
+      "tag": "🆚 vless узел 🇷🇺",
+      "type": "vless",
+      "uuid": "00000000-0000-0000-0000-00000000000",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "example.ru",
+      "server_port": 443,
+      "tls": { "enabled": true, "server_name": "example.ru", "utls": { "enabled": true, "fingerprint": "qq" } }
+    },
 
-    { "tag": "⚡️ Авто", "type": "urltest", "outbounds": [ "🆚 vless узел" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
+    { "tag": "⚡️ Авто 🌍", "type": "urltest", "outbounds": [ "🆚 vless узел 🌍" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true },
+    { "tag": "⚡️ Авто 🇷🇺", "type": "urltest", "outbounds": [ "🆚 vless узел 🇷🇺" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
   ],
 
-  "http_clients": [ { "tag": "detour_global", "detour": "GLOBAL" } ],
-
   "route": {
-    "final": "🌍 Выбор узла",
-    "auto_detect_interface": true,
-    "default_domain_resolver": "dns_resolver",
-    "default_http_client": "detour_global",
-
     "rules": [
-      { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
-      { "clash_mode": "Global", "outbound": "🌍 Выбор узла" },
-      { "action": "sniff" },
+      { "network": "icmp", "outbound": "🔌 Провайдер" },
+      { "action": "sniff", "timeout": "500ms" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
-      // Локальный REJECT для зарубежного QUIC (UDP/443). Предотвращает таймауты браузера при блокировке DPI-системами.
-      // ВАЖНО !!! Необходимо сначала убедиться, что с этим у вас действительно есть проблемы! А затем раскомментируйте правило ниже.
-      // { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "protocol": "quic" }, { "rule_set": "ru_ip", "invert": true } ] },
-      { "rule_set": [ "private" ], "outbound": "🔌 Провайдер" },
+      { "port": [ 853, 5353 ], "action": "reject" },
+      { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
+      { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
+      { "protocol": [ "stun" ], "action": "reject" },
+      { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
+      { "rule_set": [ "private", "cheburnet" ], "outbound": "🔌 Провайдер" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Торрент" },
+      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
       { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
-      { "rule_set": [ "ru" ], "outbound": "🔌 Провайдер" },
-      // Правила IP:
+      { "rule_set": [ "ru", "ru_ip" ], "outbound": "🇷🇺 Россия" },
       { "ip_is_private": true, "outbound": "🔌 Провайдер" },
-      { "rule_set": [ "ru_ip" ], "outbound": "🔌 Провайдер" }
+      { "ip_cidr": ["198.18.0.0/15",  "fc00::/18"], "outbound": "🌍 Выбор узла" },
+      { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
+      { "action": "resolve" },
+      { "clash_mode": "Global", "outbound": "🌍 Выбор узла" }
     ],
 
     "rule_set": [
@@ -125,20 +122,37 @@
       { "tag": "games", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-games.srs" },
       { "tag": "ai", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ai-chat-!cn.srs" },
       { "tag": "proxy", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/russia/runetfreedom/sing-box/rule-set-geosite/geosite-ru-blocked.srs" },
+      { "tag": "ip_geo_detect", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ip-geo-detect.srs" },
+      { "tag": "cheburnet", "type": "remote", "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs" },
       { "tag": "ru", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs" },
       { "tag": "ru_ip", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/ru.srs" }
-    ]
+    ],
+
+    "final": "🌍 Выбор узла",
+    "auto_detect_interface": true,
+    "default_domain_resolver": "dns_direct",
+    "default_http_client": "detour_global"
   },
 
   "experimental": {
-    "cache_file": { "enabled": true, "path": "cache.db", "store_fakeip": true, "store_dns": true },
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "cache_id": "",
+      "store_fakeip": true,
+      "store_dns": true
+    },
 
     "clash_api": {
       "external_controller": "0.0.0.0:9999",
       "external_ui": "zashboard",
       "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
-      "external_ui_download_detour": "GLOBAL",
       "default_mode": "Rule"
+    },
+
+    "debug": {
+      "gc_percent": 100,
+      "memory_limit": "200MB"
     }
   }
 }
