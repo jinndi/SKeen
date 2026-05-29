@@ -16,7 +16,7 @@
       },
       { "tag": "dns_local", "type": "local" },
       { "tag": "dns_direct", "type": "https", "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
-      { "tag": "dns_proxy", "type": "tls", "server": "one.one.one.one", "domain_resolver": "hosts", "detour": "GLOBAL"},
+      { "tag": "dns_proxy", "type": "https", "server": "one.one.one.one", "domain_resolver": "hosts", "detour": "GLOBAL"},
       { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
     ],
 
