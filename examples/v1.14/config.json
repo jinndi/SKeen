@@ -2,7 +2,7 @@
 // Чебурнет здесь. C комментариями смотрите файл config-commented.json
 
 {
-  "log": { "disabled": false, "level": "fatal", "output": "", "timestamp": false },
+  "log": { "disabled": false, "level": "debug", "output": "", "timestamp": false },
 
   "dns": {
     "servers": [
@@ -33,6 +33,7 @@
       { "rule_set": [ "adguard" ], "action": "predefined" },
       { "rule_set": [ "ru" ], "server": "dns_direct" },
       { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
+      { "match_response": true, "query_type": [ "A", "AAAA" ], "rule_set": [ "ru_ip_blocked" ], "server": "dns_fakeip" },
       { "match_response": true, "rule_set": [ "ru_ip" ], "action": "respond" },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
       { "clash_mode": "Global", "server": "dns_proxy" }
@@ -107,9 +108,10 @@
       { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
       { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
-      { "rule_set": [ "ru", "ru_ip" ], "outbound": "🇷🇺 Россия" },
+      { "rule_set": [ "ru" ], "outbound": "🇷🇺 Россия" },
       { "ip_is_private": true, "outbound": "🔌 Провайдер" },
-      { "ip_cidr": ["198.18.0.0/15",  "fc00::/18"], "outbound": "🌍 Выбор узла" },
+      { "ip_cidr": [ "198.18.0.0/15", "fc00::/18" ], "outbound": "🌍 Выбор узла" },
+      { "rule_set": [ "ru_ip" ], "outbound": "🇷🇺 Россия" },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
       { "action": "resolve" },
       { "clash_mode": "Global", "outbound": "🌍 Выбор узла" }
@@ -126,7 +128,8 @@
       { "tag": "ip_geo_detect", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ip-geo-detect.srs" },
       { "tag": "cheburnet", "type": "remote", "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs" },
       { "tag": "ru", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs" },
-      { "tag": "ru_ip", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/ru.srs" }
+      { "tag": "ru_ip", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/ru.srs" },
+      { "tag": "ru_ip_blocked", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/russia/runetfreedom/sing-box/rule-set-geoip/geoip-ru-blocked.srs" }
     ],
 
     "final": "🌍 Выбор узла",
