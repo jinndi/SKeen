@@ -34,14 +34,14 @@
       {
         "tag": "hosts", "type": "hosts",
         "predefined": {
-          "one.one.one.one": [ "1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001" ],
+          "dns.google": [ "8.8.8.8", "8.8.4.4", "2001:4860:4860::8888", "2001:4860:4860::8844" ],
           "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1", "2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff" ],
           "my.netcraze.pro": [ "192.168.1.1" ]
         }
       },
       { "tag": "dns_local", "type": "local" },
       { "tag": "dns_direct", "type": "https", "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
-      { "tag": "dns_proxy", "type": "https", "server": "one.one.one.one", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy", "type": "https", "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
       { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
     ],
 
