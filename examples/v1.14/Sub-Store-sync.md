@@ -82,18 +82,18 @@
   ],
 
   "outbounds": [
-    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [ ], "default": "🆚 vless узел 🌍", "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 Россия", "type": "selector", "outbounds": [ ], "default": "⚡️ Авто 🇷🇺", "interrupt_exist_connections": true },
-    { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [ ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
-    { "tag": "🕹️ Игры", "type": "selector", "outbounds": [ ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
-    { "tag": "🤖 AI", "type": "selector", "outbounds": [ ], "default": "⚡️ Авто 🌍", "interrupt_exist_connections": true },
+    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Россия", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🕹️ Игры", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🤖 AI", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
     { "tag": "🔌 Провайдер", "type": "selector", "outbounds": [ "DIRECT" ] },
 
     { "tag": "DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
     { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Выбор узла" ], "interrupt_exist_connections": true },
 
-    { "tag": "⚡️ Авто 🌍", "type": "urltest", "outbounds": [ ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true },
-    { "tag": "⚡️ Авто 🇷🇺", "type": "urltest", "outbounds": [ ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
+    { "tag": "🌍 Авто", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Авто", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
   ],
 
   "route": {
@@ -216,13 +216,13 @@ let allProxyTagsRU = singboxProxies.map(p => p.tag)
 
 // 4. Находим и заполняем outbounds группы селекторов/urltest нашего шаблона
 // (тут нужно отредактировать, если вы меняли предложенный шаблон на свои группы селекторов/urltest)
-config.outbounds.find(p => p.tag === '🌍 Выбор узла')?.outbounds?.push('⚡️ Авто 🌍', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🇷🇺 Россия')?.outbounds?.push('⚡️ Авто 🇷🇺', '🔌 Провайдер', ...allProxyTagsRU)
-config.outbounds.find(p => p.tag === '🏴‍☠️ Торрент')?.outbounds?.push('⚡️ Авто 🌍', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🕹️ Игры')?.outbounds?.push('⚡️ Авто 🌍', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🤖 AI')?.outbounds?.push('⚡️ Авто 🌍', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '⚡️ Авто 🌍')?.outbounds?.push(...allProxyTags)
-config.outbounds.find(p => p.tag === '⚡️ Авто 🇷🇺')?.outbounds?.push(...allProxyTagsRU)
+config.outbounds.find(p => p.tag === '🌍 Выбор узла')?.outbounds?.push('🌍 Авто', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🇷🇺 Россия')?.outbounds?.push('🇷🇺 Авто', '🔌 Провайдер', ...allProxyTagsRU)
+config.outbounds.find(p => p.tag === '🏴‍☠️ Торрент')?.outbounds?.push('🌍 Авто', '🔌 Провайдер', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🕹️ Игры')?.outbounds?.push('🌍 Авто', '🔌 Провайдер', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🤖 AI')?.outbounds?.push('🌍 Авто', '🔌 Провайдер', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🌍 Авто')?.outbounds?.push(...allProxyTags)
+config.outbounds.find(p => p.tag === '🇷🇺 Авто')?.outbounds?.push(...allProxyTagsRU)
 
 // 5. Добавляем в самый конец сами узлы прокси-серверов из подписки/коллекции
 config.outbounds.push(...singboxProxies, ...singboxProxiesRU)
