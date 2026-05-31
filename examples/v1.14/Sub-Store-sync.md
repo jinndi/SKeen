@@ -110,9 +110,9 @@
       { "rule_set": [ "private" ], "outbound": "🔌 Провайдер" },
       { "rule_set": [ "cheburnet" ], "outbound": "🔌 Провайдер" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Торрент" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
       { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
+      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
       { "ip_is_private": true, "outbound": "🔌 Провайдер" },
       { "ip_cidr": [ "198.18.0.0/15",  "fc00::/18" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "ru", "ru_ip" ], "outbound": "🇷🇺 Россия" },
@@ -155,6 +155,7 @@
       "external_controller": "0.0.0.0:9999",
       "external_ui": "zashboard",
       "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
+      "external_ui_download_detour": "GLOBAL",
       "default_mode": "Rule"
     },
 

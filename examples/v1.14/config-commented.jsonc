@@ -121,7 +121,6 @@
       { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
 
       // Правило 8: Защита от перегрузки таблицы Fake-IP торрент-трекерами.
-      // Утилиты проверки IP получали реальные адреса, а не 198.18.x.x.
       { "rule_set": [ "trackerslist" ], "server": "dns_direct" },
 
       // Правило 9: Набор правил фильтрации → Yandex DNS
@@ -322,9 +321,9 @@
 
       // Правила 13: Назаначаем выходы (outbound) Нашим "Гибким" селекторам
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Торрент" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
       { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
+      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
 
       // Правило 14: Частные IP-адреса (192.168.xx и т. д.) → Прямой доступ
       { "ip_is_private": true, "outbound": "🔌 Провайдер" },
