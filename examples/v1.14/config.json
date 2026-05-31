@@ -47,6 +47,14 @@
     "reverse_mapping": true
   },
 
+  "ntp": {
+    "enabled": true,
+    "interval": "30m0s",
+    "server": "ntp.msk-ix.ru",
+    "server_port": 123,
+    "detour": "🇷🇺 Россия"
+  },
+
   "http_clients": [
     { "tag": "global_client", "version": 2, "detour": "GLOBAL", "stream_receive_window": 0, "connection_receive_window": 0 },
     { "tag": "direct_client", "version": 2, "detour": "DIRECT", "stream_receive_window": 0, "connection_receive_window": 0 }
