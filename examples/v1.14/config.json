@@ -31,10 +31,10 @@
       { "rule_set": [ "trackerslist" ], "server": "dns_direct" },
       { "rule_set": [ "fakeip_filter" ], "server": "dns_direct" },
       { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
-      { "rule_set": [ "ru" ], "server": "dns_direct" },
       { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
       { "match_response": true, "query_type": [ "A", "AAAA" ], "rule_set": [ "ru_ip_blocked" ], "server": "dns_fakeip" },
       { "match_response": true, "rule_set": [ "ru_ip" ], "action": "respond" },
+      { "match_response": true, "ip_accept_any": true, "invert": true, "action": "respond" },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
       { "clash_mode": "Global", "server": "dns_proxy" }
     ],
@@ -109,10 +109,9 @@
       { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
       { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
-      { "rule_set": [ "ru" ], "outbound": "🇷🇺 Россия" },
       { "ip_is_private": true, "outbound": "🔌 Провайдер" },
       { "ip_cidr": [ "198.18.0.0/15", "fc00::/18" ], "outbound": "🌍 Выбор узла" },
-      { "rule_set": [ "ru_ip" ], "outbound": "🇷🇺 Россия" },
+      { "rule_set": [ "ru", "ru_ip" ], "outbound": "🇷🇺 Россия" },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
       { "action": "resolve" },
       { "clash_mode": "Global", "outbound": "🌍 Выбор узла" }
