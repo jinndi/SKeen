@@ -227,7 +227,7 @@
       "username": "jinndi",
       "password": "password",
       "udp_over_tcp": true,
-      "tls": { "enabled": true, "server_name": "your-domain.com" }
+      "tls": { "enabled": true, "server_name": "example.com" }
     },
     {
       "tag": "🇷🇺 VLESS",
