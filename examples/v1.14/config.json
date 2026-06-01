@@ -110,8 +110,6 @@
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
       { "port": [ 853, 5353 ], "action": "reject" },
       { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
-      { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
-      { "protocol": [ "stun" ], "action": "reject" },
       { "rule_set": [ "ip_geo_detect"], "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
       { "rule_set": [ "private" ], "outbound": "🔌 Провайдер" },
@@ -123,6 +121,8 @@
       { "ip_is_private": true, "outbound": "🔌 Провайдер" },
       { "ip_cidr": [ "198.18.0.0/15", "fc00::/18" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "ru", "ru_ip" ], "outbound": "🇷🇺 Россия" },
+      { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
+      { "protocol": [ "stun", "dtls" ], "action": "reject" },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
       { "action": "resolve" },
       { "clash_mode": "Global", "outbound": "🌍 Выбор узла" }
