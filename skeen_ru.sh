@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.16.5"
+readonly SKEEN_VERSION="4.17.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -2749,7 +2749,12 @@ ask_and_update() {
 
   current_version=$(get_current_version "$proc")
   [ -z "$current_version" ] && current_version="не установлено"
-  latest_version=$(get_latest_version "$api")
+
+  if echo "$api" | grep -q "tags"; then
+    latest_version="$(curl $CURL_PROXY_OPTIONS -s "$api" | jsonfilter -e '@.*.name' | grep -E 'alpha|beta|rc' | head -n 1 | sed 's/^v//')"
+  else
+    latest_version=$(get_latest_version "$api")
+  fi
   [ -z "$latest_version" ] && echoerr "Не удалось получить номер последней версии" && return 1
 
   if [ "$latest_version" != "$current_version" ]; then
@@ -2779,8 +2784,6 @@ ask_and_update() {
 }
 
 check_updates() {
-  local optt
-
   check_tty
 
   is_update_skeen=0
@@ -2792,28 +2795,11 @@ check_updates() {
   if [ "$SING_BINARY_ENABLE" != "1" ]; then
     ask_and_update "$SINGBOX_NAME" "sing" "$SINGBOX_API_URL" \
       update_core "https://github.com/SagerNet/sing-box/releases"
-    if [ $? -eq 1 ] && [ ! -f "$SINGBOX_BIN" ] && [ -n "$latest_version" ]; then
-      while :; do
-        printf "Загрузить %s %s? [y/n] (по умолчанию: n): " "$SINGBOX_NAME" "$latest_version" >/dev/tty
-        read -r optt </dev/tty
-        [ -z "$optt" ] && optt=n
-
-        case $optt in
-        y | Y)
-          update_core
-          break
-          ;;
-        n | N) break ;;
-        *) echoerr "Неверный вариант" ;;
-        esac
-      done
-    fi
   fi
 
   # skeen
   ask_and_update "$SKEEN_NAME" "skeen" "$SKEEN_API_URL" \
     update_skeen "https://github.com/jinndi/SKeen/releases"
-  [ $? -eq 1 ] && [ ! -f "$SKEEN_SCRIPT" ] && [ -n "$latest_version" ] && update_skeen
 
   [ "$CALLER" != "menu" ] && exit 0
 
@@ -2822,6 +2808,14 @@ check_updates() {
   else
     press_any_key_to_menu reload
   fi
+}
+
+check_beta() {
+  check_tty
+  get_curl_proxy_options
+
+  ask_and_update "$SINGBOX_NAME" "sing" "https://api.github.com/repos/SagerNet/sing-box/tags" \
+    update_core "https://github.com/SagerNet/sing-box/releases"
 }
 
 import_firewall_vars() {
@@ -3415,6 +3409,7 @@ $SKEEN_NAME CLI Команды (используйте: 'skeen help' для эт
   version - Показать версию(и)
   iface   - Показать таблицу сетевых интерфейсов
   update  - Проверить и установить обновления
+  beta    - Проверить и установить тестовую версию $SINGBOX_NAME
 
 Проверка & тестирование:
   test    - Тестировать правила файрвола
@@ -3452,6 +3447,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
 
   version) version ;;
   update) check_updates ;;
+  beta) check_beta ;;
 
   test) test_firewall ;;
   deps)

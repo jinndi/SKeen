@@ -413,6 +413,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 | `version` | Show version(s) | ✓ |
 | `iface` | Show network interface table | - |
 | `update` | Check and install updates | - |
+| `beta` | Check and install test version of Sing-box | - |
 | `test` | Test firewall rules | ✓ |
 | `deps` | Check dependencies | ✓ |
 | `check` | Check configuration | ✓ |
