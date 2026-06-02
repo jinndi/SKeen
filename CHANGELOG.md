@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.17.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.5...SKeen-v4.17.0) (2026-06-02)
+
+
+### 🚀 Feat
+
+* **core:** add beta command to install pre-release sing-box versions ([73d9975](https://github.com/jinndi/SKeen/commit/73d99752bc0a319af794ab6923a099a29eb35c49))
+
 ## [4.16.5](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.4...SKeen-v4.16.5) (2026-05-24)
 
 
