@@ -1,4 +1,4 @@
-// Примеры узлов из 14 экземпляров
+// Примеры узлов из 15 экземпляров
 // Сочетание протоколов: VLESS Reality / Hysteria2 / Trojan / TUIC / Shadowsocks / Trojan / anyTLS / Naive
 // Несколько методов передачи данных: TCP / HTTP / gRPC / h2mux (мультиплексирование) / QUIC
 
@@ -37,7 +37,7 @@
   // Привязка сертификата (certificate_public_key_sha256) для предотвращения атак типа «человек посередине»
   {
     "type": "hysteria2",
-    "tag": "tag01",
+    "tag": "tag02",
     "connect_timeout": "5s",
     "tcp_fast_open": true,
     "tcp_keep_alive": "30s",
@@ -346,4 +346,26 @@
       "server_name": "your-domain.com"
     }
   }
+
+  // ── tag15: Троян + TLS + Multiplex ──
+  // Классический протокол, шифрование TLS + h2mux мультиплекс
+  // с ограничением соединений и потоков, маскирующийся под обычный HTTPS-трафик.
+  // Никакакого uTLS (актуально)
+  {
+    "tag": "tag15",
+    "type": "trojan",
+    "password": "password",
+    "server": "example.ru",
+    "server_port": 2444,
+    "tls": {
+      "enabled": true,
+      "server_name": "example.ru"
+    },
+    "multiplex": {
+      "enabled": true,
+      "max_connections": 6,
+      "max_streams": 12,
+      "protocol": "h2mux"
+    }
+  },
 }
