@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.17.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.17.0...SKeen-v4.17.1) (2026-06-11)
+
+
+### 🧰 Chore
+
+* **dns:** add local DNS server and rules for KeenDNS access ([c1a78d7](https://github.com/jinndi/SKeen/commit/c1a78d72ffce15dd3fe68576cfa0f778b06974b2))
+
 ## [4.17.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.16.5...SKeen-v4.17.0) (2026-06-02)
 
 
