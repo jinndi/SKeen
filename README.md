@@ -259,7 +259,7 @@ An example of how to bind a connection to a specific interface can be found in t
   <summary>🏠 KeenDNS in TProxy mode?</summary>
 <br>
 
-If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from your local network in **TProxy** mode, you must configure a `hosts` type DNS server in your **sing-box** configuration (see `examples/keendns-tproxy-local-access.json` for a configuration example). If internet access is enabled, no additional settings are required.
+If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from the local network in **TProxy** mode, you need to configure a `hosts` or `local` type DNS server in the sing-box configuration (see configuration examples in the `examples/keendns-tproxy-local-access.json file`). If internet access is allowed, no additional
 
 > **Note:** Changing the HTTPS port in the web interface takes effect only after a subsequent router reboot. This is unrelated to SKeen and is a known bug in the firmware itself.
 

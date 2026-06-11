@@ -3,6 +3,10 @@
 // It also shows how to route DNS queries for that domain to the local DNS server.
 // Can be used to access a KeenDNS domain name from the local network when using TProxy.
 
+
+// 1st example:
+// 1-й пример:
+
 // Этот пример демонстрирует, как настроить KeenDNS для разрешения конкретного доменного имени
 // в локальный IP-адрес с использованием пользовательского DNS-сервера типа «hosts».
 // Он также показывает, как перенаправить DNS-запросы для этого домена на локальный DNS-сервер.
@@ -31,3 +35,34 @@
     ]
   }
 }
+
+// 2nd example:
+// 2-й пример:
+
+/// This example demonstrates how to configure KeenDNS to route DNS queries for specific domain keywords
+// to a local DNS server with the "local" type.
+
+// Этот пример демонстрирует, как настроить KeenDNS для маршрутизации DNS-запросов для определенных ключевых слов домена
+// на локальный DNS-сервер типа "local".
+
+
+{
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns-local", // Add a local DNS server with local type
+        "type": "local"     // Добавить локальный DNS-сервер типа local
+      }
+    ],
+    "rules": [
+      {
+        "domain_keyword": [  // Add a rule to route DNS queries for the specified domain suffix to the local DNS server
+          "keenetic",        // Добавить правило для маршрутизации DNS-запросов для указанных ключевых слов на локальный DNS-сервер
+          "netcraze"
+        ],
+        "server": "dns-local"
+      }
+    ]
+  }
+}
+

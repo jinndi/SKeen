@@ -8,6 +8,10 @@
   "dns": {
     "servers": [
       {
+        "type": "local",
+        "tag": "dns-local"
+      },
+      {
         "type": "tls",
         "tag": "dns-proxy",
         "detour": "proxy",
@@ -27,6 +31,7 @@
       }
     ],
     "rules": [
+      { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns-local" },
       { "rule_set": "adguard", "action": "reject" },
       { "clash_mode": "Direct", "server": "dns-direct" },
       { "clash_mode": "Global", "server": "dns-proxy" },

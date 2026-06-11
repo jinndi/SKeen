@@ -25,6 +25,10 @@
         }
       },
       {
+        "type": "local",
+        "tag": "dns-local"
+      },
+      {
         "tag": "dns-proxy",
         "type": "tls",
         "detour": "proxy",
@@ -52,6 +56,13 @@
       }
     ],
     "rules": [
+      {
+        "domain_keyword": [
+          "keenetic",
+          "netcraze"
+        ],
+        "server": "dns-local"
+      },
       {
         "action": "reject",
         "rule_set": [
