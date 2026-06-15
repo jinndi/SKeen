@@ -387,7 +387,7 @@
       { "tag": "trackerslist",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs" },
       { "tag": "games",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs" },
       { "tag": "ai",            "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs" },
-      { "tag": "proxy",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/geosite-ru-blocked.srs" },
+      { "tag": "proxy",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/russia/runetfreedom/sing-box/rule-set-geosite/geosite-ru-blocked.srs" },
       { "tag": "ru",            "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs" },
       // runetfreedom
       { "tag": "ru_ip",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/runetfreedom/russia-blocked-geoip@release/srs/ru.srs" },
