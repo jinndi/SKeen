@@ -129,18 +129,18 @@
     ],
 
     "rule_set": [
-      { "tag": "adguard", "type": "remote", "url": "https://github.com/jinndi/adguard-filter-list-srs/releases/latest/download/adguard-filter-list.srs" },
-      { "tag": "private", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/private.srs" },
-      { "tag": "fakeip_filter", "type": "remote", "url": "https://github.com/jinndi/fakeip-filter-srs/releases/latest/download/fakeip-filter.srs" },
-      { "tag": "trackerslist", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-public-tracker.srs" },
-      { "tag": "games", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-games.srs" },
-      { "tag": "ai", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ai-chat-!cn.srs" },
-      { "tag": "proxy", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/russia/runetfreedom/sing-box/rule-set-geosite/geosite-ru-blocked.srs" },
-      { "tag": "ip_geo_detect", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ip-geo-detect.srs" },
-      { "tag": "cheburnet", "type": "remote", "url": "https://github.com/jinndi/geosite-cheburnet/releases/latest/download/geosite-cheburnet.srs" },
-      { "tag": "ru", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/category-ru.srs" },
-      { "tag": "ru_ip", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/geo/geosite/ru.srs" },
-      { "tag": "ru_ip_blocked", "type": "remote", "url": "https://github.com/KaringX/karing-ruleset/raw/sing/russia/runetfreedom/sing-box/rule-set-geoip/geoip-ru-blocked.srs" }
+      { "tag": "adguard",       "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/adguard-filter-list-srs@main/adguard-filter-list.srs" },
+      { "tag": "cheburnet",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/geosite-cheburnet@main/geosite-cheburnet.srs" },
+      { "tag": "fakeip_filter", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/fakeip-filter-srs@main/fakeip-filter.srs" },
+      { "tag": "ip_geo_detect", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs" },
+      { "tag": "private",       "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs" },
+      { "tag": "trackerslist",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs" },
+      { "tag": "games",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs" },
+      { "tag": "ai",            "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs" },
+      { "tag": "proxy",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/geosite-ru-blocked.srs" },
+      { "tag": "ru",            "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs" },
+      { "tag": "ru_ip",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/runetfreedom/russia-blocked-geoip@release/srs/ru.srs" },
+      { "tag": "ru_ip_blocked", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/runetfreedom/russia-blocked-geoip@release/srs/ru-blocked.srs" }
     ],
 
     "final": "🌍 Выбор узла",
