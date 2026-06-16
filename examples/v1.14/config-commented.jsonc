@@ -376,6 +376,9 @@
     // Наборы правил (12 шт)
     // Автоматическое обновление каждые 24 часа
     // Использует http_client: по умолчанию = "🌍 Выбор узла" для загрузки
+    // Дополнительные списки можно найти например здесь:
+    // - https://github.com/senshinya/singbox_ruleset/tree/main/rule
+    // - https://github.com/karingX/karing-ruleset
     "rule_set": [
       // jinndi
       { "tag": "adguard",       "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/adguard-filter-list-srs@main/adguard-filter-list.srs" },
@@ -401,7 +404,21 @@
     "default_http_client": "global_client"  // http_client в качестве обходного маршрута для загрузки rule_set
   },
 
-  // ══════════════════════════════════════════
+  // ═══════════════════════════════════════════
+  // Конфигурация сервисов
+  // Предоставляет Zashboard дополнительные API
+  // ═══════════════════════════════════════════
+  "services": [
+    {
+      "type": "api",
+      "tag": "api",
+      "listen": "0.0.0.0",
+      "listen_port": 9998,
+      "access_control_allow_private_network": true
+    }
+  ],
+
+  // ═══════════════════════════════════════════
   // Экспериментальные функции
   // ═══════════════════════════════════════════
   "experimental": {
@@ -421,7 +438,7 @@
     "clash_api": {
       "external_controller": "0.0.0.0:9999", // Адрес прослушивания API
       "external_ui": "zashboard",            // Каталог файлов веб-панели
-      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip", // URL адрес Zashboard .zip панели
+      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts-singbox-native.zip", // URL адрес Zashboard .zip панели
       "external_ui_download_detour": "GLOBAL", // Скачивание файлов панели через глобальный селектор
       "default_mode": "Rule"   // Режим правил по умолчанию
     },

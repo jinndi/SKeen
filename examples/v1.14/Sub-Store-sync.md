@@ -150,6 +150,16 @@
     "default_http_client": "global_client"
   },
 
+  "services": [
+    {
+      "type": "api",
+      "tag": "api",
+      "listen": "0.0.0.0",
+      "listen_port": 9998,
+      "access_control_allow_private_network": true
+    }
+  ],
+
   "experimental": {
     "cache_file": {
       "enabled": true,
@@ -162,7 +172,7 @@
     "clash_api": {
       "external_controller": "0.0.0.0:9999",
       "external_ui": "zashboard",
-      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
+      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts-singbox-native.zip",
       "external_ui_download_detour": "GLOBAL",
       "default_mode": "Rule"
     },
