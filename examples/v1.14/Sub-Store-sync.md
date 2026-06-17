@@ -154,9 +154,13 @@
     {
       "type": "api",
       "tag": "api",
-      "listen": "0.0.0.0",
+      "listen": "::",
       "listen_port": 9998,
-      "access_control_allow_private_network": true
+      "access_control_allow_private_network": true,
+      "dashboard": {
+        "enabled": true,
+        "http_client": "global_client"
+      }
     }
   ],
 
