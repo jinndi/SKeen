@@ -10,8 +10,7 @@
         "tag": "hosts", "type": "hosts",
         "predefined": {
           "dns.google": [ "8.8.8.8", "8.8.4.4", "2001:4860:4860::8888", "2001:4860:4860::8844" ],
-          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1", "2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff" ],
-          "my.netcraze.pro": [ "192.168.1.1" ]
+          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1", "2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff" ]
         }
       },
       { "tag": "dns_local", "type": "local" },
@@ -24,6 +23,7 @@
       { "preferred_by": [ "hosts" ], "server": "hosts" },
       { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
       { "rule_set": [ "ip_geo_detect"], "action": "reject" },
+      { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
       { "rule_set": [ "private" ], "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
       { "rule_set": [ "adguard" ], "action": "predefined" },
