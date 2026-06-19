@@ -557,3 +557,4 @@ To reset the settings to their defaults, simply set `network.tuning` to `0` and 
 - Proxy setup guide: [https://proxy-tutorials.dustinwin.us.kg](https://proxy-tutorials.dustinwin.us.kg)
 - Outbound server block generator: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
 - Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
+- Custom rulesets: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)

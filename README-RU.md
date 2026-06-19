@@ -558,3 +558,4 @@ exec /opt/etc/init.d/S51dropbear start
   - Различные примеры настроек: [https://proxy-tutorials.dustinwin.us.kg](https://proxy-tutorials.dustinwin.us.kg)
   - Генератор outbounds: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
   - Наборы правил Karing: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
+  - Кастомные наборы правил: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)

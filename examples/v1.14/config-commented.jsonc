@@ -378,16 +378,15 @@
     // Использует http_client: по умолчанию = "🌍 Выбор узла" для загрузки
     // Дополнительные списки можно найти например здесь:
     // - https://github.com/senshinya/singbox_ruleset/tree/main/rule
-    // - https://github.com/karingX/karing-ruleset
     "rule_set": [
-      // KaringX
+      // KaringX (https://github.com/karingX/karing-ruleset)
       { "tag": "ipdetect",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs" },
       { "tag": "private",   "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs" },
       { "tag": "trackers",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs" },
       { "tag": "games",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs" },
       { "tag": "ai",        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs" },
       { "tag": "ru",        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs" },
-      // jinndi
+      // jinndi (https://github.com/jinndi/singbox_ruleset)
       { "tag": "ruip",      "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs" },
       { "tag": "adguard",   "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs" },
       { "tag": "cheburnet", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs" },
