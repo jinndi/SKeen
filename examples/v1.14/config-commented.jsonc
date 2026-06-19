@@ -103,7 +103,7 @@
       // ни ваш реальный IP-адрес, ни IP-адрес прокси-сервера не будут раскрыты
       // встроенными антифрод-системами внутри зловредных приложений.
       // ! 2ip.ru, 2ip.io и т.п. не откроются, это необходимая мера!
-      { "rule_set": [ "ip_geo_detect"], "action": "reject" },
+      { "rule_set": [ "ipdetect"], "action": "reject" },
 
       // Правило 4: Резолвим домены с ключевыми словами "keenetic" и "netcraze" через локальный DNS роутера
       // Необходимо для работы KeenDNS и CrazeDNS.
@@ -124,12 +124,12 @@
       { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
 
       // Правило 9: Защита от перегрузки таблицы Fake-IP торрент-трекерами.
-      { "rule_set": [ "trackerslist" ], "server": "dns_direct" },
+      { "rule_set": [ "trackers" ], "server": "dns_direct" },
 
       // Правило 10: Набор правил фильтрации → Yandex DNS
-      // Примечание: файл fakeip-filter.srs содержит список доменов, которые необходимо обходить с помощью поддельных IP-адресов.
+      // Примечание: файл filter.srs содержит список доменов, которые необходимо обходить с помощью поддельных IP-адресов.
       // Почему необходим обход: Некоторые домены, использующие поддельные IP-адреса, могут вызывать ошибки.
-      { "rule_set": [ "fakeip_filter" ], "server": "dns_direct" },
+      { "rule_set": [ "filter" ], "server": "dns_direct" },
 
       // Правило 11: Для проксируемых доменов назначаем Fake-IP
       { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
@@ -137,19 +137,16 @@
       // Правило 12: Для доменов, которые не прошли по праавилам выше -> делаем оценку через прокси Google DNS
       { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
 
-      // Правило 13: Из передыдущего ответа ищем российские IP в блоке -> назначаем Fake-IP
-      { "match_response": true, "query_type": [ "A", "AAAA" ], "rule_set": [ "ru_ip_blocked" ], "server": "dns_fakeip" },
+      // Правило 13: Ищем российские айпи (не в блоке), если находим -> завершаем цепочку правил и возвращаем результат
+      { "match_response": true, "rule_set": [ "ruip" ], "action": "respond" },
 
-      // Правило 14: Ищем российские айпи (не в блоке), если находим -> завершаем цепочку правил и возвращаем результат
-      { "match_response": true, "rule_set": [ "ru_ip" ], "action": "respond" },
-
-      // Правило 15: Если полученный DNS-ответ не содержит IP-адреса -> завершаем цепочку правил и возвращаем результат
+      // Правило 14: Если полученный DNS-ответ не содержит IP-адреса -> завершаем цепочку правил и возвращаем результат
       { "match_response": true, "ip_accept_any": true, "invert": true, "action": "respond" },
 
-      // Правило 16: Для зарубежных айпи (доменов) -> назначаем Fake-IP
+      // Правило 15: Для зарубежных айпи (доменов) -> назначаем Fake-IP
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
 
-      // Правило 17: Для глобального режима Clash используем прокси Google DNS после всех правил
+      // Правило 16: Для глобального режима Clash используем прокси Google DNS после всех правил
       // для принудительного их использования в этом режиме
       { "clash_mode": "Global", "server": "dns_proxy" }
     ],
@@ -324,7 +321,7 @@
       // ни ваш реальный IP-адрес, ни IP-адрес прокси-сервера не будут раскрыты
       // встроенными антифрод-системами внутри зловредных приложений.
       // ! 2ip.ru, 2ip.io и т.п. не откроются, это необходимая мера!
-      { "rule_set": [ "ip_geo_detect"], "action": "reject" },
+      { "rule_set": [ "ipdetect"], "action": "reject" },
 
       // Правило 8: Режим Clash "Direct"; да, так ему тут и надо.
       { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
@@ -349,7 +346,7 @@
       { "ip_cidr": [ "198.18.0.0/15",  "fc00::/18" ], "outbound": "🌍 Выбор узла" },
 
       // Правило 14: RU домены/IP (не в блоке т.к. после Fake-IP) -> селектор "🇷🇺 Россия"
-      { "rule_set": [ "ru", "ru_ip" ], "outbound": "🇷🇺 Россия" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 Россия" },
 
       // Правило 15: Синхронизация времени NTP -> селектор "🇷🇺 Россия"
       // Отправляем в селектор "🇷🇺 Россия" чтобы гибко управлять трафиком NTP (NTP в KeeneticOS)
@@ -376,28 +373,26 @@
       { "clash_mode": "Global", "outbound": "🌍 Выбор узла" }
     ],
 
-    // Наборы правил (12 шт)
+    // Наборы правил (11 шт)
     // Автоматическое обновление каждые 24 часа
     // Использует http_client: по умолчанию = "🌍 Выбор узла" для загрузки
     // Дополнительные списки можно найти например здесь:
     // - https://github.com/senshinya/singbox_ruleset/tree/main/rule
     // - https://github.com/karingX/karing-ruleset
     "rule_set": [
-      // jinndi
-      { "tag": "adguard",       "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/adguard-filter-list-srs@main/adguard-filter-list.srs" },
-      { "tag": "cheburnet",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/geosite-cheburnet@main/geosite-cheburnet.srs" },
-      { "tag": "fakeip_filter", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/fakeip-filter-srs@main/fakeip-filter.srs" },
       // KaringX
-      { "tag": "ip_geo_detect", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs" },
-      { "tag": "private",       "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs" },
-      { "tag": "trackerslist",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs" },
-      { "tag": "games",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs" },
-      { "tag": "ai",            "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs" },
-      { "tag": "proxy",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/russia/runetfreedom/sing-box/rule-set-geosite/geosite-ru-blocked.srs" },
-      { "tag": "ru",            "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs" },
-      // runetfreedom
-      { "tag": "ru_ip",         "type": "remote", "url": "https://cdn.jsdelivr.net/gh/runetfreedom/russia-blocked-geoip@release/srs/ru.srs" },
-      { "tag": "ru_ip_blocked", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/runetfreedom/russia-blocked-geoip@release/srs/ru-blocked.srs" }
+      { "tag": "ipdetect",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs" },
+      { "tag": "private",   "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs" },
+      { "tag": "trackers",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs" },
+      { "tag": "games",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs" },
+      { "tag": "ai",        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs" },
+      { "tag": "ru",        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs" },
+      // jinndi
+      { "tag": "ruip",      "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs" },
+      { "tag": "adguard",   "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs" },
+      { "tag": "cheburnet", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs" },
+      { "tag": "filter",    "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/filter.srs" },
+      { "tag": "proxy",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs" }
     ],
 
     // Глобальные настройки маршрутизатора
