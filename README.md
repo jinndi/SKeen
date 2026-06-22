@@ -514,9 +514,9 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "proxy_router": 0, // If set to 1, all router services will be proxied.
                        // Available in redirect, tproxy, and hybrid modes;
                        // subnet exclusions, as well as port bypass and interception rules, are respected.
-    "use_conntrack": 0 // If set to 1, enables Netfilter conntrack for state matching.
+    "use_conntrack": 1 // If set to 1, enables Netfilter conntrack for state matching.
                        // Pros: Better performance and stability for TCP/UDP.
-                       // Cons: Increased RAM usage.
+                       // Cons: Slightly increased RAM usage.
                        // Available in redirect, tproxy, and hybrid modes;
   }
 }

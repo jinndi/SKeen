@@ -207,7 +207,7 @@ create_skeen_config() {
       "use_policy": 1
     },
     "proxy_router": 0,
-    "use_conntrack": 0
+    "use_conntrack": 1
   }
 }
 EOF
