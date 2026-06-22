@@ -2062,6 +2062,7 @@ prepare_firewall() {
 
   if [ -n "$intercept_ports" ]; then
     setup_port_set "$PORT_INTERCEPT_SET" "$intercept_ports"
+    ipset add "$PORT_INTERCEPT_SET" 443 -! 2>/dev/null
     ipset destroy "$PORT_EXCLUDE_SET" -exist 2>/dev/null
 
     SKEEN_INTERCEPT_PORT="1"
@@ -2071,6 +2072,7 @@ prepare_firewall() {
 
     if [ -n "$exclude_ports" ]; then
       setup_port_set "$PORT_EXCLUDE_SET" "$exclude_ports"
+      ipset del "$PORT_EXCLUDE_SET" 443 -! 2>/dev/null
       SKEEN_EXCLUDE_PORT="1"
     fi
 
