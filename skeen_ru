@@ -13,7 +13,7 @@ readonly NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.17.1"
+readonly SKEEN_VERSION="4.17.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
@@ -175,7 +175,7 @@ cat <<EOF >"$SKEEN_CONFIG"
       "use_policy": 1
     },
     "proxy_router": 0,
-    "use_conntrack": 0
+    "use_conntrack": 1
   }
 }
 EOF
@@ -1622,6 +1622,7 @@ SKEEN_EXCLUDE_PORT="0"
 intercept_ports="$(get_validate_ports "intercept" "$(json_get_array '@.firewall.intercept.port')")"
 if [ -n "$intercept_ports" ];then
 setup_port_set "$PORT_INTERCEPT_SET" "$intercept_ports"
+ipset add "$PORT_INTERCEPT_SET" 443 -! 2>/dev/null
 ipset destroy "$PORT_EXCLUDE_SET" -exist 2>/dev/null
 SKEEN_INTERCEPT_PORT="1"
 SKEEN_EXCLUDE_PORT="0"
@@ -1629,6 +1630,7 @@ else
 exclude_ports="$(get_validate_ports "exclude" "$(json_get_array '@.firewall.exclude.port')")"
 if [ -n "$exclude_ports" ];then
 setup_port_set "$PORT_EXCLUDE_SET" "$exclude_ports"
+ipset del "$PORT_EXCLUDE_SET" 443 -! 2>/dev/null
 SKEEN_EXCLUDE_PORT="1"
 fi
 ipset destroy "$PORT_INTERCEPT_SET" -exist 2>/dev/null
