@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.17.1"
+readonly SKEEN_VERSION="4.17.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
