@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.17.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.17.1...SKeen-v4.17.2) (2026-06-22)
+
+
+### 🐛 Fix
+
+* **en:** ensure port 443 is intercepted in firewall setup ([2a0e1bb](https://github.com/jinndi/SKeen/commit/2a0e1bb051dd4f5e51675314ac417bf5b45a4a3e))
+* ensure port 443 is intercepted in firewall setup ([5ff0013](https://github.com/jinndi/SKeen/commit/5ff0013940f660d7de22e55d6cb7c0ff41c6251a))
+
+
+### 🧰 Chore
+
+* **config:** enable netfilter conntrack by default ([62505e8](https://github.com/jinndi/SKeen/commit/62505e8f897b275398ca29db0faf951ae89ee20b))
+
 ## [4.17.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.17.0...SKeen-v4.17.1) (2026-06-11)
 
 
