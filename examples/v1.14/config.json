@@ -9,8 +9,8 @@
       {
         "tag": "hosts", "type": "hosts",
         "predefined": {
-          "dns.google": [ "8.8.8.8", "8.8.4.4", "2001:4860:4860::8888", "2001:4860:4860::8844" ],
-          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1", "2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff" ]
+          "dns.google": [ "8.8.8.8", "8.8.4.4" ],
+          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ]
         }
       },
       { "tag": "dns_local", "type": "local" },
@@ -21,6 +21,7 @@
 
     "rules": [
       { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "ip_version": 6, "action": "reject" },
       { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
       { "rule_set": [ "ipdetect"], "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
@@ -55,8 +56,8 @@
   },
 
   "http_clients": [
-    { "tag": "global_client", "version": 2, "detour": "GLOBAL", "stream_receive_window": 0, "connection_receive_window": 0 },
-    { "tag": "direct_client", "version": 2, "detour": "DIRECT", "stream_receive_window": 0, "connection_receive_window": 0 }
+    { "tag": "global_client", "detour": "GLOBAL" },
+    { "tag": "direct_client", "detour": "DIRECT" }
   ],
 
   "inbounds": [
@@ -65,7 +66,7 @@
 
   "outbounds": [
     { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [ "🌍 Авто", "🔒 NAIVE" ], "default": "🔒 NAIVE", "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 Россия", "type": "selector", "outbounds": [ "🇷🇺 Авто", "🔌 Провайдер", "🇷🇺 VLESS" ], "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Россия", "type": "selector", "outbounds": [ "🇷🇺 Авто", "🔌 Провайдер", "🇷🇺 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [ "🌍 Авто", "🔌 Провайдер", "🔒 NAIVE" ], "interrupt_exist_connections": true },
     { "tag": "🕹️ Игры", "type": "selector", "outbounds": [ "🌍 Авто", "🔌 Провайдер", "🔒 NAIVE" ], "interrupt_exist_connections": true },
     { "tag": "🤖 AI", "type": "selector", "outbounds": [ "🌍 Авто", "🔌 Провайдер", "🔒 NAIVE" ], "interrupt_exist_connections": true },
@@ -85,21 +86,17 @@
       "tls": { "enabled": true, "server_name": "example.com" }
     },
     {
-      "tag": "🇷🇺 VLESS",
-      "type": "vless",
-      "uuid": "00000000-0000-0000-0000-00000000000",
-      "flow": "xtls-rprx-vision",
-      "packet_encoding": "xudp",
+      "tag": "🇷🇺 TROYAN",
+      "type": "trojan",
+      "password": "password",
       "server": "example.ru",
-      "server_port": 443,
-      "tls": {
-        "enabled": true, "server_name": "example.ru",
-        "utls": { "enabled": true, "fingerprint": "qq" }
-      }
+      "server_port": 2444,
+      "tls": { "enabled": true, "server_name": "example.ru" },
+      "multiplex": { "enabled": true }
     },
 
     { "tag": "🌍 Авто", "type": "urltest", "outbounds": [ "🌍 NAIVE" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 Авто", "type": "urltest", "outbounds": [ "🇷🇺 VLESS" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
+    { "tag": "🇷🇺 Авто", "type": "urltest", "outbounds": [ "🇷🇺 TROYAN" ], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
   ],
 
   "route": {
@@ -122,6 +119,15 @@
       { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 Россия" },
       { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
       { "protocol": [ "stun", "dtls" ], "action": "reject" },
+      {
+        "type": "logical", "mode": "or",
+        "rules": [
+          { "network": "udp", "port": [ 3478, 5349, 5350, 19302, 10000 ] },
+          { "domain_regex": "^stun\\..+" },
+          { "domain_keyword": [ "stun", "turn", "httpdns" ] }
+        ],
+        "action": "reject"
+      },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
       { "action": "resolve" },
       { "clash_mode": "Global", "outbound": "🌍 Выбор узла" }
