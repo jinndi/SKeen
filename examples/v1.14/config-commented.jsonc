@@ -467,7 +467,7 @@
     "clash_api": {
       "external_controller": "0.0.0.0:9999", // Адрес прослушивания API
       "external_ui": "zashboard",            // Каталог файлов веб-панели
-      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts-singbox-native.zip", // URL адрес Zashboard .zip панели
+      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip", // URL адрес Zashboard .zip панели
       "external_ui_download_detour": "GLOBAL", // Скачивание файлов панели через глобальный селектор
       "default_mode": "Rule"   // Режим правил по умолчанию
     },
