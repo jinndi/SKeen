@@ -220,6 +220,15 @@ try {
 } catch (e) {
   throw new Error(`Не удалось загрузить подписку '${subName}'. Проверьте имя во вкладке подписки.`)
 }
+
+// Пример добавления в singboxProxiesEU из другого файла вручную сконфигурированных прокси узлов,
+// в формате массива outbounds (по примеру как в файле примера client-outbounds.jsonc)
+// const mainOutbounds = (ProxyUtils.JSON5 || JSON).parse(await produceArtifact({
+//  type: 'file',
+//  name: 'my_name' // Ваше имя файла (ID)
+// }))
+// singboxProxiesEU.unshift(...mainOutbounds)
+
 // дополнительно для RU серверов
 let singboxProxiesRU = []
 try {
