@@ -1,0 +1,106 @@
+// Примеры конфигурации прокси узлов на стороне клиента sing-box (дополняется)
+// На стороне сервера смотрите в файле examples/v1.14/Server-sing-box.md
+// ! В server_port указывайте свои значения портов.
+
+{
+  // 1. NaïveProxy (режим TCP с UoT)
+  // Протокол NaïveProxy (протокол прокси Chrome), туннелирование TLS+HTTP/2
+  // udp_over_tcp: true - трафик UDP передается через TCP-туннель
+  {
+    "type": "naive",
+    "tag": "naive-tcp",
+    "server": "<ваш.домен.com>",
+    "server_port": 1443,
+    "username": "<ваш_имя_пользователя>",
+    "password": "<ваш_пароль>",
+    "udp_over_tcp": true,
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш.домен.com>"
+    }
+  },
+
+  // 1.1. NaïveProxy (режим QUIC)
+  // Тот же сервер, что и в первом варианте, но использует QUIC для передачи данных + управление перегрузкой BBR
+  // udp_over_tcp: false - QUIC имеет встроенную поддержку UDP
+  {
+    "type": "naive",
+    "tag": "naive-quic",
+    "server": "<ваш.домен.com>",
+    "server_port": 1443,
+    "username": "<ваш_имя_пользователя>",
+    "password": "<ваш_пароль>",
+    "udp_over_tcp": false,
+    "quic": true,
+    "quic_congestion_control": "bbr",
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш.домен.com>"
+    }
+  },
+
+  // 2. Trojan-TLS + Multiplex
+  {
+    "type": "trojan",
+    "tag": "trojan-tls-mux",
+    "password": "<ваш_пароль>",
+    "server": "<ваш.домен.com>",
+    "server_port": 2443,
+    "connect_timeout": "5s",
+    "tcp_fast_open": true,
+    "tcp_keep_alive": "30s",
+    "tcp_keep_alive_interval": "5s",
+    "udp_fragment": true,
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш.домен.com>",
+      // Если отпечатки блокируются, uTLS можно отключить
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      }
+    },
+    "multiplex": {
+      "enabled": true,
+      "max_connections": 6,
+      "max_streams": 48,
+      "protocol": "h2mux"
+    }
+  },
+
+  // 3. Trojan-TLS-WS + Multiplex за Cloudflare
+  {
+    "type": "trojan",
+    "tag": "trojan-cf-mux",
+    "password": "<ваш_пароль>",
+    "server": "<ваш_домен.com>",
+    "server_port": 2096,
+    "connect_timeout": "5s",
+    "tcp_keep_alive": "30s",
+    "tcp_keep_alive_interval": "5s",
+    "udp_fragment": true,
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш_домен.com>",
+      "spoof": "yandex.ru", // Внедрить поддельный TLS ClientHello (индивидуально),
+                            // содержащий разрешенный SNI, перед реальным, чтобы обмануть промежуточные устройства,
+                            // фильтрующие SNI и разрешающие определенные имена хостов.
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      }
+    },
+    "transport": {
+      "type": "ws",
+      "path": "/secret-path" // Ваш секретный путь (совпадает с конфигурацией сервера)
+    },
+    "multiplex": {
+      "enabled": true,
+      "max_connections": 6,
+      "max_streams": 48,
+      "protocol": "h2mux"
+    }
+  },
+
+  // ... продолжение следует
+}
