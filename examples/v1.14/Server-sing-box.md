@@ -257,7 +257,7 @@ services:
   /// а порты которые вы укажите - должны быть открыты извне вашим фаэрволом.
   /// Примеры конфигурации на стороне клиента: смотрите в файле `examples/v1.14/outbounds.json`
   "inbounds": [
-    // 1. NaïveProxy
+    // 1. NaïveProxy HTTP2/QUIC
     {
       "type": "naive",
       "tag": "naive-in",
@@ -299,7 +299,7 @@ services:
       }
     },
 
-    // 3. Trojan-TLS-WS + Multiplex за Cloudflare
+    // 3. Trojan-TLS-WS + Multiplex (для конфигурации за Cloudflare)
     {
       "type": "trojan",
       "tag": "trojan-cf-in",
@@ -325,6 +325,133 @@ services:
       }
     },
 
+    // 4. Hysteria 2
+    // Фишки и логика работы:
+    // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
+    // - Умные буферы (окна в 0): Sing-box сам на лету адаптирует буфер под качество линии (4G/Wi-Fi).
+    // - Оптимизация BBR (standard): Уменьшает потерю пакетов (packet loss) на нестабильных мобильных сетях.
+    // - Маскарадинг (masquerade): Любой левый сканер или зонд получит HTTP-статус 451 (Unavailable For Legal Reasons).
+    // Пароли и токены можно сгенерировать тут: https://openreplay.com/tools/token-generator/
+    {
+      "type": "hysteria2",
+      "tag": "hy2-in",
+      "listen": "::",
+      "listen_port": 12443,
+      "up_mbps": 1000,    // Лимит отдачи сервера (Upload) в сторону клиента для Brutal BBR
+      "down_mbps": 1000,  // Лимит приема сервера (Download) от клиента для Brutal BBR
+      "users": [
+        {
+          "name": "<ваш_имя_пользователя>",
+          "password": "<ваш_пароль>"
+        }
+      ],
+      "ignore_client_bandwidth": false,
+      "tls": {
+        "enabled": true,
+        "server_name": "<ваш.домен.com>",
+        "alpn": [ "h3" ],
+        "certificate_provider": "LetsEncrypt"
+      },
+      "stream_receive_window": 0,
+      "connection_receive_window": 0,
+      "masquerade": {
+        "type": "string",
+        "status_code": 451,
+        "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted. Your automated scanner activity has been logged and forwarded to the Committee for Digital Freedom. Have a nice day!"
+      },
+      // Обускация QUIC, 99% не работает в мобильной сети,
+      // можете раскомментировать, настроить и протестировать.
+      // "obfs": {
+      //   "type": "gecko",
+      //   "password": "<ваш_пароль_обфускации_quic>"
+      // },
+      "bbr_profile": "standard",
+      "brutal_debug": false
+    }
+
+    // 5. Hysteria 2 с Realm на Cloudflare Workers
+    // Фишки и логика работы:
+    // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
+    // - Serverless-координатор на Workers: Realm крутится на cf-workers (*.workers.dev).
+    // - Пробив любого NAT (Hole Punching): Белый IP и открытые порты не нужны.
+    // - Умные буферы (окна в 0): Sing-box сам на лету адаптирует буфер под качество линии (4G/Wi-Fi).
+    // - Оптимизация BBR (standard): Уменьшает потерю пакетов (packet loss) на нестабильных мобильных сетях.
+    // - Маскарадинг (masquerade): Любой левый сканер или зонд получит HTTP-статус 451 (Unavailable For Legal Reasons).
+    // Подробнее о технологии Realm: https://hysteria.network/ru/docs/advanced/Realms/
+    {
+      "type": "hysteria2",
+      "tag": "hy2-realm-in",
+      "listen": "::",
+      "listen_port": 11443, // Данный UDP порт не нужно открывать в фаерволе.
+      "up_mbps": 1000,    // Лимит отдачи сервера (Upload) в сторону клиента для Brutal BBR
+      "down_mbps": 1000,  // Лимит приема сервера (Download) от клиента для Brutal BBR
+      "users": [
+        {
+          "name": "<ваш_имя_пользователя>",
+          "password": "<ваш_пароль>"
+        }
+      ],
+      "ignore_client_bandwidth": false,
+      "tls": {
+        "enabled": true,
+        "server_name": "<ваш.домен.com>",
+        "alpn": [ "h3" ],
+        "certificate_provider": "LetsEncrypt"
+      },
+      "stream_receive_window": 0,
+      "connection_receive_window": 0,
+      "masquerade": {
+        "type": "string",
+        "status_code": 451,
+        "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted. Your automated scanner activity has been logged and forwarded to the Committee for Digital Freedom. Have a nice day!"
+      },
+      // Обускация QUIC, на 99% не работает в мобильной сети,
+      // но можете раскомментировать, настроить и протестировать.
+      // "obfs": {
+      //   "type": "gecko",
+      //   "password": "<ваш_пароль_обфускации_quic>"
+      // },
+      "bbr_profile": "standard",
+      "brutal_debug": false,
+      // Realm конфигурация
+      // Создаем через Cloudflare Workers: https://github.com/outlook84/cf-hysteria-realm,
+      // либо поднимаем на этом же либо другом сервере свой Realm сервис: смотрите ниже блок services
+      "realm": {
+        "server_url": "https://<ваш.домен>.workers.dev",
+        "token": "<ваш_токен>",
+        "realm_id": "<ваш_идентификатор>",
+        // Список STUN-серверов для NAT Traversal
+        "stun_servers": [
+          "turn.cloudflare.com:3478",
+          "stun.nextcloud.com:3478",
+          "stun1.l.google.com:19302"
+        ]
+      }
+    }
+
     // ... продолжение следует
+  ],
+
+  // При необходимости и возможноcти поднимает свой сервис Hysteria Realm
+  "services": [
+    {
+      "type": "hysteria-realm",
+      "tag": "hy2-realm-service",
+      "listen": "::",
+      "listen_port": 8080,
+      "tls": {
+        "enabled": true,
+        "server_name": "<ваш.домен.com>",
+        "certificate_provider": "LetsEncrypt"
+      },
+      "users": [
+        {
+          "name": "<ваш_имя>", // Выбранное вами имя realm. Должно быть длиной от 6 до 64 символов,
+                               // начинаться с буквы или цифры и содержать только латинские буквы, цифры, - или _.
+          "token": "<ваш_токен>", // Общий bearer-токен сервера рандеву.
+          "max_realms": 10  // Максимальное количество слотов, которые этот пользователь может занимать одновременно.
+        }
+      ]
+    }
   ]
 }

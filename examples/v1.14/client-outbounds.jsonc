@@ -102,5 +102,73 @@
     }
   },
 
+  // 4. Hysteria2
+  {
+    "type": "hysteria2",
+    "tag": "hy2",
+    "server": "<ваш.домен.com>",
+    "server_port": 12443, // Игронируется если настроена смена портов.
+    // Смена портов. (Не актуально для РФ)
+    // Только если вы настроили на сервере:
+    // - перенаправление с диапазона: https://hysteria.network/ru/docs/advanced/Port-Hopping/#__tabbed_2_1
+    // - открыли сам дипазон портов в фаерволе.
+    // "server_ports": [ "51000:52000" ],  // Список диапазонов портов сервера. (антиблокировка)
+    // "hop_interval": "30s",       // Минимальный интервал переключения портов.
+    // "hop_interval_max": "1m0s",  // Максимальный интервал переключения портов.
+    "up_mbps": 100,    // Максимальная скорость отдачи (Upload) твоего провайдера для Brutal BBR
+    "down_mbps": 100,  // Максимальная скорость скачивания (Download) твоего провайдера для Brutal BBR
+    "password": "<ваш_пароль_пользователя>",
+    // Если на сервере включена обускация QUIC (не для мобильных сетей)
+    // "obfs": {
+    //   "type": "gecko",
+    //   "password": "<ваш_пароль_обфускации_quic>"
+    // }
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш.домен.com>",
+      "alpn": [ "h3" ]
+    },
+    "stream_receive_window": 0,
+    "connection_receive_window": 0
+  },
+
+  // 5. Hysteria2 с Realm (Cloudflare Workers)
+  {
+    "type": "hysteria2",
+    "tag": "hy2-realm",
+    "up_mbps": 100,    // Максимальная скорость отдачи (Upload) твоего провайдера для Brutal BBR
+    "down_mbps": 100,  // Максимальная скорость скачивания (Download) твоего провайдера для Brutal BBR
+    "password": "<ваш_пароль_пользователя>",
+    // Если на сервере включена обускация QUIC (не для мобильных сетей)
+    // "obfs": {
+    //   "type": "gecko",
+    //   "password": "<ваш_пароль_обфускации_quic>"
+    // }
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш.домен.com>",
+      "alpn": [ "h3" ]
+    },
+    "stream_receive_window": 0,
+    "connection_receive_window": 0,
+    "realm": {
+      "server_url": "https://<ваш.домен>.workers.dev",
+      "token": "<ваш_токен>",
+      "realm_id": "<ваш_идентификатор>",
+      // Список STUN-серверов для NAT Traversal
+      "stun_servers": [
+        "turn.cloudflare.com:3478",
+        "stun.nextcloud.com:3478",
+        "stun1.l.google.com:19302"
+      ],
+      // Если домен указанный в server_url заблокирован (а для .workers.dev это так),
+      // Указываем в detour тег узла через которое будет обращение к нему,
+      // иначе блок http_client можно удалить.
+      "http_client": {
+        "detour": "trojan-cf-mux"
+      }
+    }
+  }
+
   // ... продолжение следует
 ]
