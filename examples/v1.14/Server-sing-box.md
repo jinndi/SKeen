@@ -359,7 +359,7 @@ services:
         "status_code": 451,
         "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted. Your automated scanner activity has been logged and forwarded to the Committee for Digital Freedom. Have a nice day!"
       },
-      // Обускация QUIC, 99% не работает в мобильной сети,
+      // Обфускация QUIC, 99% не работает в мобильной сети,
       // можете раскомментировать, настроить и протестировать.
       // "obfs": {
       //   "type": "gecko",
@@ -405,7 +405,7 @@ services:
         "status_code": 451,
         "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted. Your automated scanner activity has been logged and forwarded to the Committee for Digital Freedom. Have a nice day!"
       },
-      // Обускация QUIC, на 99% не работает в мобильной сети,
+      // Обфускация QUIC, на 99% не работает в мобильной сети,
       // но можете раскомментировать, настроить и протестировать.
       // "obfs": {
       //   "type": "gecko",
@@ -422,9 +422,10 @@ services:
         "realm_id": "<ваш_идентификатор>",
         // Список STUN-серверов для NAT Traversal
         "stun_servers": [
-          "turn.cloudflare.com:3478",
-          "stun.nextcloud.com:3478",
-          "stun1.l.google.com:19302"
+          "stun.sipnet.ru:3478",
+          "stun.miwifi.com:3478",
+          "stun1.l.google.com:19302",
+          "stun.nextcloud.com:3478"
         ]
       }
     }
@@ -455,3 +456,4 @@ services:
     }
   ]
 }
+
