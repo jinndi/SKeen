@@ -54,6 +54,7 @@
     "tls": {
       "enabled": true,
       "server_name": "<ваш.домен.com>",
+      "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
       // Если отпечатки блокируются, uTLS можно отключить
       "utls": {
         "enabled": true,
@@ -82,6 +83,7 @@
     "tls": {
       "enabled": true,
       "server_name": "<ваш_домен.com>",
+      "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
       "spoof": "yandex.ru", // Внедрить поддельный TLS ClientHello (индивидуально),
                             // содержащий разрешенный SNI, перед реальным, чтобы обмануть промежуточные устройства,
                             // фильтрующие SNI и разрешающие определенные имена хостов.
@@ -126,6 +128,7 @@
     "tls": {
       "enabled": true,
       "server_name": "<ваш.домен.com>",
+      "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
       "alpn": [ "h3" ]
     },
     "stream_receive_window": 0,
@@ -147,6 +150,7 @@
     "tls": {
       "enabled": true,
       "server_name": "<ваш.домен.com>",
+      "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
       "alpn": [ "h3" ]
     },
     "stream_receive_window": 0,
@@ -159,7 +163,6 @@
       "stun_servers": [
         "stun.sipnet.ru:3478",
         "stun.miwifi.com:3478",
-        "stun1.l.google.com:19302",
         "stun.nextcloud.com:3478"
       ],
       // Если домен указанный в server_url заблокирован (а для .workers.dev это так),
