@@ -131,6 +131,7 @@
       "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
       "alpn": [ "h3" ]
     },
+    // Размеры окон приема потока и соединения. Установите 0 для автоматического определения.
     "stream_receive_window": 0,
     "connection_receive_window": 0
   },
@@ -172,6 +173,27 @@
         "detour": "trojan-cf-mux"
       }
     }
+  },
+
+  // 6. TUIC
+  {
+    "type": "tuic",
+    "tag": "tuic-bbr",
+    "server": "<ваш.домен.com>",
+    "server_port": 12443,
+    "uuid": "<ваш_uuid>",
+    "password": "<ваш_пароль>",
+    "congestion_control": "bbr", // Алгоритм управления перегрузкой BBR
+    "udp_relay_mode": "native",  // Собственная переадресация UDP
+    "heartbeat": "10s",          // 10-секундный пульс
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш.домен.com>",
+      "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
+      "alpn": [ "h3" ]
+    },
+    "stream_receive_window": 0,
+    "connection_receive_window": 0
   }
 
   // ... продолжение следует

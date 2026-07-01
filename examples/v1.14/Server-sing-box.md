@@ -268,7 +268,7 @@ services:
       "listen_port": 1443,
       "users": [
         {
-          "username": "<ваш_имя_пользователя>",
+          "username": "<ваше_имя_пользователя>",
           "password": "<ваш_пароль>"
         }
       ],
@@ -288,7 +288,7 @@ services:
       "listen_port": 2443,
       "users": [
         {
-          "name": "<ваш_имя_пользователя>",
+          "name": "<ваше_имя_пользователя>",
           "password": "<ваш_пароль>"
         }
       ],
@@ -310,7 +310,7 @@ services:
       "listen_port": 2096,
       "users": [
         {
-          "name": "<ваш_имя_пользователя>",
+          "name": "<ваше_имя_пользователя>",
           "password": "<ваш_пароль>"
         }
       ],
@@ -339,12 +339,12 @@ services:
       "type": "hysteria2",
       "tag": "hy2-in",
       "listen": "::",
-      "listen_port": 12443,
+      "listen_port": 10443,
       "up_mbps": 1000,    // Лимит отдачи сервера (Upload) в сторону клиента для Brutal BBR
       "down_mbps": 1000,  // Лимит приема сервера (Download) от клиента для Brutal BBR
       "users": [
         {
-          "name": "<ваш_имя_пользователя>",
+          "name": "<ваше_имя_пользователя>",
           "password": "<ваш_пароль>"
         }
       ],
@@ -390,7 +390,7 @@ services:
       "down_mbps": 1000,  // Лимит приема сервера (Download) от клиента для Brutal BBR
       "users": [
         {
-          "name": "<ваш_имя_пользователя>",
+          "name": "<ваше_имя_пользователя>",
           "password": "<ваш_пароль>"
         }
       ],
@@ -430,6 +430,34 @@ services:
           "stun.nextcloud.com:3478"
         ]
       }
+    },
+
+    // 6. TUIC | Основан на QUIC, встроенная поддержка UDP, ускорение BBR
+    {
+      "type": "tuic",
+      "tag": "tuic-in",
+      "listen": "::",
+      "listen_port": 12443,
+      "users": [
+        {
+          "name": "<ваше_имя_пользователя>",
+          "uuid": "<ваш_uuid>", // Сгенерировать например тут: https://www.uuidgenerator.net/version4
+          "password": "<ваш_пароль>"
+        }
+      ],
+      "congestion_control": "bbr",
+      "auth_timeout": "3s", // Как долго сервер должен ждать, пока клиент отправит команду аутентификации?
+      "zero_rtt_handshake": false, // Не трогать!
+      "heartbeat": "10s", // Интервал для отправки пакетов подтверждения активности, поддерживающих соединение.
+      "tls": {
+        "enabled": true,
+        "server_name": "yandex.ru",
+        "alpn": [ "h3" ],
+        "certificate_path": "/etc/ssl/certself/self.crt",
+        "key_path": "/etc/ssl/certself/self.key"
+      },
+      "stream_receive_window": 0,
+      "connection_receive_window": 0
     }
 
     // ... продолжение следует
