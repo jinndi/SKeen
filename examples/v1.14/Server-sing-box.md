@@ -493,6 +493,7 @@ openssl req -x509 -newkey rsa:2048 -nodes \
   -out /root/sing-box/certself/self.crt \
   -subj "/CN=yandex.ru" \
   -days 3650
+chmod -R 600 /root/sing-box/certself/
 ```
 
 3. Далее вернитесь к конфигурации **sing-box**. Если в предыдущем разделе внутри блока `inbounds` вы использовали TLS-настройки вида:

@@ -81,8 +81,8 @@
   },
 
   "http_clients": [
-    { "tag": "global_client", "version": 2, "detour": "GLOBAL", "stream_receive_window": 0, "connection_receive_window": 0 },
-    { "tag": "direct_client", "version": 2, "detour": "DIRECT", "stream_receive_window": 0, "connection_receive_window": 0 }
+    { "tag": "global_client", "detour": "GLOBAL" },
+    { "tag": "direct_client", "detour": "DIRECT" }
   ],
 
   "inbounds": [

@@ -20,8 +20,8 @@
 - Имя, в нашем примере будет: `realms`
 - Доступ из интернета: Свободный доступ
 - Устройство: Это устройство Keenetic(Netcraze)
-- Протокол: `HTTPS`
-- Порт, в нашем примере будет: `8443`
+- Протокол: `HTTP`
+- Порт, в нашем примере будет: `8181`
 
 Для последних двух вариантов размещения - смотрите примеры в [файле настройки сервера](https://github.com/jinndi/SKeen/blob/main/examples/v1.14/Server-sing-box.md).
 
@@ -39,14 +39,15 @@
 mkdir -p /opt/etc/skeen/ssl/
 ```
 
-2. Создаём чистый сертификат со сроком действия 5 лет, в поле /CN= **указываем домен `realms.keenetic.netcraze.pro`**:
+2. Создаём чистый сертификат со сроком действия 5 лет, в поле /CN= **указываем любой домен**:
 
 ```bash
 openssl req -x509 -newkey rsa:2048 -nodes \
   -keyout /opt/etc/skeen/ssl/self.key \
   -out /opt/etc/skeen/ssl/self.crt \
-  -subj "/CN=realms.keenetic.netcraze.pro" \
+  -subj "/CN=yandex.ru" \
   -days 1825
+chmod -R 600 /opt/etc/skeen/ssl/
 ```
 3. Поскольку мы уже сгенерировали самоподписанный сертификат, снимем SHA-256 хэш его открытого ключа в формате Base64, передав утилите `openssl` файл сертификата `self.crt` (не путайте его с приватным ключом `self.key`):
 
@@ -77,7 +78,7 @@ openssl x509 -in /opt/etc/skeen/ssl/self.crt -pubkey -noout | openssl pkey -pubi
       "ignore_client_bandwidth": false,
       "tls": {
         "enabled": true,
-        "server_name": "realms.keenetic.netcraze.pro", // изменить на домен самоподписанного сертификата
+        "server_name": "yandex.ru", // изменить на домен самоподписанного сертификата
         "alpn": [ "h3" ],
         // изменить на пути к вашим самопоподписанным сертификатам
         "certificate_path": "/opt/etc/skeen/ssl/self.crt", // сам сертификат
@@ -100,7 +101,7 @@ openssl x509 -in /opt/etc/skeen/ssl/self.crt -pubkey -noout | openssl pkey -pubi
 
       // Данные подключения к Realm с поднятом на вашем роутере/vps-сервере или Cloudflare Workers
       "realm": {
-        "server_url": "https://realms.keenetic.netcraze.pro",
+        "server_url": "https://realms.keenetic.netcraze.pro", // изменить на ваш адрес
         "token": "<ваш_токен>",
         "realm_id": "<ваш_идентификатор>",
         // Список STUN-серверов для NAT Traversal
@@ -119,14 +120,7 @@ openssl x509 -in /opt/etc/skeen/ssl/self.crt -pubkey -noout | openssl pkey -pubi
       "type": "hysteria-realm",
       "tag": "hy2-realm-service",
       "listen": "0.0.0.0",
-      "listen_port": 8443,
-      "tls": {
-        "enabled": true,
-        "server_name": "realms.keenetic.netcraze.pro", // изменить на домен самоподписанного сертификата
-        // изменить на пути к вашим самопоподписанным сертификатам
-        "certificate_path": "/opt/etc/skeen/ssl/self.crt", // сам сертификат
-        "key_path": "/opt/etc/skeen/ssl/self.key" // ключ сертификата
-      },
+      "listen_port": 8181,
       "users": [
         {
           "name": "<ваш_имя>",    // Выбранное вами имя realm (realm_id). Должно быть длиной от 6 до 64 символов,
@@ -156,14 +150,14 @@ openssl x509 -in /opt/etc/skeen/ssl/self.crt -pubkey -noout | openssl pkey -pubi
   // },
   "tls": {
     "enabled": true,
-    "server_name": "realms.keenetic.netcraze.pro",
+    "server_name": "yandex.ru", // изменить на домен самоподписанного сертификата
     "alpn": [ "h3" ],
     "certificate_public_key_sha256": "<хэш_публичного_ключа>"
   },
   "stream_receive_window": 0,
   "connection_receive_window": 0,
   "realm": {
-    "server_url": "https://realms.keenetic.netcraze.pro",
+    "server_url": "https://realms.keenetic.netcraze.pro",  // изменить на ваш адрес
     "token": "<ваш_токен>",
     "realm_id": "<ваш_идентификатор>",
     // Список STUN-серверов для NAT Traversal
