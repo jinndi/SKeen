@@ -36,6 +36,7 @@ readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
 readonly SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
+readonly SKEEN_RUN_CONFIG="/tmp/${SKEEN_PROC}.json"
 readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 
 readonly SINGBOX_NAME="Sing-box"
@@ -150,7 +151,7 @@ fi
 
 create_skeen_config() {
   if [ "$1" = "force" ]; then
-    rm -f "$SKEEN_CONFIG"
+    rm -f "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"
   elif [ -f "$SKEEN_CONFIG" ]; then
     echomsg "Configuration file $SKEEN_NAME already exists, skipping creation"
     return
@@ -212,6 +213,8 @@ create_skeen_config() {
 }
 EOF
 
+  cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG" >/dev/null 2>&1
+
   [ ! -f "$SKEEN_AUTOSTART_SCRIPT" ] && create_autostart_script >/dev/null 2>&1
 
   echook "Configuration file $SKEEN_NAME created successfully"
@@ -221,14 +224,14 @@ json_get_array() {
   local path="${1:-}"
   local arr
 
-  arr="$(jsonfilter -i "$SKEEN_CONFIG" -e "${path}[*]")"
+  arr="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e "${path}[*]")"
 
   if [ -n "$arr" ]; then
     echo "$arr"
     return
   fi
 
-  jsonfilter -i "$SKEEN_CONFIG" -e "$path" | tr -d '[],"'
+  jsonfilter -i "$SKEEN_RUN_CONFIG" -e "$path" | tr -d '[],"'
 }
 
 rci() {
@@ -250,15 +253,22 @@ rci_delete() {
   curl -kfsS -X DELETE "${RCI}/${1:-}"
 }
 
-create_skeen_config_if_needed() {
-  [ ! -f "$SKEEN_CONFIG" ] && create_skeen_config
+check_and_create_or_sync_skeen_config() {
+  if [ ! -f "$SKEEN_CONFIG" ]; then
+    create_skeen_config
+  elif [ ! -f "$SKEEN_RUN_CONFIG" ] || [ "$SKEEN_CONFIG" -nt "$SKEEN_RUN_CONFIG" ]; then
+    echomsg "Syncing configuration..."
+    if cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"; then
+      echook "Configuration synced successfully"
+    else
+      exiterr "Failed to sync configuration"
+    fi
+  fi
 }
 
 get_auto_start_config() {
-  create_skeen_config_if_needed
-
   eval "$(
-    jsonfilter -i "$SKEEN_CONFIG" \
+    jsonfilter -i "$SKEEN_RUN_CONFIG" \
       -e AUTO_START_ENABLE='@.auto_start.enable' \
       -e AUTO_START_DELAY='@.auto_start.delay'
   )"
@@ -267,10 +277,8 @@ get_auto_start_config() {
 }
 
 get_sing_binary_config() {
-  create_skeen_config_if_needed
-
   eval "$(
-    jsonfilter -i "$SKEEN_CONFIG" \
+    jsonfilter -i "$SKEEN_RUN_CONFIG" \
       -e SING_BINARY_ENABLE='@.sing_binary.enable' \
       -e SING_BINARY_PATH='@.sing_binary.path'
   )"
@@ -300,18 +308,16 @@ get_sing_binary_config() {
 }
 
 get_sing_args_config() {
-  create_skeen_config_if_needed
-
   local default_config_path="/opt/etc/skeen/config.json"
 
-  SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
+  SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.enable')"
   : "${SING_CONFIG_ENABLE:=0}"
 
   SING_CONFIG_PATH="$default_config_path"
   SING_CONFIG_ARGS="-C $CONFIG_DIR"
 
   if [ "$SING_CONFIG_ENABLE" = "1" ]; then
-    SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
+    SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.path')"
     : "${SING_CONFIG_PATH:=$default_config_path}"
     SING_CONFIG_ARGS="-c $SING_CONFIG_PATH"
 
@@ -320,10 +326,8 @@ get_sing_args_config() {
 }
 
 get_service_proxy_config() {
-  create_skeen_config_if_needed
-
   eval "$(
-    jsonfilter -i "$SKEEN_CONFIG" \
+    jsonfilter -i "$SKEEN_RUN_CONFIG" \
       -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
       -e SERVICE_PROXY_PORT='@.service_proxy.port' \
       -e SERVICE_PROXY_USER='@.service_proxy.user' \
@@ -336,10 +340,8 @@ get_service_proxy_config() {
 }
 
 get_network_config() {
-  create_skeen_config_if_needed
-
   eval "$(
-    jsonfilter -i "$SKEEN_CONFIG" \
+    jsonfilter -i "$SKEEN_RUN_CONFIG" \
       -e NETWORK_IPV6='@.network.ipv6' \
       -e NETWORK_TUNING='@.network.tuning'
   )"
@@ -349,10 +351,8 @@ get_network_config() {
 }
 
 get_firewall_config() {
-  create_skeen_config_if_needed
-
   eval "$(
-    jsonfilter -i "$SKEEN_CONFIG" \
+    jsonfilter -i "$SKEEN_RUN_CONFIG" \
       -e POLICY_ENABLE='@.policy.enable' \
       -e POLICY_NAME='@.policy.name' \
       -e NETWORK_IPV6='@.network.ipv6' \
@@ -3158,7 +3158,7 @@ clean_cache() {
 
 check_skeen_config() {
   echomsg "Checking $SKEEN_NAME configuration..."
-  if jsonfilter -i "$SKEEN_CONFIG" -e '@.auto_start' >/dev/null; then
+  if jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.auto_start' >/dev/null; then
     echook "$SKEEN_NAME JSON is valid"
   else
     local err_msg="$SKEEN_NAME configuration is invalid"
@@ -3213,7 +3213,7 @@ sync_config() {
   local config_tmp="${TMP_DIR}/sing_config_tmp.json"
 
   if [ -z "$address" ]; then
-    address="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.sync_url')"
+    address="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.sync_url')"
 
     [ -z "$address" ] && echoerr "Address for synchronization not specified" && return 1
   fi
@@ -3440,6 +3440,9 @@ EOF
 }
 
 if [ -f "$SKEEN_SCRIPT" ]; then
+  [ "$CALLER" != "netfilter" ] &&
+    check_and_create_or_sync_skeen_config
+
   case "$ACTION" in
   start) start ;;
   stop) stop ;;
