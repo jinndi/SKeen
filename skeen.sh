@@ -295,7 +295,7 @@ get_sing_binary_config() {
     fi
   else
     pidof "$SING_BINARY_PATH" 2>/dev/null && killall -9 "$SING_BINARY_PATH" 2>/dev/null ||
-      pidof "sing-box" 2>/dev/null && killall -9 "sing-box" 2>/dev/null
+      pidof "sing-box" 2>/dev/null && killall -9 "sing-box" 2>/dev/null || true
   fi
 }
 
