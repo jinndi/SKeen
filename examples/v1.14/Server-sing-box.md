@@ -328,7 +328,45 @@ services:
       }
     },
 
-    // 4. Hysteria 2
+    // 4. Vmess-TLS-WS за Cloudflare с поддержкой Multiplex и Brutal BBR.
+    // Для работы Brutal BBR на сервере (Linux) установите модуль ядра алгоритма управления перегрузкой:
+    // - команда: bash <(curl -fsSL https://tcp.hy2.sh/)
+    // - исходный код tcp-brutal: https://github.com/apernet/tcp-brutal
+    // Опцию multiplex.brutal можно применить практически к любому типу прокси, поддерживающему Multiplex (Trojan, Vmess, Vless и тд.)
+    {
+      "type": "vmess",
+      "tag": "vmess-cf-in",
+      "listen": "::",
+      "listen_port": 2083,
+      "users": [
+        {
+          "name": "<ваше_имя_пользователя>",
+          "uuid": "<ваш_uuid>", // Сгенерировать например тут: https://www.uuidgenerator.net/version4
+          "alterId": 0
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "<ваш_домен.com>",
+        "certificate_provider": "CF_origin_ca"
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/secret-path"  // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
+      },
+      "multiplex": {
+        "enabled": true,    // Включить поддержку Мультиплексирования
+        "padding": true,    // Соединения без заполнения данных будут отклонены
+        "brutal": {
+          "enabled": true,  // Включить поддержку Brutal BBR
+          // Ограничение скорости в 1000 Mbps (не может превышаться на клиентах)
+          "up_mbps": 1000,
+          "down_mbps": 1000
+        }
+      }
+    },
+
+    // 5. Hysteria 2
     // Фишки и логика работы:
     // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
     // - Умные буферы (окна в 0): Sing-box сам на лету адаптирует буфер под качество линии (4G/Wi-Fi).
@@ -372,7 +410,7 @@ services:
       "brutal_debug": false
     }
 
-    // 5. Hysteria 2 с Realm на Cloudflare Workers
+    // 5.1. Hysteria 2 с Realm на Cloudflare Workers
     // Фишки и логика работы:
     // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
     // - Serverless-координатор на Workers: Realm крутится на cf-workers (*.workers.dev).

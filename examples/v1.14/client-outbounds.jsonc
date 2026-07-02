@@ -74,7 +74,7 @@
     "type": "trojan",
     "tag": "trojan-cf-mux",
     "password": "<ваш_пароль>",
-    "server": "<ваш_домен.com>",
+    "server": "<ваш_домен.com>", // Домен, использующий CDN
     "server_port": 2096,
     "connect_timeout": "5s",
     "tcp_keep_alive": "30s",
@@ -104,7 +104,45 @@
     }
   },
 
-  // 4. Hysteria2
+  // 4. Vmess-TLS-WS за Cloudflare с uTLS, Multiplex и Brutal BBR.
+  {
+    "type": "vmess",
+    "tag": "vmess-cf-brutal",
+    "server": "<ваш_домен.com>", // Домен, использующий CDN
+    "server_port": 2083,
+    "uuid": "<ваш_uuid>",  // Совпадает с конфигурацией сервера для конкретного пользователя
+    "security": "auto",    // Метод шифрования - автоматический
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш_домен.com>",
+      "spoof": "yandex.ru",  // Без этого параметра соединение в РФ к CDN Cloudflare не установится,
+                             // подберите своё значение SNI.
+      "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      }
+    },
+    "packet_encoding": "xudp", // Оптимизация UDP-трафика (метод упаковки)
+    "transport": {
+      "type": "ws",
+      "path": "/secret-path" // Ваш секретный путь (совпадает с конфигурацией сервера)
+    },
+    "multiplex": {
+      "enabled": true,
+      "protocol": "h2mux",
+      "max_connections": 4, // Сколько реальных TCP/TLS соединений (физических каналов) открывать до сервера
+      "max_streams": 16,    // Сколько отдельных запросов/сайтов можно упаковать внутрь ОДНОГО соединения
+      "padding": true,      // Включить добавление случайных байтов в заголовки пакетов
+      "brutal": {
+        "enabled": true,
+        "up_mbps": 15,  // Подстройка скорости отдачи Мегабит/с (Upload) для Brutal BBR
+        "down_mbps": 50  // Подстройка скорости скачивания Мегабит/с (Download) для Brutal BBR
+      }
+    }
+  },
+
+  // 5. Hysteria2
   {
     "type": "hysteria2",
     "tag": "hy2",
@@ -136,7 +174,7 @@
     "connection_receive_window": 0
   },
 
-  // 5. Hysteria2 с Realm (Cloudflare Workers)
+  // 5.1. Hysteria2 с Realm (Cloudflare Workers)
   {
     "type": "hysteria2",
     "tag": "hy2-realm",
