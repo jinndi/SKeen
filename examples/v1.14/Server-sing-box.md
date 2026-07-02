@@ -458,14 +458,36 @@ services:
       },
       "stream_receive_window": 0,
       "connection_receive_window": 0
+    },
+
+    // Cloudflared | Панель sing-box через Cloudflare Tunnel
+    // Если хочется панельку серверную для отслеживания логов, состояния соединений и тд.
+    // Необходим привязанный домен в панели через DNS со статусом Proxied (оранжевое облако)
+    // Токен (очень длинный) Cloudflare получить в панели при создании тунеля https://dash.cloudflare.com/?to=/:account/tunnels
+    // После создания подключения переходим во вкладку Routes и добавляем Published application там заполняем:
+    // - Subdomain: любое имя для вашего субдомена панели
+    // - Service URL: http://127.0.0.1:9999 (смотрите в блоке services под тегом api-dash)
+    // После запуск вход будет осуществляться по <subdomain>.<ваш_домен> с указанным секретным ключом в сервисе.
+    // ---
+    // Использование cloudflared позволяет создать защищенный туннель с вашим сервером.
+    // По сути, этот способ позволяет проксировать трафик через инфраструктуру Cloudflare Zero Trust,
+    // полностью скрывая реальный IP-адрес сервера и избавляя от необходимости открывать порты наружу.
+    {
+      "type": "cloudflared",
+      "tag": "cloudflare-tunnel-in",
+      "token": "<ваш_токен>",
+      "protocol": "http2" // доступно также значение quic
+      // остальные параметры (не обязательные) смотрите здесь https://sing-box.sagernet.org/configuration/inbound/cloudflared
     }
 
     // ... продолжение следует
   ],
 
-  // При необходимости и возможноcти поднимает свой сервис Hysteria Realm
-  // Чтобы поднять на роутере - смотрите в файле Hysteria-Realms-router.md
+  /// Блок настройки дополнительных сервисов
   "services": [
+    // Hysteria Realms
+    // При необходимости и возможноcти поднимает свой сервис
+    // Чтобы поднять на роутере - смотрите в файле Hysteria-Realms-router.md
     {
       "type": "hysteria-realm",
       "tag": "hy2-realm-service",
@@ -484,6 +506,18 @@ services:
           "max_realms": 10  // Максимальное количество слотов, которые этот пользователь может занимать одновременно.
         }
       ]
+    },
+
+    // API сервис (Dashboard) для управления sing-box через HTTP REST API
+    // Обновляется автоматически по умолчанию каждый день.
+    {
+      "type": "api",
+      "tag": "api-dash",
+      "listen": "127.0.0.1",
+      "listen_port": 9999,
+      "secret": "<ваш_секретный_ключ>", // Установить обязательно!
+      "access_control_allow_private_network": true,
+      "dashboard": true
     }
   ]
 }
