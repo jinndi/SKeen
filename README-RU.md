@@ -390,6 +390,9 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 │           └── experimental.json
 └── tmp/
     └── (временные файлы загрузки)
+/tmp/          # Синхранизируется в память:
+├── skeen.sh   # Скрипт управления SKeen - после старта/полного перезапуска и обновления
+└── skeen.json # Конфигурация SKeen - при любом внесении изменений в исходный
 ```
 </details>
 
