@@ -389,9 +389,10 @@ Manage the package further using the `skeen` command.
 │           └── experimental.json
 └── tmp/
     └── (temporary download files)
-/tmp/          # Synced to RAM:
-├── skeen.sh   # SKeen management script - synced after boot/full restart and updates
-└── skeen.json # SKeen configuration - on any changes to the source file
+
+/tmp/            # Synced to RAM:
+├── skeen.sh     # SKeen management script - synced after boot/full restart
+└── skeen.json   # SKeen configuration - on any changes to the source file
 ```
 </details>
 
