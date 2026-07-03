@@ -33,6 +33,7 @@ readonly SKEEN_NAME="SKeen"
 readonly SKEEN_VERSION="4.17.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
+readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
 readonly SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
@@ -259,6 +260,7 @@ check_and_create_or_sync_skeen_config() {
   elif [ ! -f "$SKEEN_RUN_CONFIG" ] || [ "$SKEEN_CONFIG" -nt "$SKEEN_RUN_CONFIG" ]; then
     echomsg "Syncing configuration..."
     if cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"; then
+      chmod 644 "$SKEEN_RUN_CONFIG"
       echook "Configuration synced successfully"
     else
       exiterr "Failed to sync configuration"
@@ -1871,6 +1873,17 @@ set_tun_rules() {
   apply_rule nat POSTROUTING -o opkgtun+ -j MASQUERADE -m comment --comment "$CHAIN_TUN"
 }
 
+get_skeen_run_script_cmd() {
+  if [ ! -f "$SKEEN_RUN_SCRIPT" ] || [ "$SKEEN_SCRIPT" -nt "$SKEEN_RUN_SCRIPT" ]; then
+    if cp -fp "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT"; then
+      chmod 755 "$SKEEN_RUN_SCRIPT"
+      echo "$SKEEN_RUN_SCRIPT apply_firewall netfilter \"\$table\""
+    else
+      echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
+    fi
+  fi
+}
+
 prepare_firewall() {
   local complete_msg
   local redirect_data
@@ -1991,7 +2004,7 @@ prepare_firewall() {
         echo "export SKEEN_MARK_POLICY=\"${SKEEN_MARK_POLICY:-}\""
       fi
 
-      echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
+      get_skeen_run_script_cmd
     } >"$FIREWALL_HOOK_FILE"
 
     chmod +x "$FIREWALL_HOOK_FILE"
@@ -2154,7 +2167,7 @@ prepare_firewall() {
     echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
     echo "export SKEEN_PROXY_ROUTER=\"$SKEEN_PROXY_ROUTER\""
     echo "export SKEEN_USE_CONNMARK=\"$SKEEN_USE_CONNMARK\""
-    echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
+    get_skeen_run_script_cmd
   } >"$FIREWALL_HOOK_FILE"
 
   chmod +x "$FIREWALL_HOOK_FILE"
@@ -2269,6 +2282,11 @@ apply_firewall() {
 }
 
 clean_firewall() {
+  if [ -f "$SKEEN_RUN_SCRIPT" ]; then
+    "$SKEEN_RUN_SCRIPT" clean_firewall old
+    return 0
+  fi
+
   echomsg "Cleaning firewall rules..."
 
   clean_chain() {
@@ -3478,6 +3496,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     esac
     ;;
   apply_firewall) [ "$CALLER" = "netfilter" ] && apply_firewall ;;
+  clean_firewall) [ "$CALLER" = "old" ] && rm -f "$SKEEN_RUN_SCRIPT"; clean_firewall ;;
   "") show_menu ;;
   help | *) show_help ;;
   esac
