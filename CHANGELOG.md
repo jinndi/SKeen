@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.18.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.17.2...SKeen-v4.18.0) (2026-07-03)
+
+
+### 🚀 Feat
+
+* **config:** move script to RAM for firewall hooks ([76c77e3](https://github.com/jinndi/SKeen/commit/76c77e3be2026ee73c3cc455c84bb82729aa31cf))
+* **config:** move SKeen config to RAM and sync on startup/change ([9f17984](https://github.com/jinndi/SKeen/commit/9f1798411de89c3f7fd59fbe6fcc79e0b4a3e35c))
+
+
+### 🐛 Fix
+
+* skeen check command termination logic ([7afccf0](https://github.com/jinndi/SKeen/commit/7afccf0c309f13f8b9c18832e9cfd39d9c8578ce))
+
+
+### 🧰 Chore
+
+* remove port 123 from default exclusion list ([178410e](https://github.com/jinndi/SKeen/commit/178410ee23510ba97ba23246bff450f3b86741ee))
+
 ## [4.17.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.17.1...SKeen-v4.17.2) (2026-06-22)
 
 
