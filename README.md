@@ -493,17 +493,17 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "intercept": {
       "dns": 1,        // Intercept DNS req. via TProxy/Hybrid modes (0 = disabled),
                        // ignored if redirect_dns is configured (see below)
-      "port": []       // Ports to intercept (all if empty).
+      "port": []       // Ports to intercept Redirect/TProxy (all if empty).
                        // Example: [ 80, 443, "1000:2000", "1500:5555" ]
     },
     "exclude": {
       "port": [
-        123, "137:139",// Ports excluded from redirect
+        "137:139",     // Ports excluded from redirect (Redirect/TProxy)
         445, 1900      // (ignored if `intercept.port` is set)
       ],
-      "ipv4_cidr": [], // Excluded IPv4 subnets for redirection.
+      "ipv4_cidr": [], // Excluded IPv4 subnets for redirection (Redirect/TProxy)
                        // Example: [ "192.87.1.0/24", "192.12.1.1" ]
-      "ipv6_cidr": []  // Excluded IPv6 subnets for redirection.
+      "ipv6_cidr": []  // Excluded IPv6 subnets for redirection (Redirect/TProxy)
                        // Example: [ "2001:db8::/32", "2001:db8::1" ]
     },
     "redirect_dns": {

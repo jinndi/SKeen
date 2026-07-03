@@ -199,7 +199,7 @@ create_skeen_config() {
       "port": []
     },
     "exclude": {
-      "port": [123, "137:139", 445, 1900],
+      "port": ["137:139", 445, 1900],
       "ipv4_cidr": [],
       "ipv6_cidr": []
     },
