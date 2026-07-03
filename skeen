@@ -13,12 +13,14 @@ readonly NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.17.2"
+readonly SKEEN_VERSION="4.18.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
+readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
 readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
 readonly SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="$WORK_DIR/$SKEEN_PROC.json"
+readonly SKEEN_RUN_CONFIG="/tmp/$SKEEN_PROC.json"
 readonly SKEEN_AUTOSTART_SCRIPT="$ENTWARE_DIR/etc/init.d/S99SKeen"
 readonly SINGBOX_NAME="Sing-box"
 SINGBOX_PROC="skeen-box"
@@ -121,7 +123,7 @@ trap 'printf "\n"; cleanup; exit 130' INT
 fi
 create_skeen_config(){
 if [ "$1" = "force" ];then
-rm -f "$SKEEN_CONFIG"
+rm -f "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"
 elif [ -f "$SKEEN_CONFIG" ];then
 echomsg "Configuration file $SKEEN_NAME already exists, skipping creation"
 return
@@ -165,7 +167,7 @@ cat <<EOF >"$SKEEN_CONFIG"
       "port": []
     },
     "exclude": {
-      "port": [123, "137:139", 445, 1900],
+      "port": ["137:139", 445, 1900],
       "ipv4_cidr": [],
       "ipv6_cidr": []
     },
@@ -179,18 +181,19 @@ cat <<EOF >"$SKEEN_CONFIG"
   }
 }
 EOF
+cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG" >/dev/null 2>&1
 [ ! -f "$SKEEN_AUTOSTART_SCRIPT" ]&&create_autostart_script >/dev/null 2>&1
 echook "Configuration file $SKEEN_NAME created successfully"
 }
 json_get_array(){
 local path="${1:-}"
 local arr
-arr="$(jsonfilter -i "$SKEEN_CONFIG" -e "$path[*]")"
+arr="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e "$path[*]")"
 if [ -n "$arr" ];then
 echo "$arr"
 return
 fi
-jsonfilter -i "$SKEEN_CONFIG" -e "$path"|tr -d '[],"'
+jsonfilter -i "$SKEEN_RUN_CONFIG" -e "$path"|tr -d '[],"'
 }
 rci(){
 curl -kfsS "$RCI/${1:-}" 2>/dev/null
@@ -207,20 +210,28 @@ fi
 rci_delete(){
 curl -kfsS -X DELETE "$RCI/${1:-}"
 }
-create_skeen_config_if_needed(){
-[ ! -f "$SKEEN_CONFIG" ]&&create_skeen_config
+check_and_create_or_sync_skeen_config(){
+if [ ! -f "$SKEEN_CONFIG" ];then
+create_skeen_config
+elif [ ! -f "$SKEEN_RUN_CONFIG" ]||[ "$SKEEN_CONFIG" -nt "$SKEEN_RUN_CONFIG" ];then
+echomsg "Syncing configuration..."
+if cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG";then
+chmod 644 "$SKEEN_RUN_CONFIG"
+echook "Configuration synced successfully"
+else
+exiterr "Failed to sync configuration"
+fi
+fi
 }
 get_auto_start_config(){
-create_skeen_config_if_needed
-eval "$(jsonfilter -i "$SKEEN_CONFIG" \
+eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 -e AUTO_START_ENABLE='@.auto_start.enable' \
 -e AUTO_START_DELAY='@.auto_start.delay')"
 : "${AUTO_START_ENABLE:=1}"
 : "${AUTO_START_DELAY:=0}"
 }
 get_sing_binary_config(){
-create_skeen_config_if_needed
-eval "$(jsonfilter -i "$SKEEN_CONFIG" \
+eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 -e SING_BINARY_ENABLE='@.sing_binary.enable' \
 -e SING_BINARY_PATH='@.sing_binary.path')"
 : "${SING_BINARY_ENABLE:=0}"
@@ -238,26 +249,24 @@ if [ -f "$SINGBOX_BIN" ]&&[ ! -x "$SINGBOX_BIN" ];then
 chmod +x "$SINGBOX_BIN" 2>/dev/null||true
 fi
 else
-pidof "$SING_BINARY_PATH" 2>/dev/null&&killall -9 "$SING_BINARY_PATH" 2>/dev/null||pidof "sing-box" 2>/dev/null&&killall -9 "sing-box" 2>/dev/null
+pidof "$SING_BINARY_PATH" 2>/dev/null&&killall -9 "$SING_BINARY_PATH" 2>/dev/null||pidof "sing-box" 2>/dev/null&&killall -9 "sing-box" 2>/dev/null||true
 fi
 }
 get_sing_args_config(){
-create_skeen_config_if_needed
 local default_config_path="/opt/etc/skeen/config.json"
-SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.enable')"
+SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.enable')"
 : "${SING_CONFIG_ENABLE:=0}"
 SING_CONFIG_PATH="$default_config_path"
 SING_CONFIG_ARGS="-C $CONFIG_DIR"
 if [ "$SING_CONFIG_ENABLE" = "1" ];then
-SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.path')"
+SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.path')"
 : "${SING_CONFIG_PATH:=$default_config_path}"
 SING_CONFIG_ARGS="-c $SING_CONFIG_PATH"
 SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
 fi
 }
 get_service_proxy_config(){
-create_skeen_config_if_needed
-eval "$(jsonfilter -i "$SKEEN_CONFIG" \
+eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
 -e SERVICE_PROXY_PORT='@.service_proxy.port' \
 -e SERVICE_PROXY_USER='@.service_proxy.user' \
@@ -268,16 +277,14 @@ eval "$(jsonfilter -i "$SKEEN_CONFIG" \
 : "${SERVICE_PROXY_PASS:=}"
 }
 get_network_config(){
-create_skeen_config_if_needed
-eval "$(jsonfilter -i "$SKEEN_CONFIG" \
+eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 -e NETWORK_IPV6='@.network.ipv6' \
 -e NETWORK_TUNING='@.network.tuning')"
 : "${NETWORK_IPV6:=1}"
 : "${NETWORK_TUNING:=0}"
 }
 get_firewall_config(){
-create_skeen_config_if_needed
-eval "$(jsonfilter -i "$SKEEN_CONFIG" \
+eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 -e POLICY_ENABLE='@.policy.enable' \
 -e POLICY_NAME='@.policy.name' \
 -e NETWORK_IPV6='@.network.ipv6' \
@@ -1471,6 +1478,16 @@ apply_rule filter "$CHAIN_TUN" -i opkgtun+ -j ACCEPT
 apply_rule filter "$CHAIN_TUN" -o opkgtun+ -j ACCEPT
 apply_rule nat POSTROUTING -o opkgtun+ -j MASQUERADE -m comment --comment "$CHAIN_TUN"
 }
+get_skeen_run_script_cmd(){
+if [ ! -f "$SKEEN_RUN_SCRIPT" ]||[ "$SKEEN_SCRIPT" -nt "$SKEEN_RUN_SCRIPT" ];then
+if cp -fp "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT";then
+chmod 755 "$SKEEN_RUN_SCRIPT"
+echo "$SKEEN_RUN_SCRIPT apply_firewall netfilter \"\$table\""
+else
+echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
+fi
+fi
+}
 prepare_firewall(){
 local complete_msg
 local redirect_data
@@ -1566,7 +1583,7 @@ echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
 echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
 echo "export SKEEN_MARK_POLICY=\"${SKEEN_MARK_POLICY:-}\""
 fi
-echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
+get_skeen_run_script_cmd
 } >"$FIREWALL_HOOK_FILE"
 chmod +x "$FIREWALL_HOOK_FILE"
 echook "$complete_msg"
@@ -1697,7 +1714,7 @@ echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
 echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
 echo "export SKEEN_PROXY_ROUTER=\"$SKEEN_PROXY_ROUTER\""
 echo "export SKEEN_USE_CONNMARK=\"$SKEEN_USE_CONNMARK\""
-echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
+get_skeen_run_script_cmd
 } >"$FIREWALL_HOOK_FILE"
 chmod +x "$FIREWALL_HOOK_FILE"
 echook "$complete_msg"
@@ -1784,6 +1801,10 @@ done
 echook "Firewall rules applied successfully"
 }
 clean_firewall(){
+if [ -f "$SKEEN_RUN_SCRIPT" ];then
+"$SKEEN_RUN_SCRIPT" clean_firewall old
+return 0
+fi
 echomsg "Cleaning firewall rules..."
 clean_chain(){
 local iptables="$1"
@@ -2461,7 +2482,7 @@ echook "Cache cleared. Restart $SKEEN_NAME to apply changes"
 }
 check_skeen_config(){
 echomsg "Checking $SKEEN_NAME configuration..."
-if jsonfilter -i "$SKEEN_CONFIG" -e '@.auto_start' >/dev/null;then
+if jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.auto_start' >/dev/null;then
 echook "$SKEEN_NAME JSON is valid"
 else
 local err_msg="$SKEEN_NAME configuration is invalid"
@@ -2505,7 +2526,7 @@ sync_config(){
 local address="${1:-}"
 local config_tmp="$TMP_DIR/sing_config_tmp.json"
 if [ -z "$address" ];then
-address="$(jsonfilter -i "$SKEEN_CONFIG" -e '@.sing_config.sync_url')"
+address="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.sync_url')"
 [ -z "$address" ]&&echoerr "Address for synchronization not specified"&&return 1
 fi
 if ! echo "$address"|grep -qE '^https?://';then
@@ -2696,6 +2717,7 @@ OpkgTun manager (KeeneticOS v5+):
 EOF
 }
 if [ -f "$SKEEN_SCRIPT" ];then
+[ "$CALLER" != "netfilter" ]&&check_and_create_or_sync_skeen_config
 case "$ACTION" in
 start)start;;
 stop)stop;;
@@ -2727,6 +2749,9 @@ list)tun_list;;
 esac
 ;;
 apply_firewall)[ "$CALLER" = "netfilter" ]&&apply_firewall;;
+clean_firewall)[ "$CALLER" = "old" ]&&rm -f "$SKEEN_RUN_SCRIPT"
+clean_firewall
+;;
 "")show_menu;;
 help|*)show_help
 esac
