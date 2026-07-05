@@ -142,7 +142,20 @@
     }
   },
 
-  // 5. Hysteria2
+  // 5. Snell V6
+  {
+    "type": "snell",
+    "tag": "snell-v6",
+    "server": "<ваш_домен_или_ip>",
+    "server_port": 3443,
+    "version": 6,
+    "psk": "<ваш_приватный_ключ>",
+    "userkey": "<ваш_ключ_пользователя>",
+    "reuse": true,
+    "mode": "default"
+  },
+
+  // 6. Hysteria2
   {
     "type": "hysteria2",
     "tag": "hy2",
@@ -174,7 +187,7 @@
     "connection_receive_window": 0
   },
 
-  // 5.1. Hysteria2 с Realm (Cloudflare Workers)
+  // 6.1. Hysteria2 с Realm (Cloudflare Workers)
   {
     "type": "hysteria2",
     "tag": "hy2-realm",
@@ -213,7 +226,7 @@
     }
   },
 
-  // 6. TUIC
+  // 7. TUIC
   {
     "type": "tuic",
     "tag": "tuic-bbr",
