@@ -52,6 +52,7 @@ readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
 readonly NET_EXCLUDE_SET="skeen_exclude_net"
 readonly PORT_INTERCEPT_SET="skeen_intercept_port"
 readonly PORT_EXCLUDE_SET="skeen_exclude_port"
+readonly FAKEIP_INTERCEPT_SET="skeen_fakeip_net"
 readonly CHAIN_PREROUTING="skeen"
 readonly CHAIN_OUTPUT="skeen_mask"
 readonly CHAIN_DIVERT="skeen_divert"
@@ -196,7 +197,11 @@ create_skeen_config() {
   "firewall": {
     "intercept": {
       "dns": 1,
-      "port": []
+      "port": [],
+      "fakeip": {
+        "enable": 0,
+        "include": "${WORK_DIR}/pure_cidr.list"
+      }
     },
     "exclude": {
       "port": ["137:139", 445, 1900],
@@ -360,6 +365,8 @@ get_firewall_config() {
       -e NETWORK_IPV6='@.network.ipv6' \
       -e NETWORK_TUNING='@.network.tuning' \
       -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
+      -e FIREWALL_INTERCEPT_FAKEIP='@.firewall.intercept.fakeip.enable' \
+      -e FIREWALL_INTERCEPT_FAKEIP_INCLUDE='@.firewall.intercept.fakeip.include' \
       -e FIREWALL_REDIRECT_DNS_ENABLE='@.firewall.redirect_dns.enable' \
       -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
       -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
@@ -372,6 +379,8 @@ get_firewall_config() {
   : "${NETWORK_IPV6:=1}"
   : "${NETWORK_TUNING:=0}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
+  : "${FIREWALL_INTERCEPT_FAKEIP:=0}"
+  : "${FIREWALL_INTERCEPT_FAKEIP_INCLUDE:=/opt/etc/skeen/proxy_pure_cidr.list}"
   : "${FIREWALL_REDIRECT_DNS_ENABLE:=0}"
   : "${FIREWALL_REDIRECT_DNS_PORT:=}"
   : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
@@ -1550,6 +1559,11 @@ add_skeen_rules() {
 
     add_rule "$iptables" "$table" "$chain" \
       -m set --match-set "${NET_EXCLUDE_SET}${IP_VERSION}" dst -j ACCEPT
+
+    if [ "$SKEEN_INTERCEPT_FAKEIP" = "1" ]; then
+      add_rule "$iptables" "$table" "$chain" \
+        -m set ! --match-set "$FAKEIP_INTERCEPT_SET${IP_VERSION}" dst -j ACCEPT
+    fi
     ;;
 
   "tproxy")
@@ -2097,28 +2111,82 @@ prepare_firewall() {
     local ipver="$1"
     local family="$2"
     local name_set="${NET_EXCLUDE_SET}${ipver}"
-    local addresses
 
     ipset create "$name_set" hash:net family "$family" -exist
     ipset flush "$name_set"
 
-    addresses=$(get_exclude_addresses "$ipver")
-
-    if [ -n "$addresses" ]; then
-      {
-        for addr in $addresses; do
-          printf "add %s %s -exist\n" "$name_set" "$addr"
-        done
-      } | ipset restore
-    fi
+    get_exclude_addresses "$ipver" | tr ' ' '\n' | {
+      while read -r addr; do
+        [ -n "$addr" ] && printf "add %s %s -exist\n" "$name_set" "$addr"
+      done
+    } | ipset restore
   }
 
   if echo "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
     setup_net_ipset 4 inet
   fi
 
-  if echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
+  if [ "$NETWORK_IPV6" = "1" ] && echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
     setup_net_ipset 6 inet6
+  fi
+
+  setup_fakeip_ipset() {
+    if [ ! -f "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" ]; then
+      touch "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" || {
+        echoerr "Ошибка создания файла $FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
+        return 1
+      }
+    fi
+
+    local temp_file
+
+    temp_file=$(mktemp) || {
+      echoerr "Ошибка создания временного файла для ipset $FAKEIP_INTERCEPT_SET"
+      return 1
+    }
+
+    {
+      echo "create ${FAKEIP_INTERCEPT_SET}4 hash:net family inet maxelem 65536 -exist"
+      echo "add ${FAKEIP_INTERCEPT_SET}4 198.18.0.0/15 -exist"
+      if [ "$NETWORK_IPV6" = "1" ]; then
+        echo "create ${FAKEIP_INTERCEPT_SET}6 hash:net family inet6 maxelem 65536 -exist"
+        echo "add ${FAKEIP_INTERCEPT_SET}6 fd00::/8 -exist"
+      fi
+
+      while read -r line || [ -n "$line" ]; do
+        line="${line##*[[:space:]]}"
+        if [ -z "$line" ] || [ "${line##}" != "$line" ]; then
+          continue
+        fi
+        line="${line%%#*}"
+        line="${line%%*[[:space:]]}"
+        [ -z "$line" ] && continue
+        case "$line" in
+          *:*) [ "$NETWORK_IPV6" = "1" ] && echo "add ${FAKEIP_INTERCEPT_SET}6 $line -exist" ;;
+          *) echo "add ${FAKEIP_INTERCEPT_SET}4 $line -exist" ;;
+        esac
+      done < "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
+
+    } > "$temp_file" || {
+      rm -f "$temp_file"
+      echoerr "Ошибка записи в временный файл ipset $FAKEIP_INTERCEPT_SET"
+      return 1
+    }
+
+    ipset restore < "$temp_file"
+    rm -f "$temp_file"
+    return 0
+  }
+
+  SKEEN_INTERCEPT_FAKEIP="0"
+  if [ "$FIREWALL_INTERCEPT_FAKEIP" = "1" ]; then
+    if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+      setup_fakeip_ipset && SKEEN_INTERCEPT_FAKEIP="1"
+    else
+      ipset destroy "${FAKEIP_INTERCEPT_SET}4" -exist 2>/dev/null
+      ipset destroy "${FAKEIP_INTERCEPT_SET}6" -exist 2>/dev/null
+      echowarn "$SINGBOX_NAME DNS не настроен, опция intercept.fakeip не будет работать!"
+    fi
   fi
 
   [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
@@ -2160,6 +2228,7 @@ prepare_firewall() {
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
     echo "export SKEEN_INTERCEPT_PORT=\"$SKEEN_INTERCEPT_PORT\""
     echo "export SKEEN_EXCLUDE_PORT=\"$SKEEN_EXCLUDE_PORT\""
+    echo "export SKEEN_INTERCEPT_FAKEIP=\"$SKEEN_INTERCEPT_FAKEIP\""
     echo "export SKEEN_INTERCEPT_DNS_ENABLE=\"$SKEEN_INTERCEPT_DNS_ENABLE\""
     echo "export SKEEN_REDIRECT_DNS_ENABLE=\"$SKEEN_REDIRECT_DNS_ENABLE\""
     echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
@@ -2342,9 +2411,11 @@ clean_firewall() {
   # 6. ipset cleanup
   if command -v ipset >/dev/null 2>&1; then
     for ip_ver in 4 6; do
-      set_name="${NET_EXCLUDE_SET}${ip_ver}"
-      ipset flush "$set_name" -exist 2>/dev/null
-      ipset destroy "$set_name" -exist 2>/dev/null
+      for name in $NET_EXCLUDE_SET $FAKEIP_INTERCEPT_SET; do
+        set_name="${name}${ip_ver}"
+        ipset flush "$set_name" -exist 2>/dev/null
+        ipset destroy "$set_name" -exist 2>/dev/null
+      done
     done
 
     for port_set in "$PORT_EXCLUDE_SET" "$PORT_INTERCEPT_SET"; do
@@ -2931,6 +3002,10 @@ fw_test_chain() {
   fi
 
   fw_test "$1" "$2" "$content" "$NET_EXCLUDE_SET" "Subnet exclude"
+
+  if [ "$SKEEN_INTERCEPT_FAKEIP" = "1" ]; then
+    fw_test "$1" "$2" "$content" "$FAKEIP_INTERCEPT_SET" "FakeIP intercept"
+  fi
 
   if [ "$1" = "mangle" ] && [ "$2" = "$CHAIN_OUTPUT" ]; then
     fw_test "$1" "$2" "$content" "$CHAIN_MARK_OUT" "Mark set"
