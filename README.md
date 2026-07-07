@@ -91,6 +91,11 @@ Workflow Algorithm:
   * `match-set skeen_exclude_net4 dst ACCEPT`
   * **Essence:** Ignore the router’s local network, reserved subnets, and the user-defined IP whitelist. Packets to these resources bypass the proxy.
 
+**Excluded FakeIP 🕵️‍♂️🚀**
+  * `! match-set skeen_fakeip_set4 dst ACCEPT`
+  * If the Sing-box DNS module is configured and enabled, this allows building routing based on it within the `PREROUTING` chain.
+  * **Essence:** We bypass the Sing-box core and allow traffic directly to FakeIP addresses (`198.18.0.0/15` and `fc00::/18`), as well as those specified in the file defined by the `firewall.intercept.fakeip.include` path, to speed up routing.
+
 **Connection Marking 🧠** - with `use_conntrack` enabled.
   * Instead of analyzing every single packet, SKeen "remembers" the decision for the entire session:
   * **TCP:** The `0x112` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
@@ -119,7 +124,7 @@ Workflow Algorithm:
   * `ctdir REPLY ACCEPT` - Instantly bypasses all incoming response traffic. This ensures maximum download speeds and minimal latency by focusing only on outgoing requests.
 
 **DNS TProxy 🔍**
-  * `tcp/udp dpt:53 TPROXY`
+  * `tcp/udp dpt:53 connmark match 0x112 TPROXY / TPROXY`
   * **Essence:** Intercept DNS requests on the fly and send them directly to the Sing-Box TProxy port. Works if `firewall.redirect_dns` is not enabled in the `skeen.json` config; otherwise just `ACCEPT` to let packets continue through the tables.
 
 **Excluded Ports 🚫**
@@ -129,6 +134,11 @@ Workflow Algorithm:
 **Address Bypass 🌍**
   * `match-set skeen_exclude_net4 dst ACCEPT`
   * **Essence:** Ignore the router’s local network, reserved subnets, and the user-defined IP whitelist. Packets to these resources bypass the proxy.
+
+**Excluded FakeIP 🕵️‍♂️🚀**
+  * `! match-set skeen_fakeip_set4 dst ACCEPT`
+  * If the Sing-box DNS module is configured and enabled, this allows building routing based on it within the `PREROUTING` chain.
+  * **Essence:** We bypass the Sing-box core and allow traffic directly to FakeIP addresses (`198.18.0.0/15` and `fc00::/18`), as well as those specified in the file defined by the `firewall.intercept.fakeip.include` path, to speed up routing.
 
 **Connection Marking 🧠** - with `use_conntrack` enabled.
   * Instead of analyzing every single packet, SKeen "remembers" the decision for the entire session:
@@ -497,8 +507,18 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "intercept": {
       "dns": 1,        // Intercept DNS req. via TProxy/Hybrid modes (0 = disabled),
                        // ignored if redirect_dns is configured (see below)
-      "port": []       // Ports to intercept Redirect/TProxy (all if empty).
+      "port": [],      // Ports for Redirect/TProxy interception (all if empty).
                        // Example: [ 80, 443, "1000:2000", "1500:5555" ]
+      "fakeip": {
+        "enable": 0,   // If 1, enables the FakeIP address pool in Redirect/TProxy interception; everything else goes to WAN.
+                       // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled, along with sing-box DNS configuration.
+                       // - Exceptions for exclude.port/cidr will function exactly like intercept.port in regular mode.
+        "include": ""  // Full path to the file containing a list of IP/CIDR resources (both v4 and v6) - one per line.
+                       // - Allows comments after #, empty lines, and leading/trailing whitespaces.
+                       // - Intended for resources that initially didn't have a domain and therefore
+                       //   didn't receive a FakeIP, but still need to be proxied.
+                       // - Default value, if not specified, is /opt/etc/skeen/pure_cidr.list
+      }
     },
     "exclude": {
       "port": [
@@ -527,9 +547,9 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 
 ```
 
-Additional configuration notes:
+**Additional configuration notes:**
 
-**`network.ipv6`** - should only be enabled if your ISP has provided an IPv6 address for internet access.
+**`network.ipv6`** - will not enable if the provider has not provided an IPv6 address for internet access.
 **`network.tuning`** - when this option is enabled, the script applies a set of Linux kernel parameters (sysctl) adapted for the operation of high-performance proxy services (sing-box) on Keenetic routers.
 
 | Category | Change | Result |
@@ -548,6 +568,20 @@ To reset the settings to their defaults, simply set `network.tuning` to `0` and 
 
 **`network.check`** - specify only those IP addresses or domain names that are guaranteed to be reachable (pingable) in your network to ensure the script can verify the connection and start services successfully after a router reboot.
 
+**`firewall.intercept.fakeip`** - this feature relies on the sing-box DNS module, meaning it must be engaged via `firewall.intercept.dns` or `firewall.redirect_dns` and configured correctly (see examples in the `examples` folder, starting from sing-box version 1.14). Everything flagged as FakeIP will always be routed through sing-box via Redirect and/or TProxy, while everything else will bypass it at the Linux kernel level. This can be highly beneficial if you primarily use domestic services and want to offload your aging mips(el) router, as FakeIP is meant to be used mainly for the foreign segment.
+
+This is an excellent solution, but use it with the understanding that you will need to manually configure the list of IP addresses for services that use direct IP connections (do not have a domain) but still need to be proxied. Such services include:
+
+* **Messenger IP pools** - many connections go directly to data centers via IP;
+* **Discord voice channels** - WebRTC traffic often bypasses DNS;
+* **P2P networks and torrent clients** - metadata downloads and seeding via trackers or direct peers;
+* **Game launchers and online games** - the traffic of the game sessions themselves often goes to direct addresses, though there are exceptions;
+* **IP pools of certain mobile apps** - addresses that are hardcoded into the application's source code.
+
+The addresses of such connections can be analyzed beforehand (there is no point for P2P, etc.) in the **Zashboard** panel under the "Connections" tab ("Host" column) - the raw IP will be shown instead of a domain name. Next, find up-to-date lists of the required IP/CIDR ranges online and add them to the file at the path specified in the `firewall.intercept.fakeip.include` parameter (changes will take effect after restarting SKeen using the `skeen restart` command).
+
+Is this solution right for you? Everyone decides for themselves based on current constraints and personal requirements for network performance and security.
+
 ## ⚖️ Credits & Legal
 
 * **SKeen** is licensed under the [MIT](https://github.com/jinndi/SKeen/blob/main/LICENSE) License.
@@ -562,11 +596,3 @@ To reset the settings to their defaults, simply set `network.tuning` to `0` and 
 - Outbound server block generator: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
 - Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
 - Custom rulesets: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
-
-## ⭐ Star History
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=jinndi/SKeen&type=date&theme=dark&legend=top-left" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=jinndi/SKeen&type=date&legend=top-left" />
-  <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=jinndi/SKeen&type=date&legend=top-left" />
-</picture>
