@@ -380,7 +380,7 @@ get_firewall_config() {
   : "${NETWORK_TUNING:=0}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
   : "${FIREWALL_INTERCEPT_FAKEIP:=0}"
-  : "${FIREWALL_INTERCEPT_FAKEIP_INCLUDE:=/opt/etc/skeen/proxy_pure_cidr.list}"
+  : "${FIREWALL_INTERCEPT_FAKEIP_INCLUDE:=/opt/etc/skeen/pure_cidr.list}"
   : "${FIREWALL_REDIRECT_DNS_ENABLE:=0}"
   : "${FIREWALL_REDIRECT_DNS_PORT:=}"
   : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
@@ -1559,7 +1559,9 @@ add_skeen_rules() {
 
     add_rule "$iptables" "$table" "$chain" \
       -m set --match-set "${NET_EXCLUDE_SET}${IP_VERSION}" dst -j ACCEPT
+    ;;
 
+  "intercept_fakeip")
     if [ "$SKEEN_INTERCEPT_FAKEIP" = "1" ]; then
       add_rule "$iptables" "$table" "$chain" \
         -m set ! --match-set "$FAKEIP_INTERCEPT_SET${IP_VERSION}" dst -j ACCEPT
@@ -1676,11 +1678,13 @@ set_chain_rules() {
       add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "intercept_dns" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
+      add_skeen_rules "$iptables" "$table" "$chain" "intercept_fakeip" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "tproxy" "$protocols"
       add_skeen_rules "$iptables" "$table" "INPUT" "keendns_accept" "$protocols"
     elif [ "$table" = "nat" ]; then
       add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
+      add_skeen_rules "$iptables" "$table" "$chain" "intercept_fakeip" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "redirect" "$protocols"
     fi
     ;;
@@ -3003,7 +3007,7 @@ fw_test_chain() {
 
   fw_test "$1" "$2" "$content" "$NET_EXCLUDE_SET" "Subnet exclude"
 
-  if [ "$SKEEN_INTERCEPT_FAKEIP" = "1" ]; then
+  if [ "$2" = "$CHAIN_PREROUTING" ] && [ "$SKEEN_INTERCEPT_FAKEIP" = "1" ]; then
     fw_test "$1" "$2" "$content" "$FAKEIP_INTERCEPT_SET" "FakeIP intercept"
   fi
 
