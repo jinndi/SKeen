@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.19.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.18.0...SKeen-v4.19.0) (2026-07-07)
+
+
+### 🚀 Feat
+
+* **firewall:** add fakeip interception support ([cad2457](https://github.com/jinndi/SKeen/commit/cad245710d0022cb98ddd291d0d4dbeaac4bfb65))
+
 ## [4.18.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.17.2...SKeen-v4.18.0) (2026-07-03)
 
 
