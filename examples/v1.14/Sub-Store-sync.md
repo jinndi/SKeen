@@ -61,6 +61,7 @@
       { "match_response": true, "rule_set": [ "ruip" ], "action": "respond" },
       { "match_response": true, "ip_accept_any": true, "invert": true, "action": "respond" },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
       { "clash_mode": "Global", "server": "dns_proxy" }
     ],
 
@@ -115,6 +116,7 @@
       { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
       { "rule_set": [ "private" ], "outbound": "🔌 Провайдер" },
       { "rule_set": [ "cheburnet" ], "outbound": "🔌 Провайдер" },
+      { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Торрент" },
       { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
       { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
@@ -122,8 +124,7 @@
       { "ip_cidr": [ "198.18.0.0/15", "fc00::/18" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
       { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 Россия" },
-      { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
-      { "protocol": [ "stun", "dtls" ], "action": "reject" },
+      { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
         "type": "logical", "mode": "or",
         "rules": [
@@ -131,7 +132,7 @@
           { "domain_regex": "^stun\\..+" },
           { "domain_keyword": [ "stun", "turn", "httpdns" ] }
         ],
-        "action": "reject"
+        "action": "reject", "method": "drop"
       },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
       { "action": "resolve" },
