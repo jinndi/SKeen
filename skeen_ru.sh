@@ -53,6 +53,7 @@ readonly NET_EXCLUDE_SET="skeen_exclude_net"
 readonly PORT_INTERCEPT_SET="skeen_intercept_port"
 readonly PORT_EXCLUDE_SET="skeen_exclude_port"
 readonly FAKEIP_INTERCEPT_SET="skeen_fakeip_net"
+readonly FAKEIP_CLIENTS_SRC_SET="skeen_fakeip_src"
 readonly CHAIN_PREROUTING="skeen"
 readonly CHAIN_OUTPUT="skeen_mask"
 readonly CHAIN_DIVERT="skeen_divert"
@@ -200,7 +201,8 @@ create_skeen_config() {
       "port": [],
       "fakeip": {
         "enable": 0,
-        "include": "${WORK_DIR}/pure_cidr.list"
+        "include": "${WORK_DIR}/pure_cidr.list",
+        "clients": []
       }
     },
     "exclude": {
@@ -1565,6 +1567,10 @@ add_skeen_rules() {
     if [ "$SKEEN_INTERCEPT_FAKEIP" = "1" ]; then
       add_rule "$iptables" "$table" "$chain" \
         -m set ! --match-set "$FAKEIP_INTERCEPT_SET${IP_VERSION}" dst -j ACCEPT
+    elif [ "$SKEEN_INTERCEPT_FAKEIP" = "2" ]; then
+      add_rule "$iptables" "$table" "$chain" \
+        -m set --match-set "$FAKEIP_CLIENTS_SRC_SET" src \
+        -m set ! --match-set "$FAKEIP_INTERCEPT_SET${IP_VERSION}" dst -j ACCEPT
     fi
     ;;
 
@@ -2094,6 +2100,7 @@ prepare_firewall() {
   if [ -n "$intercept_ports" ]; then
     setup_port_set "$PORT_INTERCEPT_SET" "$intercept_ports"
     ipset add "$PORT_INTERCEPT_SET" 443 -! 2>/dev/null
+    ipset add "$PORT_INTERCEPT_SET" 80 -! 2>/dev/null
     ipset destroy "$PORT_EXCLUDE_SET" -exist 2>/dev/null
 
     SKEEN_INTERCEPT_PORT="1"
@@ -2104,6 +2111,7 @@ prepare_firewall() {
     if [ -n "$exclude_ports" ]; then
       setup_port_set "$PORT_EXCLUDE_SET" "$exclude_ports"
       ipset del "$PORT_EXCLUDE_SET" 443 -! 2>/dev/null
+      ipset del "$PORT_EXCLUDE_SET" 80 -! 2>/dev/null
       SKEEN_EXCLUDE_PORT="1"
     fi
 
@@ -2185,7 +2193,29 @@ prepare_firewall() {
   SKEEN_INTERCEPT_FAKEIP="0"
   if [ "$FIREWALL_INTERCEPT_FAKEIP" = "1" ]; then
     if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
-      setup_fakeip_ipset && SKEEN_INTERCEPT_FAKEIP="1"
+      if setup_fakeip_ipset; then
+        SKEEN_INTERCEPT_FAKEIP="1"
+
+        local clients_src clients_src_count
+        clients_src="$(json_get_array '@.firewall.intercept.fakeip.clients')"
+
+        if [ -n "$clients_src" ]; then
+          ipset create "$FAKEIP_CLIENTS_SRC_SET" hash:net family inet maxelem 100 -exist
+          ipset flush "$FAKEIP_CLIENTS_SRC_SET"
+
+          echo "$clients_src" | {
+            while read -r addr; do
+              [ -n "$addr" ] && printf "add %s %s -exist\n" "$FAKEIP_CLIENTS_SRC_SET" "$addr"
+            done
+          } | ipset restore
+
+          clients_src_count=", клиентов: $(echo "$clients_src" | wc -l)"
+          SKEEN_INTERCEPT_FAKEIP="2"
+        fi
+        cyan " - Перехват FakeIP включен${clients_src_count}"
+      else
+        echoerr "Не удалось настроить FakeIP перехват"
+      fi
     else
       ipset destroy "${FAKEIP_INTERCEPT_SET}4" -exist 2>/dev/null
       ipset destroy "${FAKEIP_INTERCEPT_SET}6" -exist 2>/dev/null
@@ -2422,9 +2452,9 @@ clean_firewall() {
       done
     done
 
-    for port_set in "$PORT_EXCLUDE_SET" "$PORT_INTERCEPT_SET"; do
-      ipset flush "$port_set" -exist 2>/dev/null
-      ipset destroy "$port_set" -exist 2>/dev/null
+    for set_name in "$PORT_EXCLUDE_SET" "$PORT_INTERCEPT_SET" "$FAKEIP_CLIENTS_SRC_SET"; do
+      ipset flush "$set_name" -exist 2>/dev/null
+      ipset destroy "$set_name" -exist 2>/dev/null
     done
   fi
 
@@ -3007,7 +3037,7 @@ fw_test_chain() {
 
   fw_test "$1" "$2" "$content" "$NET_EXCLUDE_SET" "Subnet exclude"
 
-  if [ "$2" = "$CHAIN_PREROUTING" ] && [ "$SKEEN_INTERCEPT_FAKEIP" = "1" ]; then
+  if [ "$2" = "$CHAIN_PREROUTING" ] && [ "$SKEEN_INTERCEPT_FAKEIP" != "0" ]; then
     fw_test "$1" "$2" "$content" "$FAKEIP_INTERCEPT_SET" "FakeIP intercept"
   fi
 
