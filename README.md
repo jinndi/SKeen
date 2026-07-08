@@ -513,11 +513,15 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
         "enable": 0,   // If 1, enables the FakeIP address pool in Redirect/TProxy interception; everything else goes to WAN.
                        // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled, along with sing-box DNS configuration.
                        // - Exceptions for exclude.port/cidr will function exactly like intercept.port in regular mode.
-        "include": ""  // Full path to the file containing a list of IP/CIDR resources (both v4 and v6) - one per line.
+        "include": "", // Full path to the file containing a list of IP/CIDR resources (both v4 and v6) - one per line.
                        // - Allows comments after #, empty lines, and leading/trailing whitespaces.
                        // - Intended for resources that initially didn't have a domain and therefore
                        //   didn't receive a FakeIP, but still need to be proxied.
                        // - Default value, if not specified, is /opt/etc/skeen/pure_cidr.list
+        "clients": []  // Clients (IP addresses or CIDRs) that need FakeIP interception applied
+                       // Example: [ "192.168.2.10", "192.168.2.11" ]
+                       // For stable operation, a static IP address must be assigned to these clients;
+                       // this is done in the Keenetic/Netcraze WebUI under the "Client Lists" tab
       }
     },
     "exclude": {
