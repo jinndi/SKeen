@@ -2165,20 +2165,29 @@ prepare_firewall() {
         echo "add ${FAKEIP_INTERCEPT_SET}6 fd00::/8 -exist"
       fi
 
-      while read -r line || [ -n "$line" ]; do
-        line="${line##*[[:space:]]}"
-        if [ -z "$line" ] || [ "${line##}" != "$line" ]; then
-          continue
-        fi
-        line="${line%%#*}"
-        line="${line%%*[[:space:]]}"
-        [ -z "$line" ] && continue
-        case "$line" in
-          *:*) [ "$NETWORK_IPV6" = "1" ] && echo "add ${FAKEIP_INTERCEPT_SET}6 $line -exist" ;;
-          *) echo "add ${FAKEIP_INTERCEPT_SET}4 $line -exist" ;;
-        esac
-      done < "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
+      if [ -s "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" ]; then
+        awk -v set_name="${FAKEIP_INTERCEPT_SET}4" '
+          {
+            sub(/#.*/, "");
+            gsub(/^[ \t]+|[ \t]+$/, "");
+          }
+          $0 != "" && $0 !~ /:/ {
+            print "add " set_name " " $0 " -exist"
+          }
+        ' "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
 
+        if [ "$NETWORK_IPV6" = "1" ]; then
+          awk -v set_name="${FAKEIP_INTERCEPT_SET}6" '
+            {
+              sub(/#.*/, "");
+              gsub(/^[ \t]+|[ \t]+$/, "");
+            }
+            $0 != "" && $0 ~ /:/ {
+              print "add " set_name " " $0 " -exist"
+            }
+          ' "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
+        fi
+      fi
     } > "$temp_file" || {
       rm -f "$temp_file"
       echoerr "Ошибка записи в временный файл ipset $FAKEIP_INTERCEPT_SET"
