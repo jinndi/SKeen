@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.20.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.19.0...SKeen-v4.20.0) (2026-07-08)
+
+
+### 🚀 Feat
+
+* add source client filtering for FakeIP interception ([02f0c17](https://github.com/jinndi/SKeen/commit/02f0c17f134ab2d32b9807b05d3ccf9db7cbc82b))
+
+
+### ⚡ Perf
+
+* optimize fakeip client list processing with awk ([be44269](https://github.com/jinndi/SKeen/commit/be44269a9c6d7755de6a8a2313d733d7118a7e00))
+
 ## [4.19.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.18.0...SKeen-v4.19.0) (2026-07-07)
 
 
