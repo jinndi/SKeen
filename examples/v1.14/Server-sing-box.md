@@ -481,7 +481,8 @@ services:
       "brutal_debug": false,
       // Realm конфигурация
       // Создаем через Cloudflare Workers: https://github.com/outlook84/cf-hysteria-realm,
-      // либо поднимаем на этом же либо другом сервере свой Realm сервис: смотрите ниже блок services
+      // либо поднимаем на этом же либо другом сервере свой Realm сервис: смотрите ниже блок services,
+      // либо пробрасываем через Cloudflared tunnel (далее по примеру панели sing-box)
       "realm": {
         "server_url": "https://<ваш.домен>.workers.dev",
         "token": "<ваш_токен>",
