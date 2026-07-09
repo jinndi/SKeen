@@ -2166,27 +2166,12 @@ prepare_firewall() {
       fi
 
       if [ -s "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" ]; then
-        awk -v set_name="${FAKEIP_INTERCEPT_SET}4" '
-          {
-            sub(/#.*/, "");
-            gsub(/^[ \t]+|[ \t]+$/, "");
-          }
-          $0 != "" && $0 !~ /:/ {
-            print "add " set_name " " $0 " -exist"
-          }
+        awk -v S="$FAKEIP_INTERCEPT_SET" -v V6="$NETWORK_IPV6" '
+          { sub(/#.*/, ""); gsub(/^[ \t]+|[ \t]+$/, "") }
+          $0 == "" { next }
+          /:/  { if (V6 == "1") print "add " S "6 " $0 " -exist"; next }
+               { print "add " S "4 " $0 " -exist" }
         ' "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
-
-        if [ "$NETWORK_IPV6" = "1" ]; then
-          awk -v set_name="${FAKEIP_INTERCEPT_SET}6" '
-            {
-              sub(/#.*/, "");
-              gsub(/^[ \t]+|[ \t]+$/, "");
-            }
-            $0 != "" && $0 ~ /:/ {
-              print "add " set_name " " $0 " -exist"
-            }
-          ' "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
-        fi
       fi
     } > "$temp_file" || {
       rm -f "$temp_file"
