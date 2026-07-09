@@ -407,7 +407,40 @@ services:
      "obfs_mode": "http"
     },
 
-    // 6. Hysteria 2
+    // 6. AnyTLS | Легковесный мультиплексированный TLS-протокол с динамической маскировкой размера пакетов.
+    {
+      "type": "anytls",
+      "tag": "anytls-in",
+      "listen": "::",
+      "listen_port": 5443,
+      "users": [
+        {
+          "name": "<ваше_имя_пользователя>",
+          "password": "<ваш_пароль>"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "<ваш.домен.com>",
+        "certificate_provider": "LetsEncrypt"
+      },
+      // Массив с любой схемой заполнения TLS.
+      // Подробнее см. https://github.com/anytls/anytls-go/blob/main/docs/protocol.md
+      // Схема заполнения по умолчанию (желательно составить свою):
+      "padding_scheme": [
+        "stop=8",
+        "0=30-30",
+        "1=100-400",
+        "2=400-500,c,500-1000,c,500-1000,c,500-1000,c,500-1000",
+        "3=9-9,500-1000",
+        "4=500-1000",
+        "5=500-1000",
+        "6=500-1000",
+        "7=500-1000"
+      ]
+    }
+
+    // 7. Hysteria 2
     // Фишки и логика работы:
     // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
     // - Умные буферы (окна в 0): Sing-box сам на лету адаптирует буфер под качество линии (4G/Wi-Fi).
@@ -451,7 +484,7 @@ services:
       "brutal_debug": false
     }
 
-    // 6.1. Hysteria 2 с Realm на Cloudflare Workers
+    // 7.1. Hysteria 2 с Realm на Cloudflare Workers
     // Фишки и логика работы:
     // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
     // - Serverless-координатор на Workers: Realm крутится на cf-workers (*.workers.dev).
@@ -512,7 +545,7 @@ services:
       }
     },
 
-    // 7. TUIC | Основан на QUIC, встроенная поддержка UDP, ускорение BBR
+    // 8. TUIC | Основан на QUIC, встроенная поддержка UDP, ускорение BBR
     {
       "type": "tuic",
       "tag": "tuic-in",
@@ -540,7 +573,7 @@ services:
       "connection_receive_window": 0
     },
 
-    // Cloudflared | Панель sing-box через Cloudflare Tunnel
+    // 9. Cloudflared | Панель sing-box через Cloudflare Tunnel
     // Если хочется панельку серверную для отслеживания логов, состояния соединений и тд.
     // Необходим привязанный домен в панели через DNS со статусом Proxied (оранжевое облако)
     // Токен (очень длинный) Cloudflare получить в панели при создании тунеля https://dash.cloudflare.com/?to=/:account/tunnels
