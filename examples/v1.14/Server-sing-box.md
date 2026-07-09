@@ -438,9 +438,44 @@ services:
         "6=500-1000",
         "7=500-1000"
       ]
-    }
+    },
 
-    // 7. Hysteria 2
+    // 7. VLESS-TLS-WS за Cloudflare с поддержкой Multiplex и Brutal BBR.
+    // Почти идентично TROJAN п.3., никаких дополнительных преимуществ,
+    // т.к. протоколы VLESS и TROJAN работают одинаково через WebSocket,
+    // но в данном случаее добавляем Brutal BBR.
+    {
+      "type": "vless",
+      "tag": "vless-cf-in",
+      "listen": "::",
+      "listen_port": 2087,
+      "users": [
+        {
+          "name": "<ваш_имя_пользователя>", // Любое имя.
+          "uuid": "<ваш_uuid>", // Сгенерировать например в Linux bash: cat /proc/sys/kernel/random/uuid
+          "flow": ""  // Оставляем пустым
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "<ваш_домен.com>",
+        "certificate_provider": "CF_origin_ca"
+      },
+      "transport": {
+        "type": "ws",
+        "path": "/secret-path"  // Ваш секретный путь
+      },
+      "multiplex": {
+        "enabled": true,
+        "brutal": {
+          "enabled": true, // Включить поддержку Brutal BBR, читаем в описании п. 4. установку.
+          "up_mbps": 1000,
+          "down_mbps": 1000
+        }
+      }
+    },
+
+    // 8. Hysteria 2
     // Фишки и логика работы:
     // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
     // - Умные буферы (окна в 0): Sing-box сам на лету адаптирует буфер под качество линии (4G/Wi-Fi).
@@ -484,7 +519,7 @@ services:
       "brutal_debug": false
     }
 
-    // 7.1. Hysteria 2 с Realm на Cloudflare Workers
+    // 8.1. Hysteria 2 с Realm на Cloudflare Workers
     // Фишки и логика работы:
     // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
     // - Serverless-координатор на Workers: Realm крутится на cf-workers (*.workers.dev).
@@ -545,7 +580,7 @@ services:
       }
     },
 
-    // 8. TUIC | Основан на QUIC, встроенная поддержка UDP, ускорение BBR
+    // 9. TUIC | Основан на QUIC, встроенная поддержка UDP, ускорение BBR
     {
       "type": "tuic",
       "tag": "tuic-in",
@@ -573,7 +608,7 @@ services:
       "connection_receive_window": 0
     },
 
-    // 9. Cloudflared | Панель sing-box через Cloudflare Tunnel
+    // 10. Cloudflared | Панель sing-box через Cloudflare Tunnel
     // Если хочется панельку серверную для отслеживания логов, состояния соединений и тд.
     // Необходим привязанный домен в панели через DNS со статусом Proxied (оранжевое облако)
     // Токен (очень длинный) Cloudflare получить в панели при создании тунеля https://dash.cloudflare.com/?to=/:account/tunnels

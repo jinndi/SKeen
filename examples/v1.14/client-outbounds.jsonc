@@ -196,7 +196,44 @@
     "min_idle_session": 5                 // Поддерживать как минимум 5 активных соединений
   },
 
-  // 7. Hysteria2
+  // 7. VLESS-TLS-WS за Cloudflare с поддержкой Multiplex и Brutal BBR.
+  {
+    "type": "vless",
+    "tag": "vless-cf-brutal",
+    "server": "<ваш.домен.com>",
+    "server_port": 2087,
+    "connect_timeout": "5s",
+    "tcp_keep_alive": "30s",
+    "tcp_keep_alive_interval": "5s",
+    "uuid": "<ваш_uuid>",
+    "tls": {
+      "enabled": true,
+      "server_name": "<ваш.домен.com>",
+      "spoof": "yandex.ru",
+      "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      }
+    },
+    "transport": {
+      "type": "ws",
+      "path": "/secret-path" // Ваш секретный путь (совпадает с конфигурацией сервера)
+    },
+    "multiplex": {
+      "enabled": true,
+      "max_connections": 6,
+      "max_streams": 48,
+      "protocol": "h2mux",
+      "brutal": {
+        "enabled": true,
+        "up_mbps": 50,
+        "down_mbps": 100
+      }
+    }
+  },
+
+  // 8. Hysteria2
   {
     "type": "hysteria2",
     "tag": "hy2",
@@ -228,7 +265,7 @@
     "connection_receive_window": 0
   },
 
-  // 7.1. Hysteria2 с Realm (Cloudflare Workers)
+  // 8.1. Hysteria2 с Realm (Cloudflare Workers)
   {
     "type": "hysteria2",
     "tag": "hy2-realm",
@@ -282,7 +319,7 @@
     }
   },
 
-  // 8. TUIC
+  // 9. TUIC
   {
     "type": "tuic",
     "tag": "tuic-bbr",
