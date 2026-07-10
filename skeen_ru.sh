@@ -30,7 +30,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="4.20.0"
+readonly SKEEN_VERSION="4.20.1"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
