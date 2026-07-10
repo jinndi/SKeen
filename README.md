@@ -280,7 +280,8 @@ If you have disabled internet access to your subdomain in the "Domain Name" sect
   - TProxy/Redirect/Hybrid/Tun/DNS modes ✓
   - IPv4 and IPv6 support ✓
   - Functional Sing-box DNS module ✓
-  - Functional Sing-box fakeip ✓
+  - Functional Sing-box FakeIP ✓
+  - FakeIP proxying at the iptables level ✓
   - Zashboard configured via Clash API ✓
   - Network settings optimization ✓
   - Commands accessible via router WEB CLI ✓
@@ -573,6 +574,22 @@ To reset the settings to their defaults, simply set `network.tuning` to `0` and 
 **`network.check`** - specify only those IP addresses or domain names that are guaranteed to be reachable (pingable) in your network to ensure the script can verify the connection and start services successfully after a router reboot.
 
 **`firewall.intercept.fakeip`** - this feature relies on the sing-box DNS module, meaning it must be engaged via `firewall.intercept.dns` or `firewall.redirect_dns` and configured correctly (see examples in the `examples` folder, starting from sing-box version 1.13). Everything flagged as FakeIP will always be routed through sing-box via Redirect and/or TProxy, while everything else will bypass it at the Linux kernel level. This can be highly beneficial if you primarily use domestic services and want to offload your aging mips(el) router, as FakeIP is meant to be used mainly for the foreign segment.
+
+<details>
+  <summary>🚀 Advantages over GeoIP IPset Country-Based Filtering</summary>
+
+* **Minimal RAM Consumption:** The `geoipset` method requires loading tens of thousands of Russian subnets into the router's RAM just to exclude them. FakeIP does not store massive IP address databases at all. It operates dynamically and "on the fly" within a single small local subnet, freeing up precious memory for system needs.
+
+* **Low CPU Load (Crucial for mips/mipsel):** Instead of a heavy IP address lookup across the complex hash tables of a massive GeoIP database for *every single* network packet, the Linux kernel under FakeIP performs a single, instantaneous bitwise check: does the IP belong to the fake subnet (e.g., `198.18.0.0/15`). All direct IP-based connections (messengers, games, P2P) that didn't initiate a DNS request will, by default, immediately route directly, completely bypassing any CPU-heavy checks. Only resources that received a FakeIP via domain resolution, or specific IP/CIDR ranges you explicitly added to the `include` list, will hit the proxy. This maximizes CPU cycles, preventing internet speed drops and ping spikes under load.
+
+* **Autonomy and Independence from Updates:** GeoIP databases constantly become outdated, causing websites to mistakenly route through the proxy (or vice versa). FakeIP operates on domains right here and now; it doesn't require regular updates since sing-box handles everything for you natively.
+
+* **Precise Traffic Filtering:** The FakeIP method routes **only the specific target resources** from your sing-box DNS routing list into the proxy, saving both traffic and server resources.
+
+* **Built-in DNS Leak Protection:** FakeIP is inherently tied to the sing-box DNS module, meaning flagged websites physically cannot expose your real IP address through a provider's DNS query.
+
+* **Clean Architecture Without Third-Party Software:** To make GeoIP work alongside domains, alternative solutions require installing AdGuard Home or similar tools, linking them to ipset, and managing a mess of configuration files. Keep in mind that AdGuard Home is a heavyweight application that can rival the proxy core itself in terms of RAM usage and CPU load. Running such a "zoo" of services on a weak router makes little sense. In SKeen, the entire FakeIP functionality works right out of the box within a single compact sing-box binary, completely free of extra software or kludgy workarounds.
+</details>
 
 This is an excellent solution, but use it with the understanding that you will need to manually configure the list of IP addresses for services that use direct IP connections (do not have a domain) but still need to be proxied. Such services include:
 
