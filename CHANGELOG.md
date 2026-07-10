@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.20.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.1...SKeen-v4.20.2) (2026-07-10)
+
+
+### 🐛 Fix
+
+* version ([5ad8cdb](https://github.com/jinndi/SKeen/commit/5ad8cdb881b6c40c2fc961ba03d7ada70fb5a6ef))
+
+
+### 🧰 Chore
+
+* **main:** release SKeen 4.20.1 ([eba39fa](https://github.com/jinndi/SKeen/commit/eba39fa27ac912e8eeff300493342d891939bf71))
+* **main:** release SKeen 4.20.1 ([0b98fe6](https://github.com/jinndi/SKeen/commit/0b98fe63af3f38268d599869fc87bd135eeea397))
+
 ## [4.20.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.0...SKeen-v4.20.1) (2026-07-10)
 
 
