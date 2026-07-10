@@ -3,6 +3,13 @@
 ## [4.20.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.0...SKeen-v4.20.1) (2026-07-10)
 
 
+### 🐛 Fix
+
+* version ([5ad8cdb](https://github.com/jinndi/SKeen/commit/5ad8cdb881b6c40c2fc961ba03d7ada70fb5a6ef))
+
+## [4.20.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.0...SKeen-v4.20.1) (2026-07-10)
+
+
 ### ⚡ Perf
 
 * refactor fakeip firewall list processing into a single awk pass ([f88efb2](https://github.com/jinndi/SKeen/commit/f88efb2ec628c41185189ffd9f69454f708e158e))
