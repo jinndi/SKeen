@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.20.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.0...SKeen-v4.20.1) (2026-07-10)
+
+
+### ⚡ Perf
+
+* refactor fakeip firewall list processing into a single awk pass ([f88efb2](https://github.com/jinndi/SKeen/commit/f88efb2ec628c41185189ffd9f69454f708e158e))
+
+
+### 🧰 Chore
+
+* **config:** update sing-box configuration template ([826c121](https://github.com/jinndi/SKeen/commit/826c1217047b424bb18e21cbc3754b032c0a12c9))
+
 ## [4.20.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.19.0...SKeen-v4.20.0) (2026-07-08)
 
 
