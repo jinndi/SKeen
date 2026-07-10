@@ -1,6 +1,5 @@
-//// Конфигурация для шаблонов по умолчанию при выходе стабильной версии sing-box 1.14
-// Чебурнет здесь. C комментариями смотрите файл config-commented.json
-
+//// Конфигурация для шаблонов по умолчанию версии sing-box 1.13+
+// Начиная с SKeen 4.20.1 версии
 {
   "log": { "disabled": false, "level": "debug", "output": "", "timestamp": false },
 
@@ -20,7 +19,6 @@
     ],
 
     "rules": [
-      { "preferred_by": [ "hosts" ], "server": "hosts" },
       { "ip_version": 6, "action": "reject" },
       { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
       { "rule_set": [ "ipdetect"], "action": "reject" },
@@ -32,9 +30,7 @@
       { "rule_set": [ "trackers" ], "server": "dns_direct" },
       { "rule_set": [ "filter" ], "server": "dns_direct" },
       { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
-      { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
-      { "match_response": true, "rule_set": [ "ruip" ], "action": "respond" },
-      { "match_response": true, "ip_accept_any": true, "invert": true, "action": "respond" },
+      { "rule_set": [ "ru" ], "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
       { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
       { "clash_mode": "Global", "server": "dns_fakeip" }
@@ -42,9 +38,8 @@
 
     "final": "dns_proxy",
     "strategy": "ipv4_only",
-    "timeout": "3s",
+    "independent_cache": true,
     "cache_capacity": 16384,
-    "optimistic": { "enabled": true, "timeout": "1h0m0s" },
     "reverse_mapping": true
   },
 
@@ -55,16 +50,6 @@
     "server_port": 123,
     "detour": "🇷🇺 RU"
   },
-
-  "http_clients": [
-    {
-      "tag": "default",
-      "version": 2,
-      "detour": "GLOBAL",
-      "stream_receive_window": 0,
-      "connection_receive_window": 0
-    }
-  ],
 
   "inbounds": [
     {
@@ -93,7 +78,7 @@
       "tag": "🔒 NAIVE",
       "type": "naive",
       "server": "example.com",
-      "server_port": 443,
+      "server_port": 2443,
       "username": "jinndi",
       "password": "password",
       "udp_over_tcp": true,
@@ -148,56 +133,71 @@
     ],
 
     "rule_set": [
-      { "tag": "ipdetect",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs" },
-      { "tag": "private",   "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs" },
-      { "tag": "trackers",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs" },
-      { "tag": "games",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs" },
-      { "tag": "ai",        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs" },
-      { "tag": "ru",        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs" },
-      { "tag": "ruip",      "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs" },
-      { "tag": "adguard",   "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs" },
-      { "tag": "cheburnet", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs" },
-      { "tag": "filter",    "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/filter.srs" },
-      { "tag": "proxy",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs" }
+      {
+        "tag": "ipdetect",  "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs"
+      },
+      {
+        "tag": "private",   "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs"
+      },
+      {
+        "tag": "trackers",  "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs"
+      },
+      {
+        "tag": "games",     "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs"
+      },
+      { "tag": "ai",        "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs"
+      },
+      {
+        "tag": "ru",        "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs"
+      },
+      {
+        "tag": "ruip",      "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs"
+      },
+      {
+        "tag": "adguard",   "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs"
+      },
+      {
+        "tag": "cheburnet", "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs"
+      },
+      {
+        "tag": "filter",    "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/filter.srs"
+      },
+      {
+        "tag": "proxy",     "type": "remote", "download_detour": "GLOBAL",
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs"
+      }
     ],
-
     "final": "🌍 Proxy",
     "auto_detect_interface": true,
-    "default_domain_resolver": "dns_direct",
-    "default_http_client": "default"
+    "default_domain_resolver": "dns_direct"
   },
 
-  "services": [
-    {
-      "type": "api",
-      "tag": "api",
-      "listen": "::",
-      "listen_port": 9998,
-      "access_control_allow_private_network": true,
-      "dashboard": false
-    }
-  ],
-
   "experimental": {
-    "cache_file": {
-      "enabled": true,
-      "path": "cache.db",
-      "cache_id": "v1_14",
-      "store_fakeip": true,
-      "store_dns": true
-    },
-
     "clash_api": {
       "external_controller": "0.0.0.0:9999",
       "external_ui": "zashboard",
       "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
       "external_ui_download_detour": "GLOBAL",
-      "default_mode": "Rule"
+      "secret": "",
+      "default_mode": "rule"
     },
-
-    "debug": {
-      "gc_percent": 100,
-      "memory_limit": "200MB"
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "cache_id": "v1_13",
+      "store_fakeip": true,
+      "store_rdrc": true,
+      "rdrc_timeout": "3d"
     }
   }
 }

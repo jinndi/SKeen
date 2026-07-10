@@ -38,9 +38,9 @@
           "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ]
         }
       },
-      { "tag": "dns_local", "type": "local" },
-      { "tag": "dns_direct", "type": "https", "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
-      { "tag": "dns_proxy", "type": "https", "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_local",  "type": "local" },
+      { "tag": "dns_direct", "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_proxy",  "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
       { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
     ],
 
@@ -62,7 +62,7 @@
       { "match_response": true, "ip_accept_any": true, "invert": true, "action": "respond" },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
       { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
-      { "clash_mode": "Global", "server": "dns_proxy" }
+      { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
 
     "final": "dns_proxy",
@@ -78,52 +78,65 @@
     "interval": "30m0s",
     "server": "ntp.msk-ix.ru",
     "server_port": 123,
-    "detour": "🇷🇺 Россия"
+    "detour": "🇷🇺 RU"
   },
 
   "http_clients": [
-    { "tag": "global_client", "detour": "GLOBAL" },
-    { "tag": "direct_client", "detour": "DIRECT" }
+    {
+      "tag": "default",
+      "version": 2,
+      "detour": "GLOBAL",
+      "stream_receive_window": 0,
+      "connection_receive_window": 0
+    }
   ],
 
   "inbounds": [
-    { "tag": "tproxy-in", "type": "tproxy", "listen": "::", "listen_port": 65082, "tcp_fast_open": true, "udp_fragment": true, "udp_timeout": "1m0s" }
+    {
+      "tag": "tproxy-in",
+      "type": "tproxy",
+      "listen": "::",
+      "listen_port": 65082,
+      "tcp_fast_open": true,
+      "udp_fragment": true,
+      "udp_timeout": "1m0s"
+    }
   ],
 
   "outbounds": [
-    { "tag": "🌍 Выбор узла", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 Россия", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🏴‍☠️ Торрент", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🕹️ Игры", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🤖 AI", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🔌 Провайдер", "type": "selector", "outbounds": [ "DIRECT" ] },
+    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [] },
+    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [] },
+    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [] },
+    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [] },
+    { "tag": "🤖 AI",      "type": "selector", "outbounds": [] },
+    { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [] },
 
     { "tag": "DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
-    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Выбор узла" ], "interrupt_exist_connections": true },
+    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Proxy" ] },
 
-    { "tag": "🌍 Авто", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 Авто", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100, "interrupt_exist_connections": true }
+    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 },
+    { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 }
   ],
 
   "route": {
     "rules": [
-      { "network": "icmp", "outbound": "🔌 Провайдер" },
+      { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
       { "port": [ 853, 5353 ], "action": "reject" },
       { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
       { "rule_set": [ "ipdetect"], "action": "reject" },
-      { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
-      { "rule_set": [ "private" ], "outbound": "🔌 Провайдер" },
-      { "rule_set": [ "cheburnet" ], "outbound": "🔌 Провайдер" },
-      { "protocol": [ "ntp" ], "outbound": "🇷🇺 Россия" },
-      { "protocol": "bittorrent", "outbound": "🏴‍☠️ Торрент" },
-      { "rule_set": [ "games" ], "outbound": "🕹️ Игры" },
+      { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
+      { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
+      { "rule_set": [ "cheburnet" ], "outbound": "🔌 DIRECT" },
+      { "protocol": [ "ntp" ], "outbound": "🇷🇺 RU" },
+      { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
+      { "rule_set": [ "games" ], "outbound": "🕹️ Games" },
       { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
-      { "ip_is_private": true, "outbound": "🔌 Провайдер" },
-      { "ip_cidr": [ "198.18.0.0/15", "fc00::/18" ], "outbound": "🌍 Выбор узла" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Выбор узла" },
-      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 Россия" },
+      { "ip_is_private": true, "outbound": "🔌 DIRECT" },
+      { "ip_cidr": [ "198.18.0.0/15", "fc00::/18" ], "outbound": "🌍 Proxy" },
+      { "rule_set": [ "proxy" ], "outbound": "🌍 Proxy" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
         "type": "logical", "mode": "or",
@@ -136,7 +149,7 @@
       },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
       { "action": "resolve" },
-      { "clash_mode": "Global", "outbound": "🌍 Выбор узла" }
+      { "clash_mode": "Global", "outbound": "🌍 Proxy" }
     ],
 
     "rule_set": [
@@ -153,10 +166,10 @@
       { "tag": "proxy",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs" }
     ],
 
-    "final": "🌍 Выбор узла",
+    "final": "🌍 Proxy",
     "auto_detect_interface": true,
     "default_domain_resolver": "dns_direct",
-    "default_http_client": "global_client"
+    "default_http_client": "default"
   },
 
   "services": [
@@ -166,10 +179,7 @@
       "listen": "::",
       "listen_port": 9998,
       "access_control_allow_private_network": true,
-      "dashboard": {
-        "enabled": true,
-        "http_client": "global_client"
-      }
+      "dashboard": false
     }
   ],
 
@@ -177,7 +187,7 @@
     "cache_file": {
       "enabled": true,
       "path": "cache.db",
-      "cache_id": "",
+      "cache_id": "v1_14",
       "store_fakeip": true,
       "store_dns": true
     },
@@ -257,13 +267,13 @@ let allProxyTagsRU = singboxProxies.map(p => p.tag)
 
 // 4. Находим и заполняем outbounds группы селекторов/urltest нашего шаблона
 // (тут нужно отредактировать, если вы меняли предложенный шаблон на свои группы селекторов/urltest)
-config.outbounds.find(p => p.tag === '🌍 Выбор узла')?.outbounds?.push('🌍 Авто', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🇷🇺 Россия')?.outbounds?.push('🇷🇺 Авто', '🔌 Провайдер', ...allProxyTagsRU)
-config.outbounds.find(p => p.tag === '🏴‍☠️ Торрент')?.outbounds?.push('🌍 Авто', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🕹️ Игры')?.outbounds?.push('🌍 Авто', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🤖 AI')?.outbounds?.push('🌍 Авто', '🔌 Провайдер', ...allProxyTags)
-config.outbounds.find(p => p.tag === '🌍 Авто')?.outbounds?.push(...allProxyTags)
-config.outbounds.find(p => p.tag === '🇷🇺 Авто')?.outbounds?.push(...allProxyTagsRU)
+config.outbounds.find(p => p.tag === '🌍 Proxy')?.outbounds?.push('🌍 Auto', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🇷🇺 RU')?.outbounds?.push('🇷🇺 Auto', '🔌 DIRECT', ...allProxyTagsRU)
+config.outbounds.find(p => p.tag === '🏴‍☠️ Torrent')?.outbounds?.push('🌍 Auto', '🔌 DIRECT', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🕹️ Games')?.outbounds?.push('🌍 Auto', '🔌 DIRECT', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🤖 AI')?.outbounds?.push('🌍 Auto', '🔌 DIRECT', ...allProxyTags)
+config.outbounds.find(p => p.tag === '🌍 Auto')?.outbounds?.push(...allProxyTags)
+config.outbounds.find(p => p.tag === '🇷🇺 Auto')?.outbounds?.push(...allProxyTagsRU)
 
 // 5. Добавляем в самый конец сами узлы прокси-серверов из подписки/коллекции
 config.outbounds.push(...singboxProxies, ...singboxProxiesRU)
