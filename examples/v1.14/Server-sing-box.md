@@ -451,7 +451,7 @@ services:
       "listen_port": 2087,
       "users": [
         {
-          "name": "<ваш_имя_пользователя>", // Любое имя.
+          "name": "<ваше_имя_пользователя>", // Любое имя.
           "uuid": "<ваш_uuid>", // Сгенерировать например в Linux bash: cat /proc/sys/kernel/random/uuid
           "flow": ""  // Оставляем пустым
         }
@@ -475,7 +475,42 @@ services:
       }
     },
 
-    // 8. Hysteria 2
+    // 8. ShadowTLS V3 через Shadowsocks 2022 TCP AES-128 c Multiplex
+    // Направляем трафик для его конечной расшифровки на сервере через ShadowTLS на Shadowsocks (опция detour),
+    // клиенты при этом будут использовать обратное: протокол Shadowsocks -> через ShadowTLS,
+    // т.к. ShadowTLS сам по себе не шифрует трафик.
+		{
+			"type": "shadowtls",
+			"tag": "shadowtls-in",
+			"listen": "::",
+			"listen_port": 6443,
+			"version": 3,
+			"users": [
+				{
+					"name": "<ваш_имя_пользователя>",
+					"password": "<ваш_пароль>"
+				}
+			],
+			"handshake": {
+				"server": "<сайт.маскировки>", // Требуется, чтобы веб-сайт поддерживал TLS 1.3
+				"server_port": 443
+			},
+      "strict_mode": true,
+			"detour": "shadowsocks-in" // Направляем трафик на shadowsocks
+		},
+		{
+			"type": "shadowsocks",
+			"tag": "shadowsocks-in",
+			"listen": "127.0.0.1",
+			"method": "2022-blake3-aes-128-gcm",
+			"password": "<ваш_пароль>",  // Например, через openssl rand -base64 16
+      "network": "tcp", // Используем только TCP, т.к. на клиенте включим UDP-over-TCP
+      "multiplex": {
+        "enabled": true
+      }
+		},
+
+    // 9. Hysteria 2
     // Фишки и логика работы:
     // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
     // - Умные буферы (окна в 0): Sing-box сам на лету адаптирует буфер под качество линии (4G/Wi-Fi).
@@ -519,7 +554,7 @@ services:
       "brutal_debug": false
     }
 
-    // 8.1. Hysteria 2 с Realm на Cloudflare Workers
+    // 9.1. Hysteria 2 с Realm на Cloudflare Workers
     // Фишки и логика работы:
     // - Гигабитный канал: Сервер зажат в 1000 Mbps. На клиентах можно ставить скорость меньше.
     // - Serverless-координатор на Workers: Realm крутится на cf-workers (*.workers.dev).
@@ -580,7 +615,7 @@ services:
       }
     },
 
-    // 9. TUIC | Основан на QUIC, встроенная поддержка UDP, ускорение BBR
+    // 10. TUIC | Основан на QUIC, встроенная поддержка UDP, ускорение BBR
     {
       "type": "tuic",
       "tag": "tuic-in",
@@ -608,7 +643,7 @@ services:
       "connection_receive_window": 0
     },
 
-    // 10. Cloudflared | Панель sing-box через Cloudflare Tunnel
+    // 11. Cloudflared | Панель sing-box через Cloudflare Tunnel
     // Если хочется панельку серверную для отслеживания логов, состояния соединений и тд.
     // Необходим привязанный домен в панели через DNS со статусом Proxied (оранжевое облако)
     // Токен (очень длинный) Cloudflare получить в панели при создании тунеля https://dash.cloudflare.com/?to=/:account/tunnels
@@ -648,8 +683,8 @@ services:
       },
       "users": [
         {
-          "name": "<ваш_имя>", // Выбранное вами имя realm. Должно быть длиной от 6 до 64 символов,
-                               // начинаться с буквы или цифры и содержать только латинские буквы, цифры, - или _.
+          "name": "<ваше_имя>", // Выбранное вами имя realm. Должно быть длиной от 6 до 64 символов,
+                                // начинаться с буквы или цифры и содержать только латинские буквы, цифры, - или _.
           "token": "<ваш_токен>", // Общий bearer-токен сервера рандеву.
           "max_realms": 10  // Максимальное количество слотов, которые этот пользователь может занимать одновременно.
         }

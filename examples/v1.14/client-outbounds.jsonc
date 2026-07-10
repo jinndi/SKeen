@@ -233,7 +233,45 @@
     }
   },
 
-  // 8. Hysteria2
+  // 8. Shadowsocks 2022 UDP-over-TCP (UoT) и Multiplex через ShadowTLS V3
+  // Используем ShadowTLS в качестве выхода шифрованного Shadowsocks трафика.
+  // ВАЖНО!: Не используте в селекторах ShadowTLS узел напрямую,
+  // а лучше не включаейте его в них, т.к. сам по себе он не шифрует трафик.
+  {
+    "type": "shadowsocks",
+    "tag": "ss->shadowtls",
+    "method": "2022-blake3-aes-128-gcm",
+    "password": "<ваш_пароль>",
+    "udp_over_tcp": {
+      "enabled": true,
+      "version": 2
+    },
+    "multiplex": {
+      "enabled": true,
+      "protocol": "h2mux",
+      "max_connections": 4,
+      "max_streams": 16
+    },
+    "detour": "shadowtls" // Направляем трафик через tag=shadowtls
+  },
+  {
+    "type": "shadowtls",
+    "tag": "shadowtls",
+    "server": "<ваш_домен_или_ip>",
+    "server_port": 6443,
+    "version": 3,
+    "password": "<ваш_пароль>",
+    "tls": {
+      "enabled": true,
+      "server_name": "<сайт.маскировки>", // Указан на сервере
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      }
+    }
+  },
+
+  // 9. Hysteria2
   {
     "type": "hysteria2",
     "tag": "hy2",
@@ -265,7 +303,7 @@
     "connection_receive_window": 0
   },
 
-  // 8.1. Hysteria2 с Realm (Cloudflare Workers)
+  // 9.1. Hysteria2 с Realm (Cloudflare Workers)
   {
     "type": "hysteria2",
     "tag": "hy2-realm",
@@ -319,7 +357,7 @@
     }
   },
 
-  // 9. TUIC
+  // 10. TUIC
   {
     "type": "tuic",
     "tag": "tuic-bbr",
