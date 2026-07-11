@@ -518,7 +518,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        //   didn't receive a FakeIP, but still need to be proxied.
                        // - Default value, if not specified, is /opt/etc/skeen/pure_cidr.list
         "clients": []  // Clients (IP addresses or CIDRs) that need FakeIP interception applied
-                       // Example: [ "192.168.2.10", "192.168.2.11" ]
+                       // Example: [ "192.168.2.10", "192.168.2.11" ], if [] - all are used.
                        // For stable operation, a static IP address must be assigned to these clients;
                        // this is done in the Keenetic/Netcraze WebUI under the "Client Lists" tab
       }
