@@ -223,24 +223,16 @@ The DNS module in Sing-box is a core part of how it operates. It is used for:
 
 - preventing DNS leaks;
 - hiding DNS queries from your ISP;
-- bypassing DNS-level blocking.
+- bypassing DNS-level blocking;
+- flexible routing by rules.
 
 Does ADGuard Home solve these problems?
 Short answer - no.
 
-ADGuard Home is primarily designed for filtering (ads, trackers), but it does not provide full privacy or reliable censorship bypass.
+ADGuard Home is primarily designed for filtering (ads, trackers).
 
 Does Sing-box cover the functionality of ADGuard Home?
 Yes - Sing-box also supports DNS filtering and can fully replace ADGuard Home.
-
-**What about memory consumption?**
-
-[Multi ULTIMATE - Aggressive protection by hagezi](https://github.com/hagezi/dns-blocklists#closed_book-multi-ultimate---aggressive-protection-) (not Mini) takes [~2 MB in memory](https://github.com/KaringX/karing-ruleset/blob/sing/AdGuard/HostlistsRegistry/hagezi_ultimate.srs), while [in AdGuard it takes ~6 MB](https://github.com/KaringX/karing-ruleset/blob/sing/AdGuard/HostlistsRegistry/hagezi_ultimate.txt).
-
-The total memory consumption of sing-box is ~29 MB along with this `rule_set` and other necessary rules (see the `examples` -> `v1.14` folder). This overhead depends less on the size of the `.srs` file itself and more on the number of active connections.
-
-<img width="145" height="154" alt="image" src="https://github.com/user-attachments/assets/a19f092e-524b-4352-9a20-e51202cde0a8" />
-
 </details>
 
 <details>
@@ -261,13 +253,18 @@ An example of how to bind a connection to a specific interface can be found in t
 
 > **Note:** Selecting a provider in the SKeen policy has no effect by default without setting a policy mark in the routing or within the **outbounds** of the **sing-box** configuration. You can select any connection, but be aware: by default, the internet gateway specified in the default policy will be used, unless you have bound all or selected connections (**outbound**) to a specific interface.
 
+**Question:** Why is the option to choose a provider missing from the router policies?
+
+**Answer:** Routing is managed solely within the sing-box configuration. In the event that the primary provider fails, failover to the backup channel is disabled. This is intentional for your security to guarantee entirely predictable behavior.
 </details>
 
 <details>
   <summary>🏠 KeenDNS in TProxy mode?</summary>
 <br>
 
-If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from the local network in **TProxy** mode, you need to configure a `hosts` or `local` type DNS server in the sing-box configuration (see configuration examples in the `examples/keendns-tproxy-local-access.json file`). If internet access is allowed, no additional
+If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from the local network in **TProxy** mode, you need to configure a `hosts` or `local` type DNS server in the sing-box configuration (see configuration examples in the `examples/keendns-tproxy-local-access.json file`). If internet access is allowed, no additional.
+
+**Note:** Freeing up port 443 is absolutely not required for TProxy to work.
 
 > **Note:** Changing the HTTPS port in the web interface takes effect only after a subsequent router reboot. This is unrelated to SKeen and is a known bug in the firmware itself.
 
@@ -299,6 +296,8 @@ If you have disabled internet access to your subdomain in the "Domain Name" sect
 ```
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
 ```
+
+Russian-localized version: See [README-RU.md](README-RU.md)
 
 <details>
   <summary>⚠️ Installation failed? (click to expand)</summary>
