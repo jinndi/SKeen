@@ -84,9 +84,10 @@
       "enabled": true,
       "server_name": "<ваш_домен.com>",
       "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
-      "spoof": "yandex.ru", // Внедрить поддельный TLS ClientHello (индивидуально),
+      "spoof": "yandex.ru", // Внедрить поддельный TLS ClientHello (подбирается индивидуально),
                             // содержащий разрешенный SNI, перед реальным, чтобы обмануть промежуточные устройства,
                             // фильтрующие SNI и разрешающие определенные имена хостов.
+                            // ВАЖНО: Требует ROOT прав (в Entware имеются)
       "utls": {
         "enabled": true,
         "fingerprint": "chrome"

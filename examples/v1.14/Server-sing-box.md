@@ -479,36 +479,36 @@ services:
     // Направляем трафик для его конечной расшифровки на сервере через ShadowTLS на Shadowsocks (опция detour),
     // клиенты при этом будут использовать обратное: протокол Shadowsocks -> через ShadowTLS,
     // т.к. ShadowTLS сам по себе не шифрует трафик.
-		{
-			"type": "shadowtls",
-			"tag": "shadowtls-in",
-			"listen": "::",
-			"listen_port": 6443,
-			"version": 3,
-			"users": [
-				{
-					"name": "<ваш_имя_пользователя>",
-					"password": "<ваш_пароль>"
-				}
-			],
-			"handshake": {
-				"server": "<сайт.маскировки>", // Требуется, чтобы веб-сайт поддерживал TLS 1.3
-				"server_port": 443
-			},
+    {
+      "type": "shadowtls",
+      "tag": "shadowtls-in",
+      "listen": "::",
+      "listen_port": 6443,
+      "version": 3,
+      "users": [
+        {
+          "name": "<ваш_имя_пользователя>",
+          "password": "<ваш_пароль>"
+        }
+      ],
+      "handshake": {
+        "server": "<сайт.маскировки>", // Требуется, чтобы веб-сайт поддерживал TLS 1.3
+        "server_port": 443
+      },
       "strict_mode": true,
-			"detour": "shadowsocks-in" // Направляем трафик на shadowsocks
-		},
-		{
-			"type": "shadowsocks",
-			"tag": "shadowsocks-in",
-			"listen": "127.0.0.1",
-			"method": "2022-blake3-aes-128-gcm",
-			"password": "<ваш_пароль>",  // Например, через openssl rand -base64 16
+      "detour": "shadowsocks-in" // Направляем трафик на shadowsocks
+    },
+    {
+      "type": "shadowsocks",
+      "tag": "shadowsocks-in",
+      "listen": "127.0.0.1",
+      "method": "2022-blake3-aes-128-gcm",
+      "password": "<ваш_пароль>",  // Например, через openssl rand -base64 16
       "network": "tcp", // Используем только TCP, т.к. на клиенте включим UDP-over-TCP
       "multiplex": {
         "enabled": true
       }
-		},
+    },
 
     // 9. Hysteria 2
     // Фишки и логика работы:
@@ -820,21 +820,21 @@ gg4S7BCgcc/FuadNMH/ev+sG7kWXM5ctHw6/iYZokY8=
 * Обычный запуск в фоновом режиме:
   Создает сети, тома и запускает контейнеры. Если конфигурация проекта не менялась, Docker Compose не будет пересоздавать работающие контейнеры.
 
-```
+```bash
 docker compose up -d
 ```
 
 * Принудительный перезапуск с пересозданием:
   Используется, если вам нужно гарантированно пересоздать контейнеры с нуля, даже если их конфигурация в YAML-файле осталась прежней.
 
-```
+```bash
 docker compose up -d --force-recreate
 ```
 
 * Остановка и удаление контейнеров и сетей:
 
-```
-  docker compose down --remove-orphans
+```bash
+docker compose down --remove-orphans
 ```
 
   (Флаг --remove-orphans наводит порядок и удаляет контейнеры старых сервисов, которые вы уже убрали из файла docker-compose.yml)
@@ -843,21 +843,21 @@ docker compose up -d --force-recreate
 
 * Просмотр логов в реальном времени:
 
-```
-  docker compose logs -f --tail 100
+```bash
+docker compose logs -f --tail 100
 ```
 
   (Флаг -f запускает «живой» поток логов, а --tail 100 выводит только последние 100 строк, защищая ваш терминал от зависания из-за огромного объема старых записей)
 
 * Просмотр статуса запущенных контейнеров:
 
-```
+```bash
 docker compose ps
 ```
 
 * Выполнение команды внутри запущенного контейнера:
 
-```
+```bash
 docker compose exec <имя_сервиса> <команда>
 ```
 
@@ -867,13 +867,13 @@ docker compose exec <имя_сервиса> <команда>
 
 - Шаг 1: Скачать новые версии образов из реестра (например, Docker Hub)
 
-```
+```bash
 docker compose pull
 ```
 
 - Шаг 2: Пересоздать и перезапустить контейнеры на основе новых образов
 
-```
+```bash
 docker compose up -d
 ```
 
@@ -884,13 +884,13 @@ docker compose up -d
 * Полное удаление сервисов и скачанных образов:
   Останавливает проект и удаляет не только контейнеры и сети, но и все локально сохраненные образы, используемые в этом конфигурационном файле.
 
-```
+```bash
 docker compose down --rmi all
 ```
 
 * Полное удаление всего окружения вместе с данными (Томами):
   Флаг -v (volumes) удаляет все именованные и анонимные тома (если имелись), привязанные к проекту.
 
-```
+```bash
 docker compose down --rmi all -v
 ```
