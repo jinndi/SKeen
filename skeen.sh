@@ -1807,7 +1807,6 @@ tun_create() {
 
   rci_post "" "$payload" >/dev/null 2>&1 || {
     echoerr "Failed to create interface: $opkgtun_desc" && return
-    release_version_ge5
   }
 
   local opkgtun_name_lower
@@ -1836,7 +1835,6 @@ tun_delete() {
     if [ "$opkgtun_desc" = "$description" ]; then
       rci_delete "interface/${iface}" >/dev/null 2>&1 || {
         echoerr "Error removing interface: $opkgtun_desc" && return
-        release_version_ge5
       }
       rci_post "system/configuration/save" >/dev/null 2>&1
 
@@ -3581,6 +3579,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   sync) sync_config "$2" ;;
   iface) show_iface ;;
   tun)
+    release_version_ge5 || return 1
     case "$2" in
     create) tun_create "$3" "$4" ;;
     delete) tun_delete "$3" ;;
