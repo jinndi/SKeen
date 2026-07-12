@@ -58,8 +58,7 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
 * **Интеграция**: Управление и мониторинг отлично реализуются через встроенный интерфейс **Zashboard**, что исключает избыточность.
 * **Чистота системы**: Минимум зависимостей и отсутствие лишних открытых портов повышают общую безопасность и стабильность системы.
 * **Полный контроль**: Прямое редактирование конфигов позволяет использовать 100% возможностей Sing-Box без ограничений, накладываемых упрощенными интерфейсами.
-* **Инструмент, а не игрушка**: Пока другие проекты соревнуются в рисовании красивых кнопок и графиков, превращая роутер в тормозящую фоторамку, SKeen фокусируется на передаче пакетов. Я считаю создание тяжелых панелей для сетевого скрипта признаком плохого тона и неумения работать с системой напрямую. Если вам нужна гирлянда с интерфейсом - вы ошиблись адресом; если вам нужна скорость — вы там, где нужно.
-
+* **Инструмент, а не игрушка**: SKeen фокусируется на передаче пакетов. Я считаю создание тяжелых панелей для сетевого скрипта признаком плохого тона и неумения работать с системой напрямую.
 </details>
 
 <details>
@@ -390,6 +389,7 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 │       └── config/        # Директория конфигов sing-box
 │           ├── log.json
 │           ├── dns.json
+│           ├── ntp.json
 │           ├── inbounds.json
 │           ├── outbounds.json
 │           ├── route.json
@@ -598,18 +598,10 @@ exec /opt/etc/init.d/S51dropbear start
 
 Подходит ли вам это решение? Каждый решает сам, исходя из текущих ограничений и личных требований к производительности и безопасности сети.
 
-## ⚖️ Авторы и правовая информация
-
-* **SKeen** распространяется под лицензией [MIT](https://github.com/jinndi/SKeen/blob/main/LICENSE).
-* **Ядро sing-box:** В данном проекте используются бинарные сборки [sing-box](https://github.com/SagerNet/sing-box), которые распространяются под лицензией **GPLv3**.
-* В соответствии с требованиями лицензии GPLv3, мы выражаем признательность оригинальным авторам. SKeen предоставляет скрипты и логику конфигурации («обёртку»), в то время как основной функционал обеспечивается официальными бинарными файлами sing-box.
 
 ### 🔗 Полезные ссылки
 
-  - Плагин синхронизации: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
-  - Sub-Store-Docker: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
-  - Схема Sing-box: [https://gist.github.com/artiga033/fea992d95ad44dc8d024b229223b1002](https://gist.github.com/artiga033/fea992d95ad44dc8d024b229223b1002)
-  - Различные примеры настроек: [https://proxy-tutorials.dustinwin.us.kg](https://proxy-tutorials.dustinwin.us.kg)
-  - Генератор outbounds: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
-  - Наборы правил Karing: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
-  - Кастомные наборы правил: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
+- Sub-Store-Docker: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
+- Плагин синхронизации: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
+- Наборы правил Karing: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
+- Кастомные наборы правил: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)

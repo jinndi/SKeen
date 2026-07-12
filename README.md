@@ -59,7 +59,7 @@ The project intentionally does not include a dedicated management panel. This ap
 * **System Security & Stability**: Fewer active web services and open ports minimize the potential attack surface and reduce the risk of software conflicts within KeeneticOS.
 * **No Functional Limits**: Direct configuration via CLI/files ensures access to 100% of Sing-Box's features, which are often restricted or oversimplified in graphical interfaces.
 * **Minimalist Footprint**: The script remains lightweight with zero dependencies, requiring no extra packages like web servers or interpreters that consume valuable flash storage.
-* **A Tool, Not a Toy**: While other projects compete to draw pretty buttons and flashy graphs—effectively turning a router into a laggy digital photo frame SKeen focuses on moving packets. We consider building heavy web panels for a network script a sign of poor engineering and an inability to handle the system directly. If you need a Christmas tree with a UI, you're in the wrong place; if you need performance, you've arrived.
+* **A Tool, Not a Toy**: SKeen focuses on packet forwarding. I believe that building heavy dashboards for a network script is bad form and shows an inability to work with the system directly.
 </details>
 
 <details>
@@ -391,6 +391,7 @@ Manage the package further using the `skeen` command.
 │       └── config/        # sing-box config dir
 │           ├── log.json
 │           ├── dns.json
+│           ├── ntp.json
 │           ├── inbounds.json
 │           ├── outbounds.json
 │           ├── route.json
@@ -600,17 +601,9 @@ The addresses of such connections can be analyzed beforehand (there is no point 
 
 Is this solution right for you? Everyone decides for themselves based on current constraints and personal requirements for network performance and security.
 
-## ⚖️ Credits & Legal
-
-* **SKeen** is licensed under the [MIT](https://github.com/jinndi/SKeen/blob/main/LICENSE) License.
-* **sing-box Core:** This project utilizes binary distributions of [sing-box](https://github.com/SagerNet/sing-box), which is licensed under **GPLv3**.
-* In accordance with the GPLv3 license, we acknowledge the original authors. SKeen provides the scripts and configuration logic (the "wrapper"), while the core functionality is handled by the official sing-box binaries.
-
 ### 🔗 Useful links
-- Sync plugin: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
+
 - Sub-Store-Docker: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
-- Sing-box schema: [https://gist.github.com/artiga033/fea992d95ad44dc8d024b229223b1002](https://gist.github.com/artiga033/fea992d95ad44dc8d024b229223b1002)
-- Proxy setup guide: [https://proxy-tutorials.dustinwin.us.kg](https://proxy-tutorials.dustinwin.us.kg)
-- Outbound server block generator: [https://4n0nymou3.github.io/proxy-to-singbox-converter/](https://4n0nymou3.github.io/proxy-to-singbox-converter/)
-- Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
+- Sync plugin: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
 - Custom rulesets: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
+- Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
