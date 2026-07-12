@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.20.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.1...SKeen-v4.20.2) (2026-07-12)
+
+
+### 🐛 Fix
+
+* check xt_owner module existence for firmware &lt; 5 ([46bd38d](https://github.com/jinndi/SKeen/commit/46bd38d2d9106fe6c89092686759dbbd603d1926))
+* **tun:** fixed firmware version check for executing skeen tun &lt;cmd&gt; commands ([292a24b](https://github.com/jinndi/SKeen/commit/292a24bf3e896c450f76b4a01265d0a1f51f9cc0))
+
 ## [4.20.1](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.0...SKeen-v4.20.1) (2026-07-10)
 
 
