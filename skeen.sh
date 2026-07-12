@@ -1075,17 +1075,7 @@ check_port() {
 
 is_owner_module_working() {
   [ -d "/sys/module/xt_owner" ] && return 0
-
-  if iptables -m owner --help 2>&1 | grep -q "owner match options"; then
-    return 0
-  fi
-
-  if iptables -w -t mangle -I OUTPUT 1 -m owner --gid-owner 65534 -j RETURN >/dev/null 2>&1; then
-    iptables -w -t mangle -D OUTPUT 1 >/dev/null 2>&1
-    return 0
-  fi
-
-  return 1
+  release_version_ge5 >/dev/null 2>&1 && return 0 || return 1
 }
 
 load_module() {
