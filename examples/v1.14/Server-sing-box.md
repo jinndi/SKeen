@@ -811,6 +811,137 @@ gg4S7BCgcc/FuadNMH/ev+sG7kWXM5ctHw6/iYZokY8=
     - Минусы настройки mTLS: Избыточная сложность, Вам придется генерировать отдельный сертификат для клиентских устройств (смартфона/ПК), прописывать его в outbound клиента, а хэш вставлять в inbound сервера где в блоке TLS так же необходимо явно управлять параметром `client_authentication`. Чтобы mTLS заработал, его нужно переключить в режим `"require-and-verify"`. При дефолтном значении `"no"` сервер не будет требовать «паспорт» у клиента, и вся защита mTLS останется неактивной.
 
 
+### Encrypted Client Hello (Зашифрованное приветствие клиента)
+
+ECH (Encrypted Client Hello) шифрует TLS ClientHello, включая SNI (Server Name Indication), так что промежуточным устройствам виден только подставное «публичное имя» (public name).
+
+Без ECH SNI передаётся в открытом виде в каждом рукопожатии, что позволяет промежуточным устройствам анализировать и блокировать его. С ECH настоящее имя сервера находится внутри зашифрованных данных.
+
+> [!NOTE]
+> Параметр `ech` в конфигурационном файле sing-box защищает имя домена (SNI), к которому обращается клиент, шифруя его в момент установки TLS-соединения. Для этого принимающий сервер также должен поддерживать технологию ECH. По этой причине **для самоподписанных сертификатов со своим SNI в этом нет никакой необходимости**, так как имя домена уже подменено на уровне самого сертификата, а клиент проверяет подлинность сервера напрямую через закрепленный ключ.
+
+sing-box реализует ECH с обеих сторон в виде вложенного подблока `ech` в `tls`.
+
+**Для работы ECH требуется TLS 1.3.**
+Установите `tls.min_version: "1.3"` если вы хотите это обеспечить (для QUIC протоколов не обязательно);
+TLS 1.2 соединение с добавочным номером ECH молча разрывается.
+
+Любые ключи и пароли можно получить через sing-box если установлен локально:
+
+```bash
+sing-box generate -h
+```
+
+Либо в Entware если используете предоставляемый SKeen бинарник:
+
+```bash
+skeen-box generate -h
+```
+
+В справке выведутся доступны команды:
+
+```bash
+  ech-keypair     Сгенерировать TLS ECH ключевую пару
+  rand            Сгенерировать random bytes
+  reality-keypair Сгенерировать reality ключевую пару
+  tls-keypair     Сгенерировать TLS self sign ключевую пару
+  uuid            Сгенерировать UUID string
+  vapid-keypair   Сгенерировать VAPID ключевую пару
+  wg-keypair      Сгенерировать WireGuard ключевую пару
+```
+
+(Кстати, команды отсюда можно использовать для генерации других нужных паролей и пар.)
+
+Далее мы посмотрим справку для нужной нам команды `ech-keypair`:
+
+```bash
+skeen-box generate ech-keypair -h
+```
+
+Получим:
+
+```bash
+Usage:
+  sing-box generate ech-keypair <plain_server_name>
+```
+
+Давайте создам ключевую пару TLS ECH для yandex.ru (подставной SNI, который отображается в открытом виде на этапе хендшейка.):
+
+```bash
+skeen-box generate ech-keypair yandex.ru
+```
+
+Получим следующего вида пару ключей:
+
+```text
+-----BEGIN ECH CONFIGS-----
+AET+DQBAAAAgACDiR8uciGaoqUAZTA9SWli/zxQXHKrCcFaH7V+7caZlZAAMAAEA
+AQABAAIAAQADAAl5YW5kZXgucnUAAA==
+-----END ECH CONFIGS-----
+-----BEGIN ECH KEYS-----
+ACAeWO7UdIrm1NW+mA+PpvohEz4iPkJV+t7CXP21syRR0ABE/g0AQAAAIAAg4kfL
+nIhmqKlAGUwPUlpYv88UFxyqwnBWh+1fu3GmZWQADAABAAEAAQACAAEAAwAJeWFu
+ZGV4LnJ1AAA=
+-----END ECH KEYS-----
+```
+
+На сервере добиться этого же результата можно при запущенном контейнере, выполнив команду:
+
+```bash
+docker exec -it sing-box sing-box generate ech-keypair yandex.ru
+```
+
+Если еще не запущен, получаем так:
+
+```bash
+docker run --rm -i \
+  -v /etc/sing-box:/etc/sing-box/ \
+  ghcr.io/sagernet/sing-box:latest-testing \
+  generate ech-keypair yandex.ru
+```
+
+> [!NOTE]
+> В команду generate ech-keypair всегда нужно передавать подставной домен (decoy), который вы хотите показывать провайдеру в открытом виде. А ваш настоящий домен указывается только в поле server_name в самом конфиге клиента.
+
+На стороне сервера в блоке `tls` включаем `ech` так:
+
+```json
+  ...,
+  "tls": {
+    ...,
+    "ech": {
+      "enabled": true,
+      "key": [
+        "-----BEGIN ECH KEYS-----",
+        "ACAeWO7UdIrm1NW+mA+PpvohEz4iPkJV+t7CXP21syRR0ABE/g0AQAAAIAAg4kfL",
+        "nIhmqKlAGUwPUlpYv88UFxyqwnBWh+1fu3GmZWQADAABAAEAAQACAAEAAwAJeWFu",
+        "ZGV4LnJ1AAA=",
+        "-----END ECH KEYS-----"
+      ]
+    },
+  }
+```
+
+На стороне клиента:
+
+```json
+  ...,
+  "tls": {
+    "server_name": "<ваш_реальный_домен>",
+    "min_version": "1.3",
+    ...,
+    "ech": {
+      "enabled": true,
+      "config": [
+        "-----BEGIN ECH CONFIGS-----",
+        "AET+DQBAAAAgACDiR8uciGaoqUAZTA9SWli/zxQXHKrCcFaH7V+7caZlZAAMAAEA",
+        "AQABAAIAAQADAAl5YW5kZXgucnUAAA==",
+        "-----END ECH CONFIGS-----"
+      ]
+    }
+  }
+```
+
 ### Пример управления сервисом sing-box
 
 Все команды выполняются из директории, где находится ваш файл compose.yml.
