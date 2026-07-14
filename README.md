@@ -270,6 +270,24 @@ If you have disabled internet access to your subdomain in the "Domain Name" sect
 
 </details>
 
+<details>
+  <summary>🛣️ Routing by DSCP?</summary>
+<br>
+
+**This feature is not and will not be available in SKeen.**
+
+Reasons why:
+
+* **Breaks HW NAT:** Checking DSCP tags in iptables forces the router to inspect every single packet on the CPU. This completely disables hardware acceleration (PPE/HNAT) for all of the client's connections, tanking your overall internet speed.
+* **Windows Quirks:** The Windows network stack regularly resets DSCP tags after OS updates or network profile changes (via NLA).
+* **Incompatibility:** It is technically impossible to configure application-level DSCP tagging on mobile devices (iOS/Android) or Smart TVs.
+* **ISPs Strip Tags:** Attempting to send packets with DSCP tags to your ISP can lead to unpredictable latency, packet loss, and traffic deprioritization on their end.
+
+**Q:** What should I do instead?
+
+**A:** Learn how to build routing using Sing-box rules, and use FakeIP to filter traffic.
+</details>
+
 ### 🚀 Features
 
   - TProxy/Redirect/Hybrid/Tun/DNS modes ✓
