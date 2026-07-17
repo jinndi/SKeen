@@ -153,17 +153,10 @@
     ],
 
     "rule_set": [
-      { "tag": "ipdetect",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs" },
-      { "tag": "private",   "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs" },
-      { "tag": "trackers",  "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs" },
-      { "tag": "games",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs" },
-      { "tag": "ai",        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs" },
-      { "tag": "ru",        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs" },
-      { "tag": "ruip",      "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs" },
-      { "tag": "adguard",   "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs" },
-      { "tag": "cheburnet", "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs" },
-      { "tag": "filter",    "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/filter.srs" },
-      { "tag": "proxy",     "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs" }
+      {
+        "tag": [ "ipdetect", "private", "adguard", "cheburnet", "trackers", "filter", "games", "ai", "proxy", "ru", "ruip" ],
+        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs"
+      }
     ],
 
     "final": "🌍 Proxy",
