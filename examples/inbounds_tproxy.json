@@ -12,10 +12,7 @@
       "type": "tproxy",
       "tag": "tproxy-in",
       "listen": "::",
-      "listen_port": 65082,
-      "tcp_fast_open": true,
-      "udp_fragment": true,
-      "udp_timeout": "1m0s"
+      "listen_port": 65082
     }
   ]
 }

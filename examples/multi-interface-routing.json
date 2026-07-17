@@ -11,11 +11,15 @@
   ...,
   "outbounds": [
     ...,
+    // 1st example / Binding DIRECT to LTE interface
+    // 1-й пример / Привязка DIRECT к LTE интерфейсу
     {
       "type": "direct",
       "tag": "direct-lte",
       "bind_interface": "lte_br0" // Bind the direct outbound to the LTE interface / Привязать прямой исходящий трафик к интерфейсу LTE
     },
+    // 2nd example / Binding VLESS to PPP1 interface
+    // 2-й пример / Привязка VLESS к PPP1 интерфейсу
     {
       "tag": "vless-out",
       "type": "vless",
@@ -23,6 +27,8 @@
       "bind_interface": "ppp1" // Bind the vless outbound to the PPP1 interface / Привязать исходящий трафик VLESS к интерфейсу PPP1
     }
   ],
+  // 3rd example / Default binding for all connections to PPP0 interface
+  // 3-й пример / Привязка по умолчанию для всех соединений к PPP0 интерфейсу
   "route": {
     ...,
     "auto_detect_interface": false, // Disable automatic interface detection / Отключить автоматическое определение интерфейса

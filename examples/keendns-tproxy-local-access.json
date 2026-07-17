@@ -16,7 +16,7 @@
   "dns": {
     "servers": [
       {
-        "tag": "dns-hosts", // Add a local DNS server with hosts type
+        "tag": "hosts",     // Add a local DNS server with hosts type
         "type": "hosts",    // Добавить локальный DNS-сервер типа hosts
         "predefined": {
           "your-name.netcraze.pro": [ // Map the domain to a local IP address
@@ -30,14 +30,14 @@
         "domain_suffix": [         // Add a rule to route DNS queries for the specified domain suffix to the local DNS server
           "your-name.netcraze.pro" // Добавить правило для маршрутизации DNS-запросов для указанного суффикса домена на локальный DNS-сервер
         ],
-        "server": "dns-hosts"
+        "server": "hosts"
       }
     ]
   }
 }
 
-// 2nd example:
-// 2-й пример:
+// 2nd example (Recommended):
+// 2-й пример (Рекомендуется):
 
 /// This example demonstrates how to configure KeenDNS to route DNS queries for specific domain keywords
 // to a local DNS server with the "local" type.
@@ -50,7 +50,7 @@
   "dns": {
     "servers": [
       {
-        "tag": "dns-local", // Add a local DNS server with local type
+        "tag": "dns_local", // Add a local DNS server with local type
         "type": "local"     // Добавить локальный DNS-сервер типа local
       }
     ],
@@ -60,7 +60,7 @@
           "keenetic",        // Добавить правило для маршрутизации DNS-запросов для указанных ключевых слов на локальный DNS-сервер
           "netcraze"
         ],
-        "server": "dns-local"
+        "server": "dns_local"
       }
     ]
   }
