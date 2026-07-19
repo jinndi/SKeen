@@ -312,4 +312,347 @@ skeen sync
 skeen restart
 ```
 
-Поздравляем, вы стали продвинутым пользователем! Осталось [настроить мобильное устройство](https://github.com/jinndi/RKNHardering-defense/blob/main/SUB-STORE.md), если это вам необходимо.
+Поздравляем, вы стали продвинутым пользователем!
+
+### Бонус: Шаблоны для Windows/Linux ПК и Android смартфонов.
+
+Начиная **с версии sing-box 1.14.0-alpha.45** доступен графический клиент для `Windows`, для `Linux` **начиная с 1.14.0-alpha.48**.
+
+Ниже пример шаблона для настольных клиентов Linux/Windows, отличие от шаблона для роутера только в:
+
+ - `inbouns`: вместо `tproxy` используется `tun`
+ - отсутвия блока `services` и `experimental.clash_api`
+ - Увеличено в два раза значение `experimental.debug.memory_limit`.
+
+> Вы также можете дополнительно использовать больше правил и действий доступных в таких средах, например  маршрутизацию по процессам в зависимости от используемой системы (`process_*`)
+
+
+```jsonc
+{
+  "log": { "disabled": false, "level": "debug", "output": "", "timestamp": true },
+
+  "dns": {
+    "servers": [
+      {
+        "tag": "hosts", "type": "hosts",
+        "predefined": {
+          "dns.google": [ "8.8.8.8", "8.8.4.4" ],
+          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ],
+          "ntc.party": [ "130.255.77.28" ]
+        }
+      },
+      { "tag": "dns_local",  "type": "local" },
+      { "tag": "dns_direct", "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_proxy",  "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
+    ],
+
+    "rules": [
+      { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "ip_version": 6, "action": "reject" },
+      { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
+      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
+      { "rule_set": [ "private" ], "server": "dns_local" },
+      { "clash_mode": "Direct", "server": "dns_direct" },
+      { "rule_set": [ "adguard" ], "action": "predefined" },
+      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
+      { "rule_set": [ "trackers" ], "server": "dns_direct" },
+      { "rule_set": [ "filter" ], "server": "dns_direct" },
+      { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
+      { "match_response": true, "rule_set": [ "ruip" ], "action": "respond" },
+      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
+      { "clash_mode": "Global", "server": "dns_fakeip" }
+    ],
+
+    "final": "dns_proxy",
+    "strategy": "ipv4_only",
+    "timeout": "3s",
+    "cache_capacity": 16384,
+    "optimistic": { "enabled": true, "timeout": "1h0m0s" },
+    "reverse_mapping": true
+  },
+
+  "ntp": {
+    "enabled": true,
+    "interval": "30m0s",
+    "server": "ntp.msk-ix.ru",
+    "server_port": 123,
+    "detour": "🇷🇺 RU"
+  },
+
+
+  "http_clients": [
+    {
+      "tag": "default",
+      "version": 2,
+      "detour": "GLOBAL",
+      "stream_receive_window": 0,
+      "connection_receive_window": 0
+    }
+  ],
+
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "tun0",
+      "address": "172.18.0.1/30",
+      "loopback_address": "10.7.0.1",
+      "mtu": 1500,
+      "dns_mode": "hijack",
+      "dns_address": "172.18.0.2",
+      "auto_route": true,
+      "auto_redirect": true, // ВАЖНО!: в Windows поставить значение false
+      "strict_route": true,
+      "stack": "mixed",
+      "endpoint_independent_nat": true
+    }
+  ],
+
+  "outbounds": [
+    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [] },
+    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [] },
+    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [] },
+    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [] },
+    { "tag": "🤖 AI",      "type": "selector", "outbounds": [] },
+    { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [ "DIRECT" ] },
+
+    { "tag": "DIRECT", "type": "direct" },
+    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Proxy" ] },
+
+    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [], "interval": "30m", "tolerance": 100 },
+    { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 }
+  ],
+
+ "route": {
+    "rules": [
+      { "network": "icmp", "outbound": "🔌 DIRECT" },
+      { "action": "sniff", "timeout": "500ms" },
+      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "port": [ 853, 5353 ], "action": "reject" },
+      { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
+      { "rule_set": [ "ipdetect" ], "action": "reject" },
+      { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
+      { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
+      { "protocol": [ "ntp" ], "outbound": "🇷🇺 RU" },
+      { "rule_set": [ "cheburnet" ], "outbound": "🔌 DIRECT" },
+      { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
+      { "rule_set": [ "games" ], "outbound": "🕹️ Games" },
+      { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
+      { "ip_is_private": true, "outbound": "🔌 DIRECT" },
+      { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
+      { "rule_set": [ "proxy" ], "outbound": "🌍 Proxy" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
+      { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
+      {
+        "type": "logical", "mode": "or",
+        "rules": [
+          { "network": "udp", "port": [ 3478, 5349, 5350, 19302, 10000 ] },
+          { "domain_regex": "^stun\\..+" },
+          { "domain_keyword": [ "stun", "turn", "httpdns" ] }
+        ],
+        "action": "reject", "method": "drop"
+      },
+      { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
+      { "action": "resolve" },
+      { "clash_mode": "Global", "outbound": "🌍 Proxy" }
+    ],
+
+    "rule_set": [
+      {
+        "tag": [ "ipdetect", "private", "adguard", "cheburnet", "trackers", "filter", "games", "ai", "proxy", "ru", "ruip" ],
+        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs"
+      }
+    ],
+
+    "final": "🌍 Proxy",
+    "auto_detect_interface": true,
+    "find_process": true,
+    "default_domain_resolver": "dns_direct",
+    "default_http_client": "default"
+  },
+
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "store_fakeip": true,
+      "store_dns": true
+    },
+
+    "debug": {
+      "gc_percent": 100,
+      "memory_limit": "400MB"
+    }
+  }
+}
+```
+
+**Для Android смартфонов***
+
+Шаблон для Windows/Linux легко адаптировать под Android смартфоны, достаточно удалить ненужные селекторы упростив его.
+
+Отличия от Windows/Linux шаблона:
+
+ - Убраны селекторы: `"🏴‍☠️ Torrent"`, `"🕹️ Games"`, `"🤖 AI"` и правила для них включая записи в `rule_set`.
+ - Добавлена опция `route.auto_detect_interface`.
+
+```jsonc
+{
+  "log": { "disabled": false, "level": "debug", "output": "", "timestamp": true },
+
+  "dns": {
+    "servers": [
+      {
+        "tag": "hosts", "type": "hosts",
+        "predefined": {
+          "dns.google": [ "8.8.8.8", "8.8.4.4" ],
+          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ],
+          "ntc.party": [ "130.255.77.28" ]
+        }
+      },
+      { "tag": "dns_local",  "type": "local" },
+      { "tag": "dns_direct", "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_proxy",  "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
+    ],
+
+    "rules": [
+      { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "ip_version": 6, "action": "reject" },
+      { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
+      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
+      { "rule_set": [ "private" ], "server": "dns_local" },
+      { "clash_mode": "Direct", "server": "dns_direct" },
+      { "rule_set": [ "adguard" ], "action": "predefined" },
+      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
+      { "rule_set": [ "filter" ], "server": "dns_direct" },
+      { "rule_set": [ "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
+      { "match_response": true, "rule_set": [ "ruip" ], "action": "respond" },
+      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
+      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
+      { "clash_mode": "Global", "server": "dns_fakeip" }
+    ],
+
+    "final": "dns_proxy",
+    "strategy": "ipv4_only",
+    "timeout": "3s",
+    "cache_capacity": 16384,
+    "optimistic": { "enabled": true, "timeout": "1h0m0s" },
+    "reverse_mapping": true
+  },
+
+  "ntp": {
+    "enabled": true,
+    "interval": "30m0s",
+    "server": "ntp.msk-ix.ru",
+    "server_port": 123,
+    "detour": "🇷🇺 RU"
+  },
+
+  "http_clients": [
+    {
+      "tag": "default",
+      "version": 2,
+      "detour": "GLOBAL",
+      "stream_receive_window": 0,
+      "connection_receive_window": 0
+    }
+  ],
+
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "tun0",
+      "address": "172.18.0.1/30",
+      "loopback_address": "10.7.0.1",
+      "mtu": 1500,
+      "dns_mode": "hijack",
+      "dns_address": "172.18.0.2",
+      "auto_route": true,
+      "auto_redirect": true,
+      "strict_route": true,
+      "stack": "mixed",
+      "endpoint_independent_nat": true
+    }
+  ],
+
+  "outbounds": [
+    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [] },
+    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [] },
+    { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [ "DIRECT" ] },
+
+    { "tag": "DIRECT", "type": "direct" },
+    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Proxy" ] },
+
+    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [], "interval": "30m", "tolerance": 100 },
+    { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 }
+  ],
+
+ "route": {
+    "rules": [
+      { "network": "icmp", "outbound": "🔌 DIRECT" },
+      { "action": "sniff", "timeout": "500ms" },
+      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "port": [ 853, 5353 ], "action": "reject" },
+      { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
+      { "rule_set": [ "ipdetect" ], "action": "reject" },
+      { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
+      { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
+      { "protocol": [ "ntp" ], "outbound": "🇷🇺 RU" },
+      { "rule_set": [ "cheburnet" ], "outbound": "🔌 DIRECT" },
+      { "ip_is_private": true, "outbound": "🔌 DIRECT" },
+      { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
+      { "rule_set": [ "proxy" ], "outbound": "🌍 Proxy" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
+      { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
+      {
+        "type": "logical", "mode": "or",
+        "rules": [
+          { "network": "udp", "port": [ 3478, 5349, 5350, 19302, 10000 ] },
+          { "domain_regex": "^stun\\..+" },
+          { "domain_keyword": [ "stun", "turn", "httpdns" ] }
+        ],
+        "action": "reject", "method": "drop"
+      },
+      { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
+      { "action": "resolve" },
+      { "clash_mode": "Global", "outbound": "🌍 Proxy" }
+    ],
+
+    "rule_set": [
+      {
+        "tag": [ "ipdetect", "private", "adguard", "cheburnet", "filter", "proxy", "ru", "ruip" ],
+        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs"
+      }
+    ],
+
+    "final": "🌍 Proxy",
+    "auto_detect_interface": true,
+    "find_process": true,
+    "override_android_vpn": true,
+    "default_domain_resolver": "dns_direct",
+    "default_http_client": "default"
+  },
+
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "store_fakeip": true,
+      "store_dns": true
+    },
+
+    "debug": {
+      "gc_percent": 100,
+      "memory_limit": "400MB"
+    }
+  }
+}
+```
