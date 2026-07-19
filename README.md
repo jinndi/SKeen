@@ -50,7 +50,7 @@ Notes:
   <summary>🖥️ Web UI ?</summary>
 <br>
 
-💡 To simplify configuration, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available to import profiles via [GUI.for.SingBox](https://github.com/jinndi/sync-profile-to-skeen)
+💡 For easier setup, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). For more flexible manual configuration, automation, and synchronization, use [Sub-Store](https://github.com/jinndi/Sub-Store-Docker).
 
 The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
 

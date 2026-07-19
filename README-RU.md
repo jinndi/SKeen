@@ -50,7 +50,7 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   <summary>🖥️ Веб-интерфейс ?</summary>
 <br>
 
-💡 Для упрощения настройки доступен [плагин синхронизации](https://github.com/jinndi/sync-profile-to-skeen), позволяющий импортировать профили через [GUI.for.SingBox](https://github.com/jinndi/sync-profile-to-skeen)
+💡 Для упрощения настройки доступен [плагин синхронизации](https://github.com/jinndi/sync-profile-to-skeen), позволяющий импортировать профили через [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). Для более гибкой ручной настройки, автоматизации и синхронизации используйте [Sub-Store](https://github.com/jinndi/Sub-Store-Docker).
 
 Проект сознательно не включает отдельную панель управления. Вот почему это выгодно для вашего роутера:
 
