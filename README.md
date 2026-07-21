@@ -619,6 +619,8 @@ The addresses of such connections can be analyzed beforehand (there is no point 
 
 Is this solution right for you? Everyone decides for themselves based on current constraints and personal requirements for network performance and security.
 
+**`firewall.proxy_router`** - Note that enabling this feature will force the use of sing-box DNS (if it is configured and enabled). Additionally, if you have not added the IP addresses or subnets (`ipv4_cidr` / `ipv6_cidr`) of your built-in router VPN servers to `firewall.exclude`, traffic to them will also route through sing-box, creating unnecessary overhead.
+
 ### 🔗 Useful links
 
 - Sub-Store-Docker: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
