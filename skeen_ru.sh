@@ -1551,7 +1551,7 @@ add_skeen_rules() {
   "keendns_accept")
     local k_port
 
-    k_port="$(rci ip/http | jsonfilter -e '@.ssl.port' 2>/dev/null)"
+    k_port=$($iptables -t mangle -L INPUT -v -n | awk '/_NDM_HTTP_INPUT_TLS_/ {split($NF, a, ":"); print a[2]}')
     [ -z "$k_port" ] && return 0
 
     local rule="-m mark --mark $TABLE_MARK -j ACCEPT -m comment --comment skeen_keendns"
