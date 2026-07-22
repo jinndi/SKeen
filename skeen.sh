@@ -172,8 +172,8 @@ create_skeen_config() {
     "delay": 0
   },
   "policy": {
-    "enable": 1,
-    "name": "SKeen"
+    "enable": 0,
+    "segment": "br1"
   },
   "network": {
     "ipv6": 1,
@@ -363,7 +363,7 @@ get_firewall_config() {
   eval "$(
     jsonfilter -i "$SKEEN_RUN_CONFIG" \
       -e POLICY_ENABLE='@.policy.enable' \
-      -e POLICY_NAME='@.policy.name' \
+      -e POLICY_SEGMENT='@.policy.segment' \
       -e NETWORK_IPV6='@.network.ipv6' \
       -e NETWORK_TUNING='@.network.tuning' \
       -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
@@ -376,8 +376,8 @@ get_firewall_config() {
       -e FIREWALL_USE_CONNTRACK='@.firewall.use_conntrack'
   )"
 
-  : "${POLICY_ENABLE:=1}"
-  : "${POLICY_NAME:=SKeen}"
+  : "${POLICY_ENABLE:=0}"
+  : "${POLICY_SEGMENT:=br1}"
   : "${NETWORK_IPV6:=1}"
   : "${NETWORK_TUNING:=0}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
@@ -1153,39 +1153,12 @@ get_iptables_list() {
 
 get_mark_policy() {
   local mark=""
-  local json_policy
-  local policy_name_lower
-  local descriptions
-  local marks_list
-  local description
-  local desc_lower
-  local mark_val
 
-  if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_NAME" ]; then
-    json_policy="$(rci_post show/ip/policy)"
-
-    descriptions="$(printf '%s' "$json_policy" | jsonfilter -e '$.policy.*.description')"
-    marks_list="$(printf '%s' "$json_policy" | jsonfilter -e '$.policy.*.mark')"
-
-    [ -n "$descriptions" ] && [ -n "$marks_list" ] || return
-
-    policy_name_lower=$(printf '%s' "$POLICY_NAME" | tr '[:upper:]' '[:lower:]')
-
-    while IFS= read -r description && IFS= read -r mark_val <&3; do
-      desc_lower=$(printf '%s' "$description" | tr '[:upper:]' '[:lower:]')
-
-      if [ "$desc_lower" = "$policy_name_lower" ]; then
-        mark="$mark_val"
-        break
-      fi
-    done 3<<EOF2 <<EOF
-$marks_list
-EOF2
-$descriptions
-EOF
+  if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_SEGMENT" ]; then
+    mark=$(iptables -t mangle -L -v -n | awk -v iface="$POLICY_SEGMENT" '$0 ~ iface && /MARK set/ {print $NF}')
   fi
 
-  [ -n "$mark" ] && echo "0x$mark"
+  echo "$mark"
 }
 
 check_and_set_route_rules() {
@@ -1207,7 +1180,7 @@ check_and_set_route_rules() {
     [ -f "$WAIT_ROUTE_FILE" ] || touch "$WAIT_ROUTE_FILE"
 
     local msg="Check your internet connection"
-    [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg for policy ${SKEEN_POLICY_NAME:-unknown}"
+    [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg for segment ${SKEEN_POLICY_SEGMENT:-unknown}"
 
     echoerr "$msg"
     logger_warning "$msg"
@@ -2033,16 +2006,16 @@ prepare_firewall() {
 
   route_all=1
   if [ "$POLICY_ENABLE" != "1" ]; then
-    cyan " - Policy disabled on skeen.json"
-  elif [ -z "$POLICY_NAME" ]; then
-    cyan " - Policy name not set"
+    cyan " - Segment disabled on skeen.json"
+  elif [ -z "$POLICY_SEGMENT" ]; then
+    cyan " - Segment name not set"
   elif [ -z "$SKEEN_MARK_POLICY" ]; then
-    cyan " - Policy $POLICY_NAME not found"
+    cyan " - Segment $POLICY_SEGMENT not found"
   else
-    cyan " - Routing for the $POLICY_NAME policy"
+    cyan " - Routing $POLICY_SEGMENT segment"
     route_all=0
   fi
-  [ "$route_all" = 1 ] && echowarn "Routing for the entire device"
+  [ "$route_all" = 1 ] && echowarn "Routing entire device"
 
   SKEEN_PROXY_ROUTER="0"
   [ "$FIREWALL_PROXY_ROUTER" = "1" ] && SKEEN_PROXY_ROUTER="1"
@@ -2232,7 +2205,7 @@ prepare_firewall() {
     echo "export SKEEN_TPROXY_NETWORK=\"$SKEEN_TPROXY_NETWORK\""
     echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
     echo "export SKEEN_FIREWALL_NETWORK=\"$SKEEN_FIREWALL_NETWORK\""
-    echo "export SKEEN_POLICY_NAME=\"$POLICY_NAME\""
+    echo "export SKEEN_POLICY_SEGMENT=\"$POLICY_SEGMENT\""
     echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
     echo "export SKEEN_INTERCEPT_PORT=\"$SKEEN_INTERCEPT_PORT\""
@@ -3447,8 +3420,8 @@ show_menu() {
       echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
       echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
-      [ -n "$SKEEN_POLICY_NAME" ] &&
-        output="$output\n Client policy:: $(cyan "$SKEEN_POLICY_NAME")"
+      [ -n "$SKEEN_POLICY_SEGMENT" ] &&
+        output="$output\n Client segment:: $(cyan "$SKEEN_POLICY_SEGMENT")"
       [ "$SKEEN_TUN_ENABLED" = "1" ] &&
         output="$output\n Uses OpkgTun: $(cyan "yes")"
       output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
