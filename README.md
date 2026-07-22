@@ -288,6 +288,13 @@ Reasons why:
 **A:** Learn how to build routing using Sing-box rules, and use FakeIP to filter traffic.
 </details>
 
+<details>
+  <summary>💩 Firmware 5.2 support?</summary>
+<br>
+
+It works for now. As new updates roll out, we'll look into switching to a version that drops RCI requests entirely. Sure, it'll be a bit less convenient, and we might have to drop the OpkgTUN feature, but at least we won't be swallowing whatever crap they feed us ✌️
+</details>
+
 ### 🚀 Features
 
   - TProxy/Redirect/Hybrid/Tun/DNS modes ✓
