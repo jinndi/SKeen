@@ -1073,11 +1073,6 @@ check_port() {
   return 0
 }
 
-is_owner_module_working() {
-  [ -d "/sys/module/xt_owner" ] && return 0
-  release_version_ge5 >/dev/null 2>&1 && return 0 || return 1
-}
-
 load_module() {
   local module="${1:-}"
   local modname="${module%.ko}"
@@ -1103,6 +1098,8 @@ load_module() {
     if insmod "$target_path" >/dev/null 2>&1; then
       return 0
     fi
+  elif [ "$module" = "xt_owner.ko" ]; then
+    return 0
   fi
 
   echoerr "Модуль '$module' не найден или ошибка в загрузке"
@@ -1116,10 +1113,6 @@ loading_modules() {
   KERNEL_OS_V="$(uname -r)"
 
   for module in $modules; do
-    if [ "$module" = "xt_owner.ko" ] && is_owner_module_working; then
-      continue
-    fi
-
     if ! load_module "$module"; then
       echoerr "$err_msg"
       logger_error "$err_msg"
