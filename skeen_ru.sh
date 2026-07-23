@@ -1134,7 +1134,13 @@ get_mark_policy() {
   local mark=""
 
   if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_SEGMENT" ]; then
-    mark=$(iptables -t mangle -L -v -n | awk -v iface="$POLICY_SEGMENT" '$0 ~ iface && /MARK set/ {print $NF}')
+    local seg=$(echo "$POLICY_SEGMENT" | tr '[:upper:]' '[:lower:]')
+    case "$seg" in
+      br[0-9]|br[0-9][0-9])
+        mark=$(iptables -t mangle -L -v -n | awk -v iface="$seg" '$0 ~ iface && /MARK set/ {print $NF}')
+        ;;
+      *) echowarn "Название сегмента должно начинаться с br + после до 2х цифр" >&2 ;;
+    esac
   fi
 
   echo "$mark"
@@ -1699,7 +1705,7 @@ tun_create() {
 
   case "$opkgtun_desc" in
   [!A-Za-z0-9_-]*)
-    exiterr "Недопустимое имя, допустимые символы: A–Z, a–z, 0–9, _ and -"
+    exiterr "Недопустимое имя, допустимые символы: A–Z, a–z, 0–9, _ и -"
     ;;
   esac
 
@@ -1976,7 +1982,7 @@ prepare_firewall() {
   elif [ -z "$SKEEN_MARK_POLICY" ]; then
     echowarn "Политика сегмента $POLICY_SEGMENT недоступна"
   else
-    cyan " - Маршрутизация сегмента: $POLICY_SEGMENT"
+    cyan " - Маршрутизация политики сегмента: $POLICY_SEGMENT"
     route_all=0
   fi
   [ "$route_all" = 1 ] && echowarn "Маршрутизация всего устройства"
