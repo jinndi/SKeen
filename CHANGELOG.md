@@ -1,5 +1,31 @@
 # Changelog
 
+## [5.0.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.2...SKeen-v5.0.0) (2026-07-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **config:** Existing configuration files must be updated to use 'enabled' instead of 'enable' for all boolean flags.
+* **firewall:** Existing configurations using policy.name are no longer supported. The policy.enable default changed from 1 to 0.
+
+### 🚀 Feat
+
+* **firewall:** replace policy-based routing with segment-based routing ([95ba0b7](https://github.com/jinndi/SKeen/commit/95ba0b7b5d6352fc56d0fcbef50086c262f7863b))
+
+
+### 🛠 Refactor
+
+* **config:** rename enable fields to enabled ([a6ce7ae](https://github.com/jinndi/SKeen/commit/a6ce7ae7794f119f8ed659fbf20df4527b09a399))
+* **firewall:** replace rci ip/http call with iptables parsing for keendns port ([53287ea](https://github.com/jinndi/SKeen/commit/53287eae260eec9c2db6f5beb53f1afef77d5eb0))
+* **firewall:** validate segment name format for policy routing ([46099be](https://github.com/jinndi/SKeen/commit/46099be7196e8010fa7d98e73d77715d5645ae76))
+* **modules:** simplify xt_owner module loading logic ([ff8e407](https://github.com/jinndi/SKeen/commit/ff8e40777e865d444b6005e3b365e13f0caace61))
+* **tun:** replace rci http calls with ndmc commands ([d952bc8](https://github.com/jinndi/SKeen/commit/d952bc87c6fb728caecd7fa0085a1bee667f1fb5))
+
+
+### 🧰 Chore
+
+* **docs:** update configuration examples and routing documentation ([cc37801](https://github.com/jinndi/SKeen/commit/cc378017c06d89943af3c43bad1a8baec64bfec8))
+
 ## [4.20.2](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.1...SKeen-v4.20.2) (2026-07-12)
 
 
