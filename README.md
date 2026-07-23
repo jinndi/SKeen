@@ -288,13 +288,6 @@ Reasons why:
 **A:** Learn how to build routing using Sing-box rules, and use FakeIP to filter traffic.
 </details>
 
-<details>
-  <summary>💩 Firmware 5.2 support?</summary>
-<br>
-
-It works for now. As new updates roll out, we'll look into switching to a version that drops RCI requests entirely. Sure, it'll be a bit less convenient, and we might have to drop the OpkgTUN feature, but at least we won't be swallowing whatever crap they feed us ✌️
-</details>
-
 ### 🚀 Features
 
   - TProxy/Redirect/Hybrid/Tun/DNS modes ✓
@@ -307,6 +300,7 @@ It works for now. As new updates roll out, we'll look into switching to a versio
   - Commands accessible via router WEB CLI ✓
   - Configuration sync via GUI.for.SingBox plugin ✓
   - Optional proxying for the router itself ✓
+  - No access token required for RCI requests (none are used) ✓
 
 ### 📋 Requirements
 - Entware installed and configured
@@ -469,7 +463,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 3 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
 
-| OpkgTun manager (KeeneticOS v5+, + WEB CLI) |
+| OpkgTun manager (KeeneticOS v5+, only from SSH) |
 | -------------------------------------------------------------------------- |
 |`skeen tun create <ipv4> <name>` - Create interface with IP address and name|
 |`skeen tun delete <name>` - Delete interface by name|
@@ -491,12 +485,16 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 ```jsonc
 {
   "auto_start": {
-    "enable": 1,       // SKeen autostart on router reboot (0 = disabled)
+    "enabled": 1,      // SKeen autostart on router reboot (0 = disabled)
     "delay": 0         // Auto-start delay in seconds (default: 0)
   },
   "policy": {
-    "enable": 1,       // Enable policy-based routing (0 = disabled)
-    "name": "SKeen"    // Router policy name (default: "SKeen")
+    "enabled": 0,      // Enable routing based on segment policy (1 - enable, 0 - disable)
+    "segment": "br1"   // Name of the segment interface (Bridge) whose policy will be used;
+                       // starts with "br" followed by a number starting from 0.
+                       // The number can be found in the URL under the "Segments" section,
+                       // e.g., http://192.168.1.1/segments/Bridge1 corresponds to "br1".
+                       // Alternatively, use the command: skeen iface
   },
   "network": {
     "ipv6": 1,         // Enable IPv6 support (0 = disabled)
@@ -509,12 +507,12 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     ]                  // Domains or IPs V4 for connectivity tests (max 3)
   },
   "sing_binary": {
-    "enable": 0,       // If set to 1, a custom sing-box binary will be used;
+    "enabled": 0,      // If set to 1, a custom sing-box binary will be used;
                        // you will be responsible for its updates and removal
     "path": ""         // Full path to the binary (defaults to /opt/bin/sing-box)
   },
   "sing_config":{
-    "enable": 0,       // If set to 1, a single sing-box configuration file
+    "enabled": 0,      // If set to 1, a single sing-box configuration file
                        // located at /opt/etc/skeen/config.json will be used
                        // instead of the default folder /opt/etc/skeen/config
     "path": "",        // You can specify your own path (full path)
@@ -522,7 +520,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // using the `skeen sync` command by default (optional)
   },
   "service_proxy": {
-    "enable": 0,       // Enable using a local proxy (127.0.0.1) for update and sync commands
+    "enabled": 0,      // Enable using a local proxy (127.0.0.1) for update and sync commands
     "port": "",        // Local proxy port (e.g., SOCKS5 or mixed)
     "user": "",        // Username for connection (optional)
     "pass": ""         // Password for connection (required if user is specified)
@@ -534,7 +532,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "port": [],      // Ports for Redirect/TProxy interception (all if empty).
                        // Example: [ 80, 443, "1000:2000", "1500:5555" ]
       "fakeip": {
-        "enable": 0,   // If 1, enables the FakeIP address pool in Redirect/TProxy interception; everything else goes to WAN.
+        "enabled": 0,  // If 1, enables the FakeIP address pool in Redirect/TProxy interception; everything else goes to WAN.
                        // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled, along with sing-box DNS configuration.
                        // - Exceptions for exclude.port/cidr will function exactly like intercept.port in regular mode.
         "include": "", // Full path to the file containing a list of IP/CIDR resources (both v4 and v6) - one per line.
@@ -559,7 +557,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // Example: [ "2001:db8::/32", "2001:db8::1" ]
     },
     "redirect_dns": {
-      "enable": 0,     // Set to 1 to enable DNS redirection before system rules
+      "enabled": 0,    // Set to 1 to enable DNS redirection before system rules
       "to_port": "",   // The port to which DNS requests will be redirected
       "use_policy": 1  // Use defined policy if configured (0 = disabled)
     },
@@ -577,7 +575,10 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 
 **Additional configuration notes:**
 
+**`policy.segment`** - if you change the policy in the specified segment while SKeen is running, restart it to apply the changes. If the internet traffic rules are set to «Default policy» or «No internet access», SKeen will process traffic for the entire device.
+
 **`network.ipv6`** - will not enable if the provider has not provided an IPv6 address for internet access.
+
 **`network.tuning`** - when this option is enabled, the script applies a set of Linux kernel parameters (sysctl) adapted for the operation of high-performance proxy services (sing-box) on Keenetic routers.
 
 | Category | Change | Result |
