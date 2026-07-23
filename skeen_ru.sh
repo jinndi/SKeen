@@ -166,11 +166,11 @@ create_skeen_config() {
 // https://github.com/jinndi/SKeen/blob/main/README-RU.md
 {
   "auto_start": {
-    "enable": 1,
+    "enabled": 1,
     "delay": 0
   },
   "policy": {
-    "enable": 0,
+    "enabled": 0,
     "segment": "br1"
   },
   "network": {
@@ -179,16 +179,16 @@ create_skeen_config() {
     "check": ["vk.com", "ya.ru", "223.5.5.5"]
   },
   "sing_binary": {
-    "enable": ${SING_BINARY_ENABLE:-0},
+    "enabled": ${SING_BINARY_ENABLED:-0},
     "path": "/opt/bin/sing-box"
   },
   "sing_config":{
-    "enable": 0,
+    "enabled": 0,
     "path": "",
     "sync_url": ""
   },
   "service_proxy": {
-    "enable": 0,
+    "enabled": 0,
     "port": "",
     "user": "",
     "pass": ""
@@ -198,7 +198,7 @@ create_skeen_config() {
       "dns": 1,
       "port": [],
       "fakeip": {
-        "enable": 0,
+        "enabled": 0,
         "include": "${WORK_DIR}/pure_cidr.list",
         "clients": []
       }
@@ -209,7 +209,7 @@ create_skeen_config() {
       "ipv6_cidr": []
     },
     "redirect_dns": {
-      "enable": 0,
+      "enabled": 0,
       "to_port": "",
       "use_policy": 1
     },
@@ -257,24 +257,24 @@ check_and_create_or_sync_skeen_config() {
 get_auto_start_config() {
   eval "$(
     jsonfilter -i "$SKEEN_RUN_CONFIG" \
-      -e AUTO_START_ENABLE='@.auto_start.enable' \
+      -e AUTO_START_ENABLED='@.auto_start.enabled' \
       -e AUTO_START_DELAY='@.auto_start.delay'
   )"
-  : "${AUTO_START_ENABLE:=1}"
+  : "${AUTO_START_ENABLED:=1}"
   : "${AUTO_START_DELAY:=0}"
 }
 
 get_sing_binary_config() {
   eval "$(
     jsonfilter -i "$SKEEN_RUN_CONFIG" \
-      -e SING_BINARY_ENABLE='@.sing_binary.enable' \
+      -e SING_BINARY_ENABLED='@.sing_binary.enabled' \
       -e SING_BINARY_PATH='@.sing_binary.path'
   )"
 
-  : "${SING_BINARY_ENABLE:=0}"
+  : "${SING_BINARY_ENABLED:=0}"
   : "${SING_BINARY_PATH:=/opt/bin/sing-box}"
 
-  if [ "$SING_BINARY_ENABLE" = "1" ]; then
+  if [ "$SING_BINARY_ENABLED" = "1" ]; then
     pidof "skeen-box" 2>/dev/null && killall -9 "skeen-box" 2>/dev/null
 
     SINGBOX_PROC="$(basename "$SING_BINARY_PATH")"
@@ -298,13 +298,13 @@ get_sing_binary_config() {
 get_sing_args_config() {
   local default_config_path="/opt/etc/skeen/config.json"
 
-  SING_CONFIG_ENABLE="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.enable')"
-  : "${SING_CONFIG_ENABLE:=0}"
+  SING_CONFIG_ENABLED="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.enabled')"
+  : "${SING_CONFIG_ENABLED:=0}"
 
   SING_CONFIG_PATH="$default_config_path"
   SING_CONFIG_ARGS="-C $CONFIG_DIR"
 
-  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+  if [ "$SING_CONFIG_ENABLED" = "1" ]; then
     SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.path')"
     : "${SING_CONFIG_PATH:=$default_config_path}"
     SING_CONFIG_ARGS="-c $SING_CONFIG_PATH"
@@ -316,12 +316,12 @@ get_sing_args_config() {
 get_service_proxy_config() {
   eval "$(
     jsonfilter -i "$SKEEN_RUN_CONFIG" \
-      -e SERVICE_PROXY_ENABLE='@.service_proxy.enable' \
+      -e SERVICE_PROXY_ENABLED='@.service_proxy.enabled' \
       -e SERVICE_PROXY_PORT='@.service_proxy.port' \
       -e SERVICE_PROXY_USER='@.service_proxy.user' \
       -e SERVICE_PROXY_PASS='@.service_proxy.pass'
   )"
-  : "${SERVICE_PROXY_ENABLE:=0}"
+  : "${SERVICE_PROXY_ENABLED:=0}"
   : "${SERVICE_PROXY_PORT:=}"
   : "${SERVICE_PROXY_USER:=}"
   : "${SERVICE_PROXY_PASS:=}"
@@ -341,28 +341,28 @@ get_network_config() {
 get_firewall_config() {
   eval "$(
     jsonfilter -i "$SKEEN_RUN_CONFIG" \
-      -e POLICY_ENABLE='@.policy.enable' \
+      -e POLICY_ENABLED='@.policy.enabled' \
       -e POLICY_SEGMENT='@.policy.segment' \
       -e NETWORK_IPV6='@.network.ipv6' \
       -e NETWORK_TUNING='@.network.tuning' \
       -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
-      -e FIREWALL_INTERCEPT_FAKEIP='@.firewall.intercept.fakeip.enable' \
+      -e FIREWALL_INTERCEPT_FAKEIP='@.firewall.intercept.fakeip.enabled' \
       -e FIREWALL_INTERCEPT_FAKEIP_INCLUDE='@.firewall.intercept.fakeip.include' \
-      -e FIREWALL_REDIRECT_DNS_ENABLE='@.firewall.redirect_dns.enable' \
+      -e FIREWALL_REDIRECT_DNS_ENABLED='@.firewall.redirect_dns.enabled' \
       -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
       -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
       -e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router' \
       -e FIREWALL_USE_CONNTRACK='@.firewall.use_conntrack'
   )"
 
-  : "${POLICY_ENABLE:=0}"
+  : "${POLICY_ENABLED:=0}"
   : "${POLICY_SEGMENT:=br1}"
   : "${NETWORK_IPV6:=1}"
   : "${NETWORK_TUNING:=0}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
   : "${FIREWALL_INTERCEPT_FAKEIP:=0}"
   : "${FIREWALL_INTERCEPT_FAKEIP_INCLUDE:=/opt/etc/skeen/pure_cidr.list}"
-  : "${FIREWALL_REDIRECT_DNS_ENABLE:=0}"
+  : "${FIREWALL_REDIRECT_DNS_ENABLED:=0}"
   : "${FIREWALL_REDIRECT_DNS_PORT:=}"
   : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
   : "${FIREWALL_PROXY_ROUTER:=0}"
@@ -375,7 +375,7 @@ get_curl_proxy_options() {
   get_service_proxy_config
 
   CURL_PROXY_OPTIONS="--connect-timeout 5 --max-time 720"
-  if [ "$SERVICE_PROXY_ENABLE" = "1" ]; then
+  if [ "$SERVICE_PROXY_ENABLED" = "1" ]; then
     err_template="Прокси-сервис включен, но"
     if [ -z "$SERVICE_PROXY_PORT" ]; then
       exiterr "$err_template 'service_proxy.port' не задан"
@@ -462,8 +462,8 @@ ask_install_singbox() {
     opt=${opt:-n}
 
     case $opt in
-    y | Y) SING_BINARY_ENABLE=1; break ;;
-    n | N) SING_BINARY_ENABLE=0; break ;;
+    y | Y) SING_BINARY_ENABLED=1; break ;;
+    n | N) SING_BINARY_ENABLED=0; break ;;
     *) echoerr "Пожалуйста, введите y (да) или n (нет)." ;;
     esac
   done
@@ -657,7 +657,7 @@ create_singbox_config() {
     return
   elif [ ! -d "$CONFIG_DIR" ] && [ -f "$SKEEN_CONFIG" ]; then
     get_sing_args_config
-    if [ "$SING_CONFIG_ENABLE" = "1" ] && [ ! -f "$SING_CONFIG_PATH" ]; then
+    if [ "$SING_CONFIG_ENABLED" = "1" ] && [ ! -f "$SING_CONFIG_PATH" ]; then
       echowarn "Конфиги $SINGBOX_NAME не найдены"
     else
       echomsg "Конфиг $SINGBOX_NAME найден, пропускаем создание"
@@ -806,7 +806,7 @@ install() {
 
   get_os_release
   ask_install_singbox
-  if [ "$SING_BINARY_ENABLE" != "1" ]; then
+  if [ "$SING_BINARY_ENABLED" != "1" ]; then
     check_free_space
     get_architecture
     download_singbox
@@ -819,13 +819,13 @@ install() {
   download_skeen_script
   create_skeen_config
 
-  if [ "$SING_BINARY_ENABLE" != "1" ]; then
+  if [ "$SING_BINARY_ENABLED" != "1" ]; then
     "$SINGBOX_BIN" version
   elif [ ! -f /opt/bin/sing-box ]; then
     echomsg "Укажите путь к бинарному файлу $SINGBOX_NAME в $SKEEN_CONFIG"
   fi
 
-  if [ "$SING_CONFIG_ENABLE" != "1" ] && [ -d "$CONFIG_DIR" ]; then
+  if [ "$SING_CONFIG_ENABLED" != "1" ] && [ -d "$CONFIG_DIR" ]; then
     echomsg "Настройте $SINGBOX_NAME: отредактировав $CONFIG_DIR"
   fi
 
@@ -1004,7 +1004,7 @@ get_fw_mode_data() {
   local file
   local param
 
-  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+  if [ "$SING_CONFIG_ENABLED" = "1" ]; then
     get_fw_mode_param "$SING_CONFIG_PATH" "$type"
     return 0
   fi
@@ -1020,7 +1020,7 @@ get_fw_mode_data() {
 }
 
 has_dns_servers() {
-  if [ "$SING_CONFIG_ENABLE" = "1" ]; then
+  if [ "$SING_CONFIG_ENABLED" = "1" ]; then
     if jsonfilter -i "$SING_CONFIG_PATH" -e '@.dns.servers[0]' >/dev/null 2>&1; then
       return 0
     fi
@@ -1133,7 +1133,7 @@ get_iptables_list() {
 get_mark_policy() {
   local mark=""
 
-  if [ "$POLICY_ENABLE" = "1" ] && [ -n "$POLICY_SEGMENT" ]; then
+  if [ "$POLICY_ENABLED" = "1" ] && [ -n "$POLICY_SEGMENT" ]; then
     local seg=$(echo "$POLICY_SEGMENT" | tr '[:upper:]' '[:lower:]')
     case "$seg" in
       br[0-9]|br[0-9][0-9])
@@ -1466,7 +1466,7 @@ add_skeen_rules() {
     ;;
 
   "intercept_dns")
-    if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] && [ "$SKEEN_USE_CONNMARK" = "1" ]; then
+    if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] && [ "$SKEEN_USE_CONNMARK" = "1" ]; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_PRE" || return 0
       for proto in $protocols; do
         add_conntrack_mark "$proto" "$CHAIN_DNS_PRE"
@@ -1476,7 +1476,7 @@ add_skeen_rules() {
     fi
 
     for proto in $protocols; do
-      if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ]; then
+      if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ]; then
         # shellcheck disable=SC2086
         add_rule "$iptables" "$table" "$chain" \
           -p "$proto" $connmark_match_opt --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
@@ -1571,7 +1571,7 @@ add_skeen_rules() {
     ;;
 
   "proxy_router_dns")
-    if [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
+    if [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_OUT" || return 0
       if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
         for proto in $protocols; do
@@ -1883,37 +1883,37 @@ prepare_firewall() {
 
   get_firewall_config
 
-  SKEEN_INTERCEPT_DNS_ENABLE="0"
-  SKEEN_REDIRECT_DNS_ENABLE="0"
+  SKEEN_INTERCEPT_DNS_ENABLED="0"
+  SKEEN_REDIRECT_DNS_ENABLED="0"
   SKEEN_REDIRECT_DNS_PORT=""
 
   if has_dns_servers; then
     local msg_dns_detect=" - Обнаружена конфигурация DNS:"
-    if [ "$FIREWALL_REDIRECT_DNS_ENABLE" = "1" ]; then
+    if [ "$FIREWALL_REDIRECT_DNS_ENABLED" = "1" ]; then
       if [ -z "$FIREWALL_REDIRECT_DNS_PORT" ]; then
         echoerr "Включен редирект DNS, но порт не указан в конфигурации $SKEEN_NAME"
         press_any_key_to_menu "" 1
       fi
       check_port "$FIREWALL_REDIRECT_DNS_PORT"
-      SKEEN_REDIRECT_DNS_ENABLE="1"
+      SKEEN_REDIRECT_DNS_ENABLED="1"
       SKEEN_REDIRECT_DNS_PORT="$FIREWALL_REDIRECT_DNS_PORT"
       SKEEN_REDIRECT_DNS_USE_POLICY="$FIREWALL_REDIRECT_DNS_USE_POLICY"
       [ "$SKEEN_FIREWALL_MODE" = "none" ] && SKEEN_FIREWALL_MODE="dns"
       cyan "$msg_dns_detect redirect"
     fi
 
-    if [ "$FIREWALL_REDIRECT_DNS_ENABLE" = "1" ] && [ "$FIREWALL_INTERCEPT_DNS" = "1" ]; then
+    if [ "$FIREWALL_REDIRECT_DNS_ENABLED" = "1" ] && [ "$FIREWALL_INTERCEPT_DNS" = "1" ]; then
       echowarn "Включен редирект и перехват DNS, будет работать только редирект"
     elif [ "$FIREWALL_INTERCEPT_DNS" = "1" ]; then
       case "$SKEEN_FIREWALL_MODE" in
       tproxy | hybrid)
-        SKEEN_INTERCEPT_DNS_ENABLE="1"
+        SKEEN_INTERCEPT_DNS_ENABLED="1"
         cyan "$msg_dns_detect intercept"
       ;;
       *) echowarn "В режиме '$SKEEN_FIREWALL_MODE' перехват DNS не работает" ;;
       esac
     fi
-  elif [ "$FIREWALL_REDIRECT_DNS_ENABLE" = "1" ] || [ "$FIREWALL_INTERCEPT_DNS" = "1" ]; then
+  elif [ "$FIREWALL_REDIRECT_DNS_ENABLED" = "1" ] || [ "$FIREWALL_INTERCEPT_DNS" = "1" ]; then
     echowarn "Заданы настройки DNS в ${SKEEN_NAME}, но $SINGBOX_NAME не нестроен"
   fi
 
@@ -1942,11 +1942,11 @@ prepare_firewall() {
 
       echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
 
-      if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+      if [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
         loading_modules xt_comment.ko
         [ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ] &&
           SKEEN_MARK_POLICY="$(get_mark_policy)"
-        echo "export SKEEN_REDIRECT_DNS_ENABLE=\"$SKEEN_REDIRECT_DNS_ENABLE\""
+        echo "export SKEEN_REDIRECT_DNS_ENABLED=\"$SKEEN_REDIRECT_DNS_ENABLED\""
         echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
         echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
         echo "export SKEEN_MARK_POLICY=\"${SKEEN_MARK_POLICY:-}\""
@@ -1975,7 +1975,7 @@ prepare_firewall() {
   SKEEN_MARK_POLICY="$(get_mark_policy)"
 
   route_all=1
-  if [ "$POLICY_ENABLE" != "1" ]; then
+  if [ "$POLICY_ENABLED" != "1" ]; then
     cyan " - Политика отключена в skeen.json"
   elif [ -z "$POLICY_SEGMENT" ]; then
     cyan " - Имя сегмента не задано"
@@ -2110,7 +2110,7 @@ prepare_firewall() {
 
   SKEEN_INTERCEPT_FAKEIP="0"
   if [ "$FIREWALL_INTERCEPT_FAKEIP" = "1" ]; then
-    if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+    if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
       if setup_fakeip_ipset; then
         SKEEN_INTERCEPT_FAKEIP="1"
 
@@ -2153,7 +2153,7 @@ prepare_firewall() {
     if [ "$SKEEN_TUN_ENABLED" = "1" ]; then
       postfix_tables="|filter"
       [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && postfix_tables="|filter|nat"
-    elif [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+    elif [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
       postfix_tables="|nat"
     fi
 
@@ -2181,8 +2181,8 @@ prepare_firewall() {
     echo "export SKEEN_INTERCEPT_PORT=\"$SKEEN_INTERCEPT_PORT\""
     echo "export SKEEN_EXCLUDE_PORT=\"$SKEEN_EXCLUDE_PORT\""
     echo "export SKEEN_INTERCEPT_FAKEIP=\"$SKEEN_INTERCEPT_FAKEIP\""
-    echo "export SKEEN_INTERCEPT_DNS_ENABLE=\"$SKEEN_INTERCEPT_DNS_ENABLE\""
-    echo "export SKEEN_REDIRECT_DNS_ENABLE=\"$SKEEN_REDIRECT_DNS_ENABLE\""
+    echo "export SKEEN_INTERCEPT_DNS_ENABLED=\"$SKEEN_INTERCEPT_DNS_ENABLED\""
+    echo "export SKEEN_REDIRECT_DNS_ENABLED=\"$SKEEN_REDIRECT_DNS_ENABLED\""
     echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
     echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
     echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
@@ -2219,12 +2219,12 @@ apply_firewall() {
     press_any_key_to_menu "" 1
   fi
 
-  if [ "$SKEEN_FIREWALL_MODE" != "none" ] || [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+  if [ "$SKEEN_FIREWALL_MODE" != "none" ] || [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
     echomsg "Применение правил фаервола..."
   fi
 
   # DNS redirect
-  if [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ] && check_hook_table "nat" "$hook_table"; then
+  if [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ] && check_hook_table "nat" "$hook_table"; then
     local mark_option=""
     [ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ] && [ -n "$SKEEN_MARK_POLICY" ] &&
       mark_option="-m mark --mark $SKEEN_MARK_POLICY"
@@ -2559,7 +2559,7 @@ start() {
 
   if [ "$CALLER" = "init" ]; then
     get_auto_start_config
-    if [ "$AUTO_START_ENABLE" = "0" ]; then
+    if [ "$AUTO_START_ENABLED" = "0" ]; then
       return 0
     else
       if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null; then
@@ -2765,7 +2765,7 @@ update_skeen() {
 
   get_service_proxy_config
   get_firewall_config
-  if [ "$SERVICE_PROXY_ENABLE" = "1" ] || [ "$FIREWALL_PROXY_ROUTER" = "1" ]; then
+  if [ "$SERVICE_PROXY_ENABLED" = "1" ] || [ "$FIREWALL_PROXY_ROUTER" = "1" ]; then
     should_run="1"
   fi
   if [ "$should_run" = "1" ]; then
@@ -2836,7 +2836,7 @@ check_updates() {
   get_curl_proxy_options
 
   # sing-box
-  if [ "$SING_BINARY_ENABLE" != "1" ]; then
+  if [ "$SING_BINARY_ENABLED" != "1" ]; then
     ask_and_update "$SINGBOX_NAME" "sing" "$SINGBOX_API_URL" \
       update_core "https://github.com/SagerNet/sing-box/releases"
   fi
@@ -2936,11 +2936,11 @@ fw_test_chain() {
   if [ "$1" = "mangle" ]; then
     case "$2" in
     "$CHAIN_PREROUTING")
-      [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] && comment="DNS intercept" || comment="DNS exclude"
+      [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] && comment="DNS intercept" || comment="DNS exclude"
       fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "$comment"
       ;;
     "$CHAIN_OUTPUT")
-      [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ] && comment="DNS mark" || comment="DNS exclude"
+      [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ] && comment="DNS mark" || comment="DNS exclude"
       fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "$comment"
       ;;
     esac
@@ -2999,7 +2999,7 @@ test_firewall() {
     tables="nat"
   elif [ "$SKEEN_FIREWALL_MODE" = "tun" ]; then
     tables="filter"
-  elif [ "$SKEEN_REDIRECT_DNS_ENABLE" != "1" ]; then
+  elif [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]; then
     echowarn "Тестирование доступно в режимах tun, redirect, tproxy и hybrid"
     echowarn "А также при заданных параметрах редиректа DNS"
     press_any_key_to_menu "" 1
@@ -3018,7 +3018,7 @@ test_firewall() {
       yellow "Тестирование: $(cyan "$iptables")"
       echo "$DELIMETER"
 
-      [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ] && fw_test_chain nat "$CHAIN_DNS" "$iptables"
+      [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ] && fw_test_chain nat "$CHAIN_DNS" "$iptables"
 
       for table in $tables; do
         fw_test_chain "$table" "$CHAIN_PREROUTING" "$iptables"
@@ -3156,7 +3156,7 @@ clean_cache() {
 
   get_sing_args_config
 
-  if [ "$SING_CONFIG_ENABLE" = "1" ] && [ -f "$SING_CONFIG_PATH" ]; then
+  if [ "$SING_CONFIG_ENABLED" = "1" ] && [ -f "$SING_CONFIG_PATH" ]; then
     experimental_file="$SING_CONFIG_PATH"
   elif [ -d "$CONFIG_DIR" ] && [ -f "${CONFIG_DIR}/experimental.json" ]; then
     experimental_file="${CONFIG_DIR}/experimental.json"
@@ -3282,8 +3282,8 @@ sync_config() {
 
   get_sing_args_config
 
-  if [ "$SING_CONFIG_ENABLE" != "1" ]; then
-    echowarn "Установите параметр sing_config.enable в 1 в файле skeen.json"
+  if [ "$SING_CONFIG_ENABLED" != "1" ]; then
+    echowarn "Установите параметр sing_config.enabled в 1 в файле skeen.json"
   fi
 
   rm -f "$SING_CONFIG_PATH"
@@ -3354,7 +3354,7 @@ show_menu() {
   get_auto_start_config
   get_sing_binary_config
 
-  if [ "$AUTO_START_ENABLE" = "1" ]; then
+  if [ "$AUTO_START_ENABLED" = "1" ]; then
     autostart_status="$(green "да")"
   else
     autostart_status="$(red "нет")"
@@ -3379,7 +3379,7 @@ show_menu() {
   output="$output\n Автоматический запуск: $autostart_status"
 
   if [ "$running_text" = "Остановить" ]; then
-    if [ "$SKEEN_INTERCEPT_DNS_ENABLE" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLE" = "1" ]; then
+    if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
       sb_dns_work_text="$(green "да")"
     else
       sb_dns_work_text="$(red "нет")"
