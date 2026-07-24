@@ -14,7 +14,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.0.1"
+readonly SKEEN_VERSION="5.0.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -516,7 +516,7 @@ fi
 echomsg "Downloading $PKG_NAME..."
 mkdir -p "$TMP_DIR"
 cd "$TMP_DIR"||exit 1
-if curl $CURL_PROXY_OPTIONS --fail -Lo "$PKG_NAME" "$pkg_url";then
+if curl $CURL_PROXY_OPTIONS --fail -Lo "$PKG_NAME" $pkg_url;then
 echook "Downloaded $PKG_NAME successfully"
 else
 echoerr "Failed to download $PKG_NAME"
@@ -625,7 +625,7 @@ echomsg "Downloading $SKEEN_NAME script at $SKEEN_SCRIPT"
 if [ -n "$MIRROR" ];then
 SKEEN_SCRIPT_URL="${MIRROR}skeen"
 fi
-if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL";then
+if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL;then
 rm -f "$SKEEN_SCRIPT"
 [ -f "$backup_script" ]&&mv "$backup_script" "$SKEEN_SCRIPT"
 echoerr "Failed to download $SKEEN_NAME script"
