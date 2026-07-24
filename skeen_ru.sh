@@ -31,7 +31,7 @@ readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.0.1"
+readonly SKEEN_VERSION="5.0.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
@@ -632,7 +632,7 @@ download_singbox() {
   cd "$TMP_DIR" || exit 1
 
   # shellcheck disable=SC2086
-  if curl $CURL_PROXY_OPTIONS --fail -Lo "$PKG_NAME" "$pkg_url"; then
+  if curl $CURL_PROXY_OPTIONS --fail -Lo "$PKG_NAME" $pkg_url; then
     echook "$PKG_NAME загружен успешно"
   else
     echoerr "Не удалось загрузить $PKG_NAME"
@@ -778,7 +778,7 @@ download_skeen_script() {
   fi
 
   # shellcheck disable=SC2086
-  if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" "$SKEEN_SCRIPT_URL"; then
+  if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL; then
     rm -f "$SKEEN_SCRIPT"
     [ -f "$backup_script" ] && mv "$backup_script" "$SKEEN_SCRIPT"
     echoerr "Не удалось загрузить скрипт $SKEEN_NAME"
