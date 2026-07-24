@@ -216,6 +216,15 @@ create_skeen_config() {
     },
     "proxy_router": 0,
     "use_conntrack": 1
+  },
+  "update": {
+    "singbox": {
+      "enabled": 1,
+      "beta": 0
+    },
+    "skeen": {
+      "enabled": 1
+    }
   }
 }
 EOF
@@ -368,6 +377,19 @@ get_firewall_config() {
   : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
   : "${FIREWALL_PROXY_ROUTER:=0}"
   : "${FIREWALL_USE_CONNTRACK:=0}"
+}
+
+get_update_config() {
+  eval "$(
+    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+      -e UPDATE_SINGBOX_ENABLED='@.update.singbox.enabled' \
+      -e UPDATE_SINGBOX_BETA='@.update.singbox.beta' \
+      -e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled'
+  )"
+
+  : "${UPDATE_SINGBOX_ENABLED:=1}"
+  : "${UPDATE_SINGBOX_BETA:=0}"
+  : "${UPDATE_SKEEN_ENABLED:=1}"
 }
 
 get_curl_proxy_options() {
@@ -2841,18 +2863,32 @@ check_updates() {
 
   is_update_skeen=0
 
+  get_update_config
+  if [ "$UPDATE_SINGBOX_ENABLED" != "1" ] && [ "$UPDATE_SKEEN_ENABLED" != "1" ]; then
+    echowarn "Обновления отключены в конфигурации ${SKEEN_NAME}!"
+    press_any_key_to_menu "" 1
+  fi
   get_sing_binary_config
   get_curl_proxy_options
 
   # sing-box
   if [ "$SING_BINARY_ENABLED" != "1" ]; then
-    ask_and_update "$SINGBOX_NAME" "sing" "$SINGBOX_API_URL" \
-      update_core "https://github.com/SagerNet/sing-box/releases"
+    if [ "$UPDATE_SINGBOX_ENABLED" = "1" ]; then
+      if [ "$UPDATE_SINGBOX_BETA" = "1" ]; then
+        ask_and_update "$SINGBOX_NAME" "sing" "https://github.com/SagerNet/sing-box/releases.atom" \
+          update_core "https://github.com/SagerNet/sing-box/releases"
+      else
+        ask_and_update "$SINGBOX_NAME" "sing" "$SINGBOX_API_URL" \
+          update_core "https://github.com/SagerNet/sing-box/releases"
+      fi
+    fi
   fi
 
   # skeen
-  ask_and_update "$SKEEN_NAME" "skeen" "$SKEEN_API_URL" \
-    update_skeen "https://github.com/jinndi/SKeen/releases"
+  if [ "$UPDATE_SKEEN_ENABLED" = "1" ]; then
+    ask_and_update "$SKEEN_NAME" "skeen" "$SKEEN_API_URL" \
+      update_skeen "https://github.com/jinndi/SKeen/releases"
+  fi
 
   [ "$CALLER" != "menu" ] && exit 0
 
@@ -2861,14 +2897,6 @@ check_updates() {
   else
     press_any_key_to_menu reload
   fi
-}
-
-check_beta() {
-  check_tty
-  get_curl_proxy_options
-
-  ask_and_update "$SINGBOX_NAME" "sing" "https://github.com/SagerNet/sing-box/releases.atom" \
-    update_core "https://github.com/SagerNet/sing-box/releases"
 }
 
 import_firewall_vars() {
@@ -3466,7 +3494,6 @@ $SKEEN_NAME CLI Команды (используйте: 'skeen help' для эт
   version - Показать версию(и)
   iface   - Показать таблицу сетевых интерфейсов
   update  - Проверить и установить обновления
-  beta    - Проверить и установить тестовую версию $SINGBOX_NAME
 
 Проверка & тестирование:
   test    - Тестировать правила файрвола
@@ -3507,7 +3534,6 @@ if [ -f "$SKEEN_SCRIPT" ]; then
 
   version) version ;;
   update) check_updates ;;
-  beta) check_beta ;;
 
   test) test_firewall ;;
   deps)
