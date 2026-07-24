@@ -2,7 +2,7 @@
 // Чебурнет здесь. C комментариями смотрите файл config-commented.json
 
 {
-  "log": { "disabled": false, "level": "debug", "output": "", "timestamp": false },
+  "log": { "disabled": false, "level": "trace", "output": "", "timestamp": false },
 
   "dns": {
     "servers": [
