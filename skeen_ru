@@ -12,12 +12,13 @@ readonly TMP_DIR="$ENTWARE_DIR/tmp"
 readonly NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
+readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.0.0"
+readonly SKEEN_VERSION="5.0.1"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
-readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
+readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru $CURL_RESOLVE_FIX"
 readonly SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="$WORK_DIR/$SKEEN_PROC.json"
 readonly SKEEN_RUN_CONFIG="/tmp/$SKEEN_PROC.json"
@@ -184,6 +185,15 @@ cat <<EOF >"$SKEEN_CONFIG"
     },
     "proxy_router": 0,
     "use_conntrack": 1
+  },
+  "update": {
+    "singbox": {
+      "enabled": 1,
+      "beta": 0
+    },
+    "skeen": {
+      "enabled": 1
+    }
   }
 }
 EOF
@@ -300,6 +310,15 @@ eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
 : "${FIREWALL_PROXY_ROUTER:=0}"
 : "${FIREWALL_USE_CONNTRACK:=0}"
+}
+get_update_config(){
+eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
+-e UPDATE_SINGBOX_ENABLED='@.update.singbox.enabled' \
+-e UPDATE_SINGBOX_BETA='@.update.singbox.beta' \
+-e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled')"
+: "${UPDATE_SINGBOX_ENABLED:=1}"
+: "${UPDATE_SINGBOX_BETA:=0}"
+: "${UPDATE_SKEEN_ENABLED:=1}"
 }
 get_curl_proxy_options(){
 local err_template
@@ -489,7 +508,7 @@ echook "Последняя версия: $version"
 fi
 if [ -z "$MIRROR" ];then
 PKG_NAME="sing-box_${version}_${PKG_OS}_$PKG_ARCH$PKG_SUFFIX"
-pkg_url="https://github.com/SagerNet/sing-box/releases/download/v$version/$PKG_NAME"
+pkg_url="https://github.com/SagerNet/sing-box/releases/download/v$version/$PKG_NAME $CURL_RESOLVE_FIX"
 else
 PKG_NAME="sing-box_${PKG_OS}_$PKG_ARCH$PKG_SUFFIX"
 pkg_url="${MIRROR}sing-box/$PKG_NAME"
@@ -544,7 +563,7 @@ fi
 fi
 echomsg "Создание конфигурационных файлов $SINGBOX_NAME..."
 mkdir -p "$CONFIG_DIR"
-config_json='{"log":{"disabled":false,"level":"debug","output":"","timestamp":false},"dns":{"servers":[{"tag":"hosts","type":"hosts","predefined":{"dns.google":["8.8.8.8","8.8.4.4"],"common.dot.dns.yandex.net":["77.88.8.8","77.88.8.1"]}},{"tag":"dns_local","type":"local"},{"tag":"dns_direct","type":"https","server":"common.dot.dns.yandex.net","domain_resolver":"hosts"},{"tag":"dns_proxy","type":"https","server":"dns.google","domain_resolver":"hosts","detour":"GLOBAL"},{"tag":"dns_fakeip","type":"fakeip","inet4_range":"198.18.0.0/15","inet6_range":"fc00::/18"}],"rules":[{"ip_version":6,"action":"reject"},{"query_type":["SVCB","HTTPS","PTR"],"action":"reject"},{"rule_set":["ipdetect"],"action":"reject"},{"domain_keyword":["keenetic","netcraze"],"server":"dns_local"},{"rule_set":["private"],"server":"dns_local"},{"clash_mode":"Direct","server":"dns_direct"},{"rule_set":["adguard"],"action":"predefined"},{"rule_set":["cheburnet"],"server":"dns_direct"},{"rule_set":["trackers"],"server":"dns_direct"},{"rule_set":["filter"],"server":"dns_direct"},{"rule_set":["games","ai","proxy"],"query_type":["A","AAAA"],"rewrite_ttl":300,"server":"dns_fakeip"},{"rule_set":["ru"],"server":"dns_proxy","client_subnet":"77.88.8.0/24"},{"query_type":["A","AAAA"],"server":"dns_fakeip"},{"query_type":["A","AAAA"],"invert":true,"action":"reject"},{"clash_mode":"Global","server":"dns_fakeip"}],"final":"dns_proxy","strategy":"ipv4_only","independent_cache":true,"cache_capacity":16384,"reverse_mapping":true},"ntp":{"enabled":true,"interval":"30m0s","server":"ntp.msk-ix.ru","server_port":123,"detour":"🇷🇺 RU"},"inbounds":[{"tag":"tproxy-in","type":"tproxy","listen":"::","listen_port":65082,"tcp_fast_open":true,"udp_fragment":true,"udp_timeout":"1m0s"}],"outbounds":[{"tag":"🌍 Proxy","type":"selector","outbounds":["🌍 Auto","🔒 NAIVE"],"default":"🔒 NAIVE"},{"tag":"🇷🇺 RU","type":"selector","outbounds":["🇷🇺 Auto","🔌 DIRECT","🇷🇺 TROYAN"]},{"tag":"🏴‍☠️ Torrent","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🕹️ Games","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🤖 AI","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🔌 DIRECT","type":"selector","outbounds":["DIRECT"]},{"tag":"DIRECT","type":"direct","domain_resolver":"dns_direct"},{"tag":"GLOBAL","type":"selector","outbounds":["🌍 Proxy"]},{"tag":"🔒 NAIVE","type":"naive","server":"example.com","server_port":2443,"username":"jinndi","password":"password","udp_over_tcp":true,"tls":{"enabled":true,"server_name":"example.com"}},{"tag":"🇷🇺 TROYAN","type":"trojan","password":"password","server":"example.ru","server_port":2444,"tls":{"enabled":true,"server_name":"example.ru"},"multiplex":{"enabled":true}},{"tag":"🌍 Auto","type":"urltest","outbounds":["🌍 NAIVE"],"interval":"10m","tolerance":100},{"tag":"🇷🇺 Auto","type":"urltest","outbounds":["🇷🇺 TROYAN"],"interval":"10m","tolerance":100}],"route":{"rules":[{"network":"icmp","outbound":"🔌 DIRECT"},{"action":"sniff","timeout":"500ms"},{"action":"hijack-dns","type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}]},{"port":[853,5353],"action":"reject"},{"action":"reject","type":"logical","mode":"and","rules":[{"ip_version":6},{"default_interface_address":"2000::/3","invert":true}]},{"rule_set":["ipdetect"],"action":"reject"},{"clash_mode":"Direct","outbound":"🔌 DIRECT"},{"rule_set":["private"],"outbound":"🔌 DIRECT"},{"rule_set":["cheburnet"],"outbound":"🔌 DIRECT"},{"protocol":["ntp"],"outbound":"🇷🇺 RU"},{"protocol":"bittorrent","outbound":"🏴‍☠️ Torrent"},{"rule_set":["games"],"outbound":"🕹️ Games"},{"rule_set":["ai"],"outbound":"🤖 AI"},{"ip_is_private":true,"outbound":"🔌 DIRECT"},{"ip_cidr":["198.18.0.0/15","fc00::/18"],"outbound":"🌍 Proxy"},{"rule_set":["proxy"],"outbound":"🌍 Proxy"},{"rule_set":["ru","ruip"],"outbound":"🇷🇺 RU"},{"protocol":["stun","dtls"],"action":"reject","method":"drop"},{"type":"logical","mode":"or","rules":[{"network":"udp","port":[3478,5349,5350,19302,10000]},{"domain_regex":"^stun\\..+"},{"domain_keyword":["stun","turn","httpdns"]}],"action":"reject","method":"drop"},{"action":"route-options","udp_disable_domain_unmapping":true,"udp_connect":true},{"action":"resolve"},{"clash_mode":"Global","outbound":"🌍 Proxy"}],"rule_set":[{"tag":"ipdetect","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs"},{"tag":"private","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs"},{"tag":"trackers","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs"},{"tag":"games","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs"},{"tag":"ai","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs"},{"tag":"ru","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs"},{"tag":"ruip","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs"},{"tag":"adguard","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs"},{"tag":"cheburnet","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs"},{"tag":"filter","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/filter.srs"},{"tag":"proxy","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs"}],"final":"🌍 Proxy","auto_detect_interface":true,"default_domain_resolver":"dns_direct"},"experimental":{"clash_api":{"external_controller":"0.0.0.0:9999","external_ui":"zashboard","external_ui_download_url":"https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip","external_ui_download_detour":"GLOBAL","secret":"","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","cache_id":"v1_13","store_fakeip":true,"store_rdrc":true,"rdrc_timeout":"3d"}}}'
+config_json='{"log":{"disabled":false,"level":"trace","output":"","timestamp":false},"dns":{"servers":[{"tag":"hosts","type":"hosts","predefined":{"dns.google":["8.8.8.8","8.8.4.4"],"common.dot.dns.yandex.net":["77.88.8.8","77.88.8.1"]}},{"tag":"dns_local","type":"local"},{"tag":"dns_direct","type":"https","server":"common.dot.dns.yandex.net","domain_resolver":"hosts"},{"tag":"dns_proxy","type":"https","server":"dns.google","domain_resolver":"hosts","detour":"GLOBAL"},{"tag":"dns_fakeip","type":"fakeip","inet4_range":"198.18.0.0/15","inet6_range":"fc00::/18"}],"rules":[{"ip_version":6,"action":"reject"},{"query_type":["SVCB","HTTPS","PTR"],"action":"reject"},{"rule_set":["ipdetect"],"action":"reject"},{"domain_keyword":["keenetic","netcraze"],"server":"dns_local"},{"rule_set":["private"],"server":"dns_local"},{"clash_mode":"Direct","server":"dns_direct"},{"rule_set":["adguard"],"action":"predefined"},{"rule_set":["cheburnet"],"server":"dns_direct"},{"rule_set":["trackers"],"server":"dns_direct"},{"rule_set":["filter"],"server":"dns_direct"},{"rule_set":["games","ai","proxy"],"query_type":["A","AAAA"],"rewrite_ttl":300,"server":"dns_fakeip"},{"rule_set":["ru"],"server":"dns_proxy","client_subnet":"77.88.8.0/24"},{"query_type":["A","AAAA"],"server":"dns_fakeip"},{"query_type":["A","AAAA"],"invert":true,"action":"reject"},{"clash_mode":"Global","server":"dns_fakeip"}],"final":"dns_proxy","strategy":"ipv4_only","independent_cache":true,"cache_capacity":16384,"reverse_mapping":true},"ntp":{"enabled":true,"interval":"30m0s","server":"ntp.msk-ix.ru","server_port":123,"detour":"🇷🇺 RU"},"inbounds":[{"tag":"tproxy-in","type":"tproxy","listen":"::","listen_port":65082,"tcp_fast_open":true,"udp_fragment":true,"udp_timeout":"1m0s"}],"outbounds":[{"tag":"🌍 Proxy","type":"selector","outbounds":["🌍 Auto","🔒 NAIVE"],"default":"🔒 NAIVE"},{"tag":"🇷🇺 RU","type":"selector","outbounds":["🇷🇺 Auto","🔌 DIRECT","🇷🇺 TROYAN"]},{"tag":"🏴‍☠️ Torrent","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🕹️ Games","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🤖 AI","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🔌 DIRECT","type":"selector","outbounds":["DIRECT"]},{"tag":"DIRECT","type":"direct","domain_resolver":"dns_direct"},{"tag":"GLOBAL","type":"selector","outbounds":["🌍 Proxy"]},{"tag":"🔒 NAIVE","type":"naive","server":"example.com","server_port":2443,"username":"jinndi","password":"password","udp_over_tcp":true,"tls":{"enabled":true,"server_name":"example.com"}},{"tag":"🇷🇺 TROYAN","type":"trojan","password":"password","server":"example.ru","server_port":2444,"tls":{"enabled":true,"server_name":"example.ru"},"multiplex":{"enabled":true}},{"tag":"🌍 Auto","type":"urltest","outbounds":["🌍 NAIVE"],"interval":"10m","tolerance":100},{"tag":"🇷🇺 Auto","type":"urltest","outbounds":["🇷🇺 TROYAN"],"interval":"10m","tolerance":100}],"route":{"rules":[{"network":"icmp","outbound":"🔌 DIRECT"},{"action":"sniff","timeout":"500ms"},{"action":"hijack-dns","type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}]},{"port":[853,5353],"action":"reject"},{"action":"reject","type":"logical","mode":"and","rules":[{"ip_version":6},{"default_interface_address":"2000::/3","invert":true}]},{"rule_set":["ipdetect"],"action":"reject"},{"clash_mode":"Direct","outbound":"🔌 DIRECT"},{"rule_set":["private"],"outbound":"🔌 DIRECT"},{"rule_set":["cheburnet"],"outbound":"🔌 DIRECT"},{"protocol":["ntp"],"outbound":"🇷🇺 RU"},{"protocol":"bittorrent","outbound":"🏴‍☠️ Torrent"},{"rule_set":["games"],"outbound":"🕹️ Games"},{"rule_set":["ai"],"outbound":"🤖 AI"},{"ip_is_private":true,"outbound":"🔌 DIRECT"},{"ip_cidr":["198.18.0.0/15","fc00::/18"],"outbound":"🌍 Proxy"},{"rule_set":["proxy"],"outbound":"🌍 Proxy"},{"rule_set":["ru","ruip"],"outbound":"🇷🇺 RU"},{"protocol":["stun","dtls"],"action":"reject","method":"drop"},{"type":"logical","mode":"or","rules":[{"network":"udp","port":[3478,5349,5350,19302,10000]},{"domain_regex":"^stun\\..+"},{"domain_keyword":["stun","turn","httpdns"]}],"action":"reject","method":"drop"},{"action":"route-options","udp_disable_domain_unmapping":true,"udp_connect":true},{"action":"resolve"},{"clash_mode":"Global","outbound":"🌍 Proxy"}],"rule_set":[{"tag":"ipdetect","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs"},{"tag":"private","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs"},{"tag":"trackers","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs"},{"tag":"games","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs"},{"tag":"ai","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs"},{"tag":"ru","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs"},{"tag":"ruip","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs"},{"tag":"adguard","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs"},{"tag":"cheburnet","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs"},{"tag":"filter","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/filter.srs"},{"tag":"proxy","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs"}],"final":"🌍 Proxy","auto_detect_interface":true,"default_domain_resolver":"dns_direct"},"experimental":{"clash_api":{"external_controller":"0.0.0.0:9999","external_ui":"zashboard","external_ui_download_url":"https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip","external_ui_download_detour":"GLOBAL","secret":"","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","cache_id":"v1_13","store_fakeip":true,"store_rdrc":true,"rdrc_timeout":"3d"}}}'
 for key in log dns ntp inbounds outbounds route experimental;do
 value="$(printf '%s\n' "$config_json"|jsonfilter -e "@.$key")"
 if [ -z "$value" ]||[ "$value" = "null" ];then
@@ -674,18 +693,31 @@ uninstall(){
 echomsg "Удаление $SKEEN_NAME..."
 get_sing_binary_config
 is_running&&stop
-if [ "$SINGBOX_PROC" = 'skeen-box' ];then
-echomsg "Удаление файла $SINGBOX_NAME..."
-rm -f "$SINGBOX_BIN"
-fi
 echomsg "Удаление скрипта автозапуска..."
 rm -f "$SKEEN_AUTOSTART_SCRIPT"
 echomsg "Удаление скрипта файрвола..."
 rm -f "$FIREWALL_HOOK_FILE"
 echomsg "Удаление скрипта $SKEEN_NAME..."
-rm -f "$SKEEN_SCRIPT"
+rm -f "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG"
 echomsg "Удаление группы $SKEEN_PROC..."
 delgroup "$SKEEN_PROC"
+if [ "$SINGBOX_PROC" = 'skeen-box' ];then
+while :;do
+printf "Удалить %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
+read -r opt </dev/tty
+opt=${opt:-n}
+case $opt in
+y|Y)echomsg "Удаление файла $SINGBOX_NAME..."
+rm -f "$SINGBOX_BIN"
+break
+;;
+n|N)echomsg "Файл $SINGBOX_BIN оставлен!"
+break
+;;
+*)echoerr "Пожалуйста, введите y (да) или n (нет)."
+esac
+done
+fi
 if [ -d "$WORK_DIR" ];then
 echomsg "Каталог конфигурации $WORK_DIR незатронут"
 echomsg "Для удаления вручную выполните: rm -rf $WORK_DIR"
@@ -2195,8 +2227,8 @@ latest_version=""
 echomsg "Проверка обновлений $name..."
 current_version=$(get_current_version "$proc")
 [ -z "$current_version" ]&&current_version="не установлено"
-if echo "$api"|grep -q "tags";then
-latest_version="$(curl $CURL_PROXY_OPTIONS -s "$api"|jsonfilter -e '@.*.name'|grep -E 'alpha|beta|rc'|head -n 1|sed 's/^v//')"
+if echo "$api"|grep -q "atom";then
+latest_version="$(curl $CURL_PROXY_OPTIONS -s "$api"|grep -oE '<title>[^<]+'|grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?'|head -n 1|sed 's/^v//')"
 else
 latest_version=$(get_latest_version "$api")
 fi
@@ -2225,26 +2257,34 @@ return 0
 check_updates(){
 check_tty
 is_update_skeen=0
+get_update_config
+if [ "$UPDATE_SINGBOX_ENABLED" != "1" ]&&[ "$UPDATE_SKEEN_ENABLED" != "1" ];then
+echowarn "Обновления отключены в конфигурации $SKEEN_NAME!"
+press_any_key_to_menu "" 1
+fi
 get_sing_binary_config
 get_curl_proxy_options
 if [ "$SING_BINARY_ENABLED" != "1" ];then
+if [ "$UPDATE_SINGBOX_ENABLED" = "1" ];then
+if [ "$UPDATE_SINGBOX_BETA" = "1" ];then
+ask_and_update "$SINGBOX_NAME" "sing" "https://github.com/SagerNet/sing-box/releases.atom" \
+update_core "https://github.com/SagerNet/sing-box/releases"
+else
 ask_and_update "$SINGBOX_NAME" "sing" "$SINGBOX_API_URL" \
 update_core "https://github.com/SagerNet/sing-box/releases"
 fi
+fi
+fi
+if [ "$UPDATE_SKEEN_ENABLED" = "1" ];then
 ask_and_update "$SKEEN_NAME" "skeen" "$SKEEN_API_URL" \
 update_skeen "https://github.com/jinndi/SKeen/releases"
+fi
 [ "$CALLER" != "menu" ]&&exit 0
 if [ "$is_update_skeen" -eq 1 ];then
 exec sh "$SKEEN_SCRIPT" deps menu
 else
 press_any_key_to_menu reload
 fi
-}
-check_beta(){
-check_tty
-get_curl_proxy_options
-ask_and_update "$SINGBOX_NAME" "sing" "https://api.github.com/repos/SagerNet/sing-box/tags" \
-update_core "https://github.com/SagerNet/sing-box/releases"
 }
 import_firewall_vars(){
 if [ -f "$FIREWALL_HOOK_FILE" ];then
@@ -2723,7 +2763,6 @@ $SKEEN_NAME CLI Команды (используйте: 'skeen help' для эт
   version - Показать версию(и)
   iface   - Показать таблицу сетевых интерфейсов
   update  - Проверить и установить обновления
-  beta    - Проверить и установить тестовую версию $SINGBOX_NAME
 
 Проверка & тестирование:
   test    - Тестировать правила файрвола
@@ -2760,7 +2799,6 @@ kill)kill_proc;;
 status)status;;
 version)version;;
 update)check_updates;;
-beta)check_beta;;
 test)test_firewall;;
 deps)install_dependencies
 press_any_key_to_menu
