@@ -845,11 +845,6 @@ uninstall() {
 
   is_running && stop
 
-  if [ "$SINGBOX_PROC" = 'skeen-box' ]; then
-    echomsg "Removing $SINGBOX_NAME binary..."
-    rm -f "$SINGBOX_BIN"
-  fi
-
   echomsg "Removing auto-start script..."
   rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
@@ -857,10 +852,23 @@ uninstall() {
   rm -f "$FIREWALL_HOOK_FILE"
 
   echomsg "Removing $SKEEN_NAME script..."
-  rm -f "$SKEEN_SCRIPT"
+  rm -f "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG"
 
   echomsg "Delete group ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
+
+  if [ "$SINGBOX_PROC" = 'skeen-box' ]; then
+    while :; do
+      printf "Delete %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
+      read -r opt </dev/tty
+      opt=${opt:-n}
+      case $opt in
+      y | Y) echomsg "Removing $SINGBOX_NAME binary..."; rm -f "$SINGBOX_BIN"; break ;;
+      n | N) echomsg "File $SINGBOX_BIN kept!"; break ;;
+      *) echoerr "Please enter y (yes) or n (no)." ;;
+      esac
+    done
+  fi
 
   if [ -d "$WORK_DIR" ]; then
     echomsg "Configuration directory $WORK_DIR is retained"

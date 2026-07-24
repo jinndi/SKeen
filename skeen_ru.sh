@@ -845,11 +845,6 @@ uninstall() {
 
   is_running && stop
 
-  if [ "$SINGBOX_PROC" = 'skeen-box' ]; then
-    echomsg "Удаление файла $SINGBOX_NAME..."
-    rm -f "$SINGBOX_BIN"
-  fi
-
   echomsg "Удаление скрипта автозапуска..."
   rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
@@ -857,10 +852,23 @@ uninstall() {
   rm -f "$FIREWALL_HOOK_FILE"
 
   echomsg "Удаление скрипта ${SKEEN_NAME}..."
-  rm -f "$SKEEN_SCRIPT"
+  rm -f "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG"
 
   echomsg "Удаление группы ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
+
+  if [ "$SINGBOX_PROC" = 'skeen-box' ]; then
+    while :; do
+      printf "Удалить %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
+      read -r opt </dev/tty
+      opt=${opt:-n}
+      case $opt in
+      y | Y) echomsg "Удаление файла $SINGBOX_NAME..."; rm -f "$SINGBOX_BIN"; break ;;
+      n | N) echomsg "Файл $SINGBOX_BIN оставлен!"; break ;;
+      *) echoerr "Пожалуйста, введите y (да) или n (нет)." ;;
+      esac
+    done
+  fi
 
   if [ -d "$WORK_DIR" ]; then
     echomsg "Каталог конфигурации $WORK_DIR незатронут"
