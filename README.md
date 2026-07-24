@@ -568,6 +568,15 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // Pros: Better performance and stability for TCP/UDP.
                        // Cons: Slightly increased RAM usage.
                        // Available in redirect, tproxy, and hybrid modes;
+  },
+  "update": {
+    "singbox": {
+      "enabled": 1,    // Enable Sing-box update check via skeen update (0 = disabled)
+      "beta": 0        // If set to 1, enables checking for pre-release versions (alpha, beta, rc)
+    },
+    "skeen": {
+      "enabled": 1     // Enable SKeen update check via skeen update (0 = disabled)
+    }
   }
 }
 

@@ -566,6 +566,15 @@ exec /opt/etc/init.d/S51dropbear start
                        // Плюсы: Выше производительность и стабильность TCP/UDP.
                        // Минусы: Повышенное потребление ОЗУ (незначительное).
                        // Доступно в режимах redirect, tproxy и hybrid;
+  },
+  "update": {
+    "singbox": {
+      "enabled": 1,    // Включить проверку обновлений Sing-box через skeen update (0 = выкл)
+      "beta": 0        // Если 1, включает проверку самых свежих версий (alpha, beta, rc)
+    },
+    "skeen": {
+      "enabled": 1     // Включить проверку обновлений SKeen через skeen update (0 = выкл)
+    }
   }
 }
 ```
