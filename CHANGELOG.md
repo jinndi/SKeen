@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.1...SKeen-v5.0.2) (2026-07-24)
+
+
+### 🐛 Fix
+
+* unquote URL variables in curl download commands ([b77b75a](https://github.com/jinndi/SKeen/commit/b77b75adb9537f5d522b6d7b3d5edd3f9aa9bdc0))
+
 ## [5.0.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.0...SKeen-v5.0.1) (2026-07-24)
 
 
