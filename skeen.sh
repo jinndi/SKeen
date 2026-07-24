@@ -2803,8 +2803,8 @@ ask_and_update() {
   current_version=$(get_current_version "$proc")
   [ -z "$current_version" ] && current_version="not installed"
 
-  if echo "$api" | grep -q "tags"; then
-    latest_version="$(curl $CURL_PROXY_OPTIONS -s "$api" | jsonfilter -e '@.*.name' | grep -E 'alpha|beta|rc' | head -n 1 | sed 's/^v//')"
+  if echo "$api" | grep -q "atom"; then
+    latest_version="$(curl $CURL_PROXY_OPTIONS -s "$api" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')"
   else
     latest_version=$(get_latest_version "$api")
   fi
@@ -2867,7 +2867,7 @@ check_beta() {
   check_tty
   get_curl_proxy_options
 
-  ask_and_update "$SINGBOX_NAME" "sing" "https://api.github.com/repos/SagerNet/sing-box/tags" \
+  ask_and_update "$SINGBOX_NAME" "sing" "https://github.com/SagerNet/sing-box/releases.atom" \
     update_core "https://github.com/SagerNet/sing-box/releases"
 }
 
