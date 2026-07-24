@@ -1,5 +1,25 @@
 # Changelog
 
+## [5.0.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.0...SKeen-v5.0.1) (2026-07-24)
+
+
+### 🐛 Fix
+
+* **install:** add curl resolve workaround for GitHub release assets ([d0ee10f](https://github.com/jinndi/SKeen/commit/d0ee10f8777e6809b6e8a76c1e50db88a4ef3c21))
+* **install:** use GitHub releases Atom feed for beta version detection ([a1dc67c](https://github.com/jinndi/SKeen/commit/a1dc67cf31315b73c5a6052778f7b87c1b6809ce))
+* **uninstall:** prompt before removing sing-box binary during uninstall ([b11dd6c](https://github.com/jinndi/SKeen/commit/b11dd6c429bc89820ac63ae1dd88acbef5d42003))
+
+
+### 🛠 Refactor
+
+* **cli:** consolidate update commands into configuration-based workflow ([99c058c](https://github.com/jinndi/SKeen/commit/99c058cba3fe5a31c463e1cb47b030d7b4d80ca2))
+
+
+### 🧰 Chore
+
+* **config:** change default log level from debug to trace ([15c9acb](https://github.com/jinndi/SKeen/commit/15c9acbee106bcac65959c6282d1756d57becfa3))
+* **readme:** document update configuration options ([5e8d1e0](https://github.com/jinndi/SKeen/commit/5e8d1e0c3952938fd4af246743d13333329066d7))
+
 ## [5.0.0](https://github.com/jinndi/SKeen/compare/SKeen-v4.20.2...SKeen-v5.0.0) (2026-07-23)
 
 
