@@ -313,7 +313,7 @@ ADGuard Home в первую очередь отвечает за фильтра
 **Выполните из среды Entware из SSH:**
 
 ```bash
-curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru | sh
+curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --resolve release-assets.githubusercontent.com:443:185.199.108.133 | sh
 ```
 
 <details>

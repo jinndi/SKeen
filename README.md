@@ -313,7 +313,7 @@ Reasons why:
 **Run from Entware via SSH:**
 
 ```
-curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen | sh
+curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen --resolve release-assets.githubusercontent.com:443:185.199.108.133 | sh
 ```
 
 Russian-localized version: See [README-RU.md](README-RU.md)

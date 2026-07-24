@@ -28,13 +28,14 @@ readonly TMP_DIR="${ENTWARE_DIR}/tmp"
 readonly NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
+readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 
 readonly SKEEN_NAME="SKeen"
 readonly SKEEN_VERSION="5.0.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
-readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru"
+readonly SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru $CURL_RESOLVE_FIX"
 readonly SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 readonly SKEEN_RUN_CONFIG="/tmp/${SKEEN_PROC}.json"
@@ -597,7 +598,7 @@ download_singbox() {
 
   if [ -z "$MIRROR" ]; then
     PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
-    pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${version}/${PKG_NAME}"
+    pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${version}/${PKG_NAME} $CURL_RESOLVE_FIX"
   else
     PKG_NAME="sing-box_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
     pkg_url="${MIRROR}sing-box/${PKG_NAME}"
