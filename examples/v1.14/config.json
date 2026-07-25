@@ -2,6 +2,8 @@
 // Чебурнет здесь. C комментариями смотрите файл config-commented.json
 
 {
+  "$schema": "./schema.json",
+
   "log": { "disabled": false, "level": "trace", "output": "", "timestamp": false },
 
   "dns": {
