@@ -11,20 +11,25 @@
       {
         "tag": "hosts", "type": "hosts",
         "predefined": {
+          "cloudflare-dns.com": [ "104.16.248.249", "104.16.249.249" ],
+          "dns.quad9.net": [ "9.9.9.9", "149.112.112.112" ],
           "dns.google": [ "8.8.8.8", "8.8.4.4" ],
           "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ]
         }
       },
-      { "tag": "dns_local",  "type": "local" },
-      { "tag": "dns_direct", "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
-      { "tag": "dns_proxy",  "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
-      { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
+      { "tag": "dns_local",    "type": "local" },
+      { "tag": "dns_direct",   "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy_q9", "type": "https",  "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_fakeip",   "type": "fakeip", "inet4_range": "198.18.0.0/15" }
     ],
 
     "rules": [
       { "preferred_by": [ "hosts" ], "server": "hosts" },
-      { "ip_version": 6, "action": "reject" },
+      { "query_type": "AAAA", "action": "reject" },
       { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
+      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
       { "rule_set": [ "ipdetect"], "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
       { "rule_set": [ "private" ], "server": "dns_local" },
@@ -34,19 +39,21 @@
       { "rule_set": [ "trackers" ], "server": "dns_direct" },
       { "rule_set": [ "filter" ], "server": "dns_direct" },
       { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
-      { "action": "evaluate", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
-      { "match_response": true, "rule_set": [ "ruip" ], "action": "respond" },
-      { "match_response": true, "ip_accept_any": true, "invert": true, "action": "respond" },
+      { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
+      { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
+      { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
+      { "match_response": "final-cf", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      { "match_response": "final-q9", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      { "match_response": "final-gg", "rule_set": [ "ruip" ], "action": "respond", "race": true },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
-      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
       { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
 
-    "final": "dns_proxy",
+    "final": "dns_proxy_cf",
     "strategy": "ipv4_only",
-    "timeout": "3s",
+    "timeout": "10s",
     "cache_capacity": 16384,
-    "optimistic": { "enabled": true, "timeout": "1h0m0s" },
+    "optimistic": { "enabled": true, "timeout": "5m0s" },
     "reverse_mapping": true
   },
 
@@ -118,7 +125,7 @@
       { "action": "sniff", "timeout": "500ms" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
       { "port": [ 853, 5353 ], "action": "reject" },
-      { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
+      { "ip_version": 6, "action": "reject" },
       { "rule_set": [ "ipdetect"], "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
       { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
@@ -142,14 +149,16 @@
         "action": "reject", "method": "drop"
       },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
-      { "action": "resolve" },
+      { "action": "resolve", "timeout": "5s" },
       { "clash_mode": "Global", "outbound": "🌍 Proxy" }
     ],
 
     "rule_set": [
       {
+        "type": "remote",
         "tag": [ "ipdetect", "private", "adguard", "cheburnet", "trackers", "filter", "games", "ai", "proxy", "ru", "ruip" ],
-        "type": "remote", "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs"
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs",
+        "update_interval": "48h0m0s"
       }
     ],
 
