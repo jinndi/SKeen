@@ -59,7 +59,7 @@
   // Почему не использовать trace: Производительность роутеров ограничена, отладочные логи огромны (десятки в секунду),
   // fatal достаточно для повседневного использования.
 
-  "log": { "disabled": false, "level": "trace", "output": "", "timestamp": false },
+  "log": { "level": "trace", "output": "", "timestamp": false },
 
   // ══════════════════════════════════════════════
   // Конфигурация DNS - ядро ​​всей архитектуры,
@@ -403,7 +403,7 @@
       { "rule_set": [ "ipdetect"], "action": "reject" },
 
       // Правило 8: Режим Clash "Direct"; да, так ему тут и надо.
-      { "clash_mode": "Direct", "outbound": "🔌 Провайдер" },
+      { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
 
       // Правило 9: Приватные домены через напрямую в DIRECT.
       { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
