@@ -515,7 +515,7 @@ skeen restart
 
 Отличия от Windows/Linux шаблона:
 
- - Убраны селекторы: `"🏴‍☠️ Torrent"`, `"🕹️ Games"`, `"🤖 AI"` и правила для них включая записи в `rule_set`.
+ - Убраны селекторы: `"🏴‍☠️ Torrent"`, `"🕹️ Games"`, `"🤖 AI"`.
  - Добавлена опция `route.auto_detect_interface`.
 
 ```jsonc
@@ -635,7 +635,7 @@ skeen restart
       { "rule_set": [ "cheburnet" ], "outbound": "🔌 DIRECT" },
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
       { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Proxy" },
+      { "rule_set": [ "games", "ai", "proxy" ], "outbound": "🌍 Proxy" },
       { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
