@@ -32,10 +32,10 @@
 // Скорость при прямом подключении создаёт нагрузку на процессор, сопоставимую с работой без маршрутизации трафика через sing-box.
 // При этом решение сохраняет работоспособность в любых окружениях.
 
-// 6. Узел GLOBAL использует селектор выбора узлов ("🌍 Proxy") в качестве обходного маршрута для загрузки rule_set,
-// zashboard и обработки DNS-запросов проксируемого трафика.
+// 6. Узел GLOBAL использует селектор выбора узлов ("🌍 Proxy") в качестве обходного маршрута для загрузки rule_set и zashboard
 // !!! ВАЖНО: в селекторе "🌍 Proxy" необходим рабочий узел по умолчанию как минимум для первого старта sing-box,
-// для этого укажите его тег в параметре "default".
+// для этого укажите его тег в параметре "default", либо задайте в GLOBAL селекторе значение DIRECT,
+// если у вас нет проблем с доступом к GitHub и JsDelivr CDN
 
 // 7. Заполнять узлы и синхронизировать сам конфиг через "skeen sync" можно, настроив Sub-Store (смотрите файл Sub-Store-sync.md)
 
@@ -102,13 +102,13 @@
       // Примечание: DoH-запросы отправляются по протоколу HTTP/2 или HTTP/3, при этом путь по умолчанию — /dns-query.
       // Вопрос: Почему бы не использовать DoT? DoH обладает лучшей совместимостью с существующей HTTP-инфраструктурой.
       // Краткое описание: Это наиболее распространенный вариант для современных зашифрованных DNS-серверов.
-      { "tag": "dns_proxy_cf", "type": "https", "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy_cf", "type": "https", "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
 
       // DNS-сервер 5: Quad9 DNS-over-HTTPS для параллельных запросов через прокси с целью гонки ответов
-      { "tag": "dns_proxy_q9",  "type": "https", "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy_q9",  "type": "https", "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
 
       // DNS-сервер 6: Google DNS-over-HTTPS для параллельных запросов через прокси с целью гонки ответов
-      { "tag": "dns_proxy_gg",  "type": "https", "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy_gg",  "type": "https", "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
 
       // DNS-сервер 7: FakeIP (для международного, проксируемого трафика)
       // Примечание: Вместо реального IP-адреса будет возвращен фиктивный IP-адрес (198.18.xx).
@@ -125,7 +125,7 @@
     // Порядок очень важен! Сравнивайте сверху вниз, останавливается, когда найдено совпадение.
     "rules": [
       // Правило 1: Используем host в маршрутизации hosts DNS сервер
-      { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "preferred_by": "hosts", "server": "hosts" },
 
       // Правило 2: Отклонение всех IPv6 DNS-запросов (записи AAAA)
       // Если вам не нужен IPv6, прямое отклонение поможет избежать множества проблем.
@@ -156,14 +156,14 @@
       // ни ваш реальный IP-адрес, ни IP-адрес прокси-сервера не будут раскрыты
       // встроенными антифрод-системами внутри зловредных приложений.
       // ! 2ip.ru, 2ip.io и т.п. не откроются, это необходимая мера!
-      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
 
       // Правило 6: Резолвим домены с ключевыми словами "keenetic" и "netcraze" через локальный DNS роутера
       // Необходимо для работы KeenDNS и CrazeDNS.
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
 
       // Правило 7: Приватные (локальные) DNS запросы обрабатываем DNS роутера
-      { "rule_set": [ "private" ], "server": "dns_local" },
+      { "rule_set": "private", "server": "dns_local" },
 
       // Правило 8: В режиме Clash Direct используем только dns_direct → Yandex DNS
       { "clash_mode": "Direct", "server": "dns_direct" },
@@ -171,21 +171,21 @@
       // Правило 9: Предопределенный DNS-ответ для блокировки рекламы.
       // По умолчанию sing-box ответит кодом NOERROR (запрос успешен), но не выдаст IP.
       // Это самый мягкий способ блокировки: приложения/сайты не зависают и не спамят повторными запросами.
-      { "rule_set": [ "adguard" ], "action": "predefined" },
+      { "rule_set": "adguard", "action": "predefined" },
 
       // Правило 10: Для RU доменов белого списка -> разолвим через Yandex DNS
-      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
 
       // Правило 11: Локальный DNS для торрент-трекеров (оптимизация P2P-скорости и защита Fake-IP).
-      { "rule_set": [ "trackers" ], "server": "dns_direct" },
+      { "rule_set": "trackers", "server": "dns_direct" },
 
       // Правило 12: Набор правил фильтрации → Yandex DNS
       // Примечание: файл filter.srs содержит список доменов, которые необходимо обходить с помощью поддельных IP-адресов.
       // Почему необходим обход: Некоторые домены, использующие поддельные IP-адреса, могут вызывать ошибки.
-      { "rule_set": [ "filter" ], "server": "dns_direct" },
+      { "rule_set": "filter", "server": "dns_direct" },
 
       // Правило 13: Для проксируемых доменов назначаем Fake-IP
-      { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": [ "games", "ai", "proxy" ], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
 
       // Правило 14: Для доменов, которые не прошли по праавилам выше -> Параллельный запрос к 3-м прокси-DNS серверам
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
@@ -193,9 +193,9 @@
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
 
       // Правило 15: Гонка ответов. Если любой из серверов вернул IP из списка ruip -> отдаем самый быстрый ответ
-      { "match_response": "final-cf", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      { "match_response": "final-q9", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      { "match_response": "final-gg", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
+      { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
+      { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
 
       // // АЛЬТЕРНАТИВА правилам 14+15 (Приоритет Cloudflare + фоновые Quad9/Google)
       // // P.S. Можно делать и комбинации, вообще полностью обнулив существование Adguard Home как инструмент.
@@ -203,15 +203,16 @@
       // // Правило 14: Основной приоритетный DNS (Cloudflare).
       // { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       // // Включаем гонку для CF. Отбираем только российские IP (ruip) и отдаем результат.
-      // { "match_response": "final-cf", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      // { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
       //
       // // Правило 15: Резервные DNS (Quad9 и Google) с упреждающим запуском (speculative).
       // // Отправляются в сеть параллельно с CF, не дожидаясь его таймаута при сбое или блокировке.
       // { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24", "speculative": true },
+      // // Подключаем резервный ответ к гонке с той же проверкой на ruip.
+      // { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
+      // // + Тоже самое для dns_proxy_gg (запрос через прокси DNS Google DoH)
       // { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24", "speculative": true },
-      // // Подключаем резервные ответы к гонке с той же проверкой на ruip.
-      // { "match_response": "final-q9", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      // { "match_response": "final-gg", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      // { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
 
       // Правило 16: Для зарубежных айпи (доменов) -> назначаем Fake-IP
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
@@ -239,7 +240,10 @@
     // Роутеры имеют 256МБ-1ГБ памяти, и эта запись занимает примерно 10-20 МБ.
     // Когда кэш заполнится, старые записи будут удалены с использованием алгоритма LRU (Least Recently Used - наименее часто используемые).
 
-    "optimistic": { "enabled": true, "timeout": "5m0s" }, // Оптимистическое кэширование DNS (срок истечения 5 мин)
+    "optimistic": {
+      "enabled": true,  // Оптимистическое кэширование DNS (срок истечения 5 мин)
+      "timeout": "5m0s"
+    },
     // Принцип оптимистического кэширования:
     // 1. Если истекает срок действия DNS-записи (например, TTL=300 секунд), сначала верните старый результат (0 мс клиенту).
     // 2. Одновременно бэкэнд запрашивает новую информацию  → незаметно обновляет кэш.
@@ -314,10 +318,15 @@
     { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
     { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
     { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [ "DIRECT" ] },
+
     // Прямое подключение к правайдеру (DIRECT)
     { "tag": "DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
-    // Глобальное подключение в качестве обходного маршрута для загрузки rule_set,
-    // zashboard веб панели и обработки DNS-запросов проксируемого трафика.
+
+    // Глобальное подключение в качестве обходного маршрута для загрузки rule_set и zashboard веб панели.
+    // Примечание: Указали его тег в секции http_clients выше и experimental.clash_api ниже.
+    // !!! ВАЖНО: в селекторе "🌍 Proxy" необходим рабочий узел по умолчанию как минимум для первого старта sing-box,
+    // для этого укажите его тег в параметре "default" (елзи не задан будет перый узел по умолчанию),
+    // либо задайте вместо "🌍 Proxy" значение "DIRECT", если у вас нет проблем с доступом к GitHub и JsDelivr CDN
     { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Proxy" ] },
 
     // Список прокси-узлов
@@ -380,64 +389,65 @@
       // Кому-то полный блок QUIC сэкономит 1% процессора на роутере, дерзайте.
       // { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "protocol": "quic" }, { "port": 443 } ] },
 
-      // Правило 4: Перехват DNS (порт 53 + протокол DNS)
-      // Перехват обычных DNS-запросов к внутреннему DNS-модулю Sing-box → Предотвращение утечек данных!
-      // Логическое ИЛИ: Порт 53 или протокол DNS; перехват происходит, если выполняется хотя бы одно из этих условий.
-      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
-
-      // Правило 5: Отклонить DoT(853) и mDNS(5353) → Предотвращает обход DNS-перехвата sing-box
-      // DoT = DNS поверх TLS, зашифрованный DNS, обходящий перехват → Предотвращает возврат к порту 53
-      // mDNS = Обнаружение устройств локальной сети осуществляется системой и не требует прокси-сервера.
-      { "port": [ 853, 5353 ], "action": "reject" },
-
-      // Правило 6: Отклонять недействительные публичные IPv6-адреса
+      // Правило 4: Отклонять недействительные публичные IPv6-адреса
       // Пояснение: Сопоставляет соединения с целевым IPv6-адресом.
       // Цель: Полностью отключить IPv6 в соответствии с отказом DNS-уровня в приеме AAAA-пакетов.
       // Назначение: Во избежание сбоев соединения, вызванных проблемами в сети IPv6 или несовместимостью прокси-сервера с IPv6.
       // Примечание: Если ваша сетевая среда поддерживает IPv6 и требует его использования, вы можете удалить это правило.
       { "ip_version": 6, "action": "reject" },
 
+      // Правило 5: Перехват DNS (порт 53 + протокол DNS)
+      // Перехват обычных DNS-запросов к внутреннему DNS-модулю Sing-box → Предотвращение утечек данных!
+      // Логическое ИЛИ: Порт 53 или протокол DNS; перехват происходит, если выполняется хотя бы одно из этих условий.
+      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+
+      // Правило 6: Отклонить DoT(853) и mDNS(5353) → Предотвращает обход DNS-перехвата sing-box
+      // DoT = DNS поверх TLS, зашифрованный DNS, обходящий перехват → Предотвращает возврат к порту 53
+      // mDNS = Обнаружение устройств локальной сети осуществляется системой и не требует прокси-сервера.
+      { "port": [ 853, 5353 ], "action": "reject" },
+
       // Правило 7: Отклоняем домены сервисов проверки гео-IP.
       // Полностью запрещает запросы к детекторам IP-адресов. Это немного гарантирует, что
       // ни ваш реальный IP-адрес, ни IP-адрес прокси-сервера не будут раскрыты
       // встроенными антифрод-системами внутри зловредных приложений.
       // ! 2ip.ru, 2ip.io и т.п. не откроются, это необходимая мера!
-      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
 
       // Правило 8: Режим Clash "Direct"; да, так ему тут и надо.
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
 
       // Правило 9: Приватные домены через напрямую в DIRECT.
-      { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
+      { "rule_set": "private", "outbound": "🔌 DIRECT" },
 
       // Правило 10: Локальные сервисы чебурнета через провайдера.
-      { "rule_set": [ "cheburnet"], "outbound": "🔌 DIRECT" },
+      { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
 
       // Правило 11: Синхронизация времени NTP -> селектор "🇷🇺 RU"
       // Отправляем в селектор "🇷🇺 RU" чтобы гибко управлять трафиком NTP (NTP в KeeneticOS)
-      { "protocol": [ "ntp" ], "outbound": "🇷🇺 RU" },
+      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
 
       // Правила 12: Назаначаем выходы (outbound) Нашим "Гибким" селекторам
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
-      { "rule_set": [ "games" ], "outbound": "🕹️ Games" },
-      { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
+      { "rule_set": "games", "outbound": "🕹️ Games" },
+      { "rule_set": "ai", "outbound": "🤖 AI" },
 
       // Правило 13: Частные IP-адреса (192.168.xx и т. д.) → Прямой доступ
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
 
       // Правило 14: Принудительное использование прокси для диапазона фиктивных IP-адресов
-      // Сопоставляет все соединения с целевыми IP-адресами в диапазоне 198.18.0.0/15 и fc00::/18.
+      // Сопоставляет все соединения с целевыми IP-адресами в диапазоне 198.18.0.0/15.
+      // Добавьте в ip_cidr значение fc00::/18 если планируете исопльзовать IPv6.
       // Пояснение: Эти IP-адреса являются фиктивными и были ранее назначены DNS;
       // для соответствующих доменов было определено, что требуется прокси-сервер.
       // Следовательно, исходящий трафик должен принудительно проходить через прокси-сервер.
       // Это правило лежит в основе механизма FakeIP.
-      { "ip_cidr": [ "198.18.0.0/15",  "fc00::/18" ], "outbound": "🌍 Proxy" },
+      { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
 
       // Правило 15: Трафик для этих доменов проходит через прокси.
       // Примечание: Большинство этих доменов используют FakeIP на уровне DNS,
       // поэтому они фактически соответствуют сетевым сегментам FakeIP. (предыдущее правило)
       // Это указано еще раз в качестве резервного варианта для сценариев без FakeIP.
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Proxy" },
+      { "rule_set": "proxy", "outbound": "🌍 Proxy" },
 
       // Правило 16: RU домены/IP (не в блоке т.к. после Fake-IP) -> селектор "🇷🇺 RU"
       // Пояснение: Эта часть трафика проходит напрямую через DIRECT либо прокси в РФ,

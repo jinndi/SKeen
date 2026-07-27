@@ -42,32 +42,32 @@
       },
       { "tag": "dns_local",    "type": "local" },
       { "tag": "dns_direct",   "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
-      { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "GLOBAL" },
-      { "tag": "dns_proxy_q9", "type": "https",  "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "GLOBAL" },
-      { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
+      { "tag": "dns_proxy_q9", "type": "https",  "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
+      { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
       { "tag": "dns_fakeip",   "type": "fakeip", "inet4_range": "198.18.0.0/15" }
     ],
 
     "rules": [
-      { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "preferred_by": "hosts", "server": "hosts" },
       { "query_type": "AAAA", "action": "reject" },
       { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
       { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
-      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
-      { "rule_set": [ "private" ], "server": "dns_local" },
+      { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
-      { "rule_set": [ "adguard" ], "action": "predefined" },
-      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
-      { "rule_set": [ "trackers" ], "server": "dns_direct" },
-      { "rule_set": [ "filter" ], "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "adguard", "action": "predefined" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "rule_set": "trackers", "server": "dns_direct" },
+      { "rule_set": "filter", "server": "dns_direct" },
+      { "rule_set": [ "games", "ai", "proxy" ], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
-      { "match_response": "final-cf", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      { "match_response": "final-q9", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      { "match_response": "final-gg", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
+      { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
+      { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
       { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
@@ -76,7 +76,10 @@
     "strategy": "ipv4_only",
     "timeout": "10s",
     "cache_capacity": 16384,
-    "optimistic": { "enabled": true, "timeout": "5m0s" },
+    "optimistic": {
+      "enabled": true,
+      "timeout": "5m0s"
+    },
     "reverse_mapping": true
   },
 
@@ -126,20 +129,20 @@
     "rules": [
       { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
+      { "ip_version": 6, "action": "reject" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
       { "port": [ 853, 5353 ], "action": "reject" },
-      { "ip_version": 6, "action": "reject" },
-      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
-      { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
-      { "rule_set": [ "cheburnet" ], "outbound": "🔌 DIRECT" },
-      { "protocol": [ "ntp" ], "outbound": "🇷🇺 RU" },
+      { "rule_set": "private", "outbound": "🔌 DIRECT" },
+      { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
+      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
-      { "rule_set": [ "games" ], "outbound": "🕹️ Games" },
-      { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
+      { "rule_set": "games", "outbound": "🕹️ Games" },
+      { "rule_set": "ai", "outbound": "🤖 AI" },
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
-      { "ip_cidr": [ "198.18.0.0/15", "fc00::/18" ], "outbound": "🌍 Proxy" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Proxy" },
+      { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
+      { "rule_set": "proxy", "outbound": "🌍 Proxy" },
       { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
@@ -353,32 +356,32 @@ skeen restart
       },
       { "tag": "dns_local",    "type": "local" },
       { "tag": "dns_direct",   "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
-      { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "GLOBAL" },
-      { "tag": "dns_proxy_q9", "type": "https",  "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "GLOBAL" },
-      { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
+      { "tag": "dns_proxy_q9", "type": "https",  "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
+      { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
       { "tag": "dns_fakeip",   "type": "fakeip", "inet4_range": "198.18.0.0/15" }
     ],
 
     "rules": [
-      { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "preferred_by": "hosts", "server": "hosts" },
       { "query_type": "AAAA", "action": "reject" },
       { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
       { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
-      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
-      { "rule_set": [ "private" ], "server": "dns_local" },
+      { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
-      { "rule_set": [ "adguard" ], "action": "predefined" },
-      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
-      { "rule_set": [ "trackers" ], "server": "dns_direct" },
-      { "rule_set": [ "filter" ], "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "adguard", "action": "predefined" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "rule_set": "trackers", "server": "dns_direct" },
+      { "rule_set": "filter", "server": "dns_direct" },
+      { "rule_set": [ "games", "ai", "proxy" ], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
-      { "match_response": "final-cf", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      { "match_response": "final-q9", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      { "match_response": "final-gg", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
+      { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
+      { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
       { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
@@ -387,7 +390,10 @@ skeen restart
     "strategy": "ipv4_only",
     "timeout": "10s",
     "cache_capacity": 16384,
-    "optimistic": { "enabled": true, "timeout": "5m0s" },
+    "optimistic": {
+      "enabled": true,
+      "timeout": "5m0s"
+    },
     "reverse_mapping": true
   },
 
@@ -447,20 +453,20 @@ skeen restart
     "rules": [
       { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
-      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
-      { "port": [ 853, 5353 ], "action": "reject" },
       { "ip_version": 6, "action": "reject" },
-      { "rule_set": [ "ipdetect" ], "action": "reject" },
+      { "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "port": [ 853, 5353 ], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
-      { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
-      { "protocol": [ "ntp" ], "outbound": "🇷🇺 RU" },
-      { "rule_set": [ "cheburnet" ], "outbound": "🔌 DIRECT" },
+      { "rule_set": "private", "outbound": "🔌 DIRECT" },
+      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
+      { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
-      { "rule_set": [ "games" ], "outbound": "🕹️ Games" },
-      { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
+      { "rule_set": "games", "outbound": "🕹️ Games" },
+      { "rule_set": "ai", "outbound": "🤖 AI" },
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
       { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Proxy" },
+      { "rule_set": "proxy", "outbound": "🌍 Proxy" },
       { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
@@ -515,7 +521,9 @@ skeen restart
 
 Отличия от Windows/Linux шаблона:
 
+ - Удален один DNS под тегом `"dns_proxy_q9"` для оптимизации при слабом приеме сети.
  - Убраны селекторы: `"🏴‍☠️ Torrent"`, `"🕹️ Games"`, `"🤖 AI"`.
+ - Добавлены небезопасные TCP/UDP порты в правила (rules) для их отклонения, подробнее см. в файле config-commented.jsonc.
  - Добавлена опция `route.auto_detect_interface`.
 
 ```jsonc
@@ -528,39 +536,35 @@ skeen restart
         "tag": "hosts", "type": "hosts",
         "predefined": {
           "cloudflare-dns.com": [ "104.16.248.249", "104.16.249.249" ],
-          "dns.quad9.net": [ "9.9.9.9", "149.112.112.112" ],
           "dns.google": [ "8.8.8.8", "8.8.4.4" ],
           "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ]
         }
       },
       { "tag": "dns_local",    "type": "local" },
       { "tag": "dns_direct",   "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
-      { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "GLOBAL" },
-      { "tag": "dns_proxy_q9", "type": "https",  "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "GLOBAL" },
-      { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
+      { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
+      { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
       { "tag": "dns_fakeip",   "type": "fakeip", "inet4_range": "198.18.0.0/15" }
     ],
 
     "rules": [
-      { "preferred_by": [ "hosts" ], "server": "hosts" },
+      { "preferred_by": "hosts", "server": "hosts" },
       { "query_type": "AAAA", "action": "reject" },
       { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
       { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
-      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
-      { "rule_set": [ "private" ], "server": "dns_local" },
+      { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
-      { "rule_set": [ "adguard" ], "action": "predefined" },
-      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
-      { "rule_set": [ "trackers" ], "server": "dns_direct" },
-      { "rule_set": [ "filter" ], "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "adguard", "action": "predefined" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "rule_set": "trackers", "server": "dns_direct" },
+      { "rule_set": "filter", "server": "dns_direct" },
+      { "rule_set": [ "games", "ai", "proxy" ], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
-      { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
-      { "match_response": "final-cf", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      { "match_response": "final-q9", "rule_set": [ "ruip" ], "action": "respond", "race": true },
-      { "match_response": "final-gg", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
+      { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
       { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
       { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
@@ -569,7 +573,10 @@ skeen restart
     "strategy": "ipv4_only",
     "timeout": "10s",
     "cache_capacity": 16384,
-    "optimistic": { "enabled": true, "timeout": "5m0s" },
+    "optimistic": {
+      "enabled": true,
+      "timeout": "5m0s"
+    },
     "reverse_mapping": true
   },
 
@@ -625,14 +632,14 @@ skeen restart
     "rules": [
       { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
+      { "ip_version": 6, "action": "reject" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
       { "port": [ 853, 5353 ], "action": "reject" },
-      { "ip_version": 6, "action": "reject" },
-      { "rule_set": [ "ipdetect" ], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
-      { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
-      { "protocol": [ "ntp" ], "outbound": "🇷🇺 RU" },
-      { "rule_set": [ "cheburnet" ], "outbound": "🔌 DIRECT" },
+      { "rule_set": "private", "outbound": "🔌 DIRECT" },
+      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
+      { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
       { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
       { "rule_set": [ "games", "ai", "proxy" ], "outbound": "🌍 Proxy" },
@@ -646,6 +653,29 @@ skeen restart
           { "domain_keyword": [ "stun", "turn", "httpdns" ] }
         ],
         "action": "reject", "method": "drop"
+      },
+      {
+        "network": "udp",
+        "port": [
+          20, 21, 22, 23, 25, 69, 80, 110, 123, 137, 138, 139, 143, 389, 445,
+          500, 514, 666, 1194, 1433, 1701, 1719, 1720, 1723, 1900, 2049, 2710,
+          3128, 3306, 3389, 3479, 4444, 4500, 4665, 4672, 5060, 5061, 5349, 5355,
+          5432, 5900, 6443, 6711, 6776, 6881, 6882, 6883, 6884, 6885, 6886, 6887,
+          6888, 6889, 7001, 7002, 8000, 8080, 8443, 8612, 8766, 8767, 9090, 9987,
+          12345, 27015, 27016, 27017, 27018, 27019, 27020, 27021, 27022, 27023,
+          27024, 27025, 27026, 27027, 27028, 27029, 27030
+        ],
+        "action": "reject"
+      },
+      {
+        "network": "tcp",
+        "port": [
+          20, 21, 22, 23, 25, 80, 110, 143, 389, 445, 666, 1080, 1194, 1433, 1719,
+          1720, 1723, 2049, 2710, 3128, 3306, 3389, 3478, 3479, 4444, 4661, 4662,
+          5060, 5061, 5349, 5432, 5900, 6711, 6776, 7001, 7002, 8000, 8080, 8443,
+          8612, 9090, 10000, 12345, 1243, 27374, 3127, 31337
+        ],
+        "action": "reject"
       },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
       { "action": "resolve", "timeout": "5s" },
