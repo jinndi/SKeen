@@ -191,6 +191,7 @@
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
+
       // Правило 15: Гонка ответов. Если любой из серверов вернул IP из списка ruip -> отдаем самый быстрый ответ
       { "match_response": "final-cf", "rule_set": [ "ruip" ], "action": "respond", "race": true },
       { "match_response": "final-q9", "rule_set": [ "ruip" ], "action": "respond", "race": true },
@@ -203,6 +204,7 @@
       // { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       // // Включаем гонку для CF. Отбираем только российские IP (ruip) и отдаем результат.
       // { "match_response": "final-cf", "rule_set": [ "ruip" ], "action": "respond", "race": true },
+      //
       // // Правило 15: Резервные DNS (Quad9 и Google) с упреждающим запуском (speculative).
       // // Отправляются в сеть параллельно с CF, не дожидаясь его таймаута при сбое или блокировке.
       // { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24", "speculative": true },

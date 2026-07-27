@@ -27,7 +27,7 @@
 
 ```jsonc
 {
-  "log": { "disabled": false, "level": "trace", "output": "", "timestamp": false },
+  "log": { "level": "trace", "output": "", "timestamp": false },
 
   "dns": {
     "servers": [
@@ -338,7 +338,7 @@ skeen restart
 
 ```jsonc
 {
-  "log": { "disabled": false, "level": "trace", "output": "", "timestamp": true },
+  "log": { "level": "trace", "output": "", "timestamp": true },
 
   "dns": {
     "servers": [
@@ -520,7 +520,7 @@ skeen restart
 
 ```jsonc
 {
-  "log": { "disabled": false, "level": "trace", "output": "", "timestamp": true },
+  "log": { "level": "trace", "output": "", "timestamp": true },
 
   "dns": {
     "servers": [

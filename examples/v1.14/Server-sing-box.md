@@ -89,6 +89,30 @@ services:
       # Разрешает привязываться к системным портам (ниже 1024, например 80 или 443),
       # даже если процесс запущен не от root
       - NET_BIND_SERVICE
+
+  # Дополнительно можно поднять sub-store для работы через Cloudflare Tunnel
+  # Подробнее как настроить на 3001 порт смотрите ниже по типу описания в пункте 11 блока inbounds конфигурации sing-box.
+  # Это хороший аналог настройки предоставленной здесь: https://github.com/jinndi/Sub-Store-Docker
+  sub-store:
+    image: xream/sub-store:http-meta
+    container_name: sub-store
+    restart: unless-stopped
+    environment:
+      # Укажите тут свои уникальный набор символов после косой черты:
+      SUB_STORE_FRONTEND_BACKEND_PATH: /jfDud83kfDlo0kDewc
+      # Длее ничего можно не менять.
+      SUB_STORE_BACKEND_API_HOST: 0.0.0.0
+      SUB_STORE_BACKEND_API_PORT: 3001
+      SUB_STORE_BACKEND_MERGE: true
+      # HTTP-META интерфейс, как правило, никаких изменений не требуется.
+      PORT: 9876
+      HOST: 127.0.0.1
+    network_mode: host
+    volumes:
+      - sub_store:/opt/app/data
+
+volumes:
+  sub_store:
 ```
 
 Можно предварительно отредактировать под себя, после вставки - сохраняем файл сочетанием клавиш `Ctrl + S` и выйдим из редактора через `Ctrl + X`.
