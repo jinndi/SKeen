@@ -27,6 +27,8 @@
 
 ```jsonc
 {
+  "$schema": "https://sing-box.sagernet.org/schema.json",
+
   "log": { "level": "trace", "output": "", "timestamp": false },
 
   "dns": {
@@ -50,9 +52,7 @@
 
     "rules": [
       { "preferred_by": "hosts", "server": "hosts" },
-      { "query_type": "AAAA", "action": "reject" },
-      { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
-      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
+      { "query_type": "A", "invert": true, "action": "reject" },
       { "rule_set": "ipdetect", "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
       { "rule_set": "private", "server": "dns_local" },
@@ -61,15 +61,16 @@
       { "rule_set": "cheburnet", "server": "dns_direct" },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy" ], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": [ "games", "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
       { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
-      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" }
+      { "server": "dns_fakeip" },
+      { "clash_mode": "Global", "server": "dns_fakeip" },
+      { "action": "reject" }
     ],
 
     "final": "dns_proxy_cf",
@@ -129,8 +130,8 @@
     "rules": [
       { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
-      { "ip_version": 6, "action": "reject" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "ip_version": 6, "action": "reject" },
       { "port": [ 853, 5353 ], "action": "reject" },
       { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
@@ -341,6 +342,8 @@ skeen restart
 
 ```jsonc
 {
+  "$schema": "https://sing-box.sagernet.org/schema.json",
+
   "log": { "level": "trace", "output": "", "timestamp": true },
 
   "dns": {
@@ -364,9 +367,7 @@ skeen restart
 
     "rules": [
       { "preferred_by": "hosts", "server": "hosts" },
-      { "query_type": "AAAA", "action": "reject" },
-      { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
-      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
+      { "query_type": "A", "invert": true, "action": "reject" },
       { "rule_set": "ipdetect", "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
       { "rule_set": "private", "server": "dns_local" },
@@ -375,15 +376,16 @@ skeen restart
       { "rule_set": "cheburnet", "server": "dns_direct" },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy" ], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": [ "games", "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
       { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
-      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" }
+      { "server": "dns_fakeip" },
+      { "clash_mode": "Global", "server": "dns_fakeip" },
+      { "action": "reject" }
     ],
 
     "final": "dns_proxy_cf",
@@ -430,6 +432,7 @@ skeen restart
       "auto_redirect": true, // ВАЖНО!: в Windows поставить значение false
       "strict_route": true,
       "stack": "mixed",
+      "udp_nat_max": 4096,
       "endpoint_independent_nat": true
     }
   ],
@@ -453,8 +456,8 @@ skeen restart
     "rules": [
       { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
-      { "ip_version": 6, "action": "reject" },
       { "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "ip_version": 6, "action": "reject" },
       { "port": [ 853, 5353 ], "action": "reject" },
       { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
@@ -528,6 +531,8 @@ skeen restart
 
 ```jsonc
 {
+  "$schema": "https://sing-box.sagernet.org/schema.json",
+
   "log": { "level": "trace", "output": "", "timestamp": true },
 
   "dns": {
@@ -549,9 +554,7 @@ skeen restart
 
     "rules": [
       { "preferred_by": "hosts", "server": "hosts" },
-      { "query_type": "AAAA", "action": "reject" },
-      { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
-      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
+      { "query_type": "A", "invert": true, "action": "reject" },
       { "rule_set": "ipdetect", "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
       { "rule_set": "private", "server": "dns_local" },
@@ -560,13 +563,14 @@ skeen restart
       { "rule_set": "cheburnet", "server": "dns_direct" },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy" ], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": [ "games", "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
       { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
-      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" }
+      { "server": "dns_fakeip" },
+      { "clash_mode": "Global", "server": "dns_fakeip" },
+      { "action": "reject" }
     ],
 
     "final": "dns_proxy_cf",
@@ -612,6 +616,7 @@ skeen restart
       "auto_redirect": true,
       "strict_route": true,
       "stack": "mixed",
+      "udp_nat_max": 4096,
       "endpoint_independent_nat": true
     }
   ],
@@ -632,8 +637,8 @@ skeen restart
     "rules": [
       { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
-      { "ip_version": 6, "action": "reject" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "ip_version": 6, "action": "reject" },
       { "port": [ 853, 5353 ], "action": "reject" },
       { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
