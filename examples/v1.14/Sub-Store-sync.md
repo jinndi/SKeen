@@ -332,6 +332,7 @@ skeen restart
 
 Ниже пример шаблона для настольных клиентов Linux/Windows, отличие от шаблона для роутера только в:
 
+ - `dns.rules`: используем оптимизированный вариант, подробнее в config-commented.jsonc.
  - `inbouns`: вместо `tproxy` используется `tun`
  - отсутвия блока `services` и `experimental.clash_api`
  - Увеличено в два раза значение `experimental.debug.memory_limit`.
@@ -372,18 +373,18 @@ skeen restart
       { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
       { "rule_set": "adguard", "action": "predefined" },
-      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "rule_set": [ "cheburnet", "ru" ], "server": "dns_direct" },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": [ "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
-      { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
-      { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
-      { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
-      { "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" }
+      { "match_response": "final-cf", "action": "respond", "race": true },
+      { "match_response": "final-q9", "action": "respond", "race": true },
+      { "match_response": "final-gg", "action": "respond", "race": true },
+      { "clash_mode": "Global", "server": "dns_proxy_cf" },
+      { "action": "reject" }
     ],
 
     "final": "dns_proxy_cf",
@@ -394,7 +395,7 @@ skeen restart
       "enabled": true,
       "timeout": "5m0s"
     },
-    "reverse_mapping": true
+    "reverse_mapping": false
   },
 
   "ntp": {
@@ -522,6 +523,7 @@ skeen restart
 
 Отличия от Windows/Linux шаблона:
 
+ - `dns.rules`: используем оптимизированный вариант, подробнее в config-commented.jsonc.
  - Удален один DNS под тегом `"dns_proxy_q9"` для оптимизации при слабом приеме сети.
  - Убраны селекторы: `"🏴‍☠️ Torrent"`, `"🕹️ Games"`, `"🤖 AI"`.
  - Добавлены небезопасные TCP/UDP порты в правила (rules) для их отклонения, подробнее см. в файле config-commented.jsonc.
@@ -558,16 +560,16 @@ skeen restart
       { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
       { "rule_set": "adguard", "action": "predefined" },
-      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "rule_set": [ "cheburnet", "ru" ], "server": "dns_direct" },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": [ "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
-      { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
-      { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
-      { "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" }
+      { "match_response": "final-cf", "action": "respond", "race": true },
+      { "match_response": "final-gg", "action": "respond", "race": true },
+      { "clash_mode": "Global", "server": "dns_proxy_cf" },
+      { "action": "reject" }
     ],
 
     "final": "dns_proxy_cf",
@@ -578,7 +580,7 @@ skeen restart
       "enabled": true,
       "timeout": "5m0s"
     },
-    "reverse_mapping": true
+    "reverse_mapping": false
   },
 
   "ntp": {
