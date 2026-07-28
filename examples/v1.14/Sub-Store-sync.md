@@ -69,8 +69,7 @@
       { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
       { "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" },
-      { "action": "reject" }
+      { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
 
     "final": "dns_proxy_cf",
@@ -384,8 +383,7 @@ skeen restart
       { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
       { "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" },
-      { "action": "reject" }
+      { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
 
     "final": "dns_proxy_cf",
@@ -569,8 +567,7 @@ skeen restart
       { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
       { "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" },
-      { "action": "reject" }
+      { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
 
     "final": "dns_proxy_cf",
