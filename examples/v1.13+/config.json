@@ -1,7 +1,7 @@
 //// Конфигурация для шаблонов по умолчанию версии sing-box 1.13+
 // Начиная с SKeen 4.20.1 версии
 {
-  "log": { "disabled": false, "level": "trace", "output": "", "timestamp": false },
+  "log": { "level": "trace", "output": "", "timestamp": false },
 
   "dns": {
     "servers": [
@@ -14,25 +14,23 @@
       },
       { "tag": "dns_local",  "type": "local" },
       { "tag": "dns_direct", "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
-      { "tag": "dns_proxy",  "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "GLOBAL" },
-      { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15", "inet6_range": "fc00::/18" }
+      { "tag": "dns_proxy",  "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
+      { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15" }
     ],
 
     "rules": [
-      { "ip_version": 6, "action": "reject" },
-      { "query_type": [ "SVCB", "HTTPS", "PTR" ], "action": "reject" },
-      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "query_type": "A", "invert": true, "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
       { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
-      { "rule_set": [ "private" ], "server": "dns_local" },
+      { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
-      { "rule_set": [ "adguard" ], "action": "predefined" },
-      { "rule_set": [ "cheburnet" ], "server": "dns_direct" },
-      { "rule_set": [ "trackers" ], "server": "dns_direct" },
-      { "rule_set": [ "filter" ], "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy"], "query_type": [ "A", "AAAA" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
-      { "rule_set": [ "ru" ], "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
-      { "query_type": [ "A", "AAAA" ], "server": "dns_fakeip" },
-      { "query_type": [ "A", "AAAA" ], "invert": true, "action": "reject" },
+      { "rule_set": "adguard", "action": "predefined" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "rule_set": "trackers", "server": "dns_direct" },
+      { "rule_set": "filter", "server": "dns_direct" },
+      { "rule_set": "proxy", "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "ru", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
+      { "server": "dns_fakeip" },
       { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
 
@@ -56,10 +54,7 @@
       "tag": "tproxy-in",
       "type": "tproxy",
       "listen": "::",
-      "listen_port": 65082,
-      "tcp_fast_open": true,
-      "udp_fragment": true,
-      "udp_timeout": "1m0s"
+      "listen_port": 65082
     }
   ],
 
@@ -103,19 +98,19 @@
       { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "ip_version": 6, "action": "reject" },
       { "port": [ 853, 5353 ], "action": "reject" },
-      { "action": "reject", "type": "logical", "mode": "and", "rules": [ { "ip_version": 6 }, { "default_interface_address": "2000::/3", "invert": true } ] },
-      { "rule_set": [ "ipdetect"], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
-      { "rule_set": [ "private" ], "outbound": "🔌 DIRECT" },
-      { "rule_set": [ "cheburnet" ], "outbound": "🔌 DIRECT" },
-      { "protocol": [ "ntp" ], "outbound": "🇷🇺 RU" },
+      { "rule_set": "private", "outbound": "🔌 DIRECT" },
+      { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
+      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
-      { "rule_set": [ "games" ], "outbound": "🕹️ Games" },
-      { "rule_set": [ "ai" ], "outbound": "🤖 AI" },
+      { "rule_set": "games", "outbound": "🕹️ Games" },
+      { "rule_set": "ai", "outbound": "🤖 AI" },
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
-      { "ip_cidr": [ "198.18.0.0/15", "fc00::/18" ], "outbound": "🌍 Proxy" },
-      { "rule_set": [ "proxy" ], "outbound": "🌍 Proxy" },
+      { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
+      { "rule_set": "proxy", "outbound": "🌍 Proxy" },
       { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
@@ -128,33 +123,33 @@
         "action": "reject", "method": "drop"
       },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
-      { "action": "resolve" },
+      { "action": "resolve", "timeout": "5s" },
       { "clash_mode": "Global", "outbound": "🌍 Proxy" }
     ],
 
     "rule_set": [
       {
         "tag": "ipdetect",  "type": "remote", "download_detour": "GLOBAL",
-        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ip-geo-detect.srs"
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ipdetect.srs"
       },
       {
         "tag": "private",   "type": "remote", "download_detour": "GLOBAL",
-        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/private.srs"
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/private.srs"
       },
       {
         "tag": "trackers",  "type": "remote", "download_detour": "GLOBAL",
-        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-public-tracker.srs"
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/trackers.srs"
       },
       {
         "tag": "games",     "type": "remote", "download_detour": "GLOBAL",
-        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-games.srs"
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/games.srs"
       },
       { "tag": "ai",        "type": "remote", "download_detour": "GLOBAL",
-        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ai-chat-!cn.srs"
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ai.srs"
       },
       {
         "tag": "ru",        "type": "remote", "download_detour": "GLOBAL",
-        "url": "https://cdn.jsdelivr.net/gh/KaringX/karing-ruleset@sing/geo/geosite/category-ru.srs"
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ru.srs"
       },
       {
         "tag": "ruip",      "type": "remote", "download_detour": "GLOBAL",
