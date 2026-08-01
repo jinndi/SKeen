@@ -31,7 +31,7 @@ readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.0.2"
+readonly SKEEN_VERSION="5.0.3"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
@@ -251,9 +251,9 @@ json_get_array() {
 }
 
 check_and_create_or_sync_skeen_config() {
-  if [ ! -f "$SKEEN_CONFIG" ]; then
-    create_skeen_config
-  elif [ ! -f "$SKEEN_RUN_CONFIG" ] || [ "$SKEEN_CONFIG" -nt "$SKEEN_RUN_CONFIG" ]; then
+  [ ! -f "$SKEEN_CONFIG" ] && create_skeen_config
+
+  if [ ! -f "$SKEEN_RUN_CONFIG" ] || [ "$SKEEN_CONFIG" -nt "$SKEEN_RUN_CONFIG" ]; then
     echomsg "Синхронизируем конфигурацию..."
     if cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"; then
       chmod 644 "$SKEEN_RUN_CONFIG"
