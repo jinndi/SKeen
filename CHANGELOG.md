@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.0.3](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.2...SKeen-v5.0.3) (2026-08-01)
+
+
+### 🛠 Refactor
+
+* **config:** simplify DNS rules v1.13 and configuration in example configs ([561bb30](https://github.com/jinndi/SKeen/commit/561bb30b89f407323ddac1c633e43a7c7a9713ec))
+
+
+### 🧰 Chore
+
+* **shell:** bump SKeen version to 5.0.3 and streamline config sync logic ([ec12e82](https://github.com/jinndi/SKeen/commit/ec12e82b8a19a62750d2beaca46cedab78e58ec6))
+
 ## [5.0.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.1...SKeen-v5.0.2) (2026-07-24)
 
 
