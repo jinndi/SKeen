@@ -36,7 +36,7 @@
       { "rule_set": "cheburnet", "server": "dns_direct" },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "proxy", "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },

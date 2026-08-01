@@ -61,7 +61,7 @@
       { "rule_set": "cheburnet", "server": "dns_direct" },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "games", "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "proxy", "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
@@ -333,8 +333,8 @@ skeen restart
 Ниже пример шаблона для настольных клиентов Linux/Windows, отличие от шаблона для роутера только в:
 
  - `dns.rules`: используем оптимизированный вариант, подробнее в config-commented.jsonc.
- - `inbouns`: вместо `tproxy` используется `tun`
- - отсутвия блока `services` и `experimental.clash_api`
+ - `inbouns`: вместо `tproxy` используется `tun`.
+ - отсутвия блока `services` и `experimental.clash_api`.
  - Увеличено в два раза значение `experimental.debug.memory_limit`.
 
 > Вы также можете дополнительно использовать больше правил и действий доступных в таких средах, например  маршрутизацию по процессам в зависимости от используемой системы (`process_*`)
@@ -373,10 +373,10 @@ skeen restart
       { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
       { "rule_set": "adguard", "action": "predefined" },
-      { "rule_set": [ "cheburnet", "ru" ], "server": "dns_direct" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "proxy", "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
@@ -523,11 +523,10 @@ skeen restart
 
 Отличия от Windows/Linux шаблона:
 
- - `dns.rules`: используем оптимизированный вариант, подробнее в config-commented.jsonc.
  - Удален один DNS под тегом `"dns_proxy_q9"` для оптимизации при слабом приеме сети.
- - Убраны селекторы: `"🏴‍☠️ Torrent"`, `"🕹️ Games"`, `"🤖 AI"`.
+ - Убраны селекторы: `"🏴‍☠️ Torrent"`, `"🕹️ Games"`, `"🤖 AI"` и rule_set для них.
  - Добавлены небезопасные TCP/UDP порты в правила (rules) для их отклонения, подробнее см. в файле config-commented.jsonc.
- - Добавлена опция `route.auto_detect_interface`.
+ - Добавлена опция `route.override_android_vpn`.
 
 ```jsonc
 {
@@ -560,10 +559,9 @@ skeen restart
       { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
       { "rule_set": "adguard", "action": "predefined" },
-      { "rule_set": [ "cheburnet", "ru" ], "server": "dns_direct" },
-      { "rule_set": "trackers", "server": "dns_direct" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
-      { "rule_set": [ "ai", "proxy" ], "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "proxy", "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
       { "match_response": "final-cf", "action": "respond", "race": true },
@@ -646,7 +644,7 @@ skeen restart
       { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
       { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
-      { "rule_set": [ "games", "ai", "proxy" ], "outbound": "🌍 Proxy" },
+      { "rule_set": "proxy", "outbound": "🌍 Proxy" },
       { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
@@ -689,7 +687,7 @@ skeen restart
     "rule_set": [
       {
         "type": "remote",
-        "tag": [ "ipdetect", "private", "adguard", "cheburnet", "trackers", "filter", "games", "ai", "proxy", "ru", "ruip" ],
+        "tag": [ "ipdetect", "private", "adguard", "cheburnet", "filter", "proxy", "ru", "ruip" ],
         "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs",
         "update_interval": "48h0m0s"
       }
