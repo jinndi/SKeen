@@ -297,6 +297,7 @@ ADGuard Home в первую очередь отвечает за фильтра
   - Настроенный Zashboard через Clash API ✓
   - Оптимизация сетевых настроек ✓
   - Команды, работающие через WEB CLI роутера ✓
+  - Синхронизация конфигурации Sing-box по HTTP(S)-ссылке ✓
   - Синхронизация конфигурации через плагин к GUI.for.SingBox ✓
   - Опциональное проксирование самого роутера ✓
   - Не требует токена доступа для RCI запросов (их нет) ✓
@@ -310,9 +311,11 @@ ADGuard Home в первую очередь отвечает за фильтра
 
 ### 💾 Установка
 
+Убедитесь, что установлен Entware. В противном случае найдите инструкцию для вашей модели в [Центре поддержки](https://support.netcraze.ru/): «Руководство пользователя» → «Управление» → «OPKG» → «Установка репозитория Entware на USB-накопитель» или «Установка OPKG Entware на встроенную память роутера».
+
 **Выполните из среды Entware из SSH:**
 
-```bash
+```sh
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --resolve release-assets.githubusercontent.com:443:185.199.108.133 | sh
 ```
 
@@ -324,7 +327,7 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 
 **`Авто-подбор зеркала (рекомендуется):`**
 
-```
+```sh
 ( c="curl -sfL --connect-timeout 3"; s="skeen_ru";  \
 m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; $c "${m}${s}" | MIRROR="$m" sh || \
 m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c "${m}${s}" | MIRROR="$m" sh  || \
@@ -339,37 +342,37 @@ echo "Ошибка: Не удалось загрузить скрипт. Ни о
 
 **`CDN jsDelivr`**
 
-```
+```sh
 m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
 ```
 
 **`CDN Statically`**
 
-```
+```sh
 m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
 ```
 
 **`CDN Githack`**
 
-```
+```sh
 m="https://raw.githack.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
 ```
 
 **`Proxy GHFast`**
 
-```
+```sh
 m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
 ```
 
 **`Proxy GHProxy`**
 
-```
+```sh
 m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
 ```
 
 **`Proxy GH-Proxy (alt)`**
 
-```
+```sh
 m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
 ```
 
@@ -469,7 +472,7 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 
 Если пропал доступ к SSH Entware, выполните в Web CLI:
 
-```
+```sh
 exec /opt/etc/init.d/S51dropbear start
 ```
 

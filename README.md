@@ -298,6 +298,7 @@ Reasons why:
   - Zashboard configured via Clash API ✓
   - Network settings optimization ✓
   - Commands accessible via router WEB CLI ✓
+  - Sing-box configuration synchronization via HTTP(S) link ✓
   - Configuration sync via GUI.for.SingBox plugin ✓
   - Optional proxying for the router itself ✓
   - No access token required for RCI requests (none are used) ✓
@@ -310,9 +311,11 @@ Reasons why:
 
 ### 💾 Installation
 
+Make sure that Entware is installed. Otherwise, find the instructions for your model in the [Support Center](https://support.keenetic.com/) → User Guide → Management → OPKG → Installing the Entware repository on a USB drive / Installing OPKG Entware on internal router memory.
+
 **Run from Entware via SSH:**
 
-```
+```sh
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen --resolve release-assets.githubusercontent.com:443:185.199.108.133 | sh
 ```
 
@@ -326,7 +329,7 @@ If the primary download method is unavailable, use one of the options below:
 
 **`Automatic mirror selection (recommended):`**
 
-```
+```sh
 ( c="curl -sfL --connect-timeout 3"; s="skeen";  \
 m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; $c "${m}${s}" | MIRROR="$m" sh || \
 m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; $c "${m}${s}" | MIRROR="$m" sh  || \
@@ -341,37 +344,37 @@ Or choose a specific mirror manually:
 
 **`CDN jsDelivr`**
 
-```
+```sh
 m="https://cdn.jsdelivr.net/gh/jinndi/SKeen@static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR="$m" sh
 ```
 
 **`CDN Statically`**
 
-```
+```sh
 m="https://cdn.statically.io/gh/jinndi/SKeen@static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR="$m" sh
 ```
 
 **`CDN Githack`**
 
-```
+```sh
 m="https://raw.githack.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR="$m" sh
 ```
 
 **`Proxy GHFast`**
 
-```
+```sh
 m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR="$m" sh
 ```
 
 **`Proxy GHProxy`**
 
-```
+```sh
 m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR="$m" sh
 ```
 
 **`Proxy GH-Proxy (alt)`**
 
-```
+```sh
 m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR="$m" sh
 ```
 
@@ -470,7 +473,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 If access to Entware SSH is lost, run the following command in the Web CLI:
 
-```
+```sh
 exec /opt/etc/init.d/S51dropbear start
 ```
 
