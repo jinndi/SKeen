@@ -1,10 +1,21 @@
-//// Конфигурация для шаблона SKeen по умолчанию при выходе стабильной версии sing-box 1.14
-// C комментариями смотрите файл config-commented.json, эта версия идентична ей, но без комментариев.
+Конфигурация desktop sing-box клиентов, подходит для использования как шаблон в Sub-Store.
+
+Начиная с версии sing-box 1.14.0-alpha.45 доступен графический клиент для Windows (SFW), для Linux (SFL) начиная с 1.14.0-alpha.48.
+
+Ниже пример шаблона для настольных клиентов Linux/Windows, отличие от шаблона для роутера только в:
+
+ - `dns.rules`: используем оптимизированный вариант, подробнее в config-commented.jsonc.
+ - `inbouns`: вместо `tproxy` используется `tun`.
+ - отсутвия блока `services` и `experimental.clash_api`.
+ - Увеличено в два раза значение `experimental.debug.memory_limit`.
+
+Вы также можете дополнительно использовать больше правил и действий доступных в таких средах,
+например  маршрутизацию по процессам в зависимости от используемой системы (`process_*`)
 
 {
   "$schema": "https://sing-box.sagernet.org/schema.json",
 
-  "log": { "level": "trace", "output": "", "timestamp": false },
+  "log": { "level": "trace", "output": "", "timestamp": true },
 
   "dns": {
     "servers": [
@@ -40,11 +51,11 @@
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
-      { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
-      { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
-      { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
-      { "server": "dns_fakeip" },
-      { "clash_mode": "Global", "server": "dns_fakeip" }
+      { "match_response": "final-cf", "action": "respond", "race": true },
+      { "match_response": "final-q9", "action": "respond", "race": true },
+      { "match_response": "final-gg", "action": "respond", "race": true },
+      { "clash_mode": "Global", "server": "dns_proxy_cf" },
+      { "action": "reject" }
     ],
 
     "final": "dns_proxy_cf",
@@ -55,7 +66,7 @@
       "enabled": true,
       "timeout": "5m0s"
     },
-    "reverse_mapping": true
+    "reverse_mapping": false
   },
 
   "ntp": {
@@ -65,6 +76,7 @@
     "server_port": 123,
     "detour": "🇷🇺 RU"
   },
+
 
   "http_clients": [
     {
@@ -78,60 +90,50 @@
 
   "inbounds": [
     {
-      "tag": "tproxy-in",
-      "type": "tproxy",
-      "listen": "::",
-      "listen_port": 65082
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "tun0",
+      "address": "172.18.0.1/30",
+      "loopback_address": "10.7.0.1",
+      "mtu": 1500,
+      "dns_mode": "hijack",
+      "dns_address": "172.18.0.2",
+      "auto_route": true,
+      "auto_redirect": true, // ВАЖНО!: в Windows поставить значение false
+      "strict_route": true,
+      "stack": "mixed",
+      "udp_nat_max": 4096,
+      "endpoint_independent_nat": true
     }
   ],
 
   "outbounds": [
-    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [ "🌍 Auto", "🔒 NAIVE" ], "default": "🔒 NAIVE" },
-    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ] },
-    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
-    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
-    { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
+    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [] },
+    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [] },
+    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [] },
+    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [] },
+    { "tag": "🤖 AI",      "type": "selector", "outbounds": [] },
     { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [ "DIRECT" ] },
 
-    { "tag": "DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
+    { "tag": "DIRECT", "type": "direct" },
     { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Proxy" ] },
 
-    {
-      "tag": "🔒 NAIVE",
-      "type": "naive",
-      "server": "example.com",
-      "server_port": 443,
-      "username": "jinndi",
-      "password": "password",
-      "udp_over_tcp": true,
-      "tls": { "enabled": true, "server_name": "example.com" }
-    },
-    {
-      "tag": "🇷🇺 TROYAN",
-      "type": "trojan",
-      "password": "password",
-      "server": "example.ru",
-      "server_port": 2444,
-      "tls": { "enabled": true, "server_name": "example.ru" },
-      "multiplex": { "enabled": true }
-    },
-
-    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [ "🌍 NAIVE" ], "interval": "10m", "tolerance": 100 },
-    { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [ "🇷🇺 TROYAN" ], "interval": "10m", "tolerance": 100 }
+    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [], "interval": "30m", "tolerance": 100 },
+    { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 }
   ],
 
-  "route": {
+ "route": {
     "rules": [
       { "network": "icmp", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
-      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
       { "ip_version": 6, "action": "reject" },
       { "port": [ 853, 5353 ], "action": "reject" },
       { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
       { "rule_set": "private", "outbound": "🔌 DIRECT" },
-      { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
       { "protocol": "ntp", "outbound": "🇷🇺 RU" },
+      { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
       { "rule_set": "games", "outbound": "🕹️ Games" },
       { "rule_set": "ai", "outbound": "🤖 AI" },
@@ -165,41 +167,22 @@
 
     "final": "🌍 Proxy",
     "auto_detect_interface": true,
+    "find_process": true,
     "default_domain_resolver": "dns_direct",
     "default_http_client": "default"
   },
-
-  "services": [
-    {
-      "type": "api",
-      "tag": "api",
-      "listen": "::",
-      "listen_port": 9998,
-      "access_control_allow_private_network": true,
-      "dashboard": false
-    }
-  ],
 
   "experimental": {
     "cache_file": {
       "enabled": true,
       "path": "cache.db",
-      "cache_id": "v1_14",
       "store_fakeip": true,
       "store_dns": true
     },
 
-    "clash_api": {
-      "external_controller": "0.0.0.0:9999",
-      "external_ui": "zashboard",
-      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
-      "external_ui_download_detour": "GLOBAL",
-      "default_mode": "Rule"
-    },
-
     "debug": {
       "gc_percent": 100,
-      "memory_limit": "200MB"
+      "memory_limit": "400MB"
     }
   }
 }
