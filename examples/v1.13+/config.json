@@ -123,7 +123,7 @@
         "action": "reject", "method": "drop"
       },
       { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
-      { "action": "resolve", "timeout": "5s" },
+      { "action": "resolve" },
       { "clash_mode": "Global", "outbound": "🌍 Proxy" }
     ],
 

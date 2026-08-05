@@ -1,0 +1,142 @@
+//// Шаблон JSON подписки в панели S-UI https://github.com/alireza0/s-ui для Skeen.
+// Поддерживается версия ядра sing-box: 1.13.*
+// Отличия от config.json (v1.13):
+// 1. S-UI имеет свою структуру в частности для блока rules - его содрежимое вынесено в верхний уровень.
+// 2. В S-UI блок outbounds формируется автоматически на основе добавненных в клиентах inbounds и подписок,
+//    формирует сам селектор proxy и auto (urltest), поэтому в шаблоне их нет и все завязано на этом,
+//    в частности удалены дополнительные селекторы: "🇷🇺 RU", "🏴‍☠️ Torrent", "🕹️ Games", "🤖 AI" и rule_set и правила (rules) к ним.
+
+{
+  "log": { "level": "trace", "output": "", "timestamp": true },
+
+  "dns": {
+    "servers": [
+      {
+        "tag": "hosts", "type": "hosts",
+        "predefined": {
+          "dns.google": [ "8.8.8.8", "8.8.4.4" ],
+          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ]
+        }
+      },
+      { "tag": "dns_local", "type": "local" },
+      { "tag": "dns_direct", "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_proxy", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "proxy" },
+      { "tag": "dns_fakeip", "type": "fakeip", "inet4_range": "198.18.0.0/15" }
+    ],
+
+    "rules": [
+      { "query_type": "A", "invert": true, "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
+      { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
+      { "rule_set": "private", "server": "dns_local" },
+      { "clash_mode": "Direct", "server": "dns_direct" },
+      { "rule_set": "adguard", "action": "predefined" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "rule_set": "trackers", "server": "dns_direct" },
+      { "rule_set": "filter", "server": "dns_direct" },
+      { "rule_set": "proxy", "rewrite_ttl": 300, "server": "dns_fakeip" },
+      { "rule_set": "ru", "server": "dns_proxy", "client_subnet": "77.88.8.0/24" },
+      { "server": "dns_fakeip" },
+      { "clash_mode": "proxy", "server": "dns_fakeip" }
+    ],
+
+    "final": "dns_proxy",
+    "strategy": "ipv4_only",
+    "independent_cache": true,
+    "cache_capacity": 16384,
+    "reverse_mapping": true
+  },
+
+  "inbounds": [
+    {
+      "tag": "tproxy-in",
+      "type": "tproxy",
+      "listen": "::",
+      "listen_port": 65082
+    }
+  ],
+
+  "final": "proxy",
+  "auto_detect_interface": true,
+  "default_domain_resolver": "dns_direct",
+
+  "rules": [
+    { "network": "icmp", "outbound": "direct" },
+    { "action": "sniff", "timeout": "500ms" },
+    { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+    { "ip_version": 6, "action": "reject" },
+    { "port": [ 853, 5353 ], "action": "reject" },
+    { "rule_set": "ipdetect", "action": "reject" },
+    { "clash_mode": "direct", "outbound": "direct" },
+    { "rule_set": "private", "outbound": "direct" },
+    { "protocol": "ntp", "outbound": "direct" },
+    { "rule_set": "cheburnet", "outbound": "direct" },
+    { "ip_is_private": true, "outbound": "direct" },
+    { "ip_cidr": "198.18.0.0/15", "outbound": "proxy" },
+    { "rule_set": "proxy", "outbound": "proxy" },
+    { "rule_set": [ "ru", "ruip" ], "outbound": "direct" },
+    { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
+    {
+      "type": "logical", "mode": "or",
+      "rules": [
+        { "network": "udp", "port": [ 3478, 5349, 5350, 19302, 10000 ] },
+        { "domain_regex": "^stun\\..+" },
+        { "domain_keyword": [ "stun", "turn", "httpdns" ] }
+      ],
+      "action": "reject", "method": "drop"
+    },
+    { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
+    { "action": "resolve" },
+    { "clash_mode": "proxy", "outbound": "proxy" }
+  ],
+
+  "rule_set": [
+    {
+      "tag": "ipdetect",  "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ipdetect.srs"
+    },
+    {
+      "tag": "private",   "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/private.srs"
+    },
+    {
+      "tag": "trackers",  "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/trackers.srs"
+    },
+    {
+      "tag": "ru",        "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ru.srs"
+    },
+    {
+      "tag": "ruip",      "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs"
+    },
+    {
+      "tag": "adguard",   "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs"
+    },
+    {
+      "tag": "cheburnet", "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs"
+    },
+    {
+      "tag": "filter",    "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/filter.srs"
+    },
+    {
+      "tag": "proxy",     "type": "remote", "download_detour": "proxy",
+      "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs"
+    }
+  ],
+
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "cache_id": "v1_13",
+      "store_fakeip": true,
+      "store_rdrc": true,
+      "rdrc_timeout": "3d"
+    }
+  }
+}
