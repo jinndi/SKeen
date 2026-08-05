@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.4](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.3...SKeen-v5.0.4) (2026-08-05)
+
+
+### 🧰 Chore
+
+* **config:** Remove resolve timeout from DNS routing rule and add template-s-ui.json ([63e3559](https://github.com/jinndi/SKeen/commit/63e3559af9c521b87512d3991b1fb4e9a3fdd8dc))
+
 ## [5.0.3](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.2...SKeen-v5.0.3) (2026-08-01)
 
 
