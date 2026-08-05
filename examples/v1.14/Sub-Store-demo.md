@@ -86,7 +86,11 @@ function operator(proxies = [], targetPlatform, context) {
 
 17. Поддерживает установку `curve_preferences` для `tls` с использованием полной структуры `_curve_preferences`.
 
-18.  Snell протокол по умолчанию допускает версии 4/5/6, при этом версия 5 будет выводиться как версия 4 в соответствии с поведением Sing-box. `_userkey` на узле будет выводиться как `userkey` Sing-box.
+18.  Snell протокол по умолчанию допускает версии 4/5/6, при этом версия 5 будет выводиться как версия 4 в соответствии с поведением Sing-box. Параметр `quic_proxy_mode` можно установить через поле `quic-proxy-mode` на узле, `_userkey` на узле будет выводиться как `userkey` Sing-box.
+
+19. AnyTLS поддерживает установку параметра `client_metadata` через строковое поле `client-metadata` в узле.
+
+20. Hysteria 2 поддерживает установку параметра `disable_chrome_parrot` через строковое поле `disable-chrome-parrot` в узлах.
 
 **Описание некоторых возможностей**
 
