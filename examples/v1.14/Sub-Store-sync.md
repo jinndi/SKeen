@@ -213,13 +213,14 @@
 }
 ```
 
-  - **`Файлы` `Скрипт-модификатор (JS)`**: Там же, но чуть ниже будет карточка с заголовком **Добавить действие**. В ней выбираем **Скрипт-модификатор (JS)**. Появится новое окно ввода выше - переключаемся в нём на вкладку **Локальный скрипт** и вставляем следующий шаблон:
+  - **`Файлы` `Скрипт-модификатор (JS)`**: Там же, но во вкладке "Действия" ниже выбираем **Скрипт-модификатор (JS)**. Появится окно ввода - переключаемся в нём на вкладку **Локальный скрипт** и вставляем следующий шаблон:
 
+**Вариант 1: По раздельным подпискам/коллекциям с нужной фильтрацией заданных в них**
 
 ```javascript
 //// Указываем имена ваших подписок/коллекций
 // ВАЖНО: Теги прокси-узлов из подписок не должны дублироваться!
-const subName = "mysub" // для зарубежных прокси
+const subName = "mysub"      // для зарубежных прокси
 const subNameRU = "mysub_ru" // для российских прокси
 
 ////////////////////////////////////////////////////////////
@@ -241,7 +242,7 @@ try {
 // в формате массива outbounds (по примеру как в файле примера client-outbounds.jsonc)
 // const mainOutbounds = (ProxyUtils.JSON5 || JSON).parse(await produceArtifact({
 //  type: 'file',
-//  name: 'my_name' // Ваше имя файла (ID)
+//  name: 'myfile' // Ваше имя файла (ID) c массивом прокси-узлов
 // }))
 // singboxProxiesEU.unshift(...mainOutbounds)
 
@@ -295,6 +296,123 @@ const subNameRU = "mysub_ru" // для российских прокси
 ```
 
 И проверьте в пункте 1 (Загружаем прокси из подписок/коллекций) - там должно быть `type: "collection"`, или укажите `"subscription"`, если у вас тип «подписка».
+
+**Вариант 2: Из одной подписки/коллекции и/или файла с фильтрацией в самом скрипте**
+
+```javascript
+//// Указываем имя подписки/коллекции/файла с массивом узлов
+const subNameId = "main"     // Имя(ID) одписки/коллекции (если пусто, то не добавится)
+const fileNameId = "myfile"  // Имя(ID) файла (если пусто, то не добавится)
+////////////////////////////////////////////////////////////
+
+//// Определяем переменные для хранения прокси узлов
+const proxies = []
+
+//// Переменная для шаблона конфига sing-box
+let config = {}
+
+// 1. Загружаем прокси узлы из подписки/коллекции, если имя указано
+if (subNameId) {
+  try {
+    proxies.push(...await produceArtifact({
+      type: "collection", // укажите "subscription" если у вас подписка
+      name: subNameId,
+      platform: "sing-box",
+      produceType: "internal"
+    }))
+  } catch (e) {
+    throw new Error(`Не удалось загрузить подписку '${subNameId}'. Проверьте имя и формат подписки.`)
+  }
+}
+
+// 1.1. Загружаем прокси узлы из файла если имя файла указано
+if (fileNameId) {
+  try {
+    proxies.unshift(...(ProxyUtils.JSON5 || JSON).parse(await produceArtifact({
+      type: 'file',
+      name: fileNameId
+    })))
+  } catch (e) {
+    throw new Error(`Не удалось загрузить файл '${fileNameId}'. Проверьте имя и формат файла.`)
+  }
+}
+
+// 2. Парсим шаблон sing-box (вставленный ранее как основа конфига)
+try {
+  config = JSON.parse($files[0])
+} catch (e) {
+  throw new Error("Ошибка парсинга шаблона конфига sing-box: " + e.message)
+}
+
+// Вспомогательная функция для фильтрации тегов узлов
+// Принимает в себя 3 параметра:
+//  tagsList - массив тегов для фильтрации
+//  regex - регулятное выражение в виде строки либо самого выражения
+//  invert - boolean значение, если false (по умолчанию) то оставлять указанные в regex узлы, если true - удалять
+const getTags = (tagsList, regex, invert=false) => {
+  if (!Array.isArray(tagsList)) return []
+  if (tagsList.length === 0) return []
+  if (!regex) return tagsList
+  if (typeof regex === 'string') regex = new RegExp(regex, 'i')
+  if (typeof invert !== 'boolean') invert = false
+
+  return tagsList.filter(t => {
+    const testResult = regex.test(t)
+    return invert ? !testResult : testResult
+  })
+}
+
+// 3. Извлекаем и фильтруем только имена (теги) прокси
+// - реальные теги прокси-узлов
+const proxiesTags = proxies.map(p => p.tag)
+// - все теги включая URLTest группы и 🔌 DIRECT
+const allTags = ['🌍 Auto', '🇷🇺 Auto', '🔌 DIRECT', ...proxiesTags]
+
+// 3.1. Заполняем группы (регулярные выражения для примера)
+// Допустим эмодзи 😎 - унас содержится в названиях (тегах) в нашем файле с массивом узлов
+// - формат смотрите в client-outbounds.jsonc
+const proxyGroups = {
+  // Selectors
+  '🌍 Proxy':   getTags(allTags, '✅|😎', true),  // из всех тегов удаляем содержащие ✅ или 😎
+  '🇷🇺 RU':      getTags(allTags, '🇷🇺|🔌'),        // из всех тегов оставляем содержащие 🇷🇺 или 🔌
+  '🏴‍☠️ Torrent': getTags(allTags, '🔌|✅|😎'),     // из всех тегов оставляем содержащие 🔌, ✅ или 😎
+  '🕹️ Games':   getTags(allTags, '😎|Hys'),       // из всех тегов оставляем содержащие 😎 или подстроку Hys
+  '🤖 AI':      getTags(allTags, '🇳🇴|😎'),        // из всех тегов оставляем содержащие 🇳🇴 или 😎
+  // URL-Test группы (принимают ТОЛЬКО реальные прокси-узлы из proxiesTags)
+  '🌍 Auto': getTags(proxiesTags, '😎', true),    // из тегов реальных прокси узлов удаляем содержащие 😎
+  '🇷🇺 Auto': getTags(proxiesTags, '🇷🇺')           // из тегов реальных прокси узлов оставляем только с 🇷🇺
+}
+
+// 4. Находим и заполняем outbounds групп селекторов/urltest
+for (const [tag, outbounds] of Object.entries(proxyGroups)) {
+  const group = config.outbounds.find(p => p.tag === tag)
+  if (group && Array.isArray(group.outbounds)) {
+    if (outbounds.length === 0) {
+      group.outbounds.push('🔌 DIRECT')
+      continue
+    }
+    // Исключаем дубликаты при добавлении
+    const uniqueOutbounds = [...new Set(outbounds)]
+    group.outbounds.push(...uniqueOutbounds)
+  }
+}
+
+// 5. Добавляем сами узлы прокси-серверов
+config.outbounds.push(...proxies)
+
+// 6. Результат отдаем дальше
+$content = JSON.stringify(config, null, 2)
+```
+
+В этом типе шаблона требуется указатаь имя ранее созданной подписки/коллекции/файла в начале:
+
+```javascript
+const subNameId = "main"     // Имя(ID) одписки/коллекции (если пусто, то не добавится)
+const fileNameId = "myfile"  // Имя(ID) файла (если пусто, то не добавится)
+```
+
+В пунке и подпунке №3 настроить фильтрацию по данным вашей подписки/коллекции/файла с прокси-узлами.
+
 
 После чего сохраните ваш файл кнопкой **Сохранить** внизу.
 
