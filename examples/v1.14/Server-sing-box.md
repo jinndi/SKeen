@@ -154,7 +154,7 @@ volumes:
     {
       "tag": "LetsEncrypt",
       "type": "acme",
-      "domain": "<ваш.домен.com>",
+      "domain": "<ваш.домен.com>", // пример для домена и всех суб.доменов: ["mydomain.com", "*.mydomain.com"]
       "data_directory": "/etc/ssl/certmagic",
       "email": "<ваша@эл-почта.com>",
       "provider": "letsencrypt",
@@ -211,8 +211,9 @@ volumes:
       // Ссылка на раздел: https://dash.cloudflare.com/profile/api-tokens
       "dns01_challenge": {
         "provider": "cloudflare",
-        "api_token": "<ваш_API_токен_Cloudflare>",         // Необязательный API-токен с разрешением Zone:Read.
-        //"zone_token": "<ваш_API_токен_зоны_Cloudflare>"  // При наличии этой опции позволяет ограничить область действия api_token одной зоной.
+        "api_token": "<ваш_API_токен_Cloudflare>",         // API-токен с разрешением DNS:Edit.
+        //"zone_token": "<ваш_API_токен_зоны_Cloudflare>"  // Необязательный API-токен с разрешением Zone:Read.
+                                                           // При наличии этой опции позволяет ограничить область действия api_token одной зоной.
       }
     },
 
