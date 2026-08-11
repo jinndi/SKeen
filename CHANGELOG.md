@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.4...SKeen-v5.1.0) (2026-08-11)
+
+
+### 🚀 Feat
+
+* **firewall:** remove intercept.port configuration option ([c473b67](https://github.com/jinndi/SKeen/commit/c473b67616bb24dc29d9645a81a17c96ba4e5f4e))
+
 ## [5.0.4](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.3...SKeen-v5.0.4) (2026-08-05)
 
 
