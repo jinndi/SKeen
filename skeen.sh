@@ -491,20 +491,17 @@ ask_install_singbox() {
 }
 
 arch_elf() {
-  local bin
+  local bin="/opt/bin/opkg"
   local base="mips"
-  local B5
-  local B6
+  local b5 b6
 
-  bin="/opt/bin/opkg"
-  B5=$(printf "%d" "'$(dd if="$bin" bs=1 skip=4 count=1 2>/dev/null | head -c1)'")
-  B6=$(printf "%d" "'$(dd if="$bin" bs=1 skip=5 count=1 2>/dev/null | head -c1)'")
+  b5=$(hexdump -s 4 -n 1 -e '1/1 "%d"' "$bin" 2>/dev/null)
+  b6=$(hexdump -s 5 -n 1 -e '1/1 "%d"' "$bin" 2>/dev/null)
 
-  [ -z "$B5" ] && echo "" && return
-  [ -z "$B6" ] && echo "" && return
+  [ -z "$b5" ] || [ -z "$b6" ] && echo "" && return
 
-  case "$B5" in 2) base="${base}64" ;; esac
-  case "$B6" in 1) base="${base}el" ;; esac
+  [ "$b5" -eq 2 ] && base="${base}64" # 64-bit
+  [ "$b6" -eq 1 ] && base="${base}el" # Little-Endian
 
   echo "$base"
 }
@@ -524,23 +521,23 @@ get_architecture() {
 
   [ -z "$ARCH" ] && exiterr "Unsupported CPU architecture"
 
-  cpu_info=$(tr '[:upper:]' '[:lower:]' </proc/cpuinfo)
+  cpu_info=$(tr '[:upper:]' '[:lower:]' </proc/cpuinfo | tr -d '[:space:]')
 
   case "$ARCH" in
   aarch64)
-    case "$(echo "$cpu_info" | grep -m1 'cpu part')" in
+    case "$cpu_info" in
     *0xd03*) PKG_ARCH="${ARCH}_cortex-a53" ;;
     *0xd08*) PKG_ARCH="${ARCH}_cortex-a72" ;;
     *0xd0b*) PKG_ARCH="${ARCH}_cortex-a76" ;;
-    *) PKG_ARCH="${ARCH}_generic" ;; # fallback
+    *) PKG_ARCH="${ARCH}_generic" ;; # fallback ...
     esac
     ;;
   mipsel)
     case "$cpu_info" in
     *74k*) PKG_ARCH="${ARCH}_74kc" ;;
-    *24kf*) PKG_ARCH="${ARCH}_24kc_24kf" ;;
-    *24k*) PKG_ARCH="${ARCH}_24kc" ;;
-    *) PKG_ARCH="${ARCH}_mips32" ;; # fallback 1004, 34k, ...
+    *24kf* | *fpu:yes* | *fpuexception:yes*) PKG_ARCH="${ARCH}_24kc_24kf" ;;
+    *24k* | *34k* | *1004k* | *interaptiv*) PKG_ARCH="${ARCH}_24kc" ;;
+    *) PKG_ARCH="${ARCH}_mips32" ;; # fallback ...
     esac
     ;;
   mips)
