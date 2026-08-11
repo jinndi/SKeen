@@ -99,9 +99,10 @@
     },
     "multiplex": {
       "enabled": true,
-      "max_connections": 3,
-      "max_streams": 24,
-      "protocol": "h2mux"
+      "max_connections": 6,
+      "max_streams": 48,
+      "protocol": "h2mux",
+      "padding": true
     }
   },
 
@@ -229,9 +230,10 @@
     },
     "multiplex": {
       "enabled": true,
-      "max_connections": 3,
-      "max_streams": 24,
+      "max_connections": 6,
+      "max_streams": 48,
       "protocol": "h2mux",
+      "padding": true,
       "brutal": {
         "enabled": true,
         "up_mbps": 50,

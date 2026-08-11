@@ -349,7 +349,8 @@ volumes:
         "path": "/secret-path",  // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
       },
       "multiplex": {
-        "enabled": true
+        "enabled": true,
+        "padding": true // Если эта функция включена, соединения без заполнения данных будут отклонены.
       }
     },
 
@@ -492,6 +493,7 @@ volumes:
       },
       "multiplex": {
         "enabled": true,
+        "padding": true,  // Соединения без заполнения данных будут отклонены
         "brutal": {
           "enabled": true, // Включить поддержку Brutal BBR, читаем в описании п. 4. установку.
           "up_mbps": 1000,
