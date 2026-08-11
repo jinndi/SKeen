@@ -83,7 +83,7 @@ Workflow Algorithm:
 
 **Excluded Ports 🚫**
   * `match-set skeen_exclude_port dst ACCEPT`
-  * **Essence:** If ports are specified in `skeen.json` that should not be proxied (or, conversely, only specific ports are allowed), traffic is either sent directly or continues for further checks.
+  * **Essence:** If ports are specified in `skeen.json` that should not be proxied, traffic is either sent directly or continues for further checks.
 
 **Address Bypass 🌍**
   * `match-set skeen_exclude_net4 dst ACCEPT`
@@ -127,7 +127,7 @@ Workflow Algorithm:
 
 **Excluded Ports 🚫**
   * `tcp/udp match-set skeen_exclude_port dst ACCEPT`
-  * **Essence:** If ports are specified in `skeen.json` that should not be proxied (or, conversely, only specific ports are allowed), traffic is either sent directly or continues for further checks.
+  * **Essence:** If ports are specified in `skeen.json` that should not be proxied, traffic is either sent directly or continues for further checks.
 
 **Address Bypass 🌍**
   * `match-set skeen_exclude_net4 dst ACCEPT`
@@ -177,7 +177,7 @@ Instead of filtering by router policies, it filters processes that do not belong
 
 **Excluded Ports 🚫**
   * `tcp/udp match-set skeen_exclude_port dst ACCEPT`
-  * **Essence:** If ports are specified in `skeen.json` that should not be proxied (or, conversely, only specific ports are allowed), traffic is either sent directly or continues for further checks.
+  * **Essence:** If ports are specified in `skeen.json` that should not be proxied, traffic is either sent directly or continues for further checks.
 
 **Address Bypass 🌍**
   * `match-set skeen_exclude_net4 dst ACCEPT`
@@ -531,12 +531,10 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "intercept": {
       "dns": 1,        // Intercept DNS req. via TProxy/Hybrid modes (0 = disabled),
                        // ignored if redirect_dns is configured (see below)
-      "port": [],      // Ports for Redirect/TProxy interception (all if empty).
-                       // Example: [ 80, 443, "1000:2000", "1500:5555" ]
       "fakeip": {
         "enabled": 0,  // If 1, enables the FakeIP address pool in Redirect/TProxy interception; everything else goes to WAN.
                        // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled, along with sing-box DNS configuration.
-                       // - Exceptions for exclude.port/cidr will function exactly like intercept.port in regular mode.
+                       // - The exclude.port/cidr exceptions will function as normal.
         "include": "", // Full path to the file containing a list of IP/CIDR resources (both v4 and v6) - one per line.
                        // - Allows comments after #, empty lines, and leading/trailing whitespaces.
                        // - Intended for resources that initially didn't have a domain and therefore
@@ -551,7 +549,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "exclude": {
       "port": [
         "137:139",     // Ports excluded from redirect (Redirect/TProxy)
-        445, 1900      // (ignored if `intercept.port` is set)
+        445, 1900      // (80 and 443 won't be added, exclude only the necessary system ones.)
       ],
       "ipv4_cidr": [], // Excluded IPv4 subnets for redirection (Redirect/TProxy)
                        // Example: [ "192.87.1.0/24", "192.12.1.1" ]

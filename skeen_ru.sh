@@ -31,7 +31,7 @@ readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.0.4"
+readonly SKEEN_VERSION="5.1.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
@@ -51,7 +51,6 @@ readonly SINGBOX_SPACE_MB=128
 readonly FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
 readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
 readonly NET_EXCLUDE_SET="skeen_exclude_net"
-readonly PORT_INTERCEPT_SET="skeen_intercept_port"
 readonly PORT_EXCLUDE_SET="skeen_exclude_port"
 readonly FAKEIP_INTERCEPT_SET="skeen_fakeip_net"
 readonly FAKEIP_CLIENTS_SRC_SET="skeen_fakeip_src"
@@ -197,7 +196,6 @@ create_skeen_config() {
   "firewall": {
     "intercept": {
       "dns": 1,
-      "port": [],
       "fakeip": {
         "enabled": 0,
         "include": "${WORK_DIR}/pure_cidr.list",
@@ -1524,11 +1522,6 @@ add_skeen_rules() {
         add_rule "$iptables" "$table" "$chain" \
           -p "$proto" -m set --match-set "$PORT_EXCLUDE_SET" dst -j ACCEPT
       done
-    elif [ "$SKEEN_INTERCEPT_PORT" = "1" ]; then
-      for proto in $protocols; do
-        add_rule "$iptables" "$table" "$chain" \
-          -p "$proto" -m set ! --match-set "$PORT_INTERCEPT_SET" dst -j ACCEPT
-      done
     fi
 
     add_rule "$iptables" "$table" "$chain" \
@@ -1869,7 +1862,6 @@ prepare_firewall() {
   local tproxy_data
   local has_opkgtun
   local route_all
-  local intercept_ports
   local exclude_ports
 
   echomsg "Подготовка фаервола:"
@@ -2047,31 +2039,14 @@ prepare_firewall() {
     fi
   }
 
-  SKEEN_INTERCEPT_PORT="1"
   SKEEN_EXCLUDE_PORT="0"
+  exclude_ports="$(get_validate_ports "exclude" "$(json_get_array '@.firewall.exclude.port')")"
 
-  intercept_ports="$(get_validate_ports "intercept" "$(json_get_array '@.firewall.intercept.port')")"
-
-  if [ -n "$intercept_ports" ]; then
-    setup_port_set "$PORT_INTERCEPT_SET" "$intercept_ports"
-    ipset add "$PORT_INTERCEPT_SET" 443 -! 2>/dev/null
-    ipset add "$PORT_INTERCEPT_SET" 80 -! 2>/dev/null
-    ipset destroy "$PORT_EXCLUDE_SET" -exist 2>/dev/null
-
-    SKEEN_INTERCEPT_PORT="1"
-    SKEEN_EXCLUDE_PORT="0"
-  else
-    exclude_ports="$(get_validate_ports "exclude" "$(json_get_array '@.firewall.exclude.port')")"
-
-    if [ -n "$exclude_ports" ]; then
-      setup_port_set "$PORT_EXCLUDE_SET" "$exclude_ports"
-      ipset del "$PORT_EXCLUDE_SET" 443 -! 2>/dev/null
-      ipset del "$PORT_EXCLUDE_SET" 80 -! 2>/dev/null
-      SKEEN_EXCLUDE_PORT="1"
-    fi
-
-    ipset destroy "$PORT_INTERCEPT_SET" -exist 2>/dev/null
-    SKEEN_INTERCEPT_PORT="0"
+  if [ -n "$exclude_ports" ]; then
+    setup_port_set "$PORT_EXCLUDE_SET" "$exclude_ports"
+    ipset del "$PORT_EXCLUDE_SET" 443 -! 2>/dev/null
+    ipset del "$PORT_EXCLUDE_SET" 80 -! 2>/dev/null
+    SKEEN_EXCLUDE_PORT="1"
   fi
 
   setup_net_ipset() {
@@ -2209,7 +2184,6 @@ prepare_firewall() {
     echo "export SKEEN_POLICY_SEGMENT=\"$POLICY_SEGMENT\""
     echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
     echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
-    echo "export SKEEN_INTERCEPT_PORT=\"$SKEEN_INTERCEPT_PORT\""
     echo "export SKEEN_EXCLUDE_PORT=\"$SKEEN_EXCLUDE_PORT\""
     echo "export SKEEN_INTERCEPT_FAKEIP=\"$SKEEN_INTERCEPT_FAKEIP\""
     echo "export SKEEN_INTERCEPT_DNS_ENABLED=\"$SKEEN_INTERCEPT_DNS_ENABLED\""
@@ -2401,7 +2375,7 @@ clean_firewall() {
       done
     done
 
-    for set_name in "$PORT_EXCLUDE_SET" "$PORT_INTERCEPT_SET" "$FAKEIP_CLIENTS_SRC_SET"; do
+    for set_name in "$PORT_EXCLUDE_SET" "$FAKEIP_CLIENTS_SRC_SET"; do
       ipset flush "$set_name" -exist 2>/dev/null
       ipset destroy "$set_name" -exist 2>/dev/null
     done
@@ -2983,9 +2957,7 @@ fw_test_chain() {
     esac
   fi
 
-  if [ "$SKEEN_INTERCEPT_PORT" = "1" ]; then
-    fw_test "$1" "$2" "$content" "$PORT_INTERCEPT_SET" "Port filter"
-  elif [ "$SKEEN_EXCLUDE_PORT" = "1" ]; then
+  if [ "$SKEEN_EXCLUDE_PORT" = "1" ]; then
     # shellcheck disable=SC2015
     fw_test "$1" "$2" "$content" "$PORT_EXCLUDE_SET" "Port exclude"
   fi
