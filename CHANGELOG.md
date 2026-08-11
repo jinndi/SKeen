@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.0...SKeen-v5.1.1) (2026-08-11)
+
+
+### 🛠 Refactor
+
+* improve architecture detection logic ([cb83749](https://github.com/jinndi/SKeen/commit/cb83749f7160764ea180ef5873f897c2eb4677f6))
+
 ## [5.1.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.0.4...SKeen-v5.1.0) (2026-08-11)
 
 
