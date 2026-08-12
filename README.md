@@ -96,10 +96,10 @@ Workflow Algorithm:
 
 **Connection Marking 🧠** - with `use_conntrack` enabled.
   * Instead of analyzing every single packet, SKeen "remembers" the decision for the entire session:
-  * **TCP:** The `0x112` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
+  * **TCP:** The `0x12` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
 
 **TCP Redirect Hijack 🕸**
-  * `connmark match 0x112 REDIRECT / REDIRECT`
+  * `connmark match 0x12 REDIRECT / REDIRECT`
   * **Essence:** Final stretch. All remaining TCP traffic is forcibly redirected to the local Sing-Box port. Unlike TProxy, this uses classic NAT-based port redirection.
 
 ---
@@ -115,14 +115,14 @@ Workflow Algorithm:
   * **Essence:** Skip packets that do not have the router policy mark and the proxy mark (both are optional).
 
 **Socket Fast Path (TCP) 🚀**
-  * `match socket --transparent` -> `MARK set 0x112 + ACCEPT`
+  * `match socket --transparent` -> `MARK set 0x12 + ACCEPT`
   * **Essence:** Speed-up magic. If the system already has an open transparent socket for the packet, we simply apply a mark and pass it directly to the socket, bypassing heavy checks.
 
 **Directional Filtering (REPLY optimization) ⚡** - with `use_conntrack` enabled.
   * `ctdir REPLY ACCEPT` - Instantly bypasses all incoming response traffic. This ensures maximum download speeds and minimal latency by focusing only on outgoing requests.
 
 **DNS TProxy 🔍**
-  * `tcp/udp dpt:53 connmark match 0x112 TPROXY / TPROXY`
+  * `tcp/udp dpt:53 connmark match 0x12 TPROXY / TPROXY`
   * **Essence:** Intercept DNS requests on the fly and send them directly to the Sing-Box TProxy port. Works if `firewall.redirect_dns` is not enabled in the `skeen.json` config; otherwise just `ACCEPT` to let packets continue through the tables.
 
 **Excluded Ports 🚫**
@@ -140,10 +140,10 @@ Workflow Algorithm:
 
 **Connection Marking 🧠** - with `use_conntrack` enabled.
   * Instead of analyzing every single packet, SKeen "remembers" the decision for the entire session:
-  * **TCP/UDP:** The `0x112` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
+  * **TCP/UDP:** The `0x12` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
 
 **Final TProxy Hijack 🕸**
-  * `connmark match 0x112 TPROXY / TPROXY`
+  * `connmark match 0x12 TPROXY / TPROXY`
   * **Essence:** Final stage. All remaining TCP/UDP traffic that did not match any exclusions is forcibly redirected to the Sing-Box TProxy port.
 
 > **Note:** Local subnets (listed in the source code) are already excluded from proxying. However, if you need to exclude specific ports, you must specify them manually in `skeen.json` or within the `sing-box` configuration itself.
@@ -171,8 +171,8 @@ Instead of filtering by router policies, it filters processes that do not belong
   * `ctdir REPLY ACCEPT` - Instantly bypasses all incoming response traffic. This ensures maximum download speeds and minimal latency by focusing only on outgoing requests.
 
 **DNS Hijack (Port 53) 🔍**
-  * `tcp/udp dpt:53 MARK set 0x112` + `ACCEPT`
-  * **Core Logic:** If the router itself attempts a DNS resolution, we apply the `0x112` mark. This triggers a kernel "reroute check" to send the request to Sing-Box. Note: the mark is applied only if `firewall.redirect_dns` is not set in `skeen.json`; otherwise, it performs a simple `ACCEPT` without marking.
+  * `tcp/udp dpt:53 MARK set 0x12` + `ACCEPT`
+  * **Core Logic:** If the router itself attempts a DNS resolution, we apply the `0x12` mark. This triggers a kernel "reroute check" to send the request to Sing-Box. Note: the mark is applied only if `firewall.redirect_dns` is not set in `skeen.json`; otherwise, it performs a simple `ACCEPT` without marking.
 
 **Excluded Ports 🚫**
   * `tcp/udp match-set skeen_exclude_port dst ACCEPT`
@@ -184,14 +184,14 @@ Instead of filtering by router policies, it filters processes that do not belong
 
 **Connection Marking 🧠** - with `use_conntrack` enabled.
   * Instead of analyzing every single packet, SKeen "remembers" the decision for the entire session:
-  * **TCP/UDP:** The `0x112` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
+  * **TCP/UDP:** The `0x12` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
 
 **Catch-all (MARK) 🕸**
-  * `connmark match 0x112 MARK / MARK` - Marks everything that didn't match the lists above.
-  * **Outcome:** All other router-generated traffic (updates, utilities, scripts) is diverted to routing table 112, and subsequently to TProxy.
+  * `connmark match 0x12 MARK / MARK` - Marks everything that didn't match the lists above.
+  * **Outcome:** All other router-generated traffic (updates, utilities, scripts) is diverted to routing table 12, and subsequently to TProxy.
 
 > **How it works internally:**
-> When a packet receives the `0x112` MARK in the `OUTPUT` chain, the kernel performs a **Reroute Check**. It matches the `ip rule from all fwmark 0x112 lookup 112` and redirects the packet to the loopback interface (`lo`). There, it is intercepted by the `PREROUTING` chain, which performs the final `TPROXY` redirection to the Sing-Box port.
+> When a packet receives the `0x12` MARK in the `OUTPUT` chain, the kernel performs a **Reroute Check**. It matches the `ip rule from all fwmark 0x12 lookup 12` and redirects the packet to the loopback interface (`lo`). There, it is intercepted by the `PREROUTING` chain, which performs the final `TPROXY` redirection to the Sing-Box port.
 
 3. `hybrid` mode utilizes combined rules for router proxying: `redirect` (TCP) and `tproxy` (UDP).
 
