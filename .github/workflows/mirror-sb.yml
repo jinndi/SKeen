@@ -1,6 +1,8 @@
 name: Mirror sing-box
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '30 0 */3 * *'
 
 permissions:
   contents: write
