@@ -336,6 +336,10 @@ volumes:
     },
 
     // 3. Trojan-TLS-WS + Multiplex (для конфигурации за Cloudflare)
+    // Обратите внимание: fallback не работает поверх WebSocket / Cloudflare.
+    // Но если есть паранойя, вместо этого в панели Cloudflare в разделе Compute -> Workers & Pages
+    // разверните статику вашего сайта и там же привяжите её к вашему основному домену (не к субдомену).
+    // Все протоколы и веб-панели привязывайте к субдоменам в разделе DNS Records вашего домена.
     {
       "type": "trojan",
       "tag": "trojan-cf-in",
@@ -352,11 +356,6 @@ volumes:
         "server_name": "<ваш_домен.com>",
         "certificate_provider": "CF_origin_ca"
       },
-      // // Если подняли сервис Sub-Store делаем fallback на него
-      // "fallback": {
-      //   "server": "127.0.0.1",
-      //   "server_port": 3001
-      // },
       "transport": {
         "type": "ws",
         "path": "/secret-path",  // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
