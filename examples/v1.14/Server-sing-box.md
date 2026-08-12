@@ -28,7 +28,7 @@ curl -sSL https://get.docker.com | sh
 sudo usermod -aG docker $(whoami)
 ```
 
-### Конфигурация Docker образа sing-box
+### Конфигурация Docker образа sing-box + sub-store
 
 1. Для начал создаем и переходим в папку где будет храниться наш файл `compose.yml`, в нашем примере это `/root/sing-box`
 
@@ -90,9 +90,10 @@ services:
       # даже если процесс запущен не от root
       - NET_BIND_SERVICE
 
-  # Дополнительно можно поднять sub-store для работы через Cloudflare Tunnel
-  # Подробнее как настроить на 3001 порт смотрите ниже по типу описания в пункте 11 блока inbounds конфигурации sing-box.
-  # Это хороший аналог настройки предоставленной здесь: https://github.com/jinndi/Sub-Store-Docker
+  # Дополнительно можно поднять sub-store для работы через Cloudflare Tunnel (доступ в РФ только через прокси)
+  # Подробнее как настроить на 3001 порт смотрите ниже по типу описания в пункте 11 блока inbounds конфигурации sing-box,
+  # либо в пункте №12 через Trojan-TLS+fallback с ACME сертификатом (предпочтительней т.к. прокси возможно не потребуется).
+  # Это хорошие аналоги настройки предоставленной здесь: https://github.com/jinndi/Sub-Store-Docker
   sub-store:
     image: xream/sub-store:http-meta
     container_name: sub-store
@@ -322,6 +323,13 @@ volumes:
         "server_name": "<ваш.домен.com>",
         "certificate_provider": "ZeroSSL"
       },
+      // // Если подняли сервис Sub-Store делаем fallback на него
+      // // Нет никаких доказательств того, что обнаруживаются и блокируются троянские серверы на основе HTTP-ответов,
+      // // а открытие стандартного порта HTTP/S на сервере представляет собой гораздо более значимый признак.
+      // "fallback": {
+      //   "server": "127.0.0.1",
+      //   "server_port": 3001
+      // },
       "multiplex": {
         "enabled": true
       }
@@ -344,6 +352,11 @@ volumes:
         "server_name": "<ваш_домен.com>",
         "certificate_provider": "CF_origin_ca"
       },
+      // // Если подняли сервис Sub-Store делаем fallback на него
+      // "fallback": {
+      //   "server": "127.0.0.1",
+      //   "server_port": 3001
+      // },
       "transport": {
         "type": "ws",
         "path": "/secret-path",  // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
@@ -569,8 +582,11 @@ volumes:
       "masquerade": {
         "type": "string",
         "status_code": 451,
-        "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted. Your automated scanner activity has been logged and forwarded to the Committee for Digital Freedom. Have a nice day!"
+        "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted."
       },
+      // Альтернативный masquerade: Если подняли сервис Sub-Store делаем на него
+      // "masquerade": "http://127.0.0.1:3001",
+
       // Обфускация QUIC, 99% не работает в мобильной сети,
       // можете раскомментировать, настроить и протестировать.
       // "obfs": {
@@ -615,8 +631,11 @@ volumes:
       "masquerade": {
         "type": "string",
         "status_code": 451,
-        "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted. Your automated scanner activity has been logged and forwarded to the Committee for Digital Freedom. Have a nice day!"
+        "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted."
       },
+      // Альтернативный masquerade: Если подняли сервис Sub-Store делаем на него
+      // "masquerade": "http://127.0.0.1:3001",
+
       // Обфускация QUIC, на 99% не работает в мобильной сети,
       // но можете раскомментировать, настроить и протестировать.
       // "obfs": {
@@ -688,7 +707,29 @@ volumes:
       "token": "<ваш_токен>",
       "protocol": "http2" // доступно также значение quic
       // остальные параметры (не обязательные) смотрите здесь https://sing-box.sagernet.org/configuration/inbound/cloudflared
-    }
+    },
+
+    // 12. Sub-Store через Trojan-TLS fallback
+    // Этот пример своего рода реверс прокси на сервис Sub-Store
+    // Послокльку IP адреса сети Cloudflare недоступны в РФ,
+    // делаем на нужный домен фиктивный входящий типа trojan с fallback на докер сервис с Sub-Store
+    // Для этого мы не включаем проксирование Cloudflare (оранжевое облако) для указанного домена/субдомена,
+    // но при этом соединение защищено благодаря настройке tls
+    {
+      "type": "trojan",
+      "tag": "sub-store-fallback-in",
+      "listen": "::",
+      "listen_port": 13443, // можно указать любой другой, при входе в панель добавьте его после домена/субдомена.
+      "tls": {
+        "enabled": true,
+        "server_name": "<ваш.домен.com>", // укажите домен или суб.домен для панели Sub-Store
+        "certificate_provider": "ZeroSSL"
+      },
+      "fallback": {
+        "server": "127.0.0.1",
+        "server_port": 3001  // этот порт мы указывали в настройке compose.yml в самом начале.
+      }
+    },
 
     // ... продолжение следует
   ],
