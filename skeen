@@ -14,7 +14,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.1"
+readonly SKEEN_VERSION="5.1.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -47,8 +47,8 @@ readonly CHAIN_REDIRECT="skeen_redirect"
 readonly CHAIN_MARK_OUT="skeen_mark_out"
 readonly TABLE_REDIRECT="nat"
 readonly TABLE_TPROXY="mangle"
-readonly TABLE_MARK="0x112"
-readonly TABLE_ID="112"
+readonly TABLE_MARK="0x12"
+readonly TABLE_ID="12"
 readonly DNS_PORT=53
 readonly RESERVED_IPV4="
 0.0.0.0/8          # 'This host on this network' (RFC 1122)
@@ -955,9 +955,20 @@ case "$SKEEN_FIREWALL_MODE" in
 redirect|tun|dns|none)return 0
 esac
 ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1||true
-ip -"$IP_VERSION" route flush table "$TABLE_ID" >/dev/null 2>&1||true
-ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID"
-ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
+ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID" pref "$TABLE_ID"||{
+msg="Failed to add IP rule for family $IP_VERSION"
+echoerr "$msg"
+logger_error "$msg"
+press_any_key_to_menu "" 1
+return 1
+}
+ip -"$IP_VERSION" route replace local default dev lo table "$TABLE_ID"||{
+msg="Failed to replace local route in table $TABLE_ID"
+echoerr "$msg"
+logger_error "$msg"
+press_any_key_to_menu "" 1
+return 1
+}
 }
 is_valid_ipv4(){
 local addr="${1:-}"
@@ -1153,16 +1164,10 @@ local protocols="${5:-}"
 local connmark_match_opt=""
 add_conntrack_mark(){
 [ "$SKEEN_USE_CONNMARK" != "1" ]&&return
+local chain="${1:-}"
 connmark_match_opt="-m connmark --mark $TABLE_MARK"
-local proto="${1:-}"
-local chain="${2:-}"
-if [ "$proto" = "tcp" ];then
 add_rule "$iptables" "$table" "$chain" \
--p "$proto" -m conntrack --ctstate NEW,RELATED -j CONNMARK --set-mark "$TABLE_MARK"
-else
-add_rule "$iptables" "$table" "$chain" \
--p "$proto" -m connmark ! --mark "$TABLE_MARK" -j CONNMARK --set-mark "$TABLE_MARK"
-fi
+-m conntrack --ctstate NEW,RELATED -j CONNMARK --set-mark "$TABLE_MARK"
 }
 case "$type" in
 "exclude_connmark")local connmark_options=""
@@ -1188,8 +1193,8 @@ add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
 [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ]&&[ "$SKEEN_USE_CONNMARK" = "1" ]
 then
 create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_PRE"||return 0
+add_conntrack_mark "$CHAIN_DNS_PRE"
 for proto in $protocols;do
-add_conntrack_mark "$proto" "$CHAIN_DNS_PRE"
 add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -g "$CHAIN_DNS_PRE"
 done
 chain="$CHAIN_DNS_PRE"
@@ -1230,8 +1235,8 @@ fi
 [ "$SKEEN_USE_CONNMARK" = "1" ]
 then
 create_or_flush_chain "$iptables" "$table" "$CHAIN_TPROXY"||return 0
+add_conntrack_mark "$CHAIN_TPROXY"
 for proto in $protocols;do
-add_conntrack_mark "$proto" "$CHAIN_TPROXY"
 add_rule "$iptables" "$table" "$chain" -p "$proto" -g "$CHAIN_TPROXY"
 done
 chain="$CHAIN_TPROXY"
@@ -1260,7 +1265,7 @@ add_rule "$iptables" "$table" "$chain" -p "$protocols" -g "$CHAIN_REDIRECT"
 return 0
 fi
 create_or_flush_chain "$iptables" "$table" "$CHAIN_REDIRECT"
-add_conntrack_mark "$protocols" "$CHAIN_REDIRECT"
+add_conntrack_mark "$CHAIN_REDIRECT"
 add_rule "$iptables" "$table" "$chain" -p "$protocols" -g "$CHAIN_REDIRECT"
 chain="$CHAIN_REDIRECT"
 fi
@@ -1273,11 +1278,7 @@ add_rule "$iptables" "$table" "$chain" \
 [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]
 then
 create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_OUT"||return 0
-if [ "$SKEEN_USE_CONNMARK" = "1" ];then
-for proto in $protocols;do
-add_conntrack_mark "$proto" "$CHAIN_DNS_OUT"
-done
-fi
+[ "$SKEEN_USE_CONNMARK" = "1" ]&&add_conntrack_mark "$CHAIN_DNS_OUT"
 add_rule "$iptables" "$table" "$CHAIN_DNS_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
 for proto in $protocols;do
 add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -g "$CHAIN_DNS_OUT"
@@ -1289,11 +1290,7 @@ add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
 done
 ;;
 "proxy_router_mark")create_or_flush_chain "$iptables" "$table" "$CHAIN_MARK_OUT"||return 0
-if [ "$SKEEN_USE_CONNMARK" = "1" ];then
-for proto in $protocols;do
-add_conntrack_mark "$proto" "$CHAIN_MARK_OUT"
-done
-fi
+[ "$SKEEN_USE_CONNMARK" = "1" ]&&add_conntrack_mark "$CHAIN_MARK_OUT"
 add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
 add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" -j ACCEPT
 for proto in $protocols;do
@@ -1866,8 +1863,9 @@ clean_chain "$ipt_cmd" "$table" "$ch" OUTPUT
 done
 done
 done
-ip -4 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
-ip -6 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
+for ip_ver in 4 6;do
+ip -"$ip_ver" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1||true
+done
 ip route flush table "$TABLE_ID" 2>/dev/null
 if command -v ipset >/dev/null 2>&1;then
 for ip_ver in 4 6;do
