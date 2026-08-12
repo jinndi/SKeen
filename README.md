@@ -140,8 +140,7 @@ Workflow Algorithm:
 
 **Connection Marking 🧠** - with `use_conntrack` enabled.
   * Instead of analyzing every single packet, SKeen "remembers" the decision for the entire session:
-  * **TCP:** The `0x112` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
-  * **UDP:** A `connmark ! 0x112` check is used. If the session has not been marked yet, the system assigns the mark.
+  * **TCP/UDP:** The `0x112` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
 
 **Final TProxy Hijack 🕸**
   * `connmark match 0x112 TPROXY / TPROXY`
@@ -185,8 +184,7 @@ Instead of filtering by router policies, it filters processes that do not belong
 
 **Connection Marking 🧠** - with `use_conntrack` enabled.
   * Instead of analyzing every single packet, SKeen "remembers" the decision for the entire session:
-  * **TCP:** The `0x112` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
-  * **UDP:** A `connmark ! 0x112` check is used. If the session has not been marked yet, the system assigns the mark.
+  * **TCP/UDP:** The `0x112` mark is applied only to new connections (`NEW,RELATED`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
 
 **Catch-all (MARK) 🕸**
   * `connmark match 0x112 MARK / MARK` - Marks everything that didn't match the lists above.

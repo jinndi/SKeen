@@ -31,7 +31,7 @@ readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.1"
+readonly SKEEN_VERSION="5.1.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
@@ -1449,18 +1449,12 @@ add_skeen_rules() {
 
   add_conntrack_mark() {
     [ "$SKEEN_USE_CONNMARK" != "1" ] && return
+    local chain="${1:-}"
+
     connmark_match_opt="-m connmark --mark $TABLE_MARK"
 
-    local proto="${1:-}"
-    local chain="${2:-}"
-
-    if [ "$proto" = "tcp" ]; then
-      add_rule "$iptables" "$table" "$chain" \
-        -p "$proto" -m conntrack --ctstate NEW,RELATED -j CONNMARK --set-mark "$TABLE_MARK"
-    else
-      add_rule "$iptables" "$table" "$chain" \
-        -p "$proto" -m connmark ! --mark "$TABLE_MARK" -j CONNMARK --set-mark "$TABLE_MARK"
-    fi
+    add_rule "$iptables" "$table" "$chain" \
+        -m conntrack --ctstate NEW,RELATED -j CONNMARK --set-mark "$TABLE_MARK"
   }
 
   case "$type" in
@@ -1494,8 +1488,8 @@ add_skeen_rules() {
   "intercept_dns")
     if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] && [ "$SKEEN_USE_CONNMARK" = "1" ]; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_PRE" || return 0
+      add_conntrack_mark "$CHAIN_DNS_PRE"
       for proto in $protocols; do
-        add_conntrack_mark "$proto" "$CHAIN_DNS_PRE"
         add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -g "$CHAIN_DNS_PRE"
       done
       chain="$CHAIN_DNS_PRE"
@@ -1539,8 +1533,8 @@ add_skeen_rules() {
   "tproxy")
     if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_TPROXY" || return 0
+      add_conntrack_mark "$CHAIN_TPROXY"
       for proto in $protocols; do
-        add_conntrack_mark "$proto" "$CHAIN_TPROXY"
         add_rule "$iptables" "$table" "$chain" -p "$proto" -g "$CHAIN_TPROXY"
       done
       chain="$CHAIN_TPROXY"
@@ -1578,7 +1572,7 @@ add_skeen_rules() {
       fi
 
       create_or_flush_chain "$iptables" "$table" "$CHAIN_REDIRECT"
-      add_conntrack_mark "$protocols" "$CHAIN_REDIRECT"
+      add_conntrack_mark "$CHAIN_REDIRECT"
       add_rule "$iptables" "$table" "$chain" -p "$protocols" -g "$CHAIN_REDIRECT"
       chain="$CHAIN_REDIRECT"
     fi
@@ -1594,11 +1588,7 @@ add_skeen_rules() {
   "proxy_router_dns")
     if [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_OUT" || return 0
-      if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
-        for proto in $protocols; do
-          add_conntrack_mark "$proto" "$CHAIN_DNS_OUT"
-        done
-      fi
+      [ "$SKEEN_USE_CONNMARK" = "1" ] && add_conntrack_mark "$CHAIN_DNS_OUT"
       # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$CHAIN_DNS_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
 
@@ -1615,11 +1605,7 @@ add_skeen_rules() {
 
   "proxy_router_mark")
     create_or_flush_chain "$iptables" "$table" "$CHAIN_MARK_OUT" || return 0
-    if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
-      for proto in $protocols; do
-        add_conntrack_mark "$proto" "$CHAIN_MARK_OUT"
-      done
-    fi
+    [ "$SKEEN_USE_CONNMARK" = "1" ] && add_conntrack_mark "$CHAIN_MARK_OUT"
     # shellcheck disable=SC2086
     add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
     # shellcheck disable=SC2086
