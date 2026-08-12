@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.1.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.1...SKeen-v5.1.2) (2026-08-12)
+
+
+### 🐛 Fix
+
+* **routing:** correct routing table IDs and improve error handling ([322d347](https://github.com/jinndi/SKeen/commit/322d347ddcb26b8dc95d40f3f5706103c955b771))
+
+
+### 🛠 Refactor
+
+* **iptables:** simplify connection marking logic ([ca4dee6](https://github.com/jinndi/SKeen/commit/ca4dee659e0c074164a345b65536b428b6b7088b))
+
 ## [5.1.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.0...SKeen-v5.1.1) (2026-08-11)
 
 
