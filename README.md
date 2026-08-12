@@ -214,7 +214,7 @@ The following are intentionally **excluded** from the bypass list (local network
 </details>
 
 <details>
-<summary>🚫 ADGuard Home?</summary>
+<summary>🚫 ADGuard Home & DNS?</summary>
 <br>
 
 The DNS module in Sing-box is a core part of how it operates. It is used for:
@@ -231,6 +231,16 @@ ADGuard Home is primarily designed for filtering (ads, trackers).
 
 Does Sing-box cover the functionality of ADGuard Home?
 Yes - Sing-box also supports DNS filtering and can fully replace ADGuard Home.
+
+What about deploying your own AdGuard Home on a VPS?
+
+Domain blocking and resolution inside Sing-box are objectively better: requests are intercepted right on the router, never leaving for the external network or wasting time on it. Take Fake-IP alone—with it, everything works even faster: Sing-box processes such requests locally, bypassing external DNS resolution entirely.
+
+The Sing-box + Zashboard stack fully covers all needs for speed, analytics, and routing-level blocking. Adding AdGuard Home on a VPS to this chain is an unnecessary complication of the infrastructure and a potential single point of failure.
+
+So, we've established that configuring DNS inside Sing-box is essential for safe and stable operation (provided it is set up correctly). But what about the DNS settings on the router itself?
+
+My recommendations are as follows: the main rule is to use 100% working servers in your country (for example, Yandex DNS for Russia) and specify no more than two addresses. Beyond that, it doesn't matter whether it's DoH or DoT—this task should be handled by Sing-box itself, so even a standard DNS from your ISP will do fine. It also doesn't matter if "DNS Transit" is enabled—it literally changes nothing at all.
 </details>
 
 <details>
