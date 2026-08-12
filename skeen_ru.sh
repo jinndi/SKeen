@@ -66,8 +66,8 @@ readonly CHAIN_REDIRECT="skeen_redirect"
 readonly CHAIN_MARK_OUT="skeen_mark_out"
 readonly TABLE_REDIRECT="nat"
 readonly TABLE_TPROXY="mangle"
-readonly TABLE_MARK="0x112"
-readonly TABLE_ID="112"
+readonly TABLE_MARK="0x12"
+readonly TABLE_ID="12"
 readonly DNS_PORT=53
 
 # IETF/IANA IPv4 Special-Purpose Address Registry
@@ -1193,8 +1193,7 @@ check_and_set_route_rules() {
     local msg="Проверьте подключение к интернету"
     [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg для сегмента ${SKEEN_POLICY_SEGMENT:-unknown}"
 
-    echoerr "$msg"
-    logger_warning "$msg"
+    echoerr "$msg"; logger_warning "$msg"
 
     [ "$CALLER" = "netfilter" ] && exit 0
 
@@ -1206,10 +1205,16 @@ check_and_set_route_rules() {
   esac
 
   ip -"$IP_VERSION" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
-  ip -"$IP_VERSION" route flush table "$TABLE_ID" >/dev/null 2>&1 || true
-
-  ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID"
-  ip -"$IP_VERSION" route add local default dev lo table "$TABLE_ID"
+  ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID" pref "$TABLE_ID" || {
+    msg="Не удалось добавить правило IP для семейства $IP_VERSION"
+    echoerr "$msg"; logger_error "$msg"
+    press_any_key_to_menu "" 1; return 1
+  }
+  ip -"$IP_VERSION" route replace local default dev lo table "$TABLE_ID" || {
+    msg="Не удалось заменить локальный маршрут в таблице $TABLE_ID"
+    echoerr "$msg"; logger_error "$msg"
+    press_any_key_to_menu "" 1; return 1
+  }
 }
 
 is_valid_ipv4() {
@@ -2344,8 +2349,9 @@ clean_firewall() {
   done
 
   # 5. routing cleanup
-  ip -4 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
-  ip -6 rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" 2>/dev/null
+  for ip_ver in 4 6; do
+    ip -"$ip_ver" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
+  done
   ip route flush table "$TABLE_ID" 2>/dev/null
 
   # 6. ipset cleanup
