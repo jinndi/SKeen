@@ -440,7 +440,6 @@ get_latest_version() {
 
 show_header() {
   cyan "
-
 ░█▀▀▀█ ░█ ▄▀ █▀▀ █▀▀ █▀▀▄
 ─▀▀▀▄▄ ░█▀▄  █▀▀ █▀▀ █  █
 ░█▄▄▄█ ░█ ░█ ▀▀▀ ▀▀▀ ▀  ▀"
@@ -3331,15 +3330,29 @@ show_menu() {
     running_text="Start"
   fi
 
-  output="$output\n $SKEEN_NAME version: $(cyan "v$(get_current_version "skeen")")"
+  add_line() {
+    local key="${1:-}"
+    local val="${2:-}"
+    local target_len=10
+    local char_count pad spaces
+    char_count=$(echo -n "$key" | wc -m)
+
+    pad=$((target_len - char_count))
+    [ $pad -lt 1 ] && pad=1
+
+    spaces=$(printf '%*s' "$pad" '')
+
+    output="$output\n ${key}${spaces} ${val}"
+  }
+
+  add_line "${SKEEN_NAME}" "$(cyan "v$(get_current_version "skeen")")"
 
   version="$(cyan "v$(get_current_version "sing")")"
   [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
-  output="$output\n $SINGBOX_NAME version: ${version}"
+  add_line "${SINGBOX_NAME}" "${version}"
 
-  output="$output\n $SINGBOX_NAME state: $running_status"
-
-  output="$output\n Start automatically: $autostart_status"
+  add_line "State" "$running_status"
+  add_line "Autostart" "$autostart_status"
 
   if [ "$running_text" = "Stop" ]; then
     if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
@@ -3347,38 +3360,36 @@ show_menu() {
     else
       sb_dns_work_text="$(red no)"
     fi
-    output="$output\n ${SINGBOX_NAME} DNS working: $sb_dns_work_text"
+    add_line "Sing DNS" "$sb_dns_work_text"
 
     if [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
       echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
       echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
-      [ -n "$SKEEN_POLICY_SEGMENT" ] &&
-        output="$output\n Client segment:: $(cyan "$SKEEN_POLICY_SEGMENT")"
-      [ "$SKEEN_TUN_ENABLED" = "1" ] &&
-        output="$output\n Uses OpkgTun: $(cyan "yes")"
-      output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
-      output="$output\n Firewall network: $(cyan "$SKEEN_FIREWALL_NETWORK")"
-      output="$output\n Firewall IP ver.: $ipv4 $ipv6"
+      [ -n "$SKEEN_POLICY_SEGMENT" ] && add_line "Segment" "$(cyan "$SKEEN_POLICY_SEGMENT")"
+      [ "$SKEEN_TUN_ENABLED" = "1" ] && add_line "OpkgTun" "$(cyan "yes")"
+      add_line "Mode" "$(cyan "$SKEEN_FIREWALL_MODE")"
+      add_line "Network" "$(cyan "$SKEEN_FIREWALL_NETWORK")"
+      add_line "IP ver." "$ipv4 $ipv6"
     else
-      output="$output\n Firewall mode: $(cyan "$SKEEN_FIREWALL_MODE")"
+      add_line "Mode" "$(cyan "$SKEEN_FIREWALL_MODE")"
     fi
   fi
 
   output="$output\n\n$(cyan "Select option:")"
   output="$output\n  $(green "1.") $running_text"
   output="$output\n  $(green "2.") Restart"
-  output="$output\n  $(green "3.") Check Updates"
-  output="$output\n  $(green "4.") Test Firewall"
+  output="$output\n  $(green "3.") Updates"
+  output="$output\n  $(green "4.") Test"
   output="$output\n  $(green "5.") Uninstall"
   output="$output\n  $(green "0.") Exit\n"
 
-  printf "%b" "$output"
+  echo -e "$output"
 
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    printf "\nEnter your selection [0-5]: " >/dev/tty
+    printf "Choice [0-5]: " >/dev/tty
     read -r option </dev/tty
 
     printf "\n"

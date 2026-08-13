@@ -440,7 +440,6 @@ get_latest_version() {
 
 show_header() {
   cyan "
-
 ░█▀▀▀█ ░█ ▄▀ █▀▀ █▀▀ █▀▀▄
 ─▀▀▀▄▄ ░█▀▄  █▀▀ █▀▀ █  █
 ░█▄▄▄█ ░█ ░█ ▀▀▀ ▀▀▀ ▀  ▀"
@@ -3331,54 +3330,66 @@ show_menu() {
     running_text="Запустить"
   fi
 
-  output="$output\n Версия ${SKEEN_NAME}: $(cyan "v$(get_current_version "skeen")")"
+  add_line() {
+    local key="${1:-}"
+    local val="${2:-}"
+    local target_len=10
+    local char_count pad spaces
+    char_count=$(echo -n "$key" | wc -m)
+
+    pad=$((target_len - char_count))
+    [ $pad -lt 1 ] && pad=1
+
+    spaces=$(printf '%*s' "$pad" '')
+
+    output="$output\n ${key}${spaces} ${val}"
+  }
+
+  add_line "${SKEEN_NAME}" "$(cyan "v$(get_current_version "skeen")")"
 
   version="$(cyan "v$(get_current_version "sing")")"
-  [ "$version" = "$(cyan "v")" ] && version="$(red "не установлен")"
-  output="$output\n Версия ${SINGBOX_NAME}: ${version}"
+  [ "$version" = "$(cyan "v")" ] && version="$(red "not installed")"
+  add_line "${SINGBOX_NAME}" "${version}"
 
-  output="$output\n Состояние ${SINGBOX_NAME}: $running_status"
-
-  output="$output\n Автоматический запуск: $autostart_status"
+  add_line "Состояние" "$running_status"
+  add_line "Автостарт" "$autostart_status"
 
   if [ "$running_text" = "Остановить" ]; then
     if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
-      sb_dns_work_text="$(green "да")"
+      sb_dns_work_text="$(green да)"
     else
-      sb_dns_work_text="$(red "нет")"
+      sb_dns_work_text="$(red нет)"
     fi
-    output="$output\n ${SINGBOX_NAME} DNS работает: $sb_dns_work_text"
+    add_line "Sing DNS" "$sb_dns_work_text"
 
     if [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
       echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
       echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
 
-      [ -n "$SKEEN_POLICY_SEGMENT" ] &&
-        output="$output\n Сегмент клиентов: $(cyan "$SKEEN_POLICY_SEGMENT")"
-      [ "$SKEEN_TUN_ENABLED" = "1" ] &&
-        output="$output\n Используется OpkgTun: $(cyan "да")"
-      output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
-      output="$output\n Сеть фаервола: $(cyan "$SKEEN_FIREWALL_NETWORK")"
-      output="$output\n Версия IP фаервола: $ipv4 $ipv6"
+      [ -n "$SKEEN_POLICY_SEGMENT" ] && add_line "Segment" "$(cyan "$SKEEN_POLICY_SEGMENT")"
+      [ "$SKEEN_TUN_ENABLED" = "1" ] && add_line "OpkgTun" "$(cyan "да")"
+      add_line "Режим" "$(cyan "$SKEEN_FIREWALL_MODE")"
+      add_line "Сеть" "$(cyan "$SKEEN_FIREWALL_NETWORK")"
+      add_line "IP вер." "$ipv4 $ipv6"
     else
-      output="$output\n Режим фаервола: $(cyan "$SKEEN_FIREWALL_MODE")"
+      add_line "Режим" "$(cyan "$SKEEN_FIREWALL_MODE")"
     fi
   fi
 
-  output="$output\n\n$(cyan "Выберите действие:")"
+  output="$output\n\n$(cyan "Выберите опцию:")"
   output="$output\n  $(green "1.") $running_text"
   output="$output\n  $(green "2.") Перезапустить"
   output="$output\n  $(green "3.") Обновление"
-  output="$output\n  $(green "4.") Тест фаервола"
+  output="$output\n  $(green "4.") Тестировать"
   output="$output\n  $(green "5.") Удаление"
   output="$output\n  $(green "0.") Выход\n"
 
-  printf "%b" "$output"
+  echo -e "$output"
 
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
-    printf "\nВведите ваш выбор [0-5]: " >/dev/tty
+    printf "Выбор [0-5]: " >/dev/tty
     read -r option </dev/tty
 
     printf "\n"
