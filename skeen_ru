@@ -14,7 +14,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.3"
+readonly SKEEN_VERSION="5.1.4"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -317,25 +317,28 @@ eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 : "${UPDATE_SINGBOX_BETA:=0}"
 : "${UPDATE_SKEEN_ENABLED:=1}"
 }
-get_curl_proxy_options(){
-local err_template
+run_curl(){
+if [ -s "$SKEEN_RUN_CONFIG" ];then
+local proxy_opts=""
+local err_template="Прокси-сервис включен, но"
 get_service_proxy_config
-CURL_PROXY_OPTIONS="--connect-timeout 5 --max-time 720"
 if [ "$SERVICE_PROXY_ENABLED" = "1" ];then
-err_template="Прокси-сервис включен, но"
 if [ -z "$SERVICE_PROXY_PORT" ];then
-exiterr "$err_template 'service_proxy.port' не задан"
+echoerr "$err_template 'service_proxy.port' не задан"&&return 1
 elif get_sing_binary_config&&! is_running;then
-exiterr "$err_template $SINGBOX_NAME не запущен"
+echoerr "$err_template $SINGBOX_NAME не запущен"&&return 1
 elif ! netstat -tuln 2>/dev/null|grep -q ":$SERVICE_PROXY_PORT";then
-exiterr "$err_template процесс не слушает на порту $SERVICE_PROXY_PORT"
+echoerr "$err_template процесс не слушает на порту $SERVICE_PROXY_PORT"&&return 1
 else
-CURL_PROXY_OPTIONS="$CURL_PROXY_OPTIONS --socks5-hostname 127.0.0.1:$SERVICE_PROXY_PORT"
+proxy_opts="--socks5-hostname 127.0.0.1:$SERVICE_PROXY_PORT"
 if [ -n "$SERVICE_PROXY_USER" ]&&[ -n "$SERVICE_PROXY_PASS" ];then
-CURL_PROXY_OPTIONS="$CURL_PROXY_OPTIONS --proxy-user $SERVICE_PROXY_USER:$SERVICE_PROXY_PASS"
+proxy_opts="$proxy_opts --proxy-user $SERVICE_PROXY_USER:$SERVICE_PROXY_PASS"
 fi
 fi
 fi
+fi
+curl -fL --connect-timeout 5 --max-time 1800 --speed-limit 1000 --speed-time 15 \
+--retry 2 --retry-delay 2 --retry-all-errors $proxy_opts "$@"
 }
 get_current_version(){
 local proc="${1:-}"
@@ -352,7 +355,7 @@ esac
 get_latest_version(){
 local api_url="${1:-}"
 local latest_release
-latest_release="$(curl $CURL_PROXY_OPTIONS -s "$api_url")"
+latest_release="$(run_curl -s "$api_url")"
 [ $? -ne 0 ]&&return 1
 echo "$latest_release"|grep tag_name|grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
 }
@@ -509,7 +512,7 @@ fi
 echomsg "Загрузка $PKG_NAME..."
 mkdir -p "$TMP_DIR"
 cd "$TMP_DIR"||exit 1
-if curl $CURL_PROXY_OPTIONS --fail -Lo "$PKG_NAME" $pkg_url;then
+if run_curl -o "$PKG_NAME" $pkg_url;then
 echook "$PKG_NAME загружен успешно"
 else
 echoerr "Не удалось загрузить $PKG_NAME"
@@ -617,7 +620,7 @@ echomsg "Загрузка скрипта $SKEEN_NAME..."
 if [ -n "$MIRROR" ];then
 SKEEN_SCRIPT_URL="${MIRROR}skeen_ru"
 fi
-if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL;then
+if ! run_curl -o "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL;then
 rm -f "$SKEEN_SCRIPT"
 [ -f "$backup_script" ]&&mv "$backup_script" "$SKEEN_SCRIPT"
 echoerr "Не удалось загрузить скрипт $SKEEN_NAME"
@@ -1150,7 +1153,7 @@ case "$type" in
 "exclude_connmark")local connmark_options=""
 if [ -n "$SKEEN_MARK_POLICY" ];then
 connmark_options="-m connmark ! --mark $SKEEN_MARK_POLICY"
-[ "$SKEEN_PROXY_ROUTER" = "1" ]&&connmark_options="$connmark_options -m connmark ! --mark $TABLE_MARK"
+[ "$SKEEN_PROXY_ROUTER" = "1" ]&&connmark_options="$connmark_options -m mark ! --mark $TABLE_MARK"
 fi
 [ -n "$connmark_options" ]&&add_rule "$iptables" "$table" "$chain" $connmark_options -j ACCEPT
 ;;
@@ -1213,9 +1216,7 @@ fi
 then
 create_or_flush_chain "$iptables" "$table" "$CHAIN_TPROXY"||return 0
 add_conntrack_mark "$CHAIN_TPROXY"
-for proto in $protocols;do
-add_rule "$iptables" "$table" "$chain" -p "$proto" -g "$CHAIN_TPROXY"
-done
+add_rule "$iptables" "$table" "$chain" -g "$CHAIN_TPROXY"
 chain="$CHAIN_TPROXY"
 fi
 for proto in $protocols;do
@@ -1255,24 +1256,20 @@ add_rule "$iptables" "$table" "$chain" \
 [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]
 then
 create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_OUT"||return 0
-[ "$SKEEN_USE_CONNMARK" = "1" ]&&add_conntrack_mark "$CHAIN_MARK_OUT"
+[ "$SKEEN_USE_CONNMARK" = "1" ]&&add_conntrack_mark "$CHAIN_DNS_OUT"
 add_rule "$iptables" "$table" "$CHAIN_DNS_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
 for proto in $protocols;do
 add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -g "$CHAIN_DNS_OUT"
 done
 chain="$CHAIN_DNS_OUT"
 fi
-for proto in $protocols;do
-add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
-done
+add_rule "$iptables" "$table" "$chain" -j ACCEPT
 ;;
 "proxy_router_mark")create_or_flush_chain "$iptables" "$table" "$CHAIN_MARK_OUT"||return 0
 [ "$SKEEN_USE_CONNMARK" = "1" ]&&add_conntrack_mark "$CHAIN_MARK_OUT"
 add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
 add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" -j ACCEPT
-for proto in $protocols;do
-add_rule "$iptables" "$table" "$chain" -p "$proto" -g "$CHAIN_MARK_OUT"
-done
+add_rule "$iptables" "$table" "$chain" -g "$CHAIN_MARK_OUT"
 esac
 }
 set_chain_rules(){
@@ -2173,7 +2170,7 @@ echomsg "Проверка обновлений $name..."
 current_version=$(get_current_version "$proc")
 [ -z "$current_version" ]&&current_version="не установлено"
 if echo "$api"|grep -q "atom";then
-latest_version="$(curl $CURL_PROXY_OPTIONS -s "$api"|grep -oE '<title>[^<]+'|grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?'|head -n 1|sed 's/^v//')"
+latest_version="$(run_curl -s "$api"|grep -oE '<title>[^<]+'|grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?'|head -n 1|sed 's/^v//')"
 else
 latest_version=$(get_latest_version "$api")
 fi
@@ -2208,7 +2205,6 @@ echowarn "Обновления отключены в конфигурации $S
 press_any_key_to_menu "" 1
 fi
 get_sing_binary_config
-get_curl_proxy_options
 if [ "$SING_BINARY_ENABLED" != "1" ];then
 if [ "$UPDATE_SINGBOX_ENABLED" = "1" ];then
 if [ "$UPDATE_SINGBOX_BETA" = "1" ];then
@@ -2543,8 +2539,7 @@ fi
 if ! echo "$address"|grep -qE '^https?://';then
 echoerr "URL должен начинаться с http:// или https://"&&return 1
 fi
-get_curl_proxy_options
-if ! curl $CURL_PROXY_OPTIONS -fsL "$address" -o "$config_tmp";then
+if ! run_curl -s "$address" -o "$config_tmp";then
 echoerr "Не удалось загрузить конфигурацию с $address"&&return 1
 fi
 if is_tty&&! $SINGBOX_PROC check -c "$config_tmp";then
