@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.1.4](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.3...SKeen-v5.1.4) (2026-08-13)
+
+
+### 🐛 Fix
+
+* **iptables:** correct mark matching and chain variable references ([1eccc15](https://github.com/jinndi/SKeen/commit/1eccc15ed38d8e160a60476e12c296ebc93608c2))
+
+
+### 🛠 Refactor
+
+* **script:** replace get_curl_proxy_options with run_curl wrapper ([d105729](https://github.com/jinndi/SKeen/commit/d105729a8bf8dcade670e7d5e9b0d8f98b88645c))
+
 ## [5.1.3](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.2...SKeen-v5.1.3) (2026-08-13)
 
 
