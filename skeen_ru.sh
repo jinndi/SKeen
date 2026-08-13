@@ -2755,23 +2755,32 @@ update_core() {
 }
 
 update_skeen() {
+  if download_skeen_script "update"; then
+    echook "$SKEEN_NAME has been successfully updated"
+    is_update_skeen=1
+  else
+    echoerr "Failed to update $SKEEN_NAME"
+  fi
+}
+
+check_should_run(){
+  local proc="${1:-}"
   local should_run="0"
+
+  [ "$proc" != "$SKEEN_NAME" ] && return
 
   get_service_proxy_config
   get_firewall_config
+
   if [ "$SERVICE_PROXY_ENABLED" = "1" ] || [ "$FIREWALL_PROXY_ROUTER" = "1" ]; then
     should_run="1"
   fi
   if [ "$should_run" = "1" ]; then
-    if ! is_running; then start || press_any_key_to_menu "" 1; fi
+    if ! is_running; then
+      start || press_any_key_to_menu "" 1
+      sleep 3
+    fi
   elif is_running; then stop || press_any_key_to_menu "" 1; fi
-
-  if download_skeen_script "update"; then
-    echook "$SKEEN_NAME успешно обновлён"
-    is_update_skeen=1
-  else
-    echoerr "Не удалось обновить $SKEEN_NAME"
-  fi
 }
 
 ask_and_update() {
@@ -2782,6 +2791,8 @@ ask_and_update() {
   local releases="${5:-}"
   local current_version opt
   latest_version=""
+
+  check_should_run "$proc"
 
   echomsg "Проверка обновлений ${name}..."
 
