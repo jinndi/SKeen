@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.1.3](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.2...SKeen-v5.1.3) (2026-08-13)
+
+
+### 🎨 Style
+
+* **cli:** update help text and command descriptions ([ac322ac](https://github.com/jinndi/SKeen/commit/ac322ac571bbffdef74f8db7787fcc2c3315bfbc))
+* **menu:** extract add_line helper for menu display formatting ([7f6d439](https://github.com/jinndi/SKeen/commit/7f6d4391aaa7e55614bdd3a14105fbae5afa6db7))
+* **scripts:** consolidate local variable declarations and add default parameter syntax ([cca36e9](https://github.com/jinndi/SKeen/commit/cca36e9006033f001d7854a79949beaae7b5526e))
+
+
+### 🛠 Refactor
+
+* extract service management into check_should_run function ([5a833e1](https://github.com/jinndi/SKeen/commit/5a833e1842e1fb626cbdbaca03d928143212d817))
+
 ## [5.1.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.1...SKeen-v5.1.2) (2026-08-12)
 
 
