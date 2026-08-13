@@ -1446,7 +1446,7 @@ add_skeen_rules() {
     if [ -n "$SKEEN_MARK_POLICY" ]; then
       connmark_options="-m connmark ! --mark $SKEEN_MARK_POLICY"
       [ "$SKEEN_PROXY_ROUTER" = "1" ] &&
-        connmark_options="$connmark_options -m connmark ! --mark $TABLE_MARK"
+        connmark_options="$connmark_options -m mark ! --mark $TABLE_MARK"
     fi
     # shellcheck disable=SC2086
     [ -n "$connmark_options" ] &&
@@ -1516,9 +1516,7 @@ add_skeen_rules() {
     if [ "$SKEEN_USE_CONNMARK" = "1" ]; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_TPROXY" || return 0
       add_conntrack_mark "$CHAIN_TPROXY"
-      for proto in $protocols; do
-        add_rule "$iptables" "$table" "$chain" -p "$proto" -g "$CHAIN_TPROXY"
-      done
+      add_rule "$iptables" "$table" "$chain" -g "$CHAIN_TPROXY"
       chain="$CHAIN_TPROXY"
     fi
 
@@ -1570,7 +1568,7 @@ add_skeen_rules() {
   "proxy_router_dns")
     if [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_OUT" || return 0
-      [ "$SKEEN_USE_CONNMARK" = "1" ] && add_conntrack_mark  "$CHAIN_MARK_OUT"
+      [ "$SKEEN_USE_CONNMARK" = "1" ] && add_conntrack_mark  "$CHAIN_DNS_OUT"
       # shellcheck disable=SC2086
       add_rule "$iptables" "$table" "$CHAIN_DNS_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
 
@@ -1579,10 +1577,7 @@ add_skeen_rules() {
       done
       chain="$CHAIN_DNS_OUT"
     fi
-
-    for proto in $protocols; do
-      add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
-    done
+    add_rule "$iptables" "$table" "$chain" -j ACCEPT
     ;;
 
   "proxy_router_mark")
@@ -1592,9 +1587,7 @@ add_skeen_rules() {
     add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
     # shellcheck disable=SC2086
     add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" -j ACCEPT
-    for proto in $protocols; do
-      add_rule "$iptables" "$table" "$chain" -p "$proto" -g "$CHAIN_MARK_OUT"
-    done
+    add_rule "$iptables" "$table" "$chain" -g "$CHAIN_MARK_OUT"
     ;;
   esac
 }
