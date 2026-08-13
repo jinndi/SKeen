@@ -390,27 +390,32 @@ get_update_config() {
   : "${UPDATE_SKEEN_ENABLED:=1}"
 }
 
-get_curl_proxy_options() {
-  local err_template
+run_curl() {
+  if [ -s "$SKEEN_RUN_CONFIG" ]; then
+    local proxy_opts=""
+    local err_template="Прокси-сервис включен, но"
 
-  get_service_proxy_config
+    get_service_proxy_config
 
-  CURL_PROXY_OPTIONS="--connect-timeout 5 --max-time 720"
-  if [ "$SERVICE_PROXY_ENABLED" = "1" ]; then
-    err_template="Прокси-сервис включен, но"
-    if [ -z "$SERVICE_PROXY_PORT" ]; then
-      exiterr "$err_template 'service_proxy.port' не задан"
-    elif get_sing_binary_config && ! is_running; then
-      exiterr "$err_template $SINGBOX_NAME не запущен"
-    elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
-      exiterr "$err_template процесс не слушает на порту ${SERVICE_PROXY_PORT}"
-    else
-      CURL_PROXY_OPTIONS="${CURL_PROXY_OPTIONS} --socks5-hostname 127.0.0.1:${SERVICE_PROXY_PORT}"
-      if [ -n "$SERVICE_PROXY_USER" ] && [ -n "$SERVICE_PROXY_PASS" ]; then
-        CURL_PROXY_OPTIONS="${CURL_PROXY_OPTIONS} --proxy-user ${SERVICE_PROXY_USER}:${SERVICE_PROXY_PASS}"
+    if [ "$SERVICE_PROXY_ENABLED" = "1" ]; then
+      if [ -z "$SERVICE_PROXY_PORT" ]; then
+        echoerr "$err_template 'service_proxy.port' не задан" && return 1
+      elif get_sing_binary_config && ! is_running; then
+        echoerr "$err_template $SINGBOX_NAME не запущен" && return 1
+      elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
+        echoerr "$err_template процесс не слушает на порту ${SERVICE_PROXY_PORT}" && return 1
+      else
+        proxy_opts="--socks5-hostname 127.0.0.1:${SERVICE_PROXY_PORT}"
+        if [ -n "$SERVICE_PROXY_USER" ] && [ -n "$SERVICE_PROXY_PASS" ]; then
+          proxy_opts="$proxy_opts --proxy-user ${SERVICE_PROXY_USER}:${SERVICE_PROXY_PASS}"
+        fi
       fi
     fi
   fi
+
+  # shellcheck disable=SC2086
+  curl -fL --connect-timeout 5 --max-time 1800 --speed-limit 1000 --speed-time 15 \
+    --retry 2 --retry-delay 2 --retry-all-errors $proxy_opts "$@"
 }
 
 get_current_version() {
@@ -431,7 +436,7 @@ get_latest_version() {
   local latest_release
 
   # shellcheck disable=SC2086
-  latest_release="$(curl $CURL_PROXY_OPTIONS -s "$api_url")"
+  latest_release="$(run_curl -s "$api_url")"
   # shellcheck disable=SC2181
   [ $? -ne 0 ] && return 1
 
@@ -626,7 +631,7 @@ download_singbox() {
   cd "$TMP_DIR" || exit 1
 
   # shellcheck disable=SC2086
-  if curl $CURL_PROXY_OPTIONS --fail -Lo "$PKG_NAME" $pkg_url; then
+  if run_curl -o "$PKG_NAME" $pkg_url; then
     echook "$PKG_NAME загружен успешно"
   else
     echoerr "Не удалось загрузить $PKG_NAME"
@@ -771,7 +776,7 @@ download_skeen_script() {
   fi
 
   # shellcheck disable=SC2086
-  if ! curl $CURL_PROXY_OPTIONS --fail -Lo "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL; then
+  if ! run_curl -o "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL; then
     rm -f "$SKEEN_SCRIPT"
     [ -f "$backup_script" ] && mv "$backup_script" "$SKEEN_SCRIPT"
     echoerr "Не удалось загрузить скрипт $SKEEN_NAME"
@@ -2758,7 +2763,7 @@ ask_and_update() {
   [ -z "$current_version" ] && current_version="не установлено"
 
   if echo "$api" | grep -q "atom"; then
-    latest_version="$(curl $CURL_PROXY_OPTIONS -s "$api" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')"
+    latest_version="$(run_curl -s "$api" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')"
   else
     latest_version=$(get_latest_version "$api")
   fi
@@ -2801,7 +2806,6 @@ check_updates() {
     press_any_key_to_menu "" 1
   fi
   get_sing_binary_config
-  get_curl_proxy_options
 
   # sing-box
   if [ "$SING_BINARY_ENABLED" != "1" ]; then
@@ -3229,10 +3233,8 @@ sync_config() {
     echoerr "URL должен начинаться с http:// или https://" && return 1
   fi
 
-  get_curl_proxy_options
-
   # shellcheck disable=SC2086
-  if ! curl $CURL_PROXY_OPTIONS -fsL "$address" -o "$config_tmp"; then
+  if ! run_curl -s "$address" -o "$config_tmp"; then
     echoerr "Не удалось загрузить конфигурацию с $address" && return 1
   fi
 
