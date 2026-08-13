@@ -443,17 +443,18 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 > The output in the WEB CLI is limited to 8 lines and a certain execution time, but this does not affect the correct execution of commands
 
-`skeen` without parameters launches the management menu from SSH, use `help` for help
+`skeen` without parameters launches the management menu from SSH, use `skeen help` for help
 
 | Command | Description | WEB CLI |
 | :--- | :--- | :---: |
 | `start` | Start service | ✓ |
 | `stop` | Stop service | ✓ |
-| `restart` | Restart service | ✓ |
-| `reload` | Restart without changing firewall rules | ✓ |
+| `restart` | Full restart | ✓ |
+| `reload` | Reload Sing-box only | ✓ |
 | `kill` | Force stop | ✓ |
 | `status` | Show status | ✓ |
-| `version` | Show version(s) | ✓ |
+| `version` | Show version | ✓ |
+| `help` | Help about any command | - |
 | `iface` | Show network interface table | - |
 | `update` | Check and install updates | - |
 | `test` | Test firewall rules | ✓ |

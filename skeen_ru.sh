@@ -865,7 +865,7 @@ uninstall() {
   echomsg "Удаление скрипта автозапуска..."
   rm -f "$SKEEN_AUTOSTART_SCRIPT"
 
-  echomsg "Удаление скрипта файрвола..."
+  echomsg "Удаление скрипта фаервола..."
   rm -f "$FIREWALL_HOOK_FILE"
 
   echomsg "Удаление скрипта ${SKEEN_NAME}..."
@@ -3405,41 +3405,32 @@ show_menu() {
 
 show_help() {
   cat <<EOF
+Использование:
+  skeen [команда]
 
-$SKEEN_NAME CLI Команды (используйте: 'skeen help' для этого списка):
-
-Управление сервисом:
+Доступные Команды:
   start   - Запустить сервис
   stop    - Остановить сервис
-  restart - Перезапустить сервис
-  reload  - Перезапустить без изменения правил файрвола
+  restart - Полный перезапуск
+  reload  - Перезагрузка только $SINGBOX_NAME
   kill    - Принудительная остановка
   status  - Показать статус
-
-Информация & обновления:
-  version - Показать версию(и)
+  version - Показать версию
+  help    - Помощь по любой команде
   iface   - Показать таблицу сетевых интерфейсов
   update  - Проверить и установить обновления
-
-Проверка & тестирование:
-  test    - Тестировать правила файрвола
+  test    - Тестировать правила фаервола
   deps    - Проверить зависимости
   check   - Проверить конфигурацию
   format  - Отформатировать конфигурацию $SINGBOX_NAME
-
-Резервное копирование & восстановление:
   backup  - Создать архив $WORK_DIR
   backups - Список созданных архивов в $ENTWARE_DIR
   restore - Восстановить $WORK_DIR из архива в $ENTWARE_DIR
-
-Сброс & очистка:
   reset   - Сбросить $WORK_DIR в значение по умолчанию
   clean   - Очистить кэш файл $SINGBOX_NAME
-
-Синхронизация:
   sync    - Синхронизировать конфигурацию $SINGBOX_NAME
 
-Менеджер OpkgTun (KeeneticOS v5+):
+OpkgTun (KeeneticOS v5+):
   tun create <ipv4> <имя>  - Создать интерфейс с IP-адресом и именем
   tun delete <имя>         - Удалить интерфейс по имени
   tun list                 - Список всех интерфейсов OpkgTun
@@ -3447,8 +3438,7 @@ EOF
 }
 
 if [ -f "$SKEEN_SCRIPT" ]; then
-  [ "$CALLER" != "netfilter" ] &&
-    check_and_create_or_sync_skeen_config
+  [ "$CALLER" != "netfilter" ] && check_and_create_or_sync_skeen_config
 
   case "$ACTION" in
   start) start ;;

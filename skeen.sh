@@ -3405,50 +3405,40 @@ show_menu() {
 
 show_help() {
   cat <<EOF
+Usage:
+  skeen [command]
 
-$SKEEN_NAME CLI Commands (use: 'skeen help' for this list):
-
-Service Control:
+Available Commands:
   start   - Start service
   stop    - Stop service
-  restart - Restart service
-  reload  - Restart without changing firewall rules
+  restart - Full restart
+  reload  - Reload $SINGBOX_NAME only
   kill    - Force stop
   status  - Show status
-
-Information & Updates:
-  version - Show version(s)
+  version - Show version
+  help    - Help about any command
   iface   - Show network interface table
   update  - Check and install updates
-
-Checks & Testing:
   test    - Test firewall rules
   deps    - Check dependencies
   check   - Check configuration
   format  - Format $SINGBOX_NAME configuration
-
-Backup & Restore:
   backup  - Create archive of $WORK_DIR
   backups - List created archives in $ENTWARE_DIR
   restore - Restore $WORK_DIR from archive in $ENTWARE_DIR
-
-Reset & Cleanup:
   reset   - Reset $WORK_DIR to default
   clean   - Clear $SINGBOX_NAME cache file
-
-Synchronization:
   sync    - Synchronize $SINGBOX_NAME configuration
 
-OpkgTun manager (KeeneticOS v5+):
-  tun create <ipv4> <name> - Create interface with IP address and name
-  tun delete <name>        - Delete interface by name
+OpkgTun (KeeneticOS v5+):
+  tun create [ipv4] [name] - Create interface with IP address and name
+  tun delete [name]        - Delete interface by name
   tun list                 - List all OpkgTun interfaces
 EOF
 }
 
 if [ -f "$SKEEN_SCRIPT" ]; then
-  [ "$CALLER" != "netfilter" ] &&
-    check_and_create_or_sync_skeen_config
+  [ "$CALLER" != "netfilter" ] && check_and_create_or_sync_skeen_config
 
   case "$ACTION" in
   start) start ;;
