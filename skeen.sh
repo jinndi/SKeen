@@ -666,8 +666,7 @@ install_singbox() {
 
 create_singbox_config() {
   local act="${1:-}"
-  local key
-  local value
+  local key value
 
   if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] &&
     ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
@@ -922,11 +921,8 @@ accept_uninstall() {
 
 get_net_check_hosts() {
   local ipv="${1:-}"
-  local hosts=""
-  local sys_hosts=""
+  local hosts sys_hosts count result
   local max="3"
-  local count
-  local result
 
   if [ "$ipv" = "4" ]; then
     sys_hosts="1.1.1.1 77.88.8.8 223.5.5.5"
@@ -958,10 +954,8 @@ get_net_check_hosts() {
 }
 
 check_internet() {
-  local hosts
+  local hosts host attempt
   local max_attempts=3
-  local host
-  local attempt
 
   hosts="$(get_net_check_hosts "4")"
   max_attempts=3
@@ -986,9 +980,7 @@ check_internet() {
 get_fw_mode_param() {
   local file="${1:-}"
   local type="${2:-}"
-  local has_opkgtun
-  local port
-  local network
+  local has_opkgtun port network
 
   if [ "$type" = "tun" ]; then
     has_opkgtun=$(jsonfilter -i "$file" \
@@ -1027,8 +1019,7 @@ get_fw_mode_param() {
 
 get_fw_mode_data() {
   local type="$1"
-  local file
-  local param
+  local file param
 
   if [ "$SING_CONFIG_ENABLED" = "1" ]; then
     get_fw_mode_param "$SING_CONFIG_PATH" "$type"
@@ -1219,10 +1210,7 @@ check_and_set_route_rules() {
 
 is_valid_ipv4() {
   local addr="${1:-}"
-  local ip
-  local cidr
-  local o1 o2 o3 o4
-  local o
+  local ip cidr o1 o2 o3 o4 o
 
   ip="${addr%%/*}"
   cidr="${addr#*/}"
@@ -1245,8 +1233,7 @@ EOF
 
 is_valid_ipv6() {
   local addr="${1:-}"
-  local ip_only
-  local cidr
+  local ip_only cidr
 
   ip_only="${addr%%/*}"
   cidr="${addr#*/}"
@@ -1264,9 +1251,7 @@ is_valid_ipv6() {
 get_validate_ports() {
   local label="${1:-}"
   local input="${2:-}"
-  local valid_ports=""
-  local invalid_ports=""
-  local start end p
+  local valid_ports invalid_ports start end p
 
   input=$(printf '%s' "$input" | tr ',\r' '  ')
 
@@ -1308,7 +1293,7 @@ get_validate_ports() {
 }
 
 get_all_wan_ips() {
-  local version="$1"
+  local version="${1:-}"
   local prefix_length="32"
   [ "$version" = "6" ] && prefix_length="128"
 
@@ -1330,15 +1315,8 @@ get_all_wan_ips() {
 
 get_exclude_addresses() {
   local ip_v="${1:-}"
-  local reserved_subnets
-  local user_exclude
-  local prefix_length_default
-  local all_list
-  local line
-  local subnet
-  local invalid_list
-  local addr
-  local validator
+  local reserved_subnets user_exclude prefix_length_default
+  local all_list line subnet invalid_list addr validator
 
   [ "$ip_v" = "4" ] && prefix_length_default="32" || prefix_length_default="128"
 
@@ -1845,12 +1823,7 @@ get_skeen_run_script_cmd() {
 }
 
 prepare_firewall() {
-  local complete_msg
-  local redirect_data
-  local tproxy_data
-  local has_opkgtun
-  local route_all
-  local exclude_ports
+  local complete_msg redirect_data tproxy_data has_opkgtun route_all exclude_ports
 
   echomsg "Preparing a firewall:"
 
@@ -2012,8 +1985,8 @@ prepare_firewall() {
   fi
 
   setup_port_set() {
-    local name_set="$1"
-    local ports="$2"
+    local name_set="${1:-}"
+    local ports="${2:-}"
 
     ipset create "$name_set" bitmap:port range 0-65535 -exist
     ipset flush "$name_set"
@@ -2038,8 +2011,8 @@ prepare_firewall() {
   fi
 
   setup_net_ipset() {
-    local ipver="$1"
-    local family="$2"
+    local ipver="${1:-}"
+    local family="${2:-}"
     local name_set="${NET_EXCLUDE_SET}${ipver}"
 
     ipset create "$name_set" hash:net family "$family" -exist
@@ -2304,10 +2277,10 @@ clean_firewall() {
   echomsg "Cleaning firewall rules..."
 
   clean_chain() {
-    local iptables="$1"
-    local table="$2"
-    local chain="$3"
-    local parent="$4"
+    local iptables="${1:-}"
+    local table="${2:-}"
+    local chain="${3:-}"
+    local parent="${4:-}"
 
     if ! chain_exists "$iptables" "$table" "$chain"; then
       return 0
@@ -2506,8 +2479,7 @@ get_ulimit_n() {
 
 start_singbox() {
   local timeout=10
-  local status_start
-  local msg
+  local status_start msg
 
   echomsg "Starting ${SINGBOX_NAME}..."
 
@@ -2589,8 +2561,7 @@ start() {
 
 stop_singbox() {
   local timeout=10
-  local status_stop
-  local msg
+  local status_stop msg
 
   echomsg "Stopping ${SINGBOX_NAME}..."
 
@@ -2694,10 +2665,8 @@ reload() {
 }
 
 proc_uptime() {
-  local pid="$1"
-  local up
-  local stat
-  local runtime
+  local pid="${1:-}"
+  local up stat runtime
 
   [ -r "/proc/$pid/stat" ] || return 1
 
@@ -2717,10 +2686,7 @@ proc_uptime() {
 }
 
 status() {
-  local pid
-  local mem_used
-  local mem_peak
-  local threads
+  local pid mem_used mem_peak threads
 
   get_sing_binary_config
   pid="$(pidof "$SINGBOX_PROC")"
@@ -3049,10 +3015,7 @@ backup_list() {
 }
 
 backup_create() {
-  local archive_path
-  local parent_dir
-  local folder_name
-  local required_mb
+  local archive_path parent_dir folder_name required_mb
 
   if [ -d "$WORK_DIR" ] && [ "$(ls -A "$WORK_DIR")" ]; then
     required_mb="$(du -sm "$WORK_DIR" | awk '{print $1}')"
@@ -3081,8 +3044,7 @@ backup_restore() {
 
   restore() {
     local archive_path="${ENTWARE_DIR}/${1:-}"
-    local work_dir_backup
-    local required_mb
+    local work_dir_backup required_mb
 
     if [ -f "$archive_path" ] && tar -tf "$archive_path" | grep -q "^skeen/"; then
       required_mb="$(du -sm "$archive_path" | awk '{print $1}')"
@@ -3159,8 +3121,7 @@ config_reset() {
 }
 
 clean_cache() {
-  local experimental_file=""
-  local cache_file=""
+  local experimental_file cache_file
   local msg_not_found="Cache file not found at path"
 
   get_sing_args_config
@@ -3347,14 +3308,7 @@ show_iface() {
 }
 
 show_menu() {
-  local autostart_status
-  local running_status
-  local running_text
-  local output=""
-  local version
-  local ipv4=""
-  local ipv6=""
-  local sb_dns_work_text
+  local autostart_status running_status running_text output version ipv4 ipv6 sb_dns_work_text
 
   check_tty
   check_skeen_config && printf "\033[1A\033[2K\033[1A\033[2K"
