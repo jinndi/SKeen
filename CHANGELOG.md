@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.5](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.4...SKeen-v5.1.5) (2026-08-14)
+
+
+### ⚡ Perf
+
+* **firewall:** remove use_conntrack option (always apply TCP connection) and simplify rules ([3676843](https://github.com/jinndi/SKeen/commit/36768434c6a4d87d10e4b88ea640244fb54930a9))
+
 ## [5.1.4](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.3...SKeen-v5.1.4) (2026-08-13)
 
 
