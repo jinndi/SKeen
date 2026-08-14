@@ -77,7 +77,7 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   * `connmark match ! 0xffffaaa ... ACCEPT`
   * **Суть:** Пропускаем пакеты, которые не имеют метку политики роутера (опционально).
 
-**Directional Filtering (REPLY optimization) ⚡** - при включенной опции `use_conntrack`.
+**Directional Filtering (REPLY optimization) ⚡**
   * `ctdir REPLY ACCEPT` - Мгновенный пропуск входящего трафика. Мы проксируем только исходящие запросы, что гарантирует максимальную скорость загрузки и минимальный пинг.
 
 **Excluded Ports 🚫**
@@ -93,9 +93,9 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   * Если настроен и включен модуль DNS Sing-box, позволяет строить на основе этого маршрутизацию в PREROUTING.
   * **Суть:** Пропускаем трафик к адресам FakeIP (198.18.0.0/15 и fc00::/18) и указанным в файле заданном в пути `firewall.intercept.fakeip.include`, для ускорения маршрутизации минуя ядро Sing-box.
 
-**Connection Marking 🧠** - при включенной опции `use_conntrack`.
+**Connection Marking 🧠**
   * Вместо анализа каждого пакета, SKeen «запоминает» решение для всей сессии:
-  * **TCP:** Метка `0x12` ставится только для новых соединений (`NEW,RELATED`). Это экономит CPU, так как ядро не проверяет правила для каждого пакета внутри установленного стрима.
+  * **TCP:** Метка `0x12` ставится только для новых соединений (`NEW`). Это экономит CPU, так как ядро не проверяет правила для каждого пакета внутри установленного стрима.
 
 **TCP Redirect Hijack 🕸**
   * `connmark match 0x12 REDIRECT / REDIRECT`
@@ -117,11 +117,11 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   * `match socket --transparent` -> `MARK set 0x12 + ACCEPT`
   * **Суть:** Магия для ускорения. Если для пакета уже есть открытый прозрачный сокет в системе, мы просто вешаем метку и пропускаем его сразу к сокету, минуя тяжелые проверки.
 
-**Directional Filtering (REPLY optimization) ⚡** - при включенной опции `use_conntrack`.
+**Directional Filtering (REPLY optimization) ⚡**
   * `ctdir REPLY ACCEPT` - Мгновенный пропуск входящего трафика. Мы проксируем только исходящие запросы, что гарантирует максимальную скорость загрузки и минимальный пинг.
 
 **DNS TProxy 🔍**
-  * `tcp/udp dpt:53 connmark match 0x12 TPROXY / TPROXY`
+  * `tcp/udp dpt:53 TPROXY`
   * **Суть:** Перехватываем DNS-запросы на лету и кидаем их сразу в TProxy порт Sing-Box. Работает, если в конфиге `skeen.json` не включен `firewall.redirect_dns`, иначе просто `ACCEPT` для пропуска дальше по таблицам.
 
 **Excluded Ports 🚫**
@@ -137,9 +137,9 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   * Если настроен и включен модуль DNS Sing-box, позволяет строить на основе этого маршрутизацию в PREROUTING.
   * **Суть:** Пропускаем трафик к адресам FakeIP (198.18.0.0/15 и fc00::/18) и указанным в файле заданном в пути `firewall.intercept.fakeip.include`, для ускорения маршрутизации минуя ядро Sing-box.
 
-**Connection Marking 🧠** - при включенной опции `use_conntrack`.
+**Connection Marking 🧠**
   * Вместо анализа каждого пакета, SKeen «запоминает» решение для всей сессии:
-  * **TCP/UDP:** Метка `0x12` ставится только для новых соединений (`NEW,RELATED`). Это экономит CPU, так как ядро не проверяет правила для каждого пакета внутри установленного стрима.
+  * **TCP:** Метка `0x12` ставится только для новых соединений (`NEW`). Это экономит CPU, так как ядро не проверяет правила для каждого пакета внутри установленного стрима.
 
 **Final TProxy Hijack 🕸**
   * `connmark match 0x12 TPROXY / TPROXY`
@@ -166,7 +166,7 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   * `owner GID match skeen ACCEPT`
   * **Суть:** Если пакет создал сам `sing-box`, мы его не трогаем и выпускаем в мир. Без этого правила роутер уйдет в бесконечную петлю.
 
-**Directional Filtering (REPLY optimization) ⚡** - при включенной опции `use_conntrack`.
+**Directional Filtering (REPLY optimization) ⚡**
   * `ctdir REPLY ACCEPT` - Мгновенный пропуск входящего трафика. Мы проксируем только исходящие запросы, что гарантирует максимальную скорость загрузки и минимальный пинг.
 
 **DNS Hijack (Port 53) 🔍**
@@ -181,9 +181,9 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   * `match-set skeen_exclude_net4 dst ACCEPT`
   * **Суть:** Игнорим локалку роутера, зарезервированные подсети и пользовательский белый список IP. Пакеты к этим ресурсам идут мимо прокси.
 
-**Connection Marking 🧠** - при включенной опции `use_conntrack`.
+**Connection Marking 🧠**
   * Вместо анализа каждого пакета, SKeen «запоминает» решение для всей сессии:
-  * **TCP/UDP:** Метка `0x12` ставится только для новых соединений (`NEW,RELATED`). Это экономит CPU, так как ядро не проверяет правила для каждого пакета внутри установленного стрима.
+  * **TCP:** Метка `0x12` ставится только для новых соединений (`NEW`). Это экономит CPU, так как ядро не проверяет правила для каждого пакета внутри установленного стрима.
 
 **Catch-all (MARK) 🕸**
   * `connmark match 0x12 MARK / MARK` - метим всё, что не попало в списки выше.
@@ -572,10 +572,6 @@ exec /opt/etc/init.d/S51dropbear start
     "proxy_router": 0, // Если 1, будут проксироваться все сервисы роутера.
                        // Доступно в режимах redirect, tproxy и hybrid;
                        // исключения подсетей и порты исключения учитываются.
-    "use_conntrack": 1 // Если 1, использовать Netfilter conntrack для сопоставления.
-                       // Плюсы: Выше производительность и стабильность TCP/UDP.
-                       // Минусы: Повышенное потребление ОЗУ (незначительное).
-                       // Доступно в режимах redirect, tproxy и hybrid;
   },
   "update": {
     "singbox": {
