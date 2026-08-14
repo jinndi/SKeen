@@ -14,7 +14,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.4"
+readonly SKEEN_VERSION="5.1.5"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -40,11 +40,7 @@ readonly CHAIN_OUTPUT="skeen_mask"
 readonly CHAIN_DIVERT="skeen_divert"
 readonly CHAIN_TUN="skeen_tun"
 readonly CHAIN_DNS="_NDM_HOTSPOT_DNSREDIR"
-readonly CHAIN_DNS_PRE="skeen_dns_pre"
 readonly CHAIN_DNS_OUT="skeen_dns_out"
-readonly CHAIN_TPROXY="skeen_tproxy"
-readonly CHAIN_REDIRECT="skeen_redirect"
-readonly CHAIN_MARK_OUT="skeen_mark_out"
 readonly TABLE_REDIRECT="nat"
 readonly TABLE_TPROXY="mangle"
 readonly TABLE_MARK="0x12"
@@ -181,8 +177,7 @@ cat <<EOF >"$SKEEN_CONFIG"
       "to_port": "",
       "use_policy": 1
     },
-    "proxy_router": 0,
-    "use_conntrack": 1
+    "proxy_router": 0
   },
   "update": {
     "singbox": {
@@ -293,8 +288,7 @@ eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 -e FIREWALL_REDIRECT_DNS_ENABLED='@.firewall.redirect_dns.enabled' \
 -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
 -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
--e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router' \
--e FIREWALL_USE_CONNTRACK='@.firewall.use_conntrack')"
+-e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router')"
 : "${POLICY_ENABLED:=0}"
 : "${POLICY_SEGMENT:=br1}"
 : "${NETWORK_IPV6:=1}"
@@ -306,7 +300,6 @@ eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 : "${FIREWALL_REDIRECT_DNS_PORT:=}"
 : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
 : "${FIREWALL_PROXY_ROUTER:=0}"
-: "${FIREWALL_USE_CONNTRACK:=0}"
 }
 get_update_config(){
 eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
@@ -1143,11 +1136,18 @@ local type="${4:-}"
 local protocols="${5:-}"
 local connmark_match_opt=""
 add_conntrack_mark(){
-[ "$SKEEN_USE_CONNMARK" != "1" ]&&return
 local chain="${1:-}"
+if echo "$protocols"|grep -q "tcp";then
 connmark_match_opt="-m connmark --mark $TABLE_MARK"
 add_rule "$iptables" "$table" "$chain" \
--m conntrack --ctstate NEW,RELATED -j CONNMARK --set-mark "$TABLE_MARK"
+-p tcp -m conntrack --ctstate NEW -j CONNMARK --set-mark "$TABLE_MARK"
+fi
+}
+get_connmark_match_opt(){
+local proto="${1:-}"
+if [ -n "$connmark_match_opt" ]&&[ "$proto" = "tcp" ];then
+echo "$connmark_match_opt"
+fi
 }
 case "$type" in
 "exclude_connmark")local connmark_options=""
@@ -1166,23 +1166,13 @@ add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j ACCEPT
 add_rule "$iptables" "$table" "$chain" -p tcp -m socket --transparent -g "$CHAIN_DIVERT"
 fi
 ;;
-"ctdir_reply")[ "$SKEEN_USE_CONNMARK" != "1" ]&&return 0
-add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
+"ctdir_reply")add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
 ;;
-"intercept_dns")if
-[ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ]&&[ "$SKEEN_USE_CONNMARK" = "1" ]
-then
-create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_PRE"||return 0
-add_conntrack_mark "$CHAIN_DNS_PRE"
-for proto in $protocols;do
-add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -g "$CHAIN_DNS_PRE"
-done
-chain="$CHAIN_DNS_PRE"
-fi
-for proto in $protocols;do
+"intercept_dns")for proto in $protocols
+do
 if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ];then
 add_rule "$iptables" "$table" "$chain" \
--p "$proto" $connmark_match_opt --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
+-p "$proto" --dport "$DNS_PORT" -j TPROXY --on-ip "$PROXY_IP" \
 --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
 else
 add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -j ACCEPT
@@ -1212,16 +1202,13 @@ add_rule "$iptables" "$table" "$chain" \
 fi
 ;;
 "tproxy")if
-[ "$SKEEN_USE_CONNMARK" = "1" ]
+echo "$protocols"|grep -q "tcp"
 then
-create_or_flush_chain "$iptables" "$table" "$CHAIN_TPROXY"||return 0
-add_conntrack_mark "$CHAIN_TPROXY"
-add_rule "$iptables" "$table" "$chain" -g "$CHAIN_TPROXY"
-chain="$CHAIN_TPROXY"
+add_conntrack_mark "$chain"
 fi
 for proto in $protocols;do
 add_rule "$iptables" "$table" "$chain" \
--p "$proto" $connmark_match_opt -j TPROXY --on-ip "$PROXY_IP" \
+-p "$proto" $(get_connmark_match_opt "$proto") -j TPROXY --on-ip "$PROXY_IP" \
 --on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$TABLE_MARK"
 done
 ;;
@@ -1235,20 +1222,9 @@ $iptables -w -t "$table" -I "$chain" -p "$proto" --dport "$k_port" $rule
 fi
 done
 ;;
-"redirect")if
-[ "$SKEEN_USE_CONNMARK" = "1" ]
-then
-if [ "$chain" = "$CHAIN_OUTPUT" ]&&chain_exists "$iptables" "$table" "$CHAIN_REDIRECT";then
-add_rule "$iptables" "$table" "$chain" -p "$protocols" -g "$CHAIN_REDIRECT"
-return 0
-fi
-create_or_flush_chain "$iptables" "$table" "$CHAIN_REDIRECT"
-add_conntrack_mark "$CHAIN_REDIRECT"
-add_rule "$iptables" "$table" "$chain" -p "$protocols" -g "$CHAIN_REDIRECT"
-chain="$CHAIN_REDIRECT"
-fi
+"redirect")add_conntrack_mark "$chain"
 add_rule "$iptables" "$table" "$chain" \
--p "$protocols" $connmark_match_opt -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+-p "$protocols" $(get_connmark_match_opt "$protocols") -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
 ;;
 "proxy_router_owner")add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
 ;;
@@ -1256,8 +1232,7 @@ add_rule "$iptables" "$table" "$chain" \
 [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]
 then
 create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_OUT"||return 0
-[ "$SKEEN_USE_CONNMARK" = "1" ]&&add_conntrack_mark "$CHAIN_DNS_OUT"
-add_rule "$iptables" "$table" "$CHAIN_DNS_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
+add_rule "$iptables" "$table" "$CHAIN_DNS_OUT" -j MARK --set-mark "$TABLE_MARK"
 for proto in $protocols;do
 add_rule "$iptables" "$table" "$chain" -p "$proto" --dport "$DNS_PORT" -g "$CHAIN_DNS_OUT"
 done
@@ -1265,11 +1240,8 @@ chain="$CHAIN_DNS_OUT"
 fi
 add_rule "$iptables" "$table" "$chain" -j ACCEPT
 ;;
-"proxy_router_mark")create_or_flush_chain "$iptables" "$table" "$CHAIN_MARK_OUT"||return 0
-[ "$SKEEN_USE_CONNMARK" = "1" ]&&add_conntrack_mark "$CHAIN_MARK_OUT"
-add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" $connmark_match_opt -j MARK --set-mark "$TABLE_MARK"
-add_rule "$iptables" "$table" "$CHAIN_MARK_OUT" -j ACCEPT
-add_rule "$iptables" "$table" "$chain" -g "$CHAIN_MARK_OUT"
+"proxy_router_mark")add_rule "$iptables" "$table" "$chain" -j MARK --set-mark "$TABLE_MARK"
+add_rule "$iptables" "$table" "$chain" -j ACCEPT
 esac
 }
 set_chain_rules(){
@@ -1565,8 +1537,6 @@ fi
 [ "$route_all" = 1 ]&&echowarn "Маршрутизация всего устройства"
 SKEEN_PROXY_ROUTER="0"
 [ "$FIREWALL_PROXY_ROUTER" = "1" ]&&SKEEN_PROXY_ROUTER="1"
-SKEEN_USE_CONNMARK="0"
-[ "$FIREWALL_USE_CONNTRACK" = "1" ]&&SKEEN_USE_CONNMARK="1"
 SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 if [ -z "$SKEEN_IPTABLES_LIST" ];then
 echoerr "Нет поддерживаемых iptables"
@@ -1713,7 +1683,6 @@ echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
 echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
 echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
 echo "export SKEEN_PROXY_ROUTER=\"$SKEEN_PROXY_ROUTER\""
-echo "export SKEEN_USE_CONNMARK=\"$SKEEN_USE_CONNMARK\""
 get_skeen_run_script_cmd
 } >"$FIREWALL_HOOK_FILE"
 chmod +x "$FIREWALL_HOOK_FILE"
@@ -1824,10 +1793,10 @@ for ipt_cmd in iptables ip6tables;do
 $ipt_cmd -w -t nat -S $CHAIN_DNS 2>/dev/null|sed -n "s/^-A /$ipt_cmd -w -t nat -D /p"|grep "skeen_dns"|sh 2>/dev/null
 $ipt_cmd -w -t mangle -S INPUT 2>/dev/null|sed -n "s/^-A /$ipt_cmd -w -t mangle -D /p"|grep "skeen_keendns"|sh 2>/dev/null
 for table in nat mangle;do
-for ch in "$CHAIN_PREROUTING" "$CHAIN_DIVERT" "$CHAIN_DNS_PRE" "$CHAIN_TPROXY" "$CHAIN_REDIRECT";do
+for ch in "$CHAIN_PREROUTING" "$CHAIN_DIVERT";do
 clean_chain "$ipt_cmd" "$table" "$ch" PREROUTING
 done
-for ch in "$CHAIN_OUTPUT" "$CHAIN_DNS_OUT" "$CHAIN_MARK_OUT" "$CHAIN_REDIRECT";do
+for ch in "$CHAIN_OUTPUT" "$CHAIN_DNS_OUT";do
 clean_chain "$ipt_cmd" "$table" "$ch" OUTPUT
 done
 done
@@ -2271,7 +2240,7 @@ fw_test "$1" "$2" "$content" "skeen_tun" "Accept"
 fw_test "nat" "POSTROUTING" "$($3 -w -t nat -S POSTROUTING 2>/dev/null)" "skeen_tun" "Masquerade"
 return 0
 fi
-[ "$SKEEN_USE_CONNMARK" = "1" ]&&fw_test "$1" "$2" "$content" "ctdir REPLY" "REPLY accept"
+fw_test "$1" "$2" "$content" "ctdir REPLY" "REPLY accept"
 if [ "$1" = "mangle" ];then
 case "$2" in
 "$CHAIN_PREROUTING")[ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ]&&comment="DNS intercept"||comment="DNS exclude"
@@ -2289,15 +2258,15 @@ if [ "$2" = "$CHAIN_PREROUTING" ]&&[ "$SKEEN_INTERCEPT_FAKEIP" != "0" ];then
 fw_test "$1" "$2" "$content" "$FAKEIP_INTERCEPT_SET" "FakeIP intercept"
 fi
 if [ "$1" = "mangle" ]&&[ "$2" = "$CHAIN_OUTPUT" ];then
-fw_test "$1" "$2" "$content" "$CHAIN_MARK_OUT" "Mark set"
+fw_test "$1" "$2" "$content" "MARK" "Mark set"
 elif [ "$1" = "nat" ]&&[ "$2" = "$CHAIN_OUTPUT" ];then
-fw_test "$1" "$2" "$content" "redir|$CHAIN_REDIRECT" "TCP Redirect"
+fw_test "$1" "$2" "$content" "redir" "TCP Redirect"
 fi
 [ "$2" = "$CHAIN_OUTPUT" ]&&return 0
 if [ "$1" = "mangle" ];then
-fw_test "$1" "$2" "$content" "redirect|$CHAIN_TPROXY" "TProxy redirect"
+fw_test "$1" "$2" "$content" "redirect" "TProxy redirect"
 elif [ "$1" = "nat" ];then
-fw_test "$1" "$2" "$content" "redir|$CHAIN_REDIRECT" "TCP Redirect"
+fw_test "$1" "$2" "$content" "redir" "TCP Redirect"
 fi
 }
 test_firewall(){
