@@ -97,13 +97,15 @@
     "transport": {
       "type": "ws",
       "path": "/secret-path" // Ваш секретный путь (совпадает с конфигурацией сервера)
+      // , "headers": {
+      //   "Host": "<ваш_домен.com>" // Это нужно если в поле "server" указан IP вместо домена.
+      // }
     },
     "multiplex": {
       "enabled": true,
-      "max_connections": 6,
-      "max_streams": 48,
-      "protocol": "h2mux",
-      "padding": true
+      "protocol": "smux",
+      "max_streams": 32,  // Максимальное количество мультиплексированных потоков в соединении до открытия нового.
+      "padding": true     // Поможет оживить нежить (на сервера так же долно быть включено)
     }
   },
 
@@ -133,9 +135,8 @@
     },
     "multiplex": {
       "enabled": true,
-      "protocol": "h2mux",
-      "max_connections": 3, // Сколько реальных TCP/TLS соединений (физических каналов) открывать до сервера
-      "max_streams": 24,    // Сколько отдельных запросов/сайтов можно упаковать внутрь ОДНОГО соединения
+      "protocol": "smux",
+      "max_streams": 32,
       "padding": true,      // Включить добавление случайных байтов в заголовки пакетов
       "brutal": {
         "enabled": true,
@@ -231,9 +232,8 @@
     },
     "multiplex": {
       "enabled": true,
-      "max_connections": 6,
-      "max_streams": 48,
-      "protocol": "h2mux",
+      "protocol": "smux",
+      "max_streams": 32,
       "padding": true,
       "brutal": {
         "enabled": true,

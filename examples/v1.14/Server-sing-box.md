@@ -358,7 +358,7 @@ volumes:
       },
       "transport": {
         "type": "ws",
-        "path": "/secret-path",  // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
+        "path": "/secret-path"  // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
       },
       "multiplex": {
         "enabled": true,

@@ -134,9 +134,8 @@ volumes:
     },
     "multiplex": {
       "enabled": true,
-      "max_connections": 6,
-      "max_streams": 48,
-      "protocol": "h2mux",
+      "protocol": "smux",
+      "max_streams": 32,
       "padding": true
     },
     "tls": {
