@@ -84,9 +84,10 @@
       "enabled": true,
       "server_name": "<ваш_домен.com>",
       "certificate_public_key_sha256": "<ваш_хэш_открытого_ключа>",
-      "spoof": "yandex.ru", // Внедрить поддельный TLS ClientHello (подбирается индивидуально),
+      "spoof": "plex.tv",   // Внедрить поддельный TLS ClientHello, необходим определенный домен,
                             // содержащий разрешенный SNI, перед реальным, чтобы обмануть промежуточные устройства,
                             // фильтрующие SNI и разрешающие определенные имена хостов.
+                            // Подробнее: https://cheburcheck.ru/kb/whitelist
                             // ВАЖНО: Требует ROOT прав (в Entware имеются)
       "utls": {
         "enabled": true,
