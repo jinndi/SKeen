@@ -124,7 +124,7 @@ async function operator(proxies, targetPlatform, context) {
 
   const promises = proxies.map(async (proxy) => {
     const host = proxy.sni || proxy.server
-    const port = proxy.port
+    const port = proxy.port || 443
 
     // 1. Выключен ли TLS вообще
     const tlsDisabled = proxy.tls === false
@@ -149,14 +149,16 @@ async function operator(proxies, targetPlatform, context) {
       return proxy
     }
 
+    // Уникальный ключ кэша: домен + порт
+    const cacheKey = `${host}:${port}`
+
     // Если запрос для этого хоста еще не делался, запускаем и сохраняем Promise
-    if (!certCache[host]) {
-      console.log(`[Сертификаты] INFO: Обработка порта:  ${port}`)
-      certCache[host] = getCertificateInfo(host, port)
+    if (!certCache[cacheKey]) {
+      certCache[cacheKey] = getCertificateInfo(host, port)
     }
 
     // Дожидаемся результата из кэша (если запрос уже был, берется готовый ответ)
-    const cert = await certCache[host]
+    const cert = await certCache[cacheKey]
 
     if (cert.publicKeySha256) {
       proxy._certificate_public_key_sha256 = [cert.publicKeySha256]
