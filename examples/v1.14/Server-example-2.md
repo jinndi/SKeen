@@ -5,11 +5,11 @@
 Что должны получить в итоге:
 
  0. Работа при блоке IP вашего сервера.
- 1. Прокси`trojan` WebSocket за Clouflare на субдомене `plex.mydomain.com`.
- 2. `Sub-Store` панель на субдомене `sub.mydomain.com` через туннель Clouflare.
- 3. Серверный `API сервис sing-box` через туннель Clouflare - для добавления в Zashboard панель в любом клиенте.
+ 1. Прокси`trojan` WebSocket за Cloudflare на субдомене `plex.mydomain.com`.
+ 2. `Sub-Store` панель на субдомене `sub.mydomain.com` через туннель Cloudflare.
+ 3. Серверный `API сервис sing-box` через туннель Cloudflare - для добавления в Zashboard панель в любом клиенте.
  4. Открытые порты на сервере: 443 и ssh порт.
- 5. Опционально: Редирект (`Forwarding URL 301`) на сайт с основного `mydomain.com/*`  и суб. `plex.mydomain.com/`  доменов на `https://plex.tv` через правила `rules/page-rules` в Clouflare.
+ 5. Опционально: Редирект (`Forwarding URL 301`) на сайт с основного `mydomain.com/*`  и суб. `plex.mydomain.com/`  доменов на `https://plex.tv` через правила `rules/page-rules` в Cloudflare.
 
 ### Файл compose.yml
 
