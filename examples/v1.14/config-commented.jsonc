@@ -299,7 +299,7 @@
   },
 
   // ═══════════════════════════════════════════════
-  // HTTP-клиенты (используются для загрузки наборов правил)
+  // HTTP-клиенты (используются для загрузки наборов правил и панели Zashboard)
   // ═══════════════════════════════════════════════
   "http_clients": [
     // HTTP-клиент GLOBAL (прокси через селектор "🌍 Proxy")
@@ -594,9 +594,14 @@
       "type": "api",
       "tag": "api",
       "listen": "::",
-      "listen_port": 9998,
+      "listen_port": 9999, // Адрес прослушивания API
       "access_control_allow_private_network": true,
-      "dashboard": false
+      "dashboard": {
+        "enabled": true,
+        "path": "zashboard", // Каталог файлов веб-панели
+        // URL адрес Zashboard .zip панели
+        "download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+      }
     }
   ],
 
@@ -616,15 +621,15 @@
       "store_dns": true     // Сохранить в кэш разрешенные DNS-запросы
     },
 
-    // API Clash
+    // API Clash (можно использовать вместо API sing-box, Zashboard поддерживает и то и другое)
     // Предоставляет REST API, совместимый с Clash, которым можно управлять через такие панели, как Yacd, Zashboard и т.д.
-    "clash_api": {
-      "external_controller": "0.0.0.0:9999", // Адрес прослушивания API
-      "external_ui": "zashboard",            // Каталог файлов веб-панели
-      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip", // URL адрес Zashboard .zip панели
-      "external_ui_download_detour": "GLOBAL", // Скачивание файлов панели через глобальный селектор
-      "default_mode": "Rule"   // Режим правил по умолчанию
-    },
+    // "clash_api": {
+    //   "external_controller": "0.0.0.0:9999", // Адрес прослушивания API
+    //   "external_ui": "zashboard",            // Каталог файлов веб-панели
+    //   "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip", // URL адрес Zashboard .zip панели
+    //   "external_ui_download_detour": "GLOBAL", // Скачивание файлов панели через глобальный селектор
+    //   "default_mode": "Rule"   // Режим правил по умолчанию
+    // },
 
     // Конфигурация отладки/производительности
     "debug": {

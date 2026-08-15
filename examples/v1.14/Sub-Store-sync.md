@@ -182,9 +182,13 @@
       "type": "api",
       "tag": "api",
       "listen": "::",
-      "listen_port": 9998,
+      "listen_port": 9999,
       "access_control_allow_private_network": true,
-      "dashboard": false
+      "dashboard": {
+        "enabled": true,
+        "path": "zashboard",
+        "download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+      }
     }
   ],
 
@@ -195,14 +199,6 @@
       "cache_id": "v1_14",
       "store_fakeip": true,
       "store_dns": true
-    },
-
-    "clash_api": {
-      "external_controller": "0.0.0.0:9999",
-      "external_ui": "zashboard",
-      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
-      "external_ui_download_detour": "GLOBAL",
-      "default_mode": "Rule"
     },
 
     "debug": {
