@@ -42,9 +42,9 @@ readonly SKEEN_RUN_CONFIG="/tmp/${SKEEN_PROC}.json"
 readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 
 readonly SINGBOX_NAME="Sing-box"
-SINGBOX_PROC="skeen-box"
 SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
-SINGBOX_BIN="${ENTWARE_DIR}/bin/${SINGBOX_PROC}"
+SINGBOX_BIN="${ENTWARE_DIR}/bin/skeen-box"
+readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
 readonly SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 readonly SINGBOX_SPACE_MB=128
 
@@ -268,6 +268,8 @@ get_auto_start_config() {
 }
 
 get_sing_binary_config() {
+  local sing_pid="" sing_path=""
+
   eval "$(
     jsonfilter -i "$SKEEN_RUN_CONFIG" \
       -e SING_BINARY_ENABLED='@.sing_binary.enabled' \
@@ -277,24 +279,27 @@ get_sing_binary_config() {
   : "${SING_BINARY_ENABLED:=0}"
   : "${SING_BINARY_PATH:=/opt/bin/sing-box}"
 
-  if [ "$SING_BINARY_ENABLED" = "1" ]; then
-    pidof "skeen-box" 2>/dev/null && killall -9 "skeen-box" 2>/dev/null
-
-    SINGBOX_PROC="$(basename "$SING_BINARY_PATH")"
-    SINGBOX_BIN="$SING_BINARY_PATH"
-
-    local path_bin
-    path_bin="$(command -v "$SINGBOX_PROC")"
-    if [ -z "$path_bin" ] && [ -f "$SINGBOX_BIN" ]; then
-      PATH="$(dirname "$SINGBOX_BIN"):${PATH}"
+  if [ -f "$SINGBOX_PID_FILE" ]; then
+    read -r sing_pid < "$SINGBOX_PID_FILE"
+    if [ -n "$sing_pid" ] && [ -d "/proc/$sing_pid" ]; then
+      sing_path="$(readlink -f "/proc/$sing_pid/exe" 2>/dev/null)"
     fi
+  fi
 
-    if [ -f "$SINGBOX_BIN" ] && [ ! -x "$SINGBOX_BIN" ]; then
-      chmod +x "$SINGBOX_BIN" 2>/dev/null || true
-    fi
-  else
-    pidof "$SING_BINARY_PATH" 2>/dev/null && killall -9 "$SING_BINARY_PATH" 2>/dev/null ||
-      pidof "sing-box" 2>/dev/null && killall -9 "sing-box" 2>/dev/null || true
+  [ "$SING_BINARY_ENABLED" = "1" ] && SINGBOX_BIN="$SING_BINARY_PATH"
+
+  case "$sing_path" in
+    "" | "$SINGBOX_BIN") ;;
+    *)
+      if kill -0 "$sing_pid" 2>/dev/null; then
+        echomsg "Завершаем $SINGBOX_NAME (старый процесс с PID $sing_pid)..."
+        kill -9 "$sing_pid"; clean_firewall; rm -f "$SINGBOX_PID_FILE"
+      fi
+    ;;
+  esac
+
+  if [ -f "$SINGBOX_BIN" ] && [ ! -x "$SINGBOX_BIN" ]; then
+    chmod +x "$SINGBOX_BIN" 2>/dev/null || true
   fi
 }
 
@@ -698,7 +703,7 @@ create_singbox_config() {
     echo "{\"$key\": $value}" >"${CONFIG_DIR}/${key}.json"
   done
 
-  $SINGBOX_PROC format -w -C $CONFIG_DIR
+  $SINGBOX_BIN format -w -C $CONFIG_DIR
 
   echook "Конфигурационные файлы $SINGBOX_NAME созданы успешно"
 }
@@ -805,7 +810,7 @@ press_any_key_to_menu() {
 }
 
 is_running() {
-  pidof "$SINGBOX_PROC" >/dev/null 2>&1
+  start-stop-daemon -K -t -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1
 }
 
 install() {
@@ -871,7 +876,7 @@ uninstall() {
   echomsg "Удаление группы ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
 
-  if [ "$SINGBOX_PROC" = 'skeen-box' ]; then
+  if [ "$SINGBOX_BIN" = '/opt/bin/skeen-box' ]; then
     while :; do
       printf "Удалить %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
       read -r opt </dev/tty
@@ -2453,13 +2458,13 @@ start_singbox() {
 
   get_sing_args_config
   # shellcheck disable=SC2086
-  start-stop-daemon -S -b -x $SINGBOX_PROC -c root:$SKEEN_PROC -- $SINGBOX_ARGS
+  start-stop-daemon -S -b -m -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" -c "root:${SKEEN_PROC}" -- $SINGBOX_ARGS
   status_start=$?
 
   if [ $status_start -ne 0 ]; then
+    rm -f "$SINGBOX_PID_FILE"
     msg="Не удалось запустить $SINGBOX_NAME"
-    echoerr "$msg"
-    logger_error "$msg"
+    echoerr "$msg"; logger_error "$msg"
     return 1
   fi
 
@@ -2469,9 +2474,9 @@ start_singbox() {
   done
 
   if ! is_running; then
+    rm -f "$SINGBOX_PID_FILE"
     msg="$SINGBOX_NAME не запустился вовремя"
-    echoerr "$msg"
-    logger_error "$msg"
+    echoerr "$msg"; logger_error "$msg"
     return 1
   fi
 
@@ -2526,7 +2531,7 @@ start() {
 
 stop_singbox() {
   local timeout=40
-  local status_stop msg
+  local msg
 
   echomsg "Остановка ${SINGBOX_NAME}..."
 
@@ -2537,14 +2542,10 @@ stop_singbox() {
     return 0
   fi
 
-  # shellcheck disable=SC2086
-  start-stop-daemon -K -x $SINGBOX_PROC >/dev/null
-  status_stop=$?
-
-  if [ $status_stop -ne 0 ]; then
-    msg="Не удалось отправить сигнал остановки $SINGBOX_NAME"
-    echoerr "$msg"
-    logger_error "$msg"
+  if ! start-stop-daemon -K -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1; then
+    msg="Не удалось отправить сигнал остановки $SINGBOX_NAME (процесс не найден или уже завершен)"
+    echoerr "$msg"; logger_error "$msg"
+    rm -f "$SINGBOX_PID_FILE"
     return 1
   fi
 
@@ -2555,14 +2556,14 @@ stop_singbox() {
 
   if is_running; then
     msg="$SINGBOX_NAME не остановился вовремя"
-    echoerr "$msg"
-    logger_error "$msg"
+    echoerr "$msg"; logger_error "$msg"
     return 1
   fi
 
+  rm -f "$SINGBOX_PID_FILE"
+
   msg="$SINGBOX_NAME остановлен"
-  echook "$msg"
-  logger_notice "$msg"
+  echook "$msg"; logger_notice "$msg"
   return 0
 }
 
@@ -2583,9 +2584,15 @@ kill_proc() {
     return 0
   fi
 
-  echo "Принудительная остановка ${SKEEN_PROC}..."
-  killall -9 "$SINGBOX_PROC" 2>/dev/null
-  clean_firewall
+  echomsg "Принудительная остановка ${SKEEN_PROC}..."
+  if start-stop-daemon -K -s 9 -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1; then
+    rm -f "$SINGBOX_PID_FILE"
+    clean_firewall
+    echook "$SINGBOX_NAME успешно остановлен"
+  else
+    echoerr "Не удалось принудительно завершить $SINGBOX_NAME"
+    return 1
+  fi
 }
 
 version() {
@@ -2654,7 +2661,7 @@ status() {
   local pid mem_used mem_peak threads
 
   get_sing_binary_config
-  pid="$(pidof "$SINGBOX_PROC")"
+  [ -f "$SINGBOX_PID_FILE" ] && pid="$(cat "$SINGBOX_PID_FILE")"
 
   if [ -n "$pid" ]; then
     # shellcheck disable=SC2046
@@ -3152,7 +3159,7 @@ check_sing_config() {
     echomsg "Проверка конфигурации $SINGBOX_NAME..."
 
     # shellcheck disable=SC2086
-    if get_sing_args_config && $SINGBOX_PROC check $SING_CONFIG_ARGS; then
+    if get_sing_args_config && $SINGBOX_BIN check $SING_CONFIG_ARGS; then
       echook "Конфигурация $SINGBOX_NAME корректна"
     else
       local err_msg="$SINGBOX_NAME конфигурация не корректна"
@@ -3177,7 +3184,7 @@ format_config() {
     get_sing_args_config
 
     # shellcheck disable=SC2086
-    if $SINGBOX_PROC format -w $SING_CONFIG_ARGS; then
+    if $SINGBOX_BIN format -w $SING_CONFIG_ARGS; then
       echook "Конфигурация отформатирована успешно"
     else
       echoerr "Ошибка форматирования конфигурации"
@@ -3206,7 +3213,7 @@ sync_config() {
     echoerr "Не удалось загрузить конфигурацию с $address" && return 1
   fi
 
-  if is_tty && ! $SINGBOX_PROC check -c "$config_tmp"; then
+  if is_tty && ! $SINGBOX_BIN check -c "$config_tmp"; then
     echoerr "$SINGBOX_NAME конфигурация недействительна, синхронизация отменена!"
     rm -f "$config_tmp"
     return 1
