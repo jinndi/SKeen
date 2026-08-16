@@ -335,11 +335,20 @@ volumes:
       }
     },
 
-    // 3. Trojan-TLS-WS + Multiplex (для конфигурации за Cloudflare)
-    // Обратите внимание: fallback не работает поверх WebSocket / Cloudflare.
-    // Но если есть паранойя, вместо этого в панели Cloudflare в разделе Compute -> Workers & Pages
-    // разверните статику вашего сайта и там же привяжите её к вашему основному домену (не к субдомену).
-    // Все протоколы и веб-панели привязывайте к субдоменам в разделе DNS Records вашего домена.
+    // 3. Trojan-TLS-HTTPUpgrade/WS + Multiplex (для конфигурации за Cloudflare)
+    // HTTPUpgrade — это техническая оптимизация WebSocket: от него взяли только механизм
+    // «пробития» CDN/прокси (рукопожатие 101 Upgrade), но выбросили оверхед фрейминга WebSocket.
+    //
+    // Обратите внимание: встроенный fallback в sing-box работает при неверных учетных данных,
+    // но при запросе на корень сайта (/) транспорт отклоняет соединение с ошибкой "bad path: /".
+    // Если нужно, чтобы по основному URL открывался легитимный сайт для маскировки:
+    // 1. Используйте Nginx/Caddy перед sing-box на VPS (проксируйте только секретный /path).
+    // 2. Либо в Cloudflare (раздел Workers & Pages) разверните статический сайт и добавьте правила
+    //    в разделе домена в меню перейдите в Workers Routes - Add Route на ваш варкер с адресами по типу:
+    //    https://sub.mydomain.com/, https://sub.mydomain.com/js/*, https://sub.mydomain.com/css/* ,
+    //    https://sub.mydomain.com/assets/* и https://mydomain.com/*
+    //    или настройте Cloudflare Worker, который будет проксировать секретный /path на ваш VPS,
+    //    а все остальные запросы (/) отдавать как обычную веб-страницу.
     {
       "type": "trojan",
       "tag": "trojan-cf-in",
@@ -357,9 +366,15 @@ volumes:
         "certificate_provider": "CF_origin_ca"
       },
       "transport": {
-        "type": "ws",
-        "path": "/secret-path"  // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
+        "type": "httpupgrade",
+        "host": "<ваш_домен.com>",
+        "path": "/secret-path" // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
       },
+      // Можно вместо httpupgrade использовать ws (WebSocket) транспорт, но менее предпочтительно.
+      // "transport": {
+      //   "type": "ws",
+      //   "path": "/secret-path"
+      // },
       "multiplex": {
         "enabled": true,
         "padding": true // Если эта функция включена, соединения без заполнения данных будут отклонены.

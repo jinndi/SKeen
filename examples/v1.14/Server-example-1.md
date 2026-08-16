@@ -4,11 +4,12 @@
 
 Что должны получить в итоге:
 
- 1. Три прокси протокола: `trojan` за Clouflare, `Naive` и `Hysteria2` на субдоменах с ECH и сертификатом ZeroSSL.
+ 1. Три прокси протокола: `trojan` WS за Clouflare, `Naive` и `Hysteria2` на субдоменах с ECH и сертификатом ZeroSSL.
  2. `Sub-Store` панель на субдомене `sub.mydomain.com` через trojan fallback с сертификатом ZeroSSL.
  3. Серверный `API сервис sing-box` через туннель Clouflare - для добавления в Zashboard панель в любом клиенте.
  4. Открытые порты на сервере: 443, 2096, 4443, 8443 и ssh порт.
- 5. Основной домен с сайтом через Workers & Pages.
+ 5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `mydomain.com/*`
+    и суб. `plex.mydomain.com/`, ..., ..., доменов на ваш воркер с сайтом .
 
 ### Файл compose.yml
 
@@ -111,6 +112,7 @@ volumes:
       },
       "tls": {
         "enabled": true,
+        "alpn": [ "http/1.1" ],
         "server_name": "trws.mydomain.com",
         "certificate_provider": "OriginCA"
       }

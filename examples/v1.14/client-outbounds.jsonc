@@ -69,7 +69,7 @@
     }
   },
 
-  // 3. Trojan-TLS-WS + Multiplex за Cloudflare
+  // 3. Trojan-TLS-HTTPUpgrade/WS + Multiplex за Cloudflare
   {
     "type": "trojan",
     "tag": "trojan-cf-mux",
@@ -95,12 +95,15 @@
       }
     },
     "transport": {
-      "type": "ws",
-      "path": "/secret-path" // Ваш секретный путь (совпадает с конфигурацией сервера)
-      // , "headers": {
-      //   "Host": "<ваш_домен.com>" // Это нужно если в поле "server" указан IP вместо домена.
-      // }
+      "type": "httpupgrade",
+      "host": "<ваш_домен.com>",
+      "path": "/secret-path" // Ваш секретный путь, по которому Cloudflare поймет, что это ваш прокси
     },
+    // Если WebSocket (менее предпочтительно)
+    // "transport": {
+    //   "type": "ws",
+    //   "path": "/secret-path"
+    // },
     "multiplex": {
       "enabled": true,
       "protocol": "smux",

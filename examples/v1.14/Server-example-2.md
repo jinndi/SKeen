@@ -5,11 +5,12 @@
 Что должны получить в итоге:
 
  0. Работа при блоке IP вашего сервера.
- 1. Прокси`trojan` WebSocket за Cloudflare на субдомене `plex.mydomain.com`.
+ 1. Прокси`trojan` HTTPUpgrade за Cloudflare на субдомене `plex.mydomain.com`.
  2. `Sub-Store` панель на субдомене `sub.mydomain.com` через туннель Cloudflare.
  3. Серверный `API сервис sing-box` через туннель Cloudflare - для добавления в Zashboard панель в любом клиенте.
  4. Открытые порты на сервере: 443 и ssh порт.
- 5. Опционально: Редирект (`Forwarding URL 301`) на сайт с основного `mydomain.com/*`  и суб. `plex.mydomain.com/`  доменов на `https://plex.tv` через правила `rules/page-rules` в Cloudflare.
+ 5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `mydomain.com/*`
+    и суб. `plex.mydomain.com/`, ..., ..., доменов на ваш воркер с сайтом .
 
 ### Файл compose.yml
 
@@ -87,7 +88,8 @@ volumes:
         }
       ],
       "transport": {
-        "type": "ws",
+        "type": "httpupgrade",
+        "host": "plex.mydomain.com",
         "path": "/apistreamgdfdcy"
       },
       "multiplex": {
@@ -129,7 +131,8 @@ volumes:
     "server": "plex.mydomain.com",
     "server_port": 443,
     "transport": {
-      "type": "ws",
+      "type": "httpupgrade",
+      "host": "plex.mydomain.com",
       "path": "/apistreamgdfdcy"
     },
     "multiplex": {
@@ -142,6 +145,7 @@ volumes:
       "enabled": true,
       "server_name": "plex.mydomain.com",
       "spoof": "plex.tv",
+      "alpn": [ "http/1.1" ],
       "utls": {
         "enabled": true,
         "fingerprint": "chrome"
