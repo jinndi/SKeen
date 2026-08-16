@@ -421,8 +421,18 @@ get_current_version() {
 
   case "$proc" in
   "sing")
+    local cache_file="/tmp/skeen_singbox_version"
+
     if [ -f "$SINGBOX_BIN" ]; then
-      $SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs
+      if [ -f "$cache_file" ] && [ "$SINGBOX_BIN" -ot "$cache_file" ]; then
+        cat "$cache_file"
+        return 0
+      fi
+
+      local ver
+      ver="$($SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs)"
+      echo "$ver" > "$cache_file"
+      echo "$ver"
     fi
     ;;
   "skeen") echo "$SKEEN_VERSION" ;;
@@ -3282,7 +3292,6 @@ show_menu() {
   check_tty
   check_skeen_config && printf "\033[1A\033[2K\033[1A\033[2K"
   import_firewall_vars
-  show_header
   get_auto_start_config
   get_sing_binary_config
 
@@ -3304,15 +3313,11 @@ show_menu() {
     local key="${1:-}"
     local val="${2:-}"
     local target_len=10
-    local char_count pad spaces
-    char_count=$(echo -n "$key" | wc -m)
-
-    pad=$((target_len - char_count))
+    local pad spaces="          "
+    pad=$((target_len - ${#key}))
     [ $pad -lt 1 ] && pad=1
-
-    spaces=$(printf '%*s' "$pad" '')
-
-    output="$output\n ${key}${spaces} ${val}"
+    while [ ${#spaces} -gt $pad ]; do spaces="${spaces%?}"; done
+    output="${output}\n ${key}${spaces} ${val}"
   }
 
   add_line "${SKEEN_NAME}" "$(cyan "v$(get_current_version "skeen")")"
@@ -3333,8 +3338,8 @@ show_menu() {
     add_line "Sing DNS" "$sb_dns_work_text"
 
     if [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$SKEEN_FIREWALL_MODE" != "tun" ]; then
-      echo "$SKEEN_IPTABLES_LIST" | grep -q "ipt" && ipv4="$(cyan "4")"
-      echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6t" && ipv6="$(cyan "6")"
+      case "$SKEEN_IPTABLES_LIST" in *ipt*) ipv4="$(cyan "4")" ;; esac
+      case "$SKEEN_IPTABLES_LIST" in *ip6t*) ipv6="$(cyan "6")" ;; esac
 
       [ -n "$SKEEN_POLICY_SEGMENT" ] && add_line "Segment" "$(cyan "$SKEEN_POLICY_SEGMENT")"
       [ "$SKEEN_TUN_ENABLED" = "1" ] && add_line "OpkgTun" "$(cyan "yes")"
@@ -3354,6 +3359,7 @@ show_menu() {
   output="$output\n  $(green "5.") Uninstall"
   output="$output\n  $(green "0.") Exit\n"
 
+  show_header
   echo -e "$output"
 
   max_attempts=3
@@ -3364,21 +3370,23 @@ show_menu() {
 
     printf "\n"
 
-    if echo "$option" | grep -Eq '^[1-5]$'; then
-      echo "$DELIMETER"
-
-      case "$option" in
-      1) switch_state ;;
-      2) restart ;;
-      3) check_updates ;;
-      4) test_firewall ;;
-      5) accept_uninstall ;;
-      esac
-    else
-      [ "$option" = 0 ] && exit 0
-      echoerr "Incorrect option"
-      attempt=$((attempt + 1))
-    fi
+    case "$option" in
+      [1-5])
+        echo "$DELIMETER"
+        case "$option" in
+          1) switch_state ;;
+          2) restart ;;
+          3) check_updates ;;
+          4) test_firewall ;;
+          5) accept_uninstall ;;
+        esac
+        ;;
+      0) exit 0 ;;
+      *)
+        echoerr "Неверный вариант"
+        attempt=$((attempt + 1))
+        ;;
+    esac
   done
 
   exiterr "Maximum attempts reached, exiting menu."
