@@ -146,7 +146,7 @@ Workflow Algorithm:
   * `connmark match 0x12 TPROXY / TPROXY`
   * **Essence:** Final stage. All remaining TCP/UDP traffic that did not match any exclusions is forcibly redirected to the Sing-Box TProxy port.
 
-> **Note:** Local subnets (listed in the source code) are already excluded from proxying. However, if you need to exclude specific ports, you must specify them manually in `skeen.json` or within the `sing-box` configuration itself.
+> **Note:** Local subnets (listed in the source code) are already excluded from proxying. However, if you need to exclude specific, you must specify them manually in `skeen.json` or within the `sing-box` configuration itself.
 
 ---
 
@@ -538,10 +538,11 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
   },
   "firewall": {
     "intercept": {
-      "dns": 1,        // Intercept DNS req. via TProxy/Hybrid modes (0 = disabled),
+      "dns": 1,        // Intercept DNS queries in TProxy/Hybrid modes (0 = disabled),
                        // ignored if redirect_dns is configured (see below)
       "fakeip": {
-        "enabled": 0,  // If 1, enables the FakeIP address pool in Redirect/TProxy interception; everything else goes to WAN.
+        "enabled": 0,  // If set to 1, includes the FakeIP pool in Redirect/TProxy interception;
+                       // all other traffic goes directly, bypassing sing-box.
                        // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled, along with sing-box DNS configuration.
                        // - The exclude.port/cidr exceptions will function as normal.
         "include": "", // Full path to the file containing a list of IP/CIDR resources (both v4 and v6) - one per line.
