@@ -14,7 +14,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.5"
+readonly SKEEN_VERSION="5.1.6"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -24,9 +24,9 @@ readonly SKEEN_CONFIG="$WORK_DIR/$SKEEN_PROC.json"
 readonly SKEEN_RUN_CONFIG="/tmp/$SKEEN_PROC.json"
 readonly SKEEN_AUTOSTART_SCRIPT="$ENTWARE_DIR/etc/init.d/S99SKeen"
 readonly SINGBOX_NAME="Sing-box"
-SINGBOX_PROC="skeen-box"
 SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
-SINGBOX_BIN="$ENTWARE_DIR/bin/$SINGBOX_PROC"
+SINGBOX_BIN="$ENTWARE_DIR/bin/skeen-box"
+readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
 readonly SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 readonly SINGBOX_SPACE_MB=128
 readonly FIREWALL_HOOK_FILE="$NETFILTER_DIR/${SKEEN_PROC}_firewall.sh"
@@ -224,25 +224,32 @@ eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 : "${AUTO_START_DELAY:=0}"
 }
 get_sing_binary_config(){
+local sing_pid="" sing_path=""
 eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 -e SING_BINARY_ENABLED='@.sing_binary.enabled' \
 -e SING_BINARY_PATH='@.sing_binary.path')"
 : "${SING_BINARY_ENABLED:=0}"
 : "${SING_BINARY_PATH:=/opt/bin/sing-box}"
-if [ "$SING_BINARY_ENABLED" = "1" ];then
-pidof "skeen-box" 2>/dev/null&&killall -9 "skeen-box" 2>/dev/null
-SINGBOX_PROC="$(basename "$SING_BINARY_PATH")"
-SINGBOX_BIN="$SING_BINARY_PATH"
-local path_bin
-path_bin="$(command -v "$SINGBOX_PROC")"
-if [ -z "$path_bin" ]&&[ -f "$SINGBOX_BIN" ];then
-PATH="$(dirname "$SINGBOX_BIN"):$PATH"
+if [ -f "$SINGBOX_PID_FILE" ];then
+read -r sing_pid <"$SINGBOX_PID_FILE"
+if [ -n "$sing_pid" ]&&[ -d "/proc/$sing_pid" ];then
+sing_path="$(readlink -f "/proc/$sing_pid/exe" 2>/dev/null)"
 fi
+fi
+[ "$SING_BINARY_ENABLED" = "1" ]&&SINGBOX_BIN="$SING_BINARY_PATH"
+case "$sing_path" in
+""|"$SINGBOX_BIN");;
+*)if
+kill -0 "$sing_pid" 2>/dev/null
+then
+echomsg "Terminating $SINGBOX_NAME (old process PID $sing_pid)..."
+kill -9 "$sing_pid"
+clean_firewall
+rm -f "$SINGBOX_PID_FILE"
+fi
+esac
 if [ -f "$SINGBOX_BIN" ]&&[ ! -x "$SINGBOX_BIN" ];then
 chmod +x "$SINGBOX_BIN" 2>/dev/null||true
-fi
-else
-pidof "$SING_BINARY_PATH" 2>/dev/null&&killall -9 "$SING_BINARY_PATH" 2>/dev/null||pidof "sing-box" 2>/dev/null&&killall -9 "sing-box" 2>/dev/null||true
 fi
 }
 get_sing_args_config(){
@@ -336,10 +343,16 @@ curl -fL --connect-timeout 5 --max-time 1800 --speed-limit 1000 --speed-time 15 
 get_current_version(){
 local proc="${1:-}"
 case "$proc" in
-"sing")if
-[ -f "$SINGBOX_BIN" ]
-then
-$SINGBOX_BIN version|awk 'NR==1 {print $3}'|xargs
+"sing")local cache_file="/tmp/skeen_singbox_version"
+if [ -f "$SINGBOX_BIN" ];then
+if [ -f "$cache_file" ]&&[ "$SINGBOX_BIN" -ot "$cache_file" ];then
+cat "$cache_file"
+return 0
+fi
+local ver
+ver="$($SINGBOX_BIN version|awk 'NR==1 {print $3}'|xargs)"
+echo "$ver" >"$cache_file"
+echo "$ver"
 fi
 ;;
 "skeen")echo "$SKEEN_VERSION"
@@ -562,7 +575,7 @@ esac
 fi
 echo "{\"$key\": $value}" >"$CONFIG_DIR/$key.json"
 done
-$SINGBOX_PROC format -w -C $CONFIG_DIR
+$SINGBOX_BIN format -w -C $CONFIG_DIR
 echook "Configuration files $SINGBOX_NAME created successfully"
 }
 create_autostart_script(){
@@ -640,7 +653,7 @@ show_menu
 fi
 }
 is_running(){
-pidof "$SINGBOX_PROC" >/dev/null 2>&1
+start-stop-daemon -K -t -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1
 }
 install(){
 MIRROR="${MIRROR:-}"
@@ -689,7 +702,7 @@ echomsg "Removing $SKEEN_NAME script..."
 rm -f "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG"
 echomsg "Delete group $SKEEN_PROC..."
 delgroup "$SKEEN_PROC"
-if [ "$SINGBOX_PROC" = 'skeen-box' ];then
+if [ "$SINGBOX_BIN" = '/opt/bin/skeen-box' ];then
 while :;do
 printf "Delete %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
 read -r opt </dev/tty
@@ -1922,9 +1935,10 @@ local status_start msg
 echomsg "Starting $SINGBOX_NAME..."
 ulimit -n "$(get_ulimit_n)"||exiterr "Failed to set ulimit -n"
 get_sing_args_config
-start-stop-daemon -S -b -x $SINGBOX_PROC -c root:$SKEEN_PROC -- $SINGBOX_ARGS
+start-stop-daemon -S -b -x $SINGBOX_BIN -c root:$SKEEN_PROC -- $SINGBOX_ARGS
 status_start=$?
 if [ $status_start -ne 0 ];then
+rm -f "$SINGBOX_PID_FILE"
 msg="Failed to start $SINGBOX_NAME"
 echoerr "$msg"
 logger_error "$msg"
@@ -1935,6 +1949,7 @@ sleep 1
 timeout=$((timeout-1))
 done
 if ! is_running;then
+rm -f "$SINGBOX_PID_FILE"
 msg="$SINGBOX_NAME did not start in time"
 echoerr "$msg"
 logger_error "$msg"
@@ -1979,19 +1994,18 @@ return 0
 }
 stop_singbox(){
 local timeout=10
-local status_stop msg
+local msg
 echomsg "Stopping $SINGBOX_NAME..."
 get_sing_binary_config
 if ! is_running;then
 echook "$SINGBOX_NAME already stopped"
 return 0
 fi
-start-stop-daemon -K -x $SINGBOX_PROC >/dev/null
-status_stop=$?
-if [ $status_stop -ne 0 ];then
-msg="Failed to send stop signal to $SINGBOX_NAME"
+if ! start-stop-daemon -K -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1;then
+msg="Failed to send stop signal to $SINGBOX_NAME (process not found or already terminated)"
 echoerr "$msg"
 logger_error "$msg"
+rm -f "$SINGBOX_PID_FILE"
 return 1
 fi
 while is_running&&[ $timeout -gt 0 ];do
@@ -2004,6 +2018,7 @@ echoerr "$msg"
 logger_error "$msg"
 return 1
 fi
+rm -f "$SINGBOX_PID_FILE"
 msg="$SINGBOX_NAME stopped"
 echook "$msg"
 logger_notice "$msg"
@@ -2023,9 +2038,15 @@ if ! is_running;then
 echook "$SINGBOX_NAME is not running"
 return 0
 fi
-echo "Killing $SINGBOX_PROC..."
-killall -9 "$SINGBOX_PROC" 2>/dev/null
+echomsg "Killing $SKEEN_PROC..."
+if start-stop-daemon -K -s 9 -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1;then
+rm -f "$SINGBOX_PID_FILE"
 clean_firewall
+echook "$SINGBOX_NAME stopped successfully"
+else
+echoerr "Failed to force stop $SINGBOX_NAME"
+return 1
+fi
 }
 version(){
 local sk_version sb_version
@@ -2076,7 +2097,7 @@ $(((runtime%3600)/60))
 status(){
 local pid mem_used mem_peak threads
 get_sing_binary_config
-pid="$(pidof "$SINGBOX_PROC")"
+[ -f "$SINGBOX_PID_FILE" ]&&pid="$(cat "$SINGBOX_PID_FILE")"
 if [ -n "$pid" ];then
 set -- $(awk '$1=="VmRSS:"{r=$2} $1=="VmHWM:"{h=$2} $1=="Threads:"{t=$2} END{print r,h,t}' "/proc/$pid/status")
 mem_used="${1:-0}"
@@ -2470,7 +2491,7 @@ fi
 check_sing_config(){
 if get_sing_binary_config&&[ -f "$SINGBOX_BIN" ];then
 echomsg "Checking $SINGBOX_NAME configuration..."
-if get_sing_args_config&&$SINGBOX_PROC check $SING_CONFIG_ARGS;then
+if get_sing_args_config&&$SINGBOX_BIN check $SING_CONFIG_ARGS;then
 echook "$SINGBOX_NAME configuration is valid"
 else
 local err_msg="$SINGBOX_NAME configuration is invalid"
@@ -2489,7 +2510,7 @@ get_sing_binary_config
 if [ -f "$SINGBOX_BIN" ];then
 echomsg "Formatting $SINGBOX_NAME configuration..."
 get_sing_args_config
-if $SINGBOX_PROC format -w $SING_CONFIG_ARGS;then
+if $SINGBOX_BIN format -w $SING_CONFIG_ARGS;then
 echook "Configuration formatted successfully"
 else
 echoerr "Configuration formatting failed"
@@ -2511,7 +2532,7 @@ fi
 if ! run_curl -s "$address" -o "$config_tmp";then
 echoerr "Failed to download configuration from $address"&&return 1
 fi
-if is_tty&&! $SINGBOX_PROC check -c "$config_tmp";then
+if is_tty&&! $SINGBOX_BIN check -c "$config_tmp";then
 echoerr "$SINGBOX_NAME configuration is invalid, cancel synchronization!"
 rm -f "$config_tmp"
 return 1
@@ -2570,7 +2591,6 @@ local autostart_status running_status running_text output version ipv4 ipv6 sb_d
 check_tty
 check_skeen_config&&printf "\033[1A\033[2K\033[1A\033[2K"
 import_firewall_vars
-show_header
 get_auto_start_config
 get_sing_binary_config
 if [ "$AUTO_START_ENABLED" = "1" ];then
@@ -2589,11 +2609,10 @@ add_line(){
 local key="${1:-}"
 local val="${2:-}"
 local target_len=10
-local char_count pad spaces
-char_count=$(echo -n "$key"|wc -m)
-pad=$((target_len-char_count))
+local pad spaces="          "
+pad=$((target_len-${#key}))
 [ $pad -lt 1 ]&&pad=1
-spaces=$(printf '%*s' "$pad" '')
+while [ ${#spaces} -gt $pad ];do spaces="${spaces%?}";done
 output="$output\n $key$spaces $val"
 }
 add_line "$SKEEN_NAME" "$(cyan "v$(get_current_version "skeen")")"
@@ -2610,8 +2629,8 @@ sb_dns_work_text="$(red no)"
 fi
 add_line "Sing DNS" "$sb_dns_work_text"
 if [ "$SKEEN_FIREWALL_MODE" != "none" ]&&[ "$SKEEN_FIREWALL_MODE" != "tun" ];then
-echo "$SKEEN_IPTABLES_LIST"|grep -q "ipt"&&ipv4="$(cyan "4")"
-echo "$SKEEN_IPTABLES_LIST"|grep -q "ip6t"&&ipv6="$(cyan "6")"
+case "$SKEEN_IPTABLES_LIST" in *ipt*)ipv4="$(cyan "4")";esac
+case "$SKEEN_IPTABLES_LIST" in *ip6t*)ipv6="$(cyan "6")";esac
 [ -n "$SKEEN_POLICY_SEGMENT" ]&&add_line "Segment" "$(cyan "$SKEEN_POLICY_SEGMENT")"
 [ "$SKEEN_TUN_ENABLED" = "1" ]&&add_line "OpkgTun" "$(cyan "yes")"
 add_line "Mode" "$(cyan "$SKEEN_FIREWALL_MODE")"
@@ -2628,6 +2647,7 @@ output="$output\n  $(green "3.") Updates"
 output="$output\n  $(green "4.") Test"
 output="$output\n  $(green "5.") Uninstall"
 output="$output\n  $(green "0.") Exit\n"
+show_header
 echo -e "$output"
 max_attempts=3
 attempt=0
@@ -2635,8 +2655,8 @@ while [ $attempt -lt $max_attempts ];do
 printf "Choice [0-5]: " >/dev/tty
 read -r option </dev/tty
 printf "\n"
-if echo "$option"|grep -Eq '^[1-5]$';then
-echo "$DELIMETER"
+case "$option" in
+[1-5])echo "$DELIMETER"
 case "$option" in
 1)switch_state;;
 2)restart;;
@@ -2644,11 +2664,11 @@ case "$option" in
 4)test_firewall;;
 5)accept_uninstall
 esac
-else
-[ "$option" = 0 ]&&exit 0
-echoerr "Incorrect option"
+;;
+0)exit 0;;
+*)echoerr "Incorrect option"
 attempt=$((attempt+1))
-fi
+esac
 done
 exiterr "Maximum attempts reached, exiting menu."
 }
