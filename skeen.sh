@@ -3383,7 +3383,7 @@ show_menu() {
         ;;
       0) exit 0 ;;
       *)
-        echoerr "Неверный вариант"
+        echoerr "Incorrect option"
         attempt=$((attempt + 1))
         ;;
     esac
