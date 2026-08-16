@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.7](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.6...SKeen-v5.1.7) (2026-08-16)
+
+
+### 🐛 Fix
+
+* improve version caching and correct Russian translations ([80f8bfb](https://github.com/jinndi/SKeen/commit/80f8bfbcc051e1e7d056fe4ddb5fda4ed0b9b709))
+
 ## [5.1.6](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.5...SKeen-v5.1.6) (2026-08-16)
 
 
