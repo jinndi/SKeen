@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.1.6](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.5...SKeen-v5.1.6) (2026-08-16)
+
+
+### 🐛 Fix
+
+* [#198](https://github.com/jinndi/SKeen/issues/198) improve sing-box process management with PID file tracking ([7b11e0a](https://github.com/jinndi/SKeen/commit/7b11e0aad1d881c6a4b6399479cf7757167b4bcb))
+
+
+### ⚡ Perf
+
+* **ui:** optimize menu display and add version caching ([5d4b874](https://github.com/jinndi/SKeen/commit/5d4b874fb75a97e7c651ef1bb6cba6591b85faf4))
+
 ## [5.1.5](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.4...SKeen-v5.1.5) (2026-08-14)
 
 
