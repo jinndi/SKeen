@@ -9,7 +9,7 @@
  3. Серверный `API сервис sing-box` через туннель Clouflare - для добавления в Zashboard панель в любом клиенте.
  4. Открытые порты на сервере: 443, 2096, 4443, 8443 и ssh порт.
  5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `https://mydomain.com/*`
-    и суб. `https://plex.mydomain.com/*` доменов на ваш воркер с сайтом.
+    и суб. `https://plex.mydomain.com/`, ..., ..., доменов на ваш воркер с сайтом .
 
 ### Файл compose.yml
 

@@ -345,7 +345,8 @@ volumes:
     // 1. Используйте Nginx/Caddy перед sing-box на VPS (проксируйте только секретный /path).
     // 2. Либо в Cloudflare (раздел Workers & Pages) разверните статический сайт и добавьте правила
     //    в разделе домена в меню перейдите в Workers Routes - Add Route на ваш варкер с адресами по типу:
-    //    https://sub.mydomain.com/* и https://mydomain.com/*
+    //    https://sub.mydomain.com/, https://sub.mydomain.com/js/*, https://sub.mydomain.com/css/* ,
+    //    https://sub.mydomain.com/assets/* и https://mydomain.com/*
     //    или настройте Cloudflare Worker, который будет проксировать секретный /path на ваш VPS,
     //    а все остальные запросы (/) отдавать как обычную веб-страницу.
     {
