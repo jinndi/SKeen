@@ -9,8 +9,8 @@
  2. `Sub-Store` панель на субдомене `sub.mydomain.com` через туннель Cloudflare.
  3. Серверный `API сервис sing-box` через туннель Cloudflare - для добавления в Zashboard панель в любом клиенте.
  4. Открытые порты на сервере: 443 и ssh порт.
- 5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `mydomain.com/*`
-    и суб. `plex.mydomain.com/`, ..., ..., доменов на ваш воркер с сайтом .
+ 5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `https://mydomain.com/*`
+    и суб. `https://plex.mydomain.com/*` доменов на ваш воркер с сайтом .
 
 ### Файл compose.yml
 
