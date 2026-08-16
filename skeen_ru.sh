@@ -31,7 +31,7 @@ readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.6"
+readonly SKEEN_VERSION="5.1.7"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
@@ -292,7 +292,7 @@ get_sing_binary_config() {
     "" | "$SINGBOX_BIN") ;;
     *)
       if kill -0 "$sing_pid" 2>/dev/null; then
-        echomsg "Завершаем $SINGBOX_NAME (старый процесс с PID $sing_pid)..."
+        echomsg "Завершаем $SINGBOX_NAME (старый процесс)..."
         kill -9 "$sing_pid"; clean_firewall; rm -f "$SINGBOX_PID_FILE"
       fi
     ;;
@@ -424,14 +424,23 @@ get_current_version() {
     local cache_file="/tmp/skeen_singbox_version"
 
     if [ -f "$SINGBOX_BIN" ]; then
-      if [ -f "$cache_file" ] && [ "$SINGBOX_BIN" -ot "$cache_file" ]; then
-        cat "$cache_file"
+      local cached_path cached_ver
+
+      if [ -f "$cache_file" ]; then
+        IFS='|' read -r cached_path cached_ver < "$cache_file" 2>/dev/null
+      fi
+
+      if [ "$cached_path" = "$SINGBOX_BIN" ] && [ "$SINGBOX_BIN" -ot "$cache_file" ]; then
+        echo "$cached_ver"
         return 0
       fi
 
-      local ver
-      ver="$($SINGBOX_BIN version | awk 'NR==1 {print $3}' | xargs)"
-      echo "$ver" > "$cache_file"
+      local ver raw_output
+      raw_output="$("$SINGBOX_BIN" version 2>/dev/null)"
+      set -- $raw_output
+      ver="${3:-unknown}"
+
+      echo "${SINGBOX_BIN}|${ver}" > "$cache_file"
       echo "$ver"
     fi
     ;;
@@ -2704,10 +2713,10 @@ update_core() {
 
 update_skeen() {
   if download_skeen_script "update"; then
-    echook "$SKEEN_NAME has been successfully updated"
+    echook "$SKEEN_NAME успешно обновлен"
     is_update_skeen=1
   else
-    echoerr "Failed to update $SKEEN_NAME"
+    echoerr "Ошибка обновления $SKEEN_NAME"
   fi
 }
 
