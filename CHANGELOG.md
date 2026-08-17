@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.1.8](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.7...SKeen-v5.1.8) (2026-08-17)
+
+
+### 🐛 Fix
+
+* **update:** correct process name validation and startup timing ([31dbb2a](https://github.com/jinndi/SKeen/commit/31dbb2a17453b7cf3f492a8b0fef1d9bc5b9204f))
+
+
+### 🛠 Refactor
+
+* **firewall:** [#201](https://github.com/jinndi/SKeen/issues/201) iptables rule logic for policy bypass ([1b36878](https://github.com/jinndi/SKeen/commit/1b368784ff6344e0663376a68dbd6ecc29e55aaa))
+
 ## [5.1.7](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.6...SKeen-v5.1.7) (2026-08-16)
 
 
