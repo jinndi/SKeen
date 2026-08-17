@@ -593,12 +593,26 @@ volumes:
       },
       "stream_receive_window": 0,
       "connection_receive_window": 0,
+      // Обратите внимание masquerade работает только на UDP порту
+      // Проверить работу можно выполнив в консоле:
+      // docker run --rm cloudflare/quiche quiche-client --no-verify https://<ваш.домен.com>:<порт>/
+      // в ответ вы получите код страницы
       "masquerade": {
-        "type": "string",
-        "status_code": 451,
-        "content": "451 Unavailable For Legal Reasons\n\nThis endpoint is restricted."
+        "type": "proxy",
+        "url": "https://<ваш_сайт.маскировки>",
+        "rewrite_host": true
       },
-      // Альтернативный masquerade: Если подняли сервис Sub-Store делаем на него
+      // Еще пример
+      // "masquerade": {
+      //   "type": "string",
+      //   "status_code": 401,
+      //   "headers": {
+      //     "Server": "nginx/1.24.0",
+      //     "Content-Type": "text/html"
+      //   },
+      //   "content": "<html>\r\n<head><title>401 Authorization Required</title></head>\r\n<body>\r\n<center><h1>401 Authorization Required</h1></center>\r\n<hr><center>nginx/1.24.0</center>\r\n</body>\r\n</html>\r\n"
+      // }
+      // На локальный сервис Sub-Store можно сделать как-то так
       // "masquerade": "http://127.0.0.1:3001",
 
       // Обфускация QUIC, 99% не работает в мобильной сети,

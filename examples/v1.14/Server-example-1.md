@@ -156,7 +156,11 @@ volumes:
           "password": "ybvFZleivqii6sTx5dDJmA=="
         }
       ],
-      "masquerade": "http://127.0.0.1:3001",
+      "masquerade": {
+        "type": "proxy",
+        "url": "https://watch.plex.tv/",
+        "rewrite_host": true
+      },
       "ignore_client_bandwidth": true,
       "tls": {
         "enabled": true,
