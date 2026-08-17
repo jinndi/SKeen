@@ -14,7 +14,7 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.7"
+readonly SKEEN_VERSION="5.1.8"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -1169,13 +1169,6 @@ echo "$connmark_match_opt"
 fi
 }
 case "$type" in
-"exclude_connmark")local connmark_options=""
-if [ -n "$SKEEN_MARK_POLICY" ];then
-connmark_options="-m connmark ! --mark $SKEEN_MARK_POLICY"
-[ "$SKEEN_PROXY_ROUTER" = "1" ]&&connmark_options="$connmark_options -m mark ! --mark $TABLE_MARK"
-fi
-[ -n "$connmark_options" ]&&add_rule "$iptables" "$table" "$chain" $connmark_options -j ACCEPT
-;;
 "socket")if
 echo "$protocols"|grep -q "tcp"
 then
@@ -1269,8 +1262,9 @@ local table="${2:-}"
 local chain="${3:-}"
 local protocols="${4:-}"
 case "$chain" in
-"$CHAIN_PREROUTING")add_skeen_rules "$iptables" "$table" "$chain" "exclude_connmark" "$protocols"
-if [ "$table" = "mangle" ];then
+"$CHAIN_PREROUTING")if
+[ "$table" = "mangle" ]
+then
 add_skeen_rules "$iptables" "$table" "$chain" "socket" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "intercept_dns" "$protocols"
@@ -1298,19 +1292,19 @@ fi
 esac
 }
 goto_chain_rules(){
-local iptables="${1:-}"
-local table="${2:-}"
-local chain="${3:-}"
-local target_chain="${4:-}"
-local protocols="${5:-}"
-local rule="-m conntrack ! --ctstate INVALID -g $target_chain"
-if ! $iptables -w -t "$table" -S "$target_chain" >/dev/null 2>&1;then
-return 0
+local iptables="${1:-}" table="${2:-}" chain="${3:-}" target_chain="${4:-}"
+local base="-m conntrack ! --ctstate INVALID -g $target_chain"
+local r1="" r2=""
+$iptables -w -t "$table" -S "$target_chain" >/dev/null 2>&1||return 0
+if [ "$chain" = "PREROUTING" ]&&[ -n "$SKEEN_MARK_POLICY" ];then
+r1="-m connmark --mark $SKEEN_MARK_POLICY $base"
+[ "$table" != "$TABLE_REDIRECT" ]&&[ "$SKEEN_PROXY_ROUTER" = "1" ]&&r2="-m mark --mark $TABLE_MARK $base"
+else
+r1="$base"
 fi
-for proto in $protocols;do
-if ! $iptables -w -t "$table" -C "$chain" -p "$proto" $rule >/dev/null 2>&1;then
-$iptables -w -t "$table" -A "$chain" -p "$proto" $rule
-fi
+for r in "$r1" "$r2";do
+[ -z "$r" ]&&continue
+$iptables -w -t "$table" -C "$chain" $r >/dev/null 2>&1||$iptables -w -t "$table" -A "$chain" $r
 done
 }
 set_proxy_router_rules(){
@@ -1319,7 +1313,7 @@ local table="${2:-}"
 local protocols="${3:-}"
 check_and_create_chain "$iptables" "$table" "$CHAIN_OUTPUT"||return 0
 set_chain_rules "$iptables" "$table" "$CHAIN_OUTPUT" "$protocols"
-goto_chain_rules "$iptables" "$table" OUTPUT "$CHAIN_OUTPUT" "$protocols"
+goto_chain_rules "$iptables" "$table" OUTPUT "$CHAIN_OUTPUT"
 }
 release_version_ge5(){
 local major
@@ -1768,21 +1762,21 @@ for table in "$TABLE_TPROXY" "$TABLE_REDIRECT";do
 check_and_create_chain "$iptables" "$table" "$CHAIN_PREROUTING"||return 0
 protocols="$(get_protocols "$table")"
 set_chain_rules "$iptables" "$table" "$CHAIN_PREROUTING" "$protocols"
-goto_chain_rules "$iptables" "$table" PREROUTING "$CHAIN_PREROUTING" "$protocols"
+goto_chain_rules "$iptables" "$table" PREROUTING "$CHAIN_PREROUTING"
 [ "$SKEEN_PROXY_ROUTER" = "1" ]&&set_proxy_router_rules "$iptables" "$table" "$protocols"
 done
 elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]&&check_hook_table "$TABLE_TPROXY" "$hook_table";then
 check_and_create_chain "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING"||return 0
 protocols="$(get_protocols "$TABLE_TPROXY")"
 set_chain_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING" "$protocols"
-goto_chain_rules "$iptables" "$TABLE_TPROXY" PREROUTING "$CHAIN_PREROUTING" "$protocols"
+goto_chain_rules "$iptables" "$TABLE_TPROXY" PREROUTING "$CHAIN_PREROUTING"
 [ "$SKEEN_PROXY_ROUTER" = "1" ]&&set_proxy_router_rules "$iptables" "$TABLE_TPROXY" "$protocols"
 elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ]&&check_hook_table "$TABLE_REDIRECT" "$hook_table";then
 check_and_create_chain "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING"||return 0
 protocols="$(get_protocols "$TABLE_REDIRECT")"
 set_chain_rules "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING" "$protocols"
 goto_chain_rules "$iptables" "$TABLE_REDIRECT" PREROUTING "$CHAIN_PREROUTING" "$protocols"
-[ "$SKEEN_PROXY_ROUTER" = "1" ]&&set_proxy_router_rules "$iptables" "$TABLE_REDIRECT" "$protocols"
+[ "$SKEEN_PROXY_ROUTER" = "1" ]&&set_proxy_router_rules "$iptables" "$TABLE_REDIRECT"
 fi
 done
 [ -f "$WAIT_ROUTE_FILE" ]&&rm -f "$WAIT_ROUTE_FILE"
@@ -2140,7 +2134,7 @@ fi
 check_should_run(){
 local proc="${1:-}"
 local should_run="0"
-[ "$proc" != "$SKEEN_NAME" ]&&return
+[ "$proc" != "skeen" ]&&return
 get_service_proxy_config
 get_firewall_config
 if [ "$SERVICE_PROXY_ENABLED" = "1" ]||[ "$FIREWALL_PROXY_ROUTER" = "1" ];then
@@ -2149,7 +2143,7 @@ fi
 if [ "$should_run" = "1" ];then
 if ! is_running;then
 start||press_any_key_to_menu "" 1
-sleep 3
+sleep 2
 fi
 elif is_running;then stop||press_any_key_to_menu "" 1;fi
 }
