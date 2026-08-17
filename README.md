@@ -95,7 +95,7 @@ Workflow Algorithm:
   * **TCP:** The `0x12` mark is applied only to new connections (`NEW`). This saves CPU resources because the kernel does not have to re-evaluate rules for every packet within an established stream.
 
 **TCP Redirect Hijack 🕸**
-  * `connmark match 0x12 REDIRECT / REDIRECT`
+  * `connmark match 0x12 REDIRECT`
   * **Essence:** Final stretch. All remaining TCP traffic is forcibly redirected to the local Sing-Box port. Unlike TProxy, this uses classic NAT-based port redirection.
 
 ---
