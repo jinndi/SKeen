@@ -2713,7 +2713,7 @@ check_should_run(){
   local proc="${1:-}"
   local should_run="0"
 
-  [ "$proc" != "$SKEEN_NAME" ] && return
+  [ "$proc" != "skeen" ] && return
 
   get_service_proxy_config
   get_firewall_config
@@ -2724,7 +2724,7 @@ check_should_run(){
   if [ "$should_run" = "1" ]; then
     if ! is_running; then
       start || press_any_key_to_menu "" 1
-      sleep 3
+      sleep 2
     fi
   elif is_running; then stop || press_any_key_to_menu "" 1; fi
 }
