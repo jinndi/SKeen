@@ -92,8 +92,10 @@
     { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
     { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
     { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [ "DIRECT" ] },
+    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ] },
 
     { "tag": "DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
+    { "tag": "❌ REJECT", "type": "block" },
     { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Proxy" ] },
 
     {
@@ -163,7 +165,7 @@
       }
     ],
 
-    "final": "🌍 Proxy",
+    "final": "🚦 FINAL",
     "auto_detect_interface": true,
     "default_domain_resolver": "dns_direct",
     "default_http_client": "default"

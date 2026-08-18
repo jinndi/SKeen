@@ -119,10 +119,12 @@
     { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [] },
     { "tag": "🕹️ Games",   "type": "selector", "outbounds": [] },
     { "tag": "🤖 AI",      "type": "selector", "outbounds": [] },
-    { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [] },
+    { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [ "DIRECT" ] },
+    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ] },
 
-    { "tag": "DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
-    { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Proxy" ] },
+    { "tag": "DIRECT",    "type": "direct", "domain_resolver": "dns_direct" },
+    { "tag": "❌ REJECT", "type": "block" },
+    { "tag": "GLOBAL",    "type": "selector", "outbounds": [ "🌍 Proxy" ] },
 
     { "tag": "🌍 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 },
     { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 }
@@ -171,7 +173,7 @@
       }
     ],
 
-    "final": "🌍 Proxy",
+    "final": "🚦 FINAL",
     "auto_detect_interface": true,
     "default_domain_resolver": "dns_direct",
     "default_http_client": "default"
