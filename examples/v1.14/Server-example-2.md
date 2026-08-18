@@ -68,6 +68,12 @@ volumes:
       "requested_validity": 730
     }
   ],
+  "http_clients": [
+    {
+      "tag": "default",
+      "version": 2
+    }
+  ],
   "inbounds": [
     {
       "type": "cloudflared",

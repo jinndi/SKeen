@@ -32,7 +32,7 @@
 {
   "$schema": "https://sing-box.sagernet.org/schema.json",
 
-  "log": { "level": "trace", "output": "", "timestamp": false },
+  "log": { "level": "debug", "output": "", "timestamp": false },
 
   "dns": {
     "servers": [
@@ -52,7 +52,6 @@
       { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
       { "tag": "dns_fakeip",   "type": "fakeip", "inet4_range": "198.18.0.0/15" }
     ],
-
     "rules": [
       { "preferred_by": "hosts", "server": "hosts" },
       { "query_type": "A", "invert": true, "action": "reject" },
@@ -74,7 +73,6 @@
       { "server": "dns_fakeip" },
       { "clash_mode": "Global", "server": "dns_fakeip" }
     ],
-
     "final": "dns_proxy_cf",
     "strategy": "ipv4_only",
     "timeout": "10s",
@@ -98,9 +96,7 @@
     {
       "tag": "default",
       "version": 2,
-      "detour": "GLOBAL",
-      "stream_receive_window": 0,
-      "connection_receive_window": 0
+      "detour": "🌍 Proxy"
     }
   ],
 
@@ -119,15 +115,11 @@
     { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [] },
     { "tag": "🕹️ Games",   "type": "selector", "outbounds": [] },
     { "tag": "🤖 AI",      "type": "selector", "outbounds": [] },
-    { "tag": "🔌 DIRECT",  "type": "selector", "outbounds": [ "DIRECT" ] },
-    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ] },
-
-    { "tag": "DIRECT",    "type": "direct", "domain_resolver": "dns_direct" },
-    { "tag": "❌ REJECT", "type": "block" },
-    { "tag": "GLOBAL",    "type": "selector", "outbounds": [ "🌍 Proxy" ] },
-
-    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 },
-    { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [], "interval": "10m", "tolerance": 100 }
+    { "tag": "🌍 Auto",    "type": "urltest",  "outbounds": [], "interval": "10m", "tolerance": 100 },
+    { "tag": "🇷🇺 Auto",    "type": "urltest",  "outbounds": [], "interval": "5m",  "tolerance": 100 },
+    { "tag": "🔌 DIRECT",  "type": "direct",   "domain_resolver": "dns_direct" },
+    { "tag": "❌ REJECT",  "type": "block" },
+    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ] }
   ],
 
   "route": {
@@ -163,7 +155,6 @@
       { "action": "resolve", "timeout": "5s" },
       { "clash_mode": "Global", "outbound": "🌍 Proxy" }
     ],
-
     "rule_set": [
       {
         "type": "remote",
@@ -172,7 +163,6 @@
         "update_interval": "48h0m0s"
       }
     ],
-
     "final": "🚦 FINAL",
     "auto_detect_interface": true,
     "default_domain_resolver": "dns_direct",
@@ -202,7 +192,6 @@
       "store_fakeip": true,
       "store_dns": true
     },
-
     "debug": {
       "gc_percent": 100,
       "memory_limit": "200MB"
