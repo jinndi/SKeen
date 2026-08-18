@@ -5,9 +5,9 @@
 Что должны получить в итоге:
 
  0. Работа при блоке IP вашего сервера.
- 1. Прокси`trojan` HTTPUpgrade за Cloudflare на субдомене `plex.mydomain.com`.
- 2. `Sub-Store` панель на субдомене `sub.mydomain.com` через туннель Cloudflare.
- 3. Серверный `API сервис sing-box` через туннель Cloudflare - для добавления в Zashboard панель в любом клиенте.
+ 1. Прокси `trojan` HTTPUpgrade и WebSocket транспорты за Cloudflare на субдомене `plex.mydomain.com` и одном порту.
+ 2. `Sub-Store` панель на субдомене `sub.mydomain.com` - через туннель Cloudflare.
+ 3. Серверный `API сервис sing-box` - через туннель Cloudflare.
  4. Открытые порты на сервере: 443 и ssh порт.
  5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `https://mydomain.com/*`
     и суб. `https://plex.mydomain.com/`, ..., ..., доменов на ваш воркер с сайтом .
@@ -78,9 +78,10 @@ volumes:
     },
     {
       "type": "trojan",
-      "tag": "trojan-in",
+      "tag": "trojan-hu-in",
       "listen": "::",
       "listen_port": 443,
+      "reuse_addr": true,
       "users": [
         {
           "name": "jinndi",
@@ -90,7 +91,33 @@ volumes:
       "transport": {
         "type": "httpupgrade",
         "host": "plex.mydomain.com",
-        "path": "/apistreamgdfdcy"
+        "path": "/api-hu-streamgdfdcy"
+      },
+      "multiplex": {
+        "enabled": true,
+        "padding": true
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "plex.mydomain.com",
+        "certificate_provider": "OriginCA"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "trojan-ws-in",
+      "listen": "::",
+      "listen_port": 443,
+      "reuse_addr": true,
+      "users": [
+        {
+          "name": "jinndi",
+          "password": "ybvFZleivqii6sTx5dDJmA=="
+        }
+      ],
+      "transport": {
+        "type": "ws",
+        "path": "/api-ws-streamgdfdcy"
       },
       "multiplex": {
         "enabled": true,
@@ -125,7 +152,7 @@ volumes:
 ```json
 [
   {
-    "tag": "😎 TROJAN CF",
+    "tag": "😎 HTTPUpgrade CF",
     "type": "trojan",
     "password": "ybvFZleivqii6sTx5dDJmA==",
     "server": "plex.mydomain.com",
@@ -133,7 +160,34 @@ volumes:
     "transport": {
       "type": "httpupgrade",
       "host": "plex.mydomain.com",
-      "path": "/apistreamgdfdcy"
+      "path": "/api-hu-streamgdfdcy"
+    },
+    "multiplex": {
+      "enabled": true,
+      "protocol": "smux",
+      "max_streams": 32,
+      "padding": true
+    },
+    "tls": {
+      "enabled": true,
+      "server_name": "plex.mydomain.com",
+      "spoof": "plex.tv",
+      "alpn": [ "http/1.1" ],
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      }
+    }
+  },
+  {
+    "tag": "😎 WebSocket CF",
+    "type": "trojan",
+    "password": "ybvFZleivqii6sTx5dDJmA==",
+    "server": "plex.mydomain.com",
+    "server_port": 443,
+    "transport": {
+      "type": "ws",
+      "path": "/api-ws-streamgdfdcy"
     },
     "multiplex": {
       "enabled": true,

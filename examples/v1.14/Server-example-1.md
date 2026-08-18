@@ -5,11 +5,11 @@
 Что должны получить в итоге:
 
  1. Три прокси протокола: `trojan` WS за Clouflare, `Naive` и `Hysteria2` на субдоменах с ECH и сертификатом ZeroSSL.
- 2. `Sub-Store` панель на субдомене `sub.mydomain.com` через trojan fallback с сертификатом ZeroSSL.
+ 2. `Sub-Store` панель на субдомене `sub.mydomain.com:8443` через trojan fallback с сертификатом ZeroSSL.
  3. Серверный `API сервис sing-box` через туннель Clouflare - для добавления в Zashboard панель в любом клиенте.
- 4. Открытые порты на сервере: 443, 2096, 4443, 8443 и ssh порт.
+ 4. Открытые порты на сервере: 443 (для `trojan`, `Naive` и `Hysteria2`), 8443 (`Sub-Store`) и ssh.
  5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `https://mydomain.com/*`
-    и суб. `https://plex.mydomain.com/`, ..., ..., доменов на ваш воркер с сайтом .
+    и суб. `https://tr.mydomain.com/`, ..., ..., (`trojan`) доменов на ваш воркер с сайтом .
 
 ### Файл compose.yml
 
@@ -95,7 +95,8 @@ volumes:
       "type": "trojan",
       "tag": "trojan-in",
       "listen": "::",
-      "listen_port": 2096,
+      "listen_port": 443,
+      "reuse_addr": true,
       "users": [
         {
           "name": "jinndi",
@@ -112,8 +113,7 @@ volumes:
       },
       "tls": {
         "enabled": true,
-        "alpn": [ "http/1.1" ],
-        "server_name": "trws.mydomain.com",
+        "server_name": "tr.mydomain.com",
         "certificate_provider": "OriginCA"
       }
     },
@@ -121,7 +121,8 @@ volumes:
       "type": "naive",
       "tag": "naive-in",
       "listen": "::",
-      "listen_port": 4443,
+      "listen_port": 443,
+      "reuse_addr": true,
       "users": [
         {
           "username": "jinndi",
@@ -131,7 +132,7 @@ volumes:
       "quic_congestion_control": "bbr",
       "tls": {
         "enabled": true,
-        "server_name": "n.mydomain.com",
+        "server_name": "na.mydomain.com",
         "certificate_provider": "ZeroSSL",
         "ech": {
           "enabled": true,
@@ -149,7 +150,8 @@ volumes:
       "type": "hysteria2",
       "tag": "hy2-in",
       "listen": "::",
-      "listen_port": 8443,
+      "listen_port": 443,
+      "reuse_addr": true,
       "users": [
         {
           "name": "jinndi",
@@ -164,7 +166,7 @@ volumes:
       "ignore_client_bandwidth": true,
       "tls": {
         "enabled": true,
-        "server_name": "h.mydomain.com",
+        "server_name": "hyi.mydomain.com",
         "certificate_provider": "ZeroSSL",
         "alpn": "h3",
         "ech": {
@@ -183,7 +185,7 @@ volumes:
       "type": "trojan",
       "tag": "sub-store-fallback-in",
       "listen": "::",
-      "listen_port": 443,
+      "listen_port": 8443,
       "tls": {
         "enabled": true,
         "server_name": "sub.mydomain.com",
@@ -220,8 +222,8 @@ volumes:
     "tag": "😎 TROJAN CF",
     "type": "trojan",
     "password": "ybvFZleivqii6sTx5dDJmA==",
-    "server": "trws.mydomain.com",
-    "server_port": 2096,
+    "server": "tr.mydomain.com",
+    "server_port": 443,
     "transport": {
       "type": "ws",
       "path": "/apistreamgdfdcy"
@@ -235,7 +237,8 @@ volumes:
     },
     "tls": {
       "enabled": true,
-      "server_name": "trws.mydomain.com",
+      "alpn": [ "http/1.1" ],
+      "server_name": "tr.mydomain.com",
       "certificate_public_key_sha256": "h5gyI4HTt2hyiwaqwuVu/B3lT8BeVdSD1anKwNhuSrT=",
       "spoof": "yandex.ru",
       "utls": {
@@ -247,8 +250,8 @@ volumes:
   {
     "tag": "😎 NAIVE UoT ECH",
     "type": "naive",
-    "server": "n.mydomain.com",
-    "server_port": 4443,
+    "server": "na.mydomain.com",
+    "server_port": 443,
     "username": "jinndi",
     "password": "ybvFZleivqii6sTx5dDJmA==",
     "udp_over_tcp": {
@@ -257,7 +260,7 @@ volumes:
     },
     "tls": {
       "enabled": true,
-      "server_name": "n.mydomain.com",
+      "server_name": "na.mydomain.com",
       "ech": {
         "enabled": true,
         "config": [
@@ -272,8 +275,8 @@ volumes:
   {
     "tag": "😎 NAIVE QUIC ECH",
     "type": "naive",
-    "server": "n.mydomain.com",
-    "server_port": 4443,
+    "server": "na.mydomain.com",
+    "server_port": 443,
     "username": "jinndi",
     "password": "ybvFZleivqii6sTx5dDJmA==",
     "udp_over_tcp": false,
@@ -281,7 +284,7 @@ volumes:
     "quic_congestion_control": "bbr",
     "tls": {
       "enabled": true,
-      "server_name": "n.mydomain.com",
+      "server_name": "na.mydomain.com",
       "ech": {
         "enabled": true,
         "config": [
@@ -296,12 +299,12 @@ volumes:
   {
     "type": "hysteria2",
     "tag": "😎 HY2 ECH",
-    "server": "n.mydomain.com",
-    "server_port": 8443,
+    "server": "hyi.mydomain.com",
+    "server_port": 443,
     "password": "ybvFZleivqii6sTx5dDJmA==",
     "tls": {
       "enabled": true,
-      "server_name": "h.mydomain.com",
+      "server_name": "hyi.mydomain.com",
       "alpn": "h3",
       "ech": {
         "enabled": true,
