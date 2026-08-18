@@ -4,7 +4,7 @@
 
 Что должны получить в итоге:
 
- 1. Три прокси протокола: `trojan` WS за Clouflare, `Naive` и `Hysteria2` на субдоменах с ECH и сертификатом ZeroSSL.
+ 1. Три прокси протокола: `trojan` WS за Clouflare, `Naive`, `Hysteria2` на субдоменах с ECH и сертификатом ZeroSSL и все на одном порту.
  2. `Sub-Store` панель на субдомене `sub.mydomain.com:8443` через trojan fallback с сертификатом ZeroSSL.
  3. Серверный `API сервис sing-box` через туннель Clouflare - для добавления в Zashboard панель в любом клиенте.
  4. Открытые порты на сервере: 443 (для `trojan`, `Naive` и `Hysteria2`), 8443 (`Sub-Store`) и ssh.

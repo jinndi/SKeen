@@ -170,9 +170,9 @@ volumes:
     },
     "tls": {
       "enabled": true,
+      "alpn": "http/1.1",
       "server_name": "plex.mydomain.com",
       "spoof": "plex.tv",
-      "alpn": [ "http/1.1" ],
       "utls": {
         "enabled": true,
         "fingerprint": "chrome"
@@ -197,9 +197,9 @@ volumes:
     },
     "tls": {
       "enabled": true,
+      "alpn": "http/1.1",
       "server_name": "plex.mydomain.com",
       "spoof": "plex.tv",
-      "alpn": [ "http/1.1" ],
       "utls": {
         "enabled": true,
         "fingerprint": "chrome"
