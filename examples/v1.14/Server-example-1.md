@@ -122,6 +122,7 @@ volumes:
       "tag": "naive-in",
       "listen": "::",
       "listen_port": 443,
+      "network": "tcp",
       "reuse_addr": true,
       "users": [
         {
@@ -129,7 +130,6 @@ volumes:
           "password": "ybvFZleivqii6sTx5dDJmA=="
         }
       ],
-      "quic_congestion_control": "bbr",
       "tls": {
         "enabled": true,
         "server_name": "na.mydomain.com",
@@ -237,7 +237,7 @@ volumes:
     },
     "tls": {
       "enabled": true,
-      "alpn": [ "http/1.1" ],
+      "alpn": "http/1.1",
       "server_name": "tr.mydomain.com",
       "certificate_public_key_sha256": "h5gyI4HTt2hyiwaqwuVu/B3lT8BeVdSD1anKwNhuSrT=",
       "spoof": "yandex.ru",
@@ -248,7 +248,7 @@ volumes:
     }
   },
   {
-    "tag": "😎 NAIVE UoT ECH",
+    "tag": "😎 Naïve UoT ECH",
     "type": "naive",
     "server": "na.mydomain.com",
     "server_port": 443,
@@ -273,39 +273,15 @@ volumes:
     }
   },
   {
-    "tag": "😎 NAIVE QUIC ECH",
-    "type": "naive",
-    "server": "na.mydomain.com",
-    "server_port": 443,
-    "username": "jinndi",
-    "password": "ybvFZleivqii6sTx5dDJmA==",
-    "udp_over_tcp": false,
-    "quic": true,
-    "quic_congestion_control": "bbr",
-    "tls": {
-      "enabled": true,
-      "server_name": "na.mydomain.com",
-      "ech": {
-        "enabled": true,
-        "config": [
-          "-----BEGIN ECH CONFIGS-----",
-          "AET+DQBAAAAgACDVJeKtBLpyrY4QN/tFXSG9mjtP8jyf8WVGByBUHfysdwAMAAEA",
-          "AQABAAIAAQADAAl5YW5kZXgucnUAAA==",
-          "-----END ECH CONFIGS-----"
-        ]
-      }
-    }
-  },
-  {
     "type": "hysteria2",
-    "tag": "😎 HY2 ECH",
+    "tag": "😎 Hysteria2 ECH",
     "server": "hyi.mydomain.com",
     "server_port": 443,
     "password": "ybvFZleivqii6sTx5dDJmA==",
     "tls": {
       "enabled": true,
-      "server_name": "hyi.mydomain.com",
       "alpn": "h3",
+      "server_name": "hyi.mydomain.com",
       "ech": {
         "enabled": true,
         "config": [
