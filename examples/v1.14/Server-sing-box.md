@@ -76,6 +76,10 @@ services:
       # Внешняя папка для уже существующих сертификатов (опционально)
       # - /etc/ssl/cert:/etc/ssl/cert/
 
+      # Папкаи для хранения состояния tailscale и файлов taildrop (опционально)
+      # - /root/sing-box/tailscale:/opt/tailscale/
+      # - /root/sing-box/files:/opt/files/
+
     # Флаги запуска ядра sing-box:
     # -D задает рабочую директорию
     # -c указывает путь к файлу конфигурации
@@ -282,6 +286,32 @@ volumes:
     {
       "tag": "default",
       "version": 2
+    }
+  ],
+
+  // Пример базовой настройки Tailscale как выходной узел c SSH сервером
+  // ВНИМАНИЕ: Не размещайте это на сервере к которому у вас нет доступа по обычному WireGuad,
+  // т.к. в основе Tailscale используется именно он для передачи данных.
+  // Больше параметров смотрите в https://sing-box.sagernet.org/configuration/endpoint/tailscale/
+  // Настройка на роутере в файле client-endpoints.jsonc
+  // Получить ключ авторизации: https://console.tailscale.com/admin/settings/keys
+  // При получении ключа:
+  // 1. Не включайте Ephemeral т.к. устройства, аутентифицированные с помощью этого,
+  // будут автоматически удалены после отключения от сети.
+  // 2. Задайте тег с правами, предварительно созанный в https://console.tailscale.com/admin/acls/visual/tags,
+  // выдайте нужные разрешения, если не понятно - выбирайте все.
+  // 3. Для подключения клиентов нужны свои ключи - повторите дейсвия (тег можно оставить преждний).
+  "endpoints": [
+    {
+      "type": "tailscale",
+      "tag": "ts-server-ep",
+      "state_directory": "/opt/tailscale", // Папка хранения состояния (примонтирована к /root/sing-box/tailscale)
+      "auth_key": "tskey-auth-...", // Ключ авторизации
+      "control_url": "https://controlplane.tailscale.com", // По умолчанию исопльзуется этот адресс контрольной панели
+      "hostname": "server-ep",     // Задать имя хосту
+      "advertise_exit_node": true, // Разрешить в качестве выходного узала (клиенты смогут выходить в интернет)
+      "ssh_server": true,          // Включить SSH сервер
+      "taildrop_directory": "/opt/files" // Папка для хранения файлов Taildrop (примонтирована к /root/sing-box/files)
     }
   ],
 
