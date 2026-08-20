@@ -357,7 +357,7 @@ const allTags = ['🌍 Auto', '🇷🇺 Auto', '🔌 DIRECT', ...proxiesTags]
 
 // 3.1. Заполняем группы (регулярные выражения для примера)
 // Допустим эмодзи 😎 - унас содержится в названиях (тегах) в нашем файле с массивом узлов
-// - формат смотрите в client-outbounds.jsonc
+// - формат смотрите в outbounds.jsonc (папка server-client)
 const proxyGroups = {
   // Selectors
   '🌍 Proxy':   getTags(allTags, '✅|😎', true),  // из всех тегов удаляем содержащие ✅ или 😎
