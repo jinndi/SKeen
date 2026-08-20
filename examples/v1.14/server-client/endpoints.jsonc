@@ -1,5 +1,5 @@
 // Примеры конфигурации конечных точек на стороне клиента sing-box
-// На стороне сервера смотрите в файле examples/v1.14/Server-sing-box.md
+// На стороне сервера смотрите в файле Server-sing-box.md папка server-client
 
 {
   "endpoints": [
@@ -8,7 +8,7 @@
     {
       "type": "tailscale",
       "tag": "ts-router-ep",
-      "auth_key": "tskey-auth-...",  // Ключ авторизации (подробнее в examples/v1.14/Server-sing-box.md)
+      "auth_key": "tskey-auth-...",  // Ключ авторизации (подробнее в Server-sing-box.md)
       "state_directory": "tailscale",
       "hostname": "router-ep",  // Задать имя хосту
       "exit_node": "server-ep", // Имя или IP-адрес выходного узла для использования.

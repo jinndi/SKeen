@@ -375,7 +375,7 @@
       "tls": { "enabled": true, "server_name": "example.ru" },
       "multiplex": { "enabled": true }
     }
-    // ...Больше примеров смотрите в файле client-outbounds.jsonc
+    // ...Больше примеров смотрите в файле outbounds.jsonc папки server-client
   ],
 
   // ══════════════════════════════════════════

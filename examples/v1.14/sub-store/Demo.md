@@ -4,7 +4,7 @@
 
 Поэтому делаю здесь выборочный перевод [демо-примера](https://github.com/sub-store-org/Sub-Store/blob/master/scripts/demo.js) от [автора](https://github.com/xream) Sub-Store .
 
-Больше полезных примеров смотрите в файле [Sub-Store-example.md](./Sub-Store-example.md)
+Больше полезных примеров смотрите в файле [Examples.md](./Examples.md)
 
 ### 1. Скрипт-модификатор (JS)
 

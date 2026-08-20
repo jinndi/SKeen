@@ -226,7 +226,7 @@ try {
 }
 
 // Пример добавления в singboxProxiesEU из другого файла вручную сконфигурированных прокси узлов,
-// в формате массива outbounds (по примеру как в файле примера client-outbounds.jsonc)
+// в формате массива outbounds (по примеру как в файле примера outbounds.jsonc папка server-client)
 // const mainOutbounds = (ProxyUtils.JSON5 || JSON).parse(await produceArtifact({
 //  type: 'file',
 //  name: 'myfile' // Ваше имя файла (ID) c массивом прокси-узлов
