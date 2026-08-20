@@ -5,12 +5,12 @@
 Что должны получить в итоге:
 
  0. Работа при блоке IP вашего сервера и самого Cloudflare CDN по sni.
- 1. Прокси `trojan` HTTPUpgrade и WebSocket транспорты за Cloudflare на субдомене `plex.mydomain.com` и одном порту.
+ 1. Прокси `vless` HTTPUpgrade транспорт за Cloudflare на субдомене `okko.mydomain.com` для примера.
  2. `Sub-Store` панель на субдомене `sub.mydomain.com` - через туннель Cloudflare.
  3. Серверный `API сервис sing-box` на субдомене `dash.mydomain.com` - через туннель Cloudflare.
  4. Открытые порты на сервере: 443 и ssh порт.
  5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `https://mydomain.com/*`
-    и суб. `https://plex.mydomain.com/`, ..., ..., доменов на ваш воркер с сайтом .
+    и суб. `https://vless.mydomain.com/`, ..., ..., доменов на ваш воркер с сайтом .
 
 ### Файл compose.yml
 
@@ -83,21 +83,20 @@ volumes:
       "edge_ip_version": 4
     },
     {
-      "type": "trojan",
-      "tag": "trojan-hu-in",
+      "type": "vless",
+      "tag": "vless-hu-in",
       "listen": "::",
       "listen_port": 443,
-      "reuse_addr": true,
       "users": [
         {
           "name": "jinndi",
-          "password": "ybvFZleivqii6sTx5dDJmA=="
+          "uuid": "d1d37e0a-67c2-4ad6-8d80-ebbe6ed0aba6",
+          "flow": ""
         }
       ],
       "transport": {
         "type": "httpupgrade",
-        "host": "plex.mydomain.com",
-        "path": "/api-hu-streamgdfdcy"
+        "path": "/d42c90914844c37ecafc305f0d827707"
       },
       "multiplex": {
         "enabled": true,
@@ -105,33 +104,7 @@ volumes:
       },
       "tls": {
         "enabled": true,
-        "server_name": "plex.mydomain.com",
-        "certificate_provider": "OriginCA"
-      }
-    },
-    {
-      "type": "trojan",
-      "tag": "trojan-ws-in",
-      "listen": "::",
-      "listen_port": 443,
-      "reuse_addr": true,
-      "users": [
-        {
-          "name": "jinndi",
-          "password": "ybvFZleivqii6sTx5dDJmA=="
-        }
-      ],
-      "transport": {
-        "type": "ws",
-        "path": "/api-ws-streamgdfdcy"
-      },
-      "multiplex": {
-        "enabled": true,
-        "padding": true
-      },
-      "tls": {
-        "enabled": true,
-        "server_name": "plex.mydomain.com",
+        "server_name": "okko.mydomain.com",
         "certificate_provider": "OriginCA"
       }
     }
@@ -157,59 +130,33 @@ volumes:
 
 ```json
 [
-  {
-    "tag": "😎 HTTPUpgrade CF",
-    "type": "trojan",
-    "password": "ybvFZleivqii6sTx5dDJmA==",
-    "server": "plex.mydomain.com",
+ {
+    "tag": "😎 VLESS HU CF",
+    "type": "vless",
+    "server": "okko.mydomain.com",
     "server_port": 443,
+    "uuid": "d1d37e0a-67c2-4ad6-8d80-ebbe6ed0aba6",
+    "tls": {
+      "enabled": true,
+      "alpn": "http/1.1",
+      "server_name": "okko.mydomain.com",
+      "spoof": "okko.tv",
+      "utls": {
+        "enabled": true,
+        "fingerprint": "chrome"
+      }
+    },
+    "multiplex": {
+      "enabled": true,
+      "protocol": "smux",
+      "max_streams": 32,
+      "padding": true
+    },
+    "packet_encoding": "xudp",
     "transport": {
       "type": "httpupgrade",
-      "host": "plex.mydomain.com",
-      "path": "/api-hu-streamgdfdcy"
-    },
-    "multiplex": {
-      "enabled": true,
-      "protocol": "smux",
-      "max_streams": 32,
-      "padding": true
-    },
-    "tls": {
-      "enabled": true,
-      "alpn": "http/1.1",
-      "server_name": "plex.mydomain.com",
-      "spoof": "plex.tv",
-      "utls": {
-        "enabled": true,
-        "fingerprint": "chrome"
-      }
-    }
-  },
-  {
-    "tag": "😎 WebSocket CF",
-    "type": "trojan",
-    "password": "ybvFZleivqii6sTx5dDJmA==",
-    "server": "plex.mydomain.com",
-    "server_port": 443,
-    "transport": {
-      "type": "ws",
-      "path": "/api-ws-streamgdfdcy"
-    },
-    "multiplex": {
-      "enabled": true,
-      "protocol": "smux",
-      "max_streams": 32,
-      "padding": true
-    },
-    "tls": {
-      "enabled": true,
-      "alpn": "http/1.1",
-      "server_name": "plex.mydomain.com",
-      "spoof": "plex.tv",
-      "utls": {
-        "enabled": true,
-        "fingerprint": "chrome"
-      }
+      "host": "okko.mydomain.com",
+      "path": "/d42c90914844c37ecafc305f0d827707"
     }
   }
 ]

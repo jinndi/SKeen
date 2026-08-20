@@ -4,6 +4,7 @@
 
 Что должны получить в итоге:
 
+ 0. Работа `trojan` при блоке IP вашего сервера и самого Cloudflare CDN по sni.
  1. Три прокси протокола: `trojan` WS за Clouflare, `Naive`, `Hysteria2` на субдоменах с ECH и сертификатом ZeroSSL и все на одном порту.
  2. `Sub-Store` панель на субдомене `sub.mydomain.com:8443` через trojan fallback с сертификатом ZeroSSL.
  3. Серверный `API сервис sing-box` через туннель Clouflare - для добавления в Zashboard панель в любом клиенте.
@@ -219,7 +220,7 @@ volumes:
 
 ### Файла с прокси для клиентов в Sub-Store
 
-Как добавить на выходе в вашу подписку эти прокси для клиентов смотрите в [Sub-Store-sync.md](./Sub-Store-sync.md)
+Как добавить на выходе в вашу подписку эти прокси для клиентов смотрите в [sub-store/Sync.md](../sub-store/Sync.md)
 
 
 ```json
