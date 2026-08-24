@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.9](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.8...SKeen-v5.1.9) (2026-08-24)
+
+
+### 🐛 Fix
+
+* bump skeen version and add config validation guard ([8a6bda0](https://github.com/jinndi/SKeen/commit/8a6bda093da3adace20f833327f50367769d0d29))
+
 ## [5.1.8](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.7...SKeen-v5.1.8) (2026-08-17)
 
 
