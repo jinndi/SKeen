@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.10](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.9...SKeen-v5.1.10) (2026-08-24)
+
+
+### 🐛 Fix
+
+* add resilient sing-box config formatting ([80dd014](https://github.com/jinndi/SKeen/commit/80dd014613c8c213779edb849ce6707e3f492eb5))
+
 ## [5.1.9](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.8...SKeen-v5.1.9) (2026-08-24)
 
 
