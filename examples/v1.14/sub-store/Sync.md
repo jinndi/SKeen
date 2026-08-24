@@ -175,12 +175,8 @@
       "tag": "api",
       "listen": "::",
       "listen_port": 9999,
-      "access_control_allow_private_network": true,
-      "dashboard": {
-        "enabled": true,
-        "path": "zashboard",
-        "download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
-      }
+      "secret": "",
+      "dashboard": true
     }
   ],
 

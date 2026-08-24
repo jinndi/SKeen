@@ -7,7 +7,7 @@
  0. Работа `trojan` при блоке IP вашего сервера и самого Cloudflare CDN по sni.
  1. Три прокси протокола: `trojan` WS за Clouflare, `Naive`, `Hysteria2` на субдоменах с ECH и сертификатом ZeroSSL и все на одном порту.
  2. `Sub-Store` панель на субдомене `sub.mydomain.com:8443` через trojan fallback с сертификатом ZeroSSL.
- 3. Серверный `API сервис sing-box` через туннель Clouflare - для добавления в Zashboard панель в любом клиенте.
+ 3. Серверный `API сервис sing-box` через туннель Clouflare - для добавления бекенда панели в любом доступном клиенте.
  4. Открытые порты на сервере: 443 (для `trojan`, `Naive` и `Hysteria2`), 8443 (`Sub-Store`) и ssh.
  5. Опционально: Сайт в Cloudflare на Workers & Pages с правилами в Workers Routes для `https://mydomain.com/*`
     и суб. `https://tr.mydomain.com/`, ..., ..., (`trojan`) доменов на ваш воркер с сайтом .
@@ -211,7 +211,6 @@ volumes:
       "listen": "127.0.0.1",
       "listen_port": 15225,
       "secret": "14843e4a59297a287040b857309d7ad9",
-      "access_control_allow_private_network": true,
       "dashboard": true
     }
   ]

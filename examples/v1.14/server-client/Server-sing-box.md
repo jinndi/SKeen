@@ -836,7 +836,6 @@ volumes:
       "listen": "127.0.0.1",
       "listen_port": 9999,
       "secret": "<ваш_секретный_ключ>", // Установить обязательно!
-      "access_control_allow_private_network": true,
       "dashboard": true
     }
   ]

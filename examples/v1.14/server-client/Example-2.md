@@ -143,7 +143,6 @@ volumes:
       "listen": "127.0.0.1",
       "listen_port": 15225,
       "secret": "14843e4a59297a287040b857309d7ad9",
-      "access_control_allow_private_network": true,
       "dashboard": true
     }
   ]

@@ -55,7 +55,7 @@ Notes:
 The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
 
 * **Resource Efficiency**: Bypassing heavy WebUIs saves RAM and reduces CPU overhead, preserving system resources for high-speed routing and encryption.
-* **Seamless Integration**: Monitoring and basic management are already handled by the built-in **Zashboard** interface, making additional UIs redundant.
+* **Seamless Integration**: Management and monitoring are efficiently implemented through built-in APIs for popular interfaces, eliminating redundancy.
 * **System Security & Stability**: Fewer active web services and open ports minimize the potential attack surface and reduce the risk of software conflicts within KeeneticOS.
 * **No Functional Limits**: Direct configuration via CLI/files ensures access to 100% of Sing-Box's features, which are often restricted or oversimplified in graphical interfaces.
 * **Minimalist Footprint**: The script remains lightweight with zero dependencies, requiring no extra packages like web servers or interpreters that consume valuable flash storage.
@@ -227,13 +227,13 @@ Yes - Sing-box also supports DNS filtering and can fully replace ADGuard Home.
 
 What about deploying your own AdGuard Home on a VPS?
 
-Domain blocking and resolution inside Sing-box are objectively better: requests are intercepted right on the router, never leaving for the external network or wasting time on it. Take Fake-IP alone—with it, everything works even faster: Sing-box processes such requests locally, bypassing external DNS resolution entirely.
+Domain blocking and resolution inside Sing-box are objectively better: requests are intercepted right on the router, never leaving for the external network or wasting time on it. Take Fake-IP alone-with it, everything works even faster: Sing-box processes such requests locally, bypassing external DNS resolution entirely.
 
-The Sing-box + Zashboard stack fully covers all needs for speed, analytics, and routing-level blocking. Adding AdGuard Home on a VPS to this chain is an unnecessary complication of the infrastructure and a potential single point of failure.
+The Sing-box + web interface stack fully covers all needs for speed, analytics, and routing-level blocking. Adding AdGuard Home on a VPS to this chain is an unnecessary complication of the infrastructure and a potential single point of failure.
 
 So, we've established that configuring DNS inside Sing-box is essential for safe and stable operation (provided it is set up correctly). But what about the DNS settings on the router itself?
 
-My recommendations are as follows: the main rule is to use 100% working servers in your country (for example, Yandex DNS for Russia) and specify no more than two addresses. Beyond that, it doesn't matter whether it's DoH or DoT—this task should be handled by Sing-box itself, so even a standard DNS from your ISP will do fine. It also doesn't matter if "DNS Transit" is enabled—it literally changes nothing at all.
+My recommendations are as follows: the main rule is to use 100% working servers in your country (for example, Yandex DNS for Russia) and specify no more than two addresses. Beyond that, it doesn't matter whether it's DoH or DoT-this task should be handled by Sing-box itself, so even a standard DNS from your ISP will do fine. It also doesn't matter if "DNS Transit" is enabled-it literally changes nothing at all.
 </details>
 
 <details>
@@ -296,7 +296,7 @@ Reasons why:
   - Functional Sing-box DNS module ✓
   - Functional Sing-box FakeIP ✓
   - FakeIP proxying at the iptables level ✓
-  - Zashboard configured via Clash API ✓
+  - Configured web interface via the built-in API ✓
   - Network settings optimization ✓
   - Commands accessible via router WEB CLI ✓
   - Sing-box configuration synchronization via HTTP(S) link ✓
@@ -388,7 +388,7 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 
 **Configure the sing-box JSON configuration file(s)** located in the `/opt/etc/skeen/config/` directory. Example configuration files are already provided there. Alternatively, you can use your own single configuration file by enabling the `sing_config.enable` mode.
 
-**Zashboard panel** is configured by default via the Clash API and can be accessed through the router’s IP address (usually 192.168.1.1) at `http://192.168.1.1:9999`
+**web panel** is configured by default and available at the router's IP address (usually 192.168.1.1) at `http://192.168.1.1:9999`.
 
 The `/opt/etc/skeen` directory is not removed during program uninstallation (it must be deleted manually if necessary) and is not overwritten during reinstallation if it already exists.
 
@@ -631,7 +631,7 @@ This is an excellent solution, but use it with the understanding that you will n
 * **Game launchers and online games** - the traffic of the game sessions themselves often goes to direct addresses, though there are exceptions;
 * **IP pools of certain mobile apps** - addresses that are hardcoded into the application's source code.
 
-The addresses of such connections can be analyzed beforehand (there is no point for P2P, etc.) in the **Zashboard** panel under the "Connections" tab ("Host" column) - the raw IP will be shown instead of a domain name. Next, find up-to-date lists of the required IP/CIDR ranges online and add them to the file at the path specified in the `firewall.intercept.fakeip.include` parameter (changes will take effect after restarting SKeen using the `skeen restart` command).
+The addresses of such connections can be analyzed beforehand (there is no point for P2P, etc.) in the web panel, under the “Connections” or “Sessions” tab (the “Host” column, target address) - the raw IP will be shown instead of a domain name. Next, find up-to-date lists of the required IP/CIDR ranges online and add them to the file at the path specified in the `firewall.intercept.fakeip.include` parameter (changes will take effect after restarting SKeen using the `skeen restart` command).
 
 Is this solution right for you? Everyone decides for themselves based on current constraints and personal requirements for network performance and security.
 
