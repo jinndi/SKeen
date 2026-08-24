@@ -644,3 +644,4 @@ Is this solution right for you? Everyone decides for themselves based on current
 - Custom rulesets: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
 - Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
 - Tutorial: [https://core-tutorial.argsment.com/singbox](https://core-tutorial.argsment.com/singbox)
+- sing-box-lx core (XHTTP): [https://github.com/Leadaxe/sing-box-lx](https://github.com/Leadaxe/sing-box-lx)

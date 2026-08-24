@@ -641,3 +641,4 @@ exec /opt/etc/init.d/S51dropbear start
 - Наборы правил Karing: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
 - Кастомные наборы правил: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
 - Справочник: [https://core-tutorial.argsment.com/singbox](https://core-tutorial.argsment.com/singbox)
+- Ядро sing-box-lx (XHTTP): [https://github.com/Leadaxe/sing-box-lx](https://github.com/Leadaxe/sing-box-lx)
