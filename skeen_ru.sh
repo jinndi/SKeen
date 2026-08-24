@@ -31,7 +31,7 @@ readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.9"
+readonly SKEEN_VERSION="5.1.10"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
@@ -722,7 +722,11 @@ create_singbox_config() {
     echo "{\"$key\": $value}" >"${CONFIG_DIR}/${key}.json"
   done
 
-  $SINGBOX_BIN format -w -C $CONFIG_DIR
+  if [ -f "$SINGBOX_BIN" ]; then
+    $SINGBOX_BIN format -w -C $CONFIG_DIR >/dev/null 2>&1
+  elif command -v sing-box >/dev/null 2>&1; then
+    sing-box format -w -C $CONFIG_DIR >/dev/null 2>&1
+  fi
 
   echook "Конфигурационные файлы $SINGBOX_NAME созданы успешно"
 }
@@ -3083,6 +3087,7 @@ config_reset() {
       if backup_create; then
         rm -rf "$WORK_DIR"
         mkdir -p "$WORK_DIR"
+        get_sing_binary_config
         create_singbox_config "force"
         create_skeen_config "force"
         echook "Сброс конфигурации выполнен"
