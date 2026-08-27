@@ -453,8 +453,7 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 
 2 - очищает файл кэша. Это необходимо при использовании функции `experimental.cache_file` в sing-box, например, для сброса кэша загруженных правил (rule_set) и истории DNS-запросов. Начиная с версии sing-box 1.14, в кэш сохраняются все DNS-ответы (ранее - только отклоненные)
 
-3 - принимает URL JSON-конфигурации Sing-box в качестве второго параметра (HTTP или HTTPS), необязательно указывать, если прописан адрес в `sing_config.sync_url`
-
+3 - принимает URL JSON-конфигурации Sing-box в качестве второго параметра (HTTP или HTTPS), необязательно указывать, если прописан адрес в `singbox.config.url`.
 
 | Менеджер OpkgTun (KeeneticOS v5+, только через SSH) |
 | :--- |

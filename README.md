@@ -455,7 +455,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 2 - clears the cache file. This is required when using the `experimental.cache_file` feature in sing-box, for example, to reset the cache of loaded rule_set and DNS query history. Starting with sing-box version 1.14, all DNS responses are stored in the cache (previously only rejected ones)
 
-3 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `sing_config.sync_url`
+3 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `singbox.config.url`
 
 | OpkgTun manager (KeeneticOS v5+, only from SSH) |
 | -------------------------------------------------------------------------- |
