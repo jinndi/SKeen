@@ -13,20 +13,20 @@ readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.11"
+readonly SKEEN_VERSION="5.1.12"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
-readonly SKEEN_API_URL="https://api.github.com/repos/jinndi/SKeen/releases/latest"
+readonly SKEEN_API_URL="https://github.com/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="$WORK_DIR/$SKEEN_PROC.json"
 readonly SKEEN_RUN_CONFIG="/tmp/$SKEEN_PROC.json"
 readonly SKEEN_AUTOSTART_SCRIPT="$ENTWARE_DIR/etc/init.d/S99SKeen"
-SKEEN_SCRIPT_URL="https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru $CURL_RESOLVE_FIX"
+SKEEN_SCRIPT_URL="$SKEEN_API_URL/download/skeen_ru $CURL_RESOLVE_FIX"
 readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
 readonly SINGBOX_BIN_PATH="$ENTWARE_DIR/bin/skeen-box"
 readonly SINGBOX_DEFAULT_CONFIG_PATH="$WORK_DIR/config.json"
-readonly SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
+readonly SINGBOX_API_URL="https://github.com/SagerNet/sing-box/releases/latest"
 readonly SINGBOX_SPACE_MB=128
 SINGBOX_CONFIG_JSON_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/config.json"
 readonly FIREWALL_HOOK_FILE="$NETFILTER_DIR/${SKEEN_PROC}_firewall.sh"
@@ -379,9 +379,9 @@ esac
 }
 get_latest_version(){
 local api_url="${1:-}" latest_release
-latest_release="$(run_curl -s "$api_url")"
+latest_release="$(run_curl -sI -H "Cache-Control: no-cache" "$api_url?$(date +%s)")"
 [ $? -ne 0 ]&&return 1
-echo "$latest_release"|grep tag_name|grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+echo "$latest_release"|grep -i "^location:"|sed -E 's/.*tag\/(.*)/\1/'|tr -d '\r'|grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
 }
 show_header(){
 cyan "
