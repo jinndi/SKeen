@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.1.11](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.10...SKeen-v5.1.11) (2026-08-27)
+
+
+### 🛠 Refactor
+
+* replace inline config creation with remote download from repository ([6a016c5](https://github.com/jinndi/SKeen/commit/6a016c52ec77e4f12183ca735590171dc5edb2c5))
+* restructure sing-box config and variable naming ([7e79f0a](https://github.com/jinndi/SKeen/commit/7e79f0aba89218e5331b4d22dd08cd33e0c69e3a))
+
+
+### 🧰 Chore
+
+* **docs:** update READMEs to reflect single config.json path and restructure file layout ([b64a317](https://github.com/jinndi/SKeen/commit/b64a31796b28eaa905e53c8779ff9658831c269a))
+
 ## [5.1.10](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.9...SKeen-v5.1.10) (2026-08-24)
 
 
