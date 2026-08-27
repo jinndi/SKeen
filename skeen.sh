@@ -23,7 +23,6 @@ readonly DEPENDENCIES="start-stop-daemon iptables ip-full ipset net-tools curl t
 
 readonly ENTWARE_DIR="/opt"
 readonly WORK_DIR="${ENTWARE_DIR}/etc/skeen"
-readonly CONFIG_DIR="${WORK_DIR}/config"
 readonly TMP_DIR="${ENTWARE_DIR}/tmp"
 readonly NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
@@ -42,9 +41,9 @@ readonly SKEEN_RUN_CONFIG="/tmp/${SKEEN_PROC}.json"
 readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 
 readonly SINGBOX_NAME="Sing-box"
-SINGBOX_ARGS="run -D $WORK_DIR -C $CONFIG_DIR"
-SINGBOX_BIN="${ENTWARE_DIR}/bin/skeen-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
+readonly SINGBOX_BIN_PATH="${ENTWARE_DIR}/bin/skeen-box"
+readonly SINGBOX_DEFAULT_CONFIG_PATH="${WORK_DIR}/config.json"
 readonly SINGBOX_API_URL="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 readonly SINGBOX_SPACE_MB=128
 
@@ -174,20 +173,27 @@ create_skeen_config() {
     "tuning": 0,
     "check": ["1.1.1.1", "ya.ru", "223.5.5.5"]
   },
-  "sing_binary": {
-    "enabled": ${SING_BINARY_ENABLED:-0},
-    "path": "/opt/bin/sing-box"
+  "singbox": {
+    "config": {
+      "path": "/opt/etc/skeen/config.json",
+      "url": ""
+    },
+    "external": {
+      "enabled": ${EXTERNAL_ENABLED:-0},
+      "path": "",
+      "config": {
+        "path": "",
+        "url": ""
+      }
+    }
   },
-  "sing_config":{
-    "enabled": 0,
-    "path": "",
-    "sync_url": ""
-  },
-  "service_proxy": {
-    "enabled": 0,
-    "port": "",
-    "user": "",
-    "pass": ""
+  "services": {
+    "proxy": {
+      "enabled": 0,
+      "port": "",
+      "user": "",
+      "pass": ""
+    }
   },
   "firewall": {
     "intercept": {
@@ -257,27 +263,8 @@ check_and_create_or_sync_skeen_config() {
   fi
 }
 
-get_auto_start_config() {
-  eval "$(
-    jsonfilter -i "$SKEEN_RUN_CONFIG" \
-      -e AUTO_START_ENABLED='@.auto_start.enabled' \
-      -e AUTO_START_DELAY='@.auto_start.delay'
-  )"
-  : "${AUTO_START_ENABLED:=1}"
-  : "${AUTO_START_DELAY:=0}"
-}
-
-get_sing_binary_config() {
-  local sing_pid="" sing_path=""
-
-  eval "$(
-    jsonfilter -i "$SKEEN_RUN_CONFIG" \
-      -e SING_BINARY_ENABLED='@.sing_binary.enabled' \
-      -e SING_BINARY_PATH='@.sing_binary.path'
-  )"
-
-  : "${SING_BINARY_ENABLED:=0}"
-  : "${SING_BINARY_PATH:=/opt/bin/sing-box}"
+check_and_kill_old_proc() {
+  local sing_pid sing_path
 
   if [ -f "$SINGBOX_PID_FILE" ]; then
     read -r sing_pid < "$SINGBOX_PID_FILE"
@@ -285,8 +272,6 @@ get_sing_binary_config() {
       sing_path="$(readlink -f "/proc/$sing_pid/exe" 2>/dev/null)"
     fi
   fi
-
-  [ "$SING_BINARY_ENABLED" = "1" ] && SINGBOX_BIN="$SING_BINARY_PATH"
 
   case "$sing_path" in
     "" | "$SINGBOX_BIN") ;;
@@ -303,36 +288,14 @@ get_sing_binary_config() {
   fi
 }
 
-get_sing_args_config() {
-  local default_config_path="/opt/etc/skeen/config.json"
-
-  SING_CONFIG_ENABLED="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.enabled')"
-  : "${SING_CONFIG_ENABLED:=0}"
-
-  SING_CONFIG_PATH="$default_config_path"
-  SING_CONFIG_ARGS="-C $CONFIG_DIR"
-
-  if [ "$SING_CONFIG_ENABLED" = "1" ]; then
-    SING_CONFIG_PATH="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.path')"
-    : "${SING_CONFIG_PATH:=$default_config_path}"
-    SING_CONFIG_ARGS="-c $SING_CONFIG_PATH"
-
-    SINGBOX_ARGS="run -D $WORK_DIR -c $SING_CONFIG_PATH"
-  fi
-}
-
-get_service_proxy_config() {
+get_auto_start_config() {
   eval "$(
     jsonfilter -i "$SKEEN_RUN_CONFIG" \
-      -e SERVICE_PROXY_ENABLED='@.service_proxy.enabled' \
-      -e SERVICE_PROXY_PORT='@.service_proxy.port' \
-      -e SERVICE_PROXY_USER='@.service_proxy.user' \
-      -e SERVICE_PROXY_PASS='@.service_proxy.pass'
+      -e AUTO_START_ENABLED='@.auto_start.enabled' \
+      -e AUTO_START_DELAY='@.auto_start.delay'
   )"
-  : "${SERVICE_PROXY_ENABLED:=0}"
-  : "${SERVICE_PROXY_PORT:=}"
-  : "${SERVICE_PROXY_USER:=}"
-  : "${SERVICE_PROXY_PASS:=}"
+  : "${AUTO_START_ENABLED:=1}"
+  : "${AUTO_START_DELAY:=0}"
 }
 
 get_network_config() {
@@ -344,6 +307,51 @@ get_network_config() {
 
   : "${NETWORK_IPV6:=1}"
   : "${NETWORK_TUNING:=0}"
+}
+
+get_singbox_config() {
+  eval "$(
+    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+      -e sing_config_path='@.singbox.config.path' \
+      -e sing_config_url='@.singbox.config.url' \
+      -e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
+      -e sing_external_path='@.singbox.external.path' \
+      -e sing_external_config_path='@.singbox.external.config.path' \
+      -e sing_external_config_url='@.singbox.external.config.url'
+  )"
+
+  : "${sing_config_path:=$SINGBOX_DEFAULT_CONFIG_PATH}"
+  : "${sing_config_url:=}"
+  : "${SINGBOX_EXTERNAL_ENABLED:=0}"
+  : "${sing_external_path:=/opt/bin/sing-box}"
+  : "${sing_external_config_path:=$sing_config_path}"
+  : "${sing_external_config_url:=$sing_config_url}"
+
+  if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ]; then
+    SINGBOX_BIN="$sing_external_path"
+    SINGBOX_CONFIG="$sing_external_config_path"
+    SINGBOX_CONFIG_URL="$sing_external_config_url"
+  else
+    SINGBOX_BIN="$SINGBOX_BIN_PATH"
+    SINGBOX_CONFIG="$sing_config_path"
+    SINGBOX_CONFIG_URL="$sing_config_url"
+  fi
+
+  check_and_kill_old_proc
+}
+
+get_service_proxy_config() {
+  eval "$(
+    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+      -e SERVICE_PROXY_ENABLED='@.services.proxy.enabled' \
+      -e SERVICE_PROXY_PORT='@.services.proxy.port' \
+      -e SERVICE_PROXY_USER='@.services.proxy.user' \
+      -e SERVICE_PROXY_PASS='@.services.proxy.pass'
+  )"
+  : "${SERVICE_PROXY_ENABLED:=0}"
+  : "${SERVICE_PROXY_PORT:=}"
+  : "${SERVICE_PROXY_USER:=}"
+  : "${SERVICE_PROXY_PASS:=}"
 }
 
 get_firewall_config() {
@@ -398,7 +406,7 @@ run_curl() {
     if [ "$SERVICE_PROXY_ENABLED" = "1" ]; then
       if [ -z "$SERVICE_PROXY_PORT" ]; then
         echoerr "$err_template 'service_proxy.port' is not set" && return 1
-      elif get_sing_binary_config && ! is_running; then
+      elif ! is_running; then
         echoerr "$err_template $SINGBOX_NAME is not running" && return 1
       elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
         echoerr "$err_template no process is listening on port ${SERVICE_PROXY_PORT}" && return 1
@@ -449,10 +457,8 @@ get_current_version() {
 }
 
 get_latest_version() {
-  local api_url="${1:-}"
-  local latest_release
+  local api_url="${1:-}" latest_release
 
-  # shellcheck disable=SC2086
   latest_release="$(run_curl -s "$api_url")"
   # shellcheck disable=SC2181
   [ $? -ne 0 ] && return 1
@@ -504,8 +510,8 @@ ask_install_singbox() {
     opt=${opt:-n}
 
     case $opt in
-    y | Y) SING_BINARY_ENABLED=1; break ;;
-    n | N) SING_BINARY_ENABLED=0; break ;;
+    y | Y) EXTERNAL_ENABLED=1; break ;;
+    n | N) EXTERNAL_ENABLED=0; break ;;
     *) echoerr "Please enter y (yes) or n (no)." ;;
     esac
   done
@@ -673,11 +679,11 @@ install_singbox() {
     exiterr "Error extracting $PKG_NAME"
   fi
 
-  echomsg "Installing $SINGBOX_NAME binary to $SINGBOX_BIN"
-  [ -f "$SINGBOX_BIN" ] && rm -f "$SINGBOX_BIN"
-  mv ./usr/bin/sing-box "$SINGBOX_BIN"
-  chmod 755 "$SINGBOX_BIN"
-  chmod +x "$SINGBOX_BIN"
+  echomsg "Installing $SINGBOX_NAME binary to $SINGBOX_BIN_PATH"
+  [ -f "$SINGBOX_BIN_PATH" ] && rm -f "$SINGBOX_BIN_PATH"
+  mv ./usr/bin/sing-box "$SINGBOX_BIN_PATH"
+  chmod 755 "$SINGBOX_BIN_PATH"
+  chmod +x "$SINGBOX_BIN_PATH"
 
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${PKG_NAME}"
@@ -686,49 +692,26 @@ install_singbox() {
 }
 
 create_singbox_config() {
-  local act="${1:-}"
-  local key value
+  local act="${1:-}" key value config_json
 
-  if [ "$act" != "force" ] && [ -d "$CONFIG_DIR" ] &&
-    ls "$CONFIG_DIR"/*.json >/dev/null 2>&1; then
-    echomsg "Found configuration folder ${CONFIG_DIR}, skipping creation"
+  get_singbox_config
+
+  if [ "$act" != "force" ] && [ -f "$SINGBOX_CONFIG" ]; then
+    echomsg "Configuration $SINGBOX_NAME found, skipping creation"
     return
-  elif [ ! -d "$CONFIG_DIR" ] && [ -f "$SKEEN_CONFIG" ]; then
-    get_sing_args_config
-    if [ "$SING_CONFIG_ENABLED" = "1" ] && [ ! -f "$SING_CONFIG_PATH" ]; then
-      echowarn "Configuration files for $SINGBOX_NAME not found"
-    else
-      echomsg "Configuration file $SINGBOX_NAME found, skipping creation"
-      return
-    fi
   fi
 
-  echomsg "Creating $SINGBOX_NAME configuration files..."
+  echomsg "Creating $SINGBOX_NAME configuration..."
 
-  mkdir -p "$CONFIG_DIR"
+  mkdir -p "$(dirname "$SINGBOX_CONFIG")"
 
   config_json='{"log":{"level":"trace","output":"","timestamp":false},"dns":{"servers":[{"tag":"hosts","type":"hosts","predefined":{"dns.google":["8.8.8.8","8.8.4.4"],"common.dot.dns.yandex.net":["77.88.8.8","77.88.8.1"]}},{"tag":"dns_local","type":"local"},{"tag":"dns_direct","type":"https","server":"common.dot.dns.yandex.net","domain_resolver":"hosts"},{"tag":"dns_proxy","type":"https","server":"dns.google","domain_resolver":"hosts","detour":"🌍 Proxy"},{"tag":"dns_fakeip","type":"fakeip","inet4_range":"198.18.0.0/15"}],"rules":[{"query_type":"A","invert":true,"action":"reject"},{"rule_set":"ipdetect","action":"reject"},{"domain_keyword":["keenetic","netcraze"],"server":"dns_local"},{"rule_set":"private","server":"dns_local"},{"clash_mode":"Direct","server":"dns_direct"},{"rule_set":"adguard","action":"predefined"},{"rule_set":"cheburnet","server":"dns_direct"},{"rule_set":"trackers","server":"dns_direct"},{"rule_set":"filter","server":"dns_direct"},{"rule_set":"proxy","rewrite_ttl":300,"server":"dns_fakeip"},{"rule_set":"ru","server":"dns_proxy","client_subnet":"77.88.8.0/24"},{"server":"dns_fakeip"},{"clash_mode":"Global","server":"dns_fakeip"}],"final":"dns_proxy","strategy":"ipv4_only","independent_cache":true,"cache_capacity":16384,"reverse_mapping":true},"ntp":{"enabled":true,"interval":"30m0s","server":"ntp.msk-ix.ru","server_port":123,"detour":"🇷🇺 RU"},"inbounds":[{"tag":"tproxy-in","type":"tproxy","listen":"::","listen_port":65082}],"outbounds":[{"tag":"🌍 Proxy","type":"selector","outbounds":["🌍 Auto","🔒 NAIVE"],"default":"🔒 NAIVE"},{"tag":"🇷🇺 RU","type":"selector","outbounds":["🇷🇺 Auto","🔌 DIRECT","🇷🇺 TROYAN"]},{"tag":"🏴‍☠️ Torrent","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🕹️ Games","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🤖 AI","type":"selector","outbounds":["🌍 Auto","🔌 DIRECT","🔒 NAIVE"]},{"tag":"🔌 DIRECT","type":"selector","outbounds":["DIRECT"]},{"tag":"DIRECT","type":"direct","domain_resolver":"dns_direct"},{"tag":"GLOBAL","type":"selector","outbounds":["🌍 Proxy"]},{"tag":"🔒 NAIVE","type":"naive","server":"example.com","server_port":2443,"username":"jinndi","password":"password","udp_over_tcp":true,"tls":{"enabled":true,"server_name":"example.com"}},{"tag":"🇷🇺 TROYAN","type":"trojan","password":"password","server":"example.ru","server_port":2444,"tls":{"enabled":true,"server_name":"example.ru"},"multiplex":{"enabled":true}},{"tag":"🌍 Auto","type":"urltest","outbounds":["🌍 NAIVE"],"interval":"10m","tolerance":100},{"tag":"🇷🇺 Auto","type":"urltest","outbounds":["🇷🇺 TROYAN"],"interval":"10m","tolerance":100}],"route":{"rules":[{"network":"icmp","outbound":"🔌 DIRECT"},{"action":"sniff","timeout":"500ms"},{"action":"hijack-dns","type":"logical","mode":"or","rules":[{"protocol":"dns"},{"port":53}]},{"ip_version":6,"action":"reject"},{"port":[853,5353],"action":"reject"},{"rule_set":"ipdetect","action":"reject"},{"clash_mode":"Direct","outbound":"🔌 DIRECT"},{"rule_set":"private","outbound":"🔌 DIRECT"},{"rule_set":"cheburnet","outbound":"🔌 DIRECT"},{"protocol":"ntp","outbound":"🇷🇺 RU"},{"protocol":"bittorrent","outbound":"🏴‍☠️ Torrent"},{"rule_set":"games","outbound":"🕹️ Games"},{"rule_set":"ai","outbound":"🤖 AI"},{"ip_is_private":true,"outbound":"🔌 DIRECT"},{"ip_cidr":"198.18.0.0/15","outbound":"🌍 Proxy"},{"rule_set":"proxy","outbound":"🌍 Proxy"},{"rule_set":["ru","ruip"],"outbound":"🇷🇺 RU"},{"protocol":["stun","dtls"],"action":"reject","method":"drop"},{"type":"logical","mode":"or","rules":[{"network":"udp","port":[3478,5349,5350,19302,10000]},{"domain_regex":"^stun\\..+"},{"domain_keyword":["stun","turn","httpdns"]}],"action":"reject","method":"drop"},{"action":"route-options","udp_disable_domain_unmapping":true,"udp_connect":true},{"action":"resolve"},{"clash_mode":"Global","outbound":"🌍 Proxy"}],"rule_set":[{"tag":"ipdetect","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ipdetect.srs"},{"tag":"private","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/private.srs"},{"tag":"trackers","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/trackers.srs"},{"tag":"games","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/games.srs"},{"tag":"ai","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ai.srs"},{"tag":"ru","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ru.srs"},{"tag":"ruip","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/ruip.srs"},{"tag":"adguard","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/adguard.srs"},{"tag":"cheburnet","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/cheburnet.srs"},{"tag":"filter","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/filter.srs"},{"tag":"proxy","type":"remote","download_detour":"GLOBAL","url":"https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/proxy.srs"}],"final":"🌍 Proxy","auto_detect_interface":true,"default_domain_resolver":"dns_direct"},"experimental":{"clash_api":{"external_controller":"0.0.0.0:9999","external_ui":"zashboard","external_ui_download_url":"https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip","external_ui_download_detour":"GLOBAL","secret":"","default_mode":"rule"},"cache_file":{"enabled":true,"path":"cache.db","cache_id":"v1_13","store_fakeip":true,"store_rdrc":true,"rdrc_timeout":"3d"}}}'
 
-  for key in log dns ntp inbounds outbounds route experimental; do
-    value="$(printf '%s\n' "$config_json" | jsonfilter -e "@.$key")"
+  echo "$config_json" > "$SINGBOX_CONFIG"
 
-    if [ -z "$value" ] || [ "$value" = "null" ]; then
-      case "$key" in
-      services | endpoints | inbounds | outbounds) value="[]" ;;
-      *) value="{}" ;;
-      esac
-    fi
+  [ -f "$SINGBOX_BIN" ] && $SINGBOX_BIN format -w -c $SINGBOX_CONFIG
 
-    echo "{\"$key\": $value}" >"${CONFIG_DIR}/${key}.json"
-  done
-
-  if [ -f "$SINGBOX_BIN" ]; then
-    $SINGBOX_BIN format -w -C $CONFIG_DIR >/dev/null 2>&1
-  elif command -v sing-box >/dev/null 2>&1; then
-    sing-box format -w -C $CONFIG_DIR >/dev/null 2>&1
-  fi
-
-  echook "Configuration files $SINGBOX_NAME created successfully"
+  echook "Configuration $SINGBOX_NAME created successfully"
 }
 
 create_autostart_script() {
@@ -786,20 +769,18 @@ create_skeen_group() {
 
 download_skeen_script() {
   local action="${1:-}"
-  local backup_script="${SKEEN_SCRIPT}.backup"
+  local backup_script="${SKEEN_SCRIPT}.bak"
 
   echomsg "Downloading $SKEEN_NAME script at $SKEEN_SCRIPT"
 
-  [ -f "$SKEEN_SCRIPT" ] && mv "$SKEEN_SCRIPT" "$backup_script"
+  [ -f "$SKEEN_SCRIPT" ] && mv -f "$SKEEN_SCRIPT" "$backup_script"
 
   if [ -n "$MIRROR" ]; then
     SKEEN_SCRIPT_URL="${MIRROR}skeen"
   fi
 
-  # shellcheck disable=SC2086
   if ! run_curl -o "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL; then
-    rm -f "$SKEEN_SCRIPT"
-    [ -f "$backup_script" ] && mv "$backup_script" "$SKEEN_SCRIPT"
+    [ -f "$backup_script" ] && mv -f "$backup_script" "$SKEEN_SCRIPT"
     echoerr "Failed to download $SKEEN_NAME script"
     [ "$action" != "update" ] && exit 1
     return 1
@@ -833,7 +814,7 @@ press_any_key_to_menu() {
 }
 
 is_running() {
-  start-stop-daemon -K -t -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1
+  start-stop-daemon -K -t -p "$SINGBOX_PID_FILE" >/dev/null 2>&1
 }
 
 install() {
@@ -848,7 +829,7 @@ install() {
 
   get_os_release
   ask_install_singbox
-  if [ "$SING_BINARY_ENABLED" != "1" ]; then
+  if [ "$EXTERNAL_ENABLED" != "1" ]; then
     check_free_space
     get_architecture
     download_singbox
@@ -861,18 +842,14 @@ install() {
   download_skeen_script
   create_skeen_config
 
-  if [ "$SING_BINARY_ENABLED" != "1" ]; then
-    "$SINGBOX_BIN" version
+  if [ "$EXTERNAL_ENABLED" != "1" ]; then
+    "$SINGBOX_BIN_PATH" version
   elif [ ! -f /opt/bin/sing-box ]; then
     echomsg "Set the $SINGBOX_NAME binary path in $SKEEN_CONFIG"
   fi
 
-  if [ "$SING_CONFIG_ENABLED" != "1" ] && [ -d "$CONFIG_DIR" ]; then
-    echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
-  fi
-
+  echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
   echomsg "Configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
-
   echook "Installation completed"
 
   MIRROR=""
@@ -882,8 +859,6 @@ install() {
 
 uninstall() {
   echomsg "Uninstalling ${SKEEN_NAME}..."
-
-  get_sing_binary_config
 
   is_running && stop
 
@@ -899,7 +874,7 @@ uninstall() {
   echomsg "Delete group ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
 
-  if [ "$SINGBOX_BIN" = '/opt/bin/skeen-box' ]; then
+  if get_singbox_config && [ "$SINGBOX_BIN" = "$SINGBOX_BIN_PATH" ]; then
     while :; do
       printf "Delete %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
       read -r opt </dev/tty
@@ -1002,25 +977,18 @@ check_internet() {
   logger_error "Internet is not available via any of the checked hosts"
 }
 
-get_fw_mode_param() {
-  local file="${1:-}"
-  local type="${2:-}"
+get_fw_mode_data() {
+  local type="${1:-}"
   local has_opkgtun port network
 
   if [ "$type" = "tun" ]; then
-    has_opkgtun=$(jsonfilter -i "$file" \
-      -e '@.inbounds[@.type="'"$type"'"].interface_name' | grep ^opkgtun)
-
+    has_opkgtun=$(jsonfilter -i "$SINGBOX_CONFIG" -e '@.inbounds[@.type="'"$type"'"].interface_name' | grep ^opkgtun)
     [ -z "$has_opkgtun" ] && return 0
-
     echo "tun"
-
     return 0
   fi
 
-  port=$(jsonfilter -i "$file" \
-    -e '@.inbounds[@.type="'"$type"'"].listen_port' |
-    head -n1 2>/dev/null)
+  port=$(jsonfilter -i "$SINGBOX_CONFIG" -e '@.inbounds[@.type="'"$type"'"].listen_port' | head -n1 2>/dev/null)
 
   [ -z "$port" ] && return 0
 
@@ -1029,9 +997,7 @@ get_fw_mode_param() {
     return 0
   fi
 
-  network=$(jsonfilter -i "$file" \
-    -e '@.inbounds[@.type="'"$type"'"].network' |
-    head -n1 2>/dev/null)
+  network=$(jsonfilter -i "$SINGBOX_CONFIG" -e '@.inbounds[@.type="'"$type"'"].network' | head -n1 2>/dev/null)
 
   if [ -n "$network" ]; then
     echo "${port}|${network}"
@@ -1042,37 +1008,9 @@ get_fw_mode_param() {
   return 0
 }
 
-get_fw_mode_data() {
-  local type="$1"
-  local file param
-
-  if [ "$SING_CONFIG_ENABLED" = "1" ]; then
-    get_fw_mode_param "$SING_CONFIG_PATH" "$type"
-    return 0
-  fi
-
-  [ -d "$CONFIG_DIR" ] || return 0
-  for file in "$CONFIG_DIR"/*.json; do
-    [ -f "$file" ] || continue
-    param="$(get_fw_mode_param "$file" "$type")"
-    [ -n "$param" ] && echo "$param" && return 0
-  done
-
-  return 0
-}
-
 has_dns_servers() {
-  if [ "$SING_CONFIG_ENABLED" = "1" ]; then
-    if jsonfilter -i "$SING_CONFIG_PATH" -e '@.dns.servers[0]' >/dev/null 2>&1; then
-      return 0
-    fi
-  elif [ -d "$CONFIG_DIR" ]; then
-    for file in "$CONFIG_DIR"/*.json; do
-      [ -f "$file" ] || continue
-      if jsonfilter -i "$file" -e '@.dns.servers[0]' >/dev/null 2>&1; then
-        return 0
-      fi
-    done
+  if jsonfilter -i "$SINGBOX_CONFIG" -e '@.dns.servers[0]' >/dev/null 2>&1; then
+    return 0
   fi
 
   return 1
@@ -1815,7 +1753,7 @@ prepare_firewall() {
 
   complete_msg="Firewall preparation is complete"
 
-  get_sing_args_config
+  get_singbox_config
 
   redirect_data="$(get_fw_mode_data "redirect")"
   SKEEN_REDIRECT_PORT="$(echo "$redirect_data" | cut -d'|' -f1)"
@@ -2468,9 +2406,8 @@ start_singbox() {
   # shellcheck disable=SC3045
   ulimit -n "$(get_ulimit_n)" || exiterr "Failed to set ulimit -n"
 
-  get_sing_args_config
-  # shellcheck disable=SC2086
-  start-stop-daemon -S -b -x $SINGBOX_BIN -c root:$SKEEN_PROC -- $SINGBOX_ARGS
+  start-stop-daemon -S -b -m -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" \
+    -c "root:${SKEEN_PROC}" -- run -D "$WORK_DIR" -c "$SINGBOX_CONFIG"
   status_start=$?
 
   if [ $status_start -ne 0 ]; then
@@ -2498,7 +2435,7 @@ start_singbox() {
 }
 
 start() {
-  get_sing_binary_config
+  get_singbox_config
 
   if [ ! -f "$SINGBOX_BIN" ]; then
     echoerr "$SINGBOX_NAME binary not found, please install it first"
@@ -2547,14 +2484,12 @@ stop_singbox() {
 
   echomsg "Stopping ${SINGBOX_NAME}..."
 
-  get_sing_binary_config
-
   if ! is_running; then
     echook "$SINGBOX_NAME already stopped"
     return 0
   fi
 
-  if ! start-stop-daemon -K -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1; then
+  if ! start-stop-daemon -K -p "$SINGBOX_PID_FILE" >/dev/null 2>&1; then
     msg="Failed to send stop signal to $SINGBOX_NAME (process not found or already terminated)"
     echoerr "$msg"; logger_error "$msg"
     rm -f "$SINGBOX_PID_FILE"
@@ -2589,15 +2524,13 @@ stop() {
 }
 
 kill_proc() {
-  get_sing_binary_config
-
   if ! is_running; then
     echook "$SINGBOX_NAME is not running"
     return 0
   fi
 
   echomsg "Killing ${SKEEN_PROC}..."
-  if start-stop-daemon -K -s 9 -p "$SINGBOX_PID_FILE" -x "$SINGBOX_BIN" >/dev/null 2>&1; then
+  if start-stop-daemon -K -s 9 -p "$SINGBOX_PID_FILE" >/dev/null 2>&1; then
     rm -f "$SINGBOX_PID_FILE"
     clean_firewall
     echook "$SINGBOX_NAME stopped successfully"
@@ -2609,8 +2542,7 @@ kill_proc() {
 
 version() {
   local sk_version sb_version
-
-  get_sing_binary_config
+  get_singbox_config
   sk_version="$(get_current_version "skeen")"
   sb_version="$(get_current_version "sing")"
   if [ "$CALLER" = "cli" ]; then
@@ -2625,8 +2557,6 @@ version() {
 }
 
 switch_state() {
-  get_sing_binary_config
-
   if is_running; then
     stop
   else
@@ -2645,6 +2575,7 @@ restart() {
 
 reload() {
   check_config && echo "$DELIMETER"
+  get_singbox_config
   stop_singbox && start_singbox || exit 1
 }
 
@@ -2672,7 +2603,6 @@ proc_uptime() {
 status() {
   local pid mem_used mem_peak threads
 
-  get_sing_binary_config
   [ -f "$SINGBOX_PID_FILE" ] && pid="$(cat "$SINGBOX_PID_FILE")"
 
   if [ -n "$pid" ]; then
@@ -2700,7 +2630,6 @@ update_core() {
   download_singbox || return 1
   if is_running; then stop || exit 1; fi
   install_singbox
-  create_singbox_config
   echook "$SINGBOX_NAME core has been successfully updated"
 }
 
@@ -2792,10 +2721,9 @@ check_updates() {
     echowarn "Updates are disabled in the ${SKEEN_NAME} configuration!"
     press_any_key_to_menu "" 1
   fi
-  get_sing_binary_config
 
   # sing-box
-  if [ "$SING_BINARY_ENABLED" != "1" ]; then
+  if get_singbox_config && [ "$SINGBOX_EXTERNAL_ENABLED" != "1" ]; then
     if [ "$UPDATE_SINGBOX_ENABLED" = "1" ]; then
       if [ "$UPDATE_SINGBOX_BETA" = "1" ]; then
         ask_and_update "$SINGBOX_NAME" "sing" "https://github.com/SagerNet/sing-box/releases.atom" \
@@ -2935,7 +2863,6 @@ fw_test_chain() {
 test_firewall() {
   local tables
 
-  get_sing_binary_config
   if ! is_running; then
     echoerr "Testing are available only when $SKEEN_NAME is started"
     press_any_key_to_menu "" 1
@@ -3087,7 +3014,6 @@ config_reset() {
       if backup_create; then
         rm -rf "$WORK_DIR"
         mkdir -p "$WORK_DIR"
-        get_sing_binary_config
         create_singbox_config "force"
         create_skeen_config "force"
         echook "Configuration reset completed"
@@ -3105,53 +3031,41 @@ config_reset() {
 }
 
 clean_cache() {
-  local experimental_file cache_file
-  local msg_not_found="Cache file not found at path"
+  local cache_file_enabled cache_file_path msg_not_found="Cache file not found at path"
 
-  get_sing_args_config
+  get_singbox_config
 
-  if [ "$SING_CONFIG_ENABLED" = "1" ] && [ -f "$SING_CONFIG_PATH" ]; then
-    experimental_file="$SING_CONFIG_PATH"
-  elif [ -d "$CONFIG_DIR" ] && [ -f "${CONFIG_DIR}/experimental.json" ]; then
-    experimental_file="${CONFIG_DIR}/experimental.json"
-  elif [ -d "$CONFIG_DIR" ]; then
-    for file in "$CONFIG_DIR"/*.json; do
-      [ -f "$file" ] || continue
-      if jsonfilter -i "$file" -e '@.experimental.cache_file.enabled' >/dev/null 2>&1; then
-        experimental_file="$file"
-        break
-      fi
-    done
-  fi
-
-  if [ -z "$experimental_file" ]; then
+  if [ ! -s "$SINGBOX_CONFIG" ]; then
     echoerr "Configuration file with 'experimental.cache_file' parameter not found"
     return 0
   fi
 
-  cache_file_enabled="$(jsonfilter -i "$experimental_file" -e '@.experimental.cache_file.enabled')"
+  eval "$(
+    jsonfilter -i "$SINGBOX_CONFIG" \
+      -e cache_file_enabled='@.experimental.cache_file.enabled' \
+      -e cache_file_path='@.experimental.cache_file.path'
+  )"
+
   if [ "$cache_file_enabled" != "true" ]; then
     echowarn "Cache file is disabled in $SINGBOX_NAME configuration"
   fi
 
-  cache_file="$(jsonfilter -i "$experimental_file" -e '@.experimental.cache_file.path')"
-
-  if [ -z "$cache_file" ]; then
-    cache_file="${WORK_DIR}/cache.db"
+  if [ -z "$cache_file_path" ]; then
+    cache_file_path="${WORK_DIR}/cache.db"
   else
-    if ! echo "$cache_file" | grep -q "^/"; then
-      cache_file="${WORK_DIR}/${cache_file}"
-      if [ ! -f "$cache_file" ]; then
-        echoerr "${msg_not_found}: $cache_file"
+    if ! echo "$cache_file_path" | grep -q "^/"; then
+      cache_file_path="${WORK_DIR}/${cache_file}"
+      if [ ! -f "$cache_file_path" ]; then
+        echoerr "${msg_not_found}: $cache_file_path"
         return 0
       fi
-    elif [ ! -f "$cache_file" ]; then
-      echoerr "${msg_not_found}: $cache_file"
+    elif [ ! -f "$cache_file_path" ]; then
+      echoerr "${msg_not_found}: $cache_file_path"
       return 0
     fi
   fi
 
-  rm -f "$cache_file"
+  rm -f "$cache_file_path"
   echook "Cache cleared. Restart $SKEEN_NAME to apply changes"
 }
 
@@ -3168,11 +3082,11 @@ check_skeen_config() {
 }
 
 check_sing_config() {
-  if get_sing_binary_config && [ -f "$SINGBOX_BIN" ]; then
+  if get_singbox_config && [ -f "$SINGBOX_BIN" ]; then
     echomsg "Checking $SINGBOX_NAME configuration..."
 
     # shellcheck disable=SC2086
-    if get_sing_args_config && $SINGBOX_BIN check $SING_CONFIG_ARGS; then
+    if $SINGBOX_BIN check -c $SINGBOX_CONFIG; then
       echook "$SINGBOX_NAME configuration is valid"
     else
       local err_msg="$SINGBOX_NAME configuration is invalid"
@@ -3189,57 +3103,48 @@ check_config() {
 }
 
 format_config() {
-  get_sing_binary_config
-
-  if [ -f "$SINGBOX_BIN" ]; then
+  if get_singbox_config && [ -f "$SINGBOX_BIN" ]; then
     echomsg "Formatting ${SINGBOX_NAME} configuration..."
 
-    get_sing_args_config
-
     # shellcheck disable=SC2086
-    if $SINGBOX_BIN format -w $SING_CONFIG_ARGS; then
+    if $SINGBOX_BIN format -w -c $SINGBOX_CONFIG; then
       echook "Configuration formatted successfully"
     else
       echoerr "Configuration formatting failed"
     fi
   else
-    echoerr "The $SINGBOX_NAME executable is missing"
+    echoerr "$SINGBOX_NAME executable is missing"
   fi
 }
 
 sync_config() {
   local address="${1:-}"
-  local config_tmp="${TMP_DIR}/sing_config_tmp.json"
+  local config_tmp="/tmp/skeen_sync_config.tmp"
+
+  get_singbox_config
 
   if [ -z "$address" ]; then
-    address="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.sing_config.sync_url')"
-
-    [ -z "$address" ] && echoerr "Address for synchronization not specified" && return 1
+    [ -z "$SINGBOX_CONFIG_URL" ] && echoerr "Адрес для синхронизации не указан" && return 1
+    address="$SINGBOX_CONFIG_URL"
   fi
 
   if ! echo "$address" | grep -qE '^https?://'; then
     echoerr "URL must start with http:// or https://" && return 1
   fi
 
-  # shellcheck disable=SC2086
   if ! run_curl -s "$address" -o "$config_tmp"; then
     echoerr "Failed to download configuration from $address" && return 1
   fi
 
-  if is_tty && get_sing_binary_config && ! $SINGBOX_BIN check -c "$config_tmp"; then
+  if is_tty && ! $SINGBOX_BIN check -c "$config_tmp"; then
     echoerr "$SINGBOX_NAME configuration is invalid, cancel synchronization!"
     rm -f "$config_tmp"
     return 1
   fi
 
-  get_sing_args_config
+  [ -f "$SINGBOX_CONFIG" ] && cp -f "$SINGBOX_CONFIG" "${SINGBOX_CONFIG}.bak"
+  mv -f "$config_tmp" "$SINGBOX_CONFIG"
 
-  if [ "$SING_CONFIG_ENABLED" != "1" ]; then
-    echowarn "Set the parameter sing_config.enabled to 1 in the skeen.json file"
-  fi
-
-  rm -f "$SING_CONFIG_PATH"
-  mv "$config_tmp" "$SING_CONFIG_PATH"
   echook "Configuration synced, then restart $SKEEN_NAME to apply the changes"
 }
 
@@ -3295,10 +3200,9 @@ show_menu() {
   check_tty
   check_skeen_config && printf "\033[1A\033[2K\033[1A\033[2K"
   import_firewall_vars
-  get_auto_start_config
-  get_sing_binary_config
+  get_singbox_config
 
-  if [ "$AUTO_START_ENABLED" = "1" ]; then
+  if get_auto_start_config && [ "$AUTO_START_ENABLED" = "1" ]; then
     autostart_status="$(green "yes")"
   else
     autostart_status="$(red "no")"
