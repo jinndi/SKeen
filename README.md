@@ -386,39 +386,30 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 
 **Configure SKeen**. Its configuration file is located at `/opt/etc/skeen/skeen.json`.
 
-**Configure the sing-box JSON configuration file(s)** located in the `/opt/etc/skeen/config/` directory. Example configuration files are already provided there. Alternatively, you can use your own single configuration file by enabling the `sing_config.enable` mode.
+**Configure the sing-box JSON configuration file**, located by default at `/opt/etc/skeen/config.json`.
 
-**web panel** is configured by default and available at the router's IP address (usually 192.168.1.1) at `http://192.168.1.1:9999`.
+**The WEB dashboard** is configured by default and accessible at your router's IP address (typically 192.168.1.1) at `http://192.168.1.1:9999`.
 
 The `/opt/etc/skeen` directory is not removed during program uninstallation (it must be deleted manually if necessary) and is not overwritten during reinstallation if it already exists.
 
 Manage the package further using the `skeen` command.
 
-<details>
-  <summary>After successful installation:</summary>
-<br>
+**File and directory structure after successful installation:**
 
 ```
 /opt/
 ├── bin/
-│   ├── skeen              # SKeen management script
-│   └── skeen-box          # sing-box binary (if you didn't skip the installation)
+│   ├── skeen         # SKeen management script
+│   └── skeen-box     # Sing-box binary (if you didn't skip the installation)
 ├── etc/
 │   ├── init.d/
-│   │   └── S99SKeen       # Autostart script
+│   │   └── S99SKeen  # Autostart script
 │   ├── ndm/
 │   │   └── netfilter.d/
 │   │       └── skeen_firewall.sh  # Created on start
 │   └── skeen/
-│       ├── skeen.json     # SKeen configuration
-│       └── config/        # sing-box config dir
-│           ├── log.json
-│           ├── dns.json
-│           ├── ntp.json
-│           ├── inbounds.json
-│           ├── outbounds.json
-│           ├── route.json
-│           └── experimental.json
+│       ├── skeen.json    # SKeen configuration
+│       └── config.json   # Sing-box configuration
 └── tmp/
     └── (temporary download files)
 
@@ -426,7 +417,6 @@ Manage the package further using the `skeen` command.
 ├── skeen.sh     # SKeen management script - synced after boot/full restart
 └── skeen.json   # SKeen configuration - on any changes to the source file
 ```
-</details>
 
 ### ⚡ Commands
 
@@ -488,11 +478,11 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 
 ```jsonc
 {
-  "auto_start": {
+  "auto_start": {      //// Automatic startup configuration for SKeen including Sing-box.
     "enabled": 1,      // SKeen autostart on router reboot (0 = disabled)
     "delay": 0         // Auto-start delay in seconds (default: 0)
   },
-  "policy": {
+  "policy": {          //// Access policy configuration for the specified network segment.
     "enabled": 0,      // Enable routing based on segment policy (1 - enable, 0 - disable)
     "segment": "br1"   // Name of the segment interface (Bridge) whose policy will be used;
                        // starts with "br" followed by a number starting from 0.
@@ -500,7 +490,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // e.g., http://192.168.1.1/segments/Bridge1 corresponds to "br1".
                        // Alternatively, use the command: skeen iface
   },
-  "network": {
+  "network": {         //// Network configuration
     "ipv6": 1,         // Enable IPv6 support (0 = disabled)
     "tuning": 0,       // Enable sysctl network optimization (1 = on).
                        // If disabled, sysctl settings reset after reboot.
@@ -510,35 +500,43 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "223.5.5.5"
     ]                  // Domains or IPs V4 for connectivity tests (max 3)
   },
-  "sing_binary": {
-    "enabled": 0,      // If set to 1, a custom sing-box binary will be used;
-                       // you will be responsible for its updates and removal
-    "path": ""         // Full path to the binary (defaults to /opt/bin/sing-box)
+  "singbox": {         //// Sing-box configuration
+    "config": {        // + Configuration file
+      "path": "",      // Full path to the local Sing-box configuration file
+                       // Default is /opt/etc/skeen/config.json
+      "url": ""        // URL (http:// or https://) for syncing configuration
+                       // via `skeen sync` by default (optional)
+    },
+    "external": {      // + External Sing-box usage
+      "enabled": 0,    // If set to 1, an external Sing-box binary is used;
+                       // its installation, updates, and removal are managed manually.
+      "path": "",      // Full path to binary (default: /opt/bin/sing-box).
+      "config": {      // Configuration file for external Sing-box (optional)
+        "path": "",    // Similar to the singbox.config object above;
+        "url": ""      // its data will be used if left blank here.
+      }
+    }
   },
-  "sing_config":{
-    "enabled": 0,      // If set to 1, a single sing-box configuration file
-                       // located at /opt/etc/skeen/config.json will be used
-                       // instead of the default folder /opt/etc/skeen/config
-    "path": "",        // You can specify your own path (full path)
-    "sync_url": "",    // URL (http:// or https://) from which the configuration will be synced
-                       // using the `skeen sync` command by default (optional)
+  "services": {        //// Additional services configuration
+    "proxy": {         // + Local proxy service for update and sync commands
+      "enabled": 0,    // If set to 1, a local proxy (127.0.0.1) is used
+      "port": "",      // Local proxy port (SOCKS5 or mixed)
+      "user": "",      // Username for authentication (optional)
+      "pass": ""       // Password for authentication (required if username is provided)
+    }
   },
-  "service_proxy": {
-    "enabled": 0,      // Enable using a local proxy (127.0.0.1) for update and sync commands
-    "port": "",        // Local proxy port (e.g., SOCKS5 or mixed)
-    "user": "",        // Username for connection (optional)
-    "pass": ""         // Password for connection (required if user is specified)
-  },
-  "firewall": {
-    "intercept": {
+  "firewall": {        /// SKeen firewall configuration (iptables chains/rules)
+    "intercept": {     // + Interception rules to the Sing-box core
       "dns": 1,        // Intercept DNS queries in TProxy/Hybrid modes (0 = disabled),
                        // ignored if redirect_dns is configured (see below)
-      "fakeip": {
+
+      "fakeip": {      // Interception based on Sing-box FakeIP DNS
         "enabled": 0,  // If set to 1, includes the FakeIP pool in Redirect/TProxy interception;
-                       // all other traffic goes directly, bypassing sing-box.
-                       // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled, along with sing-box DNS configuration.
+                       // all other traffic goes directly, bypassing sing-box:
+                       // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled,
+                       //   along with sing-box DNS configuration.
                        // - The exclude.port/cidr exceptions will function as normal.
-        "include": "", // Full path to the file containing a list of IP/CIDR resources (both v4 and v6) - one per line.
+        "include": "", // Full path to the file containing a list of IP/CIDR resources (both v4 and v6):
                        // - Allows comments after #, empty lines, and leading/trailing whitespaces.
                        // - Intended for resources that initially didn't have a domain and therefore
                        //   didn't receive a FakeIP, but still need to be proxied.
@@ -549,17 +547,18 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // this is done in the Keenetic/Netcraze WebUI under the "Client Lists" tab
       }
     },
-    "exclude": {
+    "exclude": {       // + Exclude rules from Sing-box core interception
       "port": [
-        "137:139",     // Ports excluded from redirect (Redirect/TProxy)
+        "137:139",     // Ports excluded from Redirect/TProxy
         445, 1900      // (80 and 443 won't be added, exclude only the necessary system ones.)
       ],
-      "ipv4_cidr": [], // Excluded IPv4 subnets for redirection (Redirect/TProxy)
+      "ipv4_cidr": [], // Excluded IPv4 subnets from Redirect/TProxy
                        // Example: [ "192.87.1.0/24", "192.12.1.1" ]
-      "ipv6_cidr": []  // Excluded IPv6 subnets for redirection (Redirect/TProxy)
+
+      "ipv6_cidr": []  // Excluded IPv6 subnets from Redirect/TProxy
                        // Example: [ "2001:db8::/32", "2001:db8::1" ]
     },
-    "redirect_dns": {
+    "redirect_dns": {  // + DNS query redirection (as an alternative to interception)
       "enabled": 0,    // Set to 1 to enable DNS redirection before system rules
       "to_port": "",   // The port to which DNS requests will be redirected
       "use_policy": 1  // Use defined policy if configured (0 = disabled)
@@ -568,13 +567,13 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // Available in redirect, tproxy, and hybrid modes;
                        // subnet exclusions, as well as port bypass and interception rules, are respected.
   },
-  "update": {
+  "update": {          /// Update settings (skeen update)
     "singbox": {
-      "enabled": 1,    // Enable Sing-box update check via skeen update (0 = disabled)
+      "enabled": 1,    // Enable Sing-box update check (0 = disabled)
       "beta": 0        // If set to 1, enables checking for pre-release versions (alpha, beta, rc)
     },
     "skeen": {
-      "enabled": 1     // Enable SKeen update check via skeen update (0 = disabled)
+      "enabled": 1     // Enable SKeen update check (0 = disabled)
     }
   }
 }
