@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.12](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.11...SKeen-v5.1.12) (2026-08-27)
+
+
+### 🛠 Refactor
+
+* **update:** replace GitHub API release check with direct HTTP redirect ([af76d18](https://github.com/jinndi/SKeen/commit/af76d18c0451551b9e25316bf318c2eb67e0252b))
+
 ## [5.1.11](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.10...SKeen-v5.1.11) (2026-08-27)
 
 
