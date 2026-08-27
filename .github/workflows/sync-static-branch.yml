@@ -23,6 +23,8 @@ jobs:
           shfmt -s -mn skeen.sh > skeen_min
           shfmt -s -mn skeen_ru.sh > skeen_ru_min
 
+          cp config.json config.json_tmp
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -35,14 +37,16 @@ jobs:
 
           mv skeen_min skeen
           mv skeen_ru_min skeen_ru
+          mv config.json_tmp config.json
 
-          if [ -n "$(git status --porcelain skeen skeen_ru)" ]; then
-            git add skeen skeen_ru
-            git commit -m "dist: update optimized scripts $(date +'%Y-%m-%d %H:%M')"
+          if [ -n "$(git status --porcelain skeen skeen_ru config.json)" ]; then
+            git add skeen skeen_ru config.json
+            git commit -m "dist: update optimized scripts and config $(date +'%Y-%m-%d %H:%M')"
             git push origin static
 
             curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/skeen"
             curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/skeen_ru"
+            curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/config.json"
           else
             echo "No changes to commit"
           fi
