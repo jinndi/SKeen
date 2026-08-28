@@ -382,7 +382,7 @@ m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/";
 </details>
 
 > [!NOTE]
-> You will be prompted to install `sing-box` from the official repository or skip it to manually configure a custom binary in `/opt/etc/skeen/skeen.json` later.
+> You will be prompted to install `sing-box` from the official repository (either the stable or beta version). You can also skip the installation to configure a custom binary file later in `/opt/etc/skeen/skeen.json`.
 
 **Configure SKeen**. Its configuration file is located at `/opt/etc/skeen/skeen.json`.
 
