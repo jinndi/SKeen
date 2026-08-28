@@ -1,5 +1,9 @@
 on:
   workflow_dispatch:
+  workflow_run:
+      workflows: ["Release please"]
+      types:
+        - completed
 
 permissions:
   contents: write
@@ -8,6 +12,9 @@ name: Sync static branch
 
 jobs:
   build-and-push:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
