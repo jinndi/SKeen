@@ -12,8 +12,9 @@ readonly NETFILTER_DIR="$ENTWARE_DIR/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
+readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.1.12"
+readonly SKEEN_VERSION="5.2.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -21,14 +22,14 @@ readonly SKEEN_API_URL="https://github.com/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="$WORK_DIR/$SKEEN_PROC.json"
 readonly SKEEN_RUN_CONFIG="/tmp/$SKEEN_PROC.json"
 readonly SKEEN_AUTOSTART_SCRIPT="$ENTWARE_DIR/etc/init.d/S99SKeen"
-SKEEN_SCRIPT_URL="$SKEEN_API_URL/download/skeen_ru $CURL_RESOLVE_FIX"
+readonly SKEEN_SCRIPT_URL="$SKEEN_API_URL/download/skeen_ru $CURL_RESOLVE_FIX"
 readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
 readonly SINGBOX_BIN_PATH="$ENTWARE_DIR/bin/skeen-box"
 readonly SINGBOX_DEFAULT_CONFIG_PATH="$WORK_DIR/config.json"
 readonly SINGBOX_API_URL="https://github.com/SagerNet/sing-box/releases/latest"
+readonly SINGBOX_API_URL_BETA="https://github.com/SagerNet/sing-box/releases.atom"
 readonly SINGBOX_SPACE_MB=128
-SINGBOX_CONFIG_JSON_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/config.json"
 readonly FIREWALL_HOOK_FILE="$NETFILTER_DIR/${SKEEN_PROC}_firewall.sh"
 readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
 readonly NET_EXCLUDE_SET="skeen_exclude_net"
@@ -145,7 +146,7 @@ cat <<EOF >"$SKEEN_CONFIG"
   },
   "singbox": {
     "config": {
-      "path": "/opt/etc/skeen/config.json",
+      "path": "$SKEEN_CONFIG",
       "url": ""
     },
     "external": {
@@ -189,7 +190,7 @@ cat <<EOF >"$SKEEN_CONFIG"
   "update": {
     "singbox": {
       "enabled": 1,
-      "beta": 0
+      "beta": ${BETA_ENABLED:-0}
     },
     "skeen": {
       "enabled": 1
@@ -201,15 +202,24 @@ cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG" >/dev/null 2>&1
 [ ! -f "$SKEEN_AUTOSTART_SCRIPT" ]&&create_autostart_script >/dev/null 2>&1
 echook "Configuration file $SKEEN_NAME created successfully"
 }
+get_skeen_config_path(){
+if [ -f "${SKEEN_RUN_CONFIG:-}" ];then
+echo "$SKEEN_RUN_CONFIG"
+elif [ -f "${SKEEN_CONFIG:-}" ];then
+echo "$SKEEN_CONFIG"
+fi
+}
 json_get_array(){
 local path="${1:-}"
-local arr
-arr="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e "$path[*]")"
+local arr config_path
+config_path="$(get_skeen_config_path)"
+[ -z "$config_path" ]&&return 1
+arr="$(jsonfilter -i "$config_path" -e "$path[*]")"
 if [ -n "$arr" ];then
 echo "$arr"
 return
 fi
-jsonfilter -i "$SKEEN_RUN_CONFIG" -e "$path"|tr -d '[],"'
+jsonfilter -i "$config_path" -e "$path"|tr -d '[],"'
 }
 check_and_create_or_sync_skeen_config(){
 [ ! -f "$SKEEN_CONFIG" ]&&create_skeen_config
@@ -247,21 +257,27 @@ chmod +x "$SINGBOX_BIN" 2>/dev/null||true
 fi
 }
 get_auto_start_config(){
-eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
+local config_path
+config_path="$(get_skeen_config_path)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
 -e AUTO_START_ENABLED='@.auto_start.enabled' \
 -e AUTO_START_DELAY='@.auto_start.delay')"
 : "${AUTO_START_ENABLED:=1}"
 : "${AUTO_START_DELAY:=0}"
 }
 get_network_config(){
-eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
+local config_path
+config_path="$(get_skeen_config_path)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
 -e NETWORK_IPV6='@.network.ipv6' \
 -e NETWORK_TUNING='@.network.tuning')"
 : "${NETWORK_IPV6:=1}"
 : "${NETWORK_TUNING:=0}"
 }
 get_singbox_config(){
-eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
+local config_path
+config_path="$(get_skeen_config_path)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
 -e sing_config_path='@.singbox.config.path' \
 -e sing_config_url='@.singbox.config.url' \
 -e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
@@ -286,7 +302,9 @@ fi
 check_and_kill_old_proc
 }
 get_service_proxy_config(){
-eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
+local config_path
+config_path="$(get_skeen_config_path)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
 -e SERVICE_PROXY_ENABLED='@.services.proxy.enabled' \
 -e SERVICE_PROXY_PORT='@.services.proxy.port' \
 -e SERVICE_PROXY_USER='@.services.proxy.user' \
@@ -297,7 +315,9 @@ eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 : "${SERVICE_PROXY_PASS:=}"
 }
 get_firewall_config(){
-eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
+local config_path
+config_path="$(get_skeen_config_path)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
 -e POLICY_ENABLED='@.policy.enabled' \
 -e POLICY_SEGMENT='@.policy.segment' \
 -e NETWORK_IPV6='@.network.ipv6' \
@@ -322,7 +342,9 @@ eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 : "${FIREWALL_PROXY_ROUTER:=0}"
 }
 get_update_config(){
-eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
+local config_path
+config_path="$(get_skeen_config_path)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
 -e UPDATE_SINGBOX_ENABLED='@.update.singbox.enabled' \
 -e UPDATE_SINGBOX_BETA='@.update.singbox.beta' \
 -e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled')"
@@ -331,7 +353,6 @@ eval "$(jsonfilter -i "$SKEEN_RUN_CONFIG" \
 : "${UPDATE_SKEEN_ENABLED:=1}"
 }
 run_curl(){
-if [ -s "$SKEEN_RUN_CONFIG" ];then
 local proxy_opts=""
 local err_template="Service proxy is enabled but"
 get_service_proxy_config
@@ -346,7 +367,6 @@ else
 proxy_opts="--socks5-hostname 127.0.0.1:$SERVICE_PROXY_PORT"
 if [ -n "$SERVICE_PROXY_USER" ]&&[ -n "$SERVICE_PROXY_PASS" ];then
 proxy_opts="$proxy_opts --proxy-user $SERVICE_PROXY_USER:$SERVICE_PROXY_PASS"
-fi
 fi
 fi
 fi
@@ -378,10 +398,16 @@ fi
 esac
 }
 get_latest_version(){
-local api_url="${1:-}" latest_release
+local api_url="${1:-}" sing_beta="${2:-}" latest_release tag
+if [ "$sing_beta" = "1" ];then
+latest_release="$(run_curl -s "$api_url")"
+tag="$(echo "$latest_release"|grep -oE '<title>[^<]+'|grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?'|head -n 1|sed 's/^v//')"
+else
 latest_release="$(run_curl -sI -H "Cache-Control: no-cache" "$api_url?$(date +%s)")"
-[ $? -ne 0 ]&&return 1
-echo "$latest_release"|grep -i "^location:"|sed -E 's/.*tag\/(.*)/\1/'|tr -d '\r'|grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+tag="$(echo "$latest_release"|grep -i "^location:"|sed -E 's/.*tag\/(.*)/\1/'|tr -d '\r'|grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+fi
+[ -z "$tag" ]&&return 1
+echo "$tag"
 }
 show_header(){
 cyan "
@@ -411,20 +437,25 @@ PKG_SUFFIX=".ipk"
 fi
 }
 ask_install_singbox(){
+show_header
+printf "\n"
 while :;do
-printf "You can opt out of installing %s from the official repository\n" "$SINGBOX_NAME"
-printf "and set up your own instance of the program instead.\n"
-printf "Skip installing %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
+cyan "$SINGBOX_NAME installation options:"
+printf " 1) Latest stable\n 2) Latest alpha/beta/rc\n 3) Use custom binary\n\n"
+printf "Select an option [1-3]: " >/dev/tty
 read -r opt </dev/tty
-opt=${opt:-n}
-case $opt in
-y|Y)EXTERNAL_ENABLED=1
+BETA_ENABLED=0
+EXTERNAL_ENABLED=0
+case ${opt:-1} in
+1)break;;
+2)BETA_ENABLED=1
 break
 ;;
-n|N)EXTERNAL_ENABLED=0
+3)EXTERNAL_ENABLED=1
 break
 ;;
-*)echoerr "Please enter y (yes) or n (no)."
+*)echoerr "Please enter 1, 2, or 3."
+printf "\n"
 esac
 done
 }
@@ -518,11 +549,12 @@ done
 echook "All dependencies are installed"
 }
 download_singbox(){
-local version="${1:-$latest_version}"
-local pkg_url
+local beta="${1:-}" version="${2:-$latest_version}" pkg_url
 if [ -z "$version" ]&&[ -z "$MIRROR" ];then
 echomsg "Fetching the latest version..."
-version="$(get_latest_version "$SINGBOX_API_URL")"
+local api_url="$SINGBOX_API_URL"
+[ "$beta" = "1" ]&&api_url="$SINGBOX_API_URL_BETA"
+version="$(get_latest_version "$api_url" "$beta")"
 [ -z "$version" ]&&echoerr "Failed to fetch the latest version"&&exit 1
 echook "Latest version is $version"
 fi
@@ -531,7 +563,9 @@ PKG_NAME="sing-box_${version}_${PKG_OS}_$PKG_ARCH$PKG_SUFFIX"
 pkg_url="https://github.com/SagerNet/sing-box/releases/download/v$version/$PKG_NAME $CURL_RESOLVE_FIX"
 else
 PKG_NAME="sing-box_${PKG_OS}_$PKG_ARCH$PKG_SUFFIX"
-pkg_url="${MIRROR}sing-box/$PKG_NAME"
+local sing_folder="sing-box"
+[ "$beta" = "1" ]&&sing_folder="sing-box-beta"
+pkg_url="$MIRROR$sing_folder/$PKG_NAME"
 fi
 echomsg "Downloading $PKG_NAME..."
 mkdir -p "$TMP_DIR"
@@ -566,7 +600,7 @@ rm -f "$TMP_DIR/$PKG_NAME"
 echook "$SINGBOX_NAME binary installed successfully"
 }
 download_singbox_config(){
-local action="${1:-}"
+local beta="${1:-}" action="${2:-}"
 get_singbox_config
 local backup_config="$SINGBOX_CONFIG.bak"
 if [ "$act" != "force" ]&&[ -f "$SINGBOX_CONFIG" ];then
@@ -576,10 +610,14 @@ fi
 echomsg "Downloading $SINGBOX_NAME configuration..."
 mkdir -p "$(dirname "$SINGBOX_CONFIG")"
 [ -f "$SINGBOX_CONFIG" ]&&mv -f "$SINGBOX_CONFIG" "$backup_config"
+local config_name="config.json" config_url=""
+[ "$beta" = "1" ]&&config_name="config_beta.json"
 if [ -n "$MIRROR" ];then
-SINGBOX_CONFIG_JSON_URL="${MIRROR}config.json"
+config_url="$MIRROR$config_name"
+else
+config_url="$REPO_MAIN_BRANCH$config_name"
 fi
-if ! run_curl -o "$SINGBOX_CONFIG" $SINGBOX_CONFIG_JSON_URL;then
+if ! run_curl -o "$SINGBOX_CONFIG" $config_url;then
 [ -f "$backup_config" ]&&mv -f "$backup_config" "$SINGBOX_CONFIG"
 echoerr "Failed to download $SINGBOX_NAME configuration"
 return 1
@@ -629,12 +667,13 @@ fi
 download_skeen_script(){
 local action="${1:-}"
 local backup_script="$SKEEN_SCRIPT.bak"
+local script_url="$SKEEN_SCRIPT_URL"
 echomsg "Downloading $SKEEN_NAME script at $SKEEN_SCRIPT"
 [ -f "$SKEEN_SCRIPT" ]&&mv -f "$SKEEN_SCRIPT" "$backup_script"
 if [ -n "$MIRROR" ];then
-SKEEN_SCRIPT_URL="${MIRROR}skeen"
+script_url="${MIRROR}skeen"
 fi
-if ! run_curl -o "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL;then
+if ! run_curl -o "$SKEEN_SCRIPT" $script_url;then
 [ -f "$backup_script" ]&&mv -f "$backup_script" "$SKEEN_SCRIPT"
 echoerr "Failed to download $SKEEN_NAME script"
 [ "$action" != "update" ]&&exit 1
@@ -666,7 +705,9 @@ install(){
 MIRROR="${MIRROR:-}"
 if [ -n "$MIRROR" ];then
 case "$MIRROR" in
-https://*static/|http://*static/)echomsg "Using mirror: $MIRROR";;
+https://*static/|http://*static/)echomsg "Using mirror: $MIRROR"
+printf "\n"
+;;
 *)exiterr "Mirror URL must start with http(s):// and end with static/"
 esac
 fi
@@ -675,11 +716,11 @@ ask_install_singbox
 if [ "$EXTERNAL_ENABLED" != "1" ];then
 check_free_space
 get_architecture
-download_singbox
+download_singbox "$BETA_ENABLED"
 install_singbox
 fi
 install_dependencies
-download_singbox_config
+download_singbox_config "$BETA_ENABLED"
 create_autostart_script
 create_skeen_group
 download_skeen_script
@@ -704,19 +745,20 @@ echomsg "Removing firewall hook script..."
 rm -f "$FIREWALL_HOOK_FILE"
 echomsg "Removing $SKEEN_NAME script..."
 rm -f "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG"
+rm -f /tmp/skeen_singbox_version
 echomsg "Delete group $SKEEN_PROC..."
 delgroup "$SKEEN_PROC"
-if get_singbox_config&&[ "$SINGBOX_BIN" = "$SINGBOX_BIN_PATH" ];then
+if [ -f "$SINGBOX_BIN_PATH" ];then
 while :;do
 printf "Delete %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
 read -r opt </dev/tty
 opt=${opt:-n}
 case $opt in
 y|Y)echomsg "Removing $SINGBOX_NAME binary..."
-rm -f "$SINGBOX_BIN"
+rm -f "$SINGBOX_BIN_PATH"
 break
 ;;
-n|N)echomsg "File $SINGBOX_BIN kept!"
+n|N)echomsg "File $SINGBOX_BIN_PATH kept!"
 break
 ;;
 *)echoerr "Please enter y (yes) or n (no)."
@@ -2119,17 +2161,14 @@ local proc="${2:-}"
 local api="${3:-}"
 local update_fn="${4:-}"
 local releases="${5:-}"
-local current_version opt
+local current_version beta opt
 latest_version=""
 check_should_run "$proc"
 echomsg "Checking $name for updates..."
 current_version=$(get_current_version "$proc")
 [ -z "$current_version" ]&&current_version="not installed"
-if echo "$api"|grep -q "atom";then
-latest_version="$(run_curl -s "$api"|grep -oE '<title>[^<]+'|grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?'|head -n 1|sed 's/^v//')"
-else
-latest_version=$(get_latest_version "$api")
-fi
+case "$api" in *atom)beta="1";esac
+latest_version=$(get_latest_version "$api" "$beta")
 [ -z "$latest_version" ]&&echoerr "Failed to fetch the latest version"&&return 1
 if [ "$current_version" != "$latest_version" ];then
 printf '%s %s\n' "$(cyan "Current version $name:")" "$(red "$current_version")"
@@ -2162,13 +2201,10 @@ press_any_key_to_menu "" 1
 fi
 if get_singbox_config&&[ "$SINGBOX_EXTERNAL_ENABLED" != "1" ];then
 if [ "$UPDATE_SINGBOX_ENABLED" = "1" ];then
-if [ "$UPDATE_SINGBOX_BETA" = "1" ];then
-ask_and_update "$SINGBOX_NAME" "sing" "https://github.com/SagerNet/sing-box/releases.atom" \
+local api_url="$SINGBOX_API_URL"
+[ "$UPDATE_SINGBOX_BETA" = "1" ]&&api_url="$SINGBOX_API_URL_BETA"
+ask_and_update "$SINGBOX_NAME" "sing" "$api_url" \
 update_core "https://github.com/SagerNet/sing-box/releases"
-else
-ask_and_update "$SINGBOX_NAME" "sing" "$SINGBOX_API_URL" \
-update_core "https://github.com/SagerNet/sing-box/releases"
-fi
 fi
 fi
 if [ "$UPDATE_SKEEN_ENABLED" = "1" ];then
@@ -2384,7 +2420,8 @@ backup_create
 then
 rm -rf "$WORK_DIR"
 mkdir -p "$WORK_DIR"
-download_singbox_config "force"
+get_update_config
+download_singbox_config "$UPDATE_SINGBOX_BETA" "force"
 create_skeen_config "force"
 echook "Configuration reset completed"
 else
@@ -2430,7 +2467,7 @@ echook "Cache cleared. Restart $SKEEN_NAME to apply changes"
 }
 check_skeen_config(){
 echomsg "Checking $SKEEN_NAME configuration..."
-if jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.auto_start' >/dev/null;then
+if jsonfilter -i "$(get_skeen_config_path)" -e '@.auto_start' >/dev/null;then
 echook "$SKEEN_NAME JSON is valid"
 else
 local err_msg="$SKEEN_NAME configuration is invalid"
