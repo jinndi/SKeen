@@ -236,18 +236,26 @@ EOF
   echook "Configuration file $SKEEN_NAME created successfully"
 }
 
+get_skeen_config_path() {
+  if [ -f "${SKEEN_RUN_CONFIG:-}" ]; then
+    echo "$SKEEN_RUN_CONFIG"
+  elif [ -f "${SKEEN_CONFIG:-}" ]; then
+    echo "$SKEEN_CONFIG"
+  fi
+}
+
 json_get_array() {
   local path="${1:-}"
   local arr
 
-  arr="$(jsonfilter -i "$SKEEN_RUN_CONFIG" -e "${path}[*]")"
+  arr="$(jsonfilter -i "$(get_skeen_config_path)" -e "${path}[*]")"
 
   if [ -n "$arr" ]; then
     echo "$arr"
     return
   fi
 
-  jsonfilter -i "$SKEEN_RUN_CONFIG" -e "$path" | tr -d '[],"'
+  jsonfilter -i "$(get_skeen_config_path)" -e "$path" | tr -d '[],"'
 }
 
 check_and_create_or_sync_skeen_config() {
@@ -291,7 +299,7 @@ check_and_kill_old_proc() {
 
 get_auto_start_config() {
   eval "$(
-    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+    jsonfilter -i "$(get_skeen_config_path)" \
       -e AUTO_START_ENABLED='@.auto_start.enabled' \
       -e AUTO_START_DELAY='@.auto_start.delay'
   )"
@@ -301,7 +309,7 @@ get_auto_start_config() {
 
 get_network_config() {
   eval "$(
-    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+    jsonfilter -i "$(get_skeen_config_path)" \
       -e NETWORK_IPV6='@.network.ipv6' \
       -e NETWORK_TUNING='@.network.tuning'
   )"
@@ -312,7 +320,7 @@ get_network_config() {
 
 get_singbox_config() {
   eval "$(
-    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+    jsonfilter -i "$(get_skeen_config_path)" \
       -e sing_config_path='@.singbox.config.path' \
       -e sing_config_url='@.singbox.config.url' \
       -e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
@@ -343,7 +351,7 @@ get_singbox_config() {
 
 get_service_proxy_config() {
   eval "$(
-    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+    jsonfilter -i "$(get_skeen_config_path)" \
       -e SERVICE_PROXY_ENABLED='@.services.proxy.enabled' \
       -e SERVICE_PROXY_PORT='@.services.proxy.port' \
       -e SERVICE_PROXY_USER='@.services.proxy.user' \
@@ -357,7 +365,7 @@ get_service_proxy_config() {
 
 get_firewall_config() {
   eval "$(
-    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+    jsonfilter -i "$(get_skeen_config_path)" \
       -e POLICY_ENABLED='@.policy.enabled' \
       -e POLICY_SEGMENT='@.policy.segment' \
       -e NETWORK_IPV6='@.network.ipv6' \
@@ -386,7 +394,7 @@ get_firewall_config() {
 
 get_update_config() {
   eval "$(
-    jsonfilter -i "$SKEEN_RUN_CONFIG" \
+    jsonfilter -i "$(get_skeen_config_path)" \
       -e UPDATE_SINGBOX_ENABLED='@.update.singbox.enabled' \
       -e UPDATE_SINGBOX_BETA='@.update.singbox.beta' \
       -e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled'
@@ -695,7 +703,7 @@ install_singbox() {
 download_singbox_config() {
   local action="${1:-}"
 
-  get_singbox_config
+  get_singbox_config >/dev/null 2>&1
   local backup_config="${SINGBOX_CONFIG}.bak"
 
   if [ "$act" != "force" ] && [ -f "$SINGBOX_CONFIG" ]; then
@@ -879,17 +887,19 @@ uninstall() {
   echomsg "Removing $SKEEN_NAME script..."
   rm -f "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG"
 
+  rm -f /tmp/skeen_singbox_version
+
   echomsg "Delete group ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
 
-  if get_singbox_config && [ "$SINGBOX_BIN" = "$SINGBOX_BIN_PATH" ]; then
+  if [ -f "$SINGBOX_BIN_PATH" ]; then
     while :; do
       printf "Delete %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
       read -r opt </dev/tty
       opt=${opt:-n}
       case $opt in
-      y | Y) echomsg "Removing $SINGBOX_NAME binary..."; rm -f "$SINGBOX_BIN"; break ;;
-      n | N) echomsg "File $SINGBOX_BIN kept!"; break ;;
+      y | Y) echomsg "Removing $SINGBOX_NAME binary..."; rm -f "$SINGBOX_BIN_PATH"; break ;;
+      n | N) echomsg "File $SINGBOX_BIN_PATH kept!"; break ;;
       *) echoerr "Please enter y (yes) or n (no)." ;;
       esac
     done
@@ -3079,7 +3089,7 @@ clean_cache() {
 
 check_skeen_config() {
   echomsg "Checking $SKEEN_NAME configuration..."
-  if jsonfilter -i "$SKEEN_RUN_CONFIG" -e '@.auto_start' >/dev/null; then
+  if jsonfilter -i "$(get_skeen_config_path)" -e '@.auto_start' >/dev/null; then
     echook "$SKEEN_NAME JSON is valid"
   else
     local err_msg="$SKEEN_NAME configuration is invalid"
