@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.2.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.12...SKeen-v5.2.0) (2026-08-28)
+
+
+### 🚀 Feat
+
+* **config:** add beta install support and refactor config path resolution ([7d6a350](https://github.com/jinndi/SKeen/commit/7d6a3508452c7a298843e0233d3069a5280e0b53))
+
+
+### 🛠 Refactor
+
+* **config:** use get_skeen_config_path helper for config file resolution ([24bc3cb](https://github.com/jinndi/SKeen/commit/24bc3cb2d19ac42724ee790b66f73b5a96363487))
+
 ## [5.1.12](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.11...SKeen-v5.1.12) (2026-08-27)
 
 
