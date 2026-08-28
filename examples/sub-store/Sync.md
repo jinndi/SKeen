@@ -26,7 +26,10 @@
   > Вы можете использовать любой собственный вариант - отредактированный или дополненный. Единственное, что необходимо, - это наличие структуры блока `outbounds`, схожей с примером. Если вы любите конструировать, создайте шаблон через `GUI.for.SingBox` (только для стабыльных версий sing-box) и скопируйте его с помощью плагина [sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen).
 
   > [!TIP]
-  > Если вам нужен шаблон для Windows, Linux или Android официальных клиентов sing-box, возьмите шаблоны из файлов `template-desktop.json` или `template-android.json` соответственно.
+  > Если вам нужен шаблон для Windows, Linux или Android официальных клиентов sing-box, возьмите их из папки `templates`.
+
+
+  **АКТУАЛЬНОСТЬ шаблона:** Sing-box `1.14.0-beta.2 +` версии.
 
 ```jsonc
 {
@@ -406,13 +409,12 @@ const fileNameId = "myfile"  // Имя(ID) файла (если пусто, то
 
 Допустим, при настройке `Sub-Store` мы получили ссылку на синхронизацию нашей конфигурации для `sing-box` вида `https://mydomain.ydns.eu/share/file/router?token=22kiO29piehSe2105yYYR`.
 
-1. Редактируем и сохраняем в `skeen.json` секцию `sing_config`:
+1. Редактируем и сохраняем в `skeen.json` секцию `singbox.config` или/либо `singbox.external.config`:
 
 ```json
-  "sing_config":{
-    "enable": 1,
+  "config":{
     "path": "/opt/etc/skeen/config.json",
-    "sync_url": "https://mydomain.ydns.eu/share/file/router?token=22kiO29piehSe2105yYYR"
+    "url": "https://mydomain.ydns.eu/share/file/router?token=22kiO29piehSe2105yYYR"
   }
 ```
 

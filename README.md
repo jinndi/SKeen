@@ -250,7 +250,7 @@ This is highly discouraged. From a manufacturer's perspective, this is a sure wa
 
 When Multi-WAN is enabled, sing-box's own outbound traffic may "hop" between different providers. Since most proxy protocols (VLESS, VMess, Shadowsocks) are highly sensitive to client IP changes within a single session, the connection becomes extremely unstable. For proper operation, you must strictly bind sing-box to a single internet channel.
 
-An example of how to bind a connection to a specific interface can be found in the `examples` folder, in the `multi-interface-routing.json` file.
+An example of how to bind a connection to a specific interface can be found in the `examples/basic/` folder, in the `multi-interface-routing.json` file.
 
 > **Note:** Selecting a provider in the SKeen policy has no effect by default without setting a policy mark in the routing or within the **outbounds** of the **sing-box** configuration. You can select any connection, but be aware: by default, the internet gateway specified in the default policy will be used, unless you have bound all or selected connections (**outbound**) to a specific interface.
 
@@ -263,7 +263,7 @@ An example of how to bind a connection to a specific interface can be found in t
   <summary>🏠 KeenDNS in TProxy mode?</summary>
 <br>
 
-If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from the local network in **TProxy** mode, you need to configure a `hosts` or `local` type DNS server in the sing-box configuration (see configuration examples in the `examples/keendns-tproxy-local-access.json file`). If internet access is allowed, no additional.
+If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from the local network in **TProxy** mode, you need to configure a `hosts` or `local` type DNS server in the sing-box configuration (see configuration examples in the `examples/basic/keendns-tproxy-local-access.json file`). If internet access is allowed, no additional.
 
 **Note:** Freeing up port 443 is absolutely not required for TProxy to work.
 
