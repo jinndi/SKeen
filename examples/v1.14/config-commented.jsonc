@@ -334,16 +334,16 @@
   // ══════════════════════════════════════════════
   "outbounds": [
     // Селекторы для переключения прокси в веб панели для конкретных наборов правил/протоколов
-    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [ "🌍 Auto", "🔒 NAIVE" ], "default": "🔒 NAIVE" },
+    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [ "🌍 Auto", "🔒 TROYAN" ], "default": "🔒 TROYAN" },
     { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ] },
-    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
-    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
-    { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 NAIVE" ] },
+    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ] },
+    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ] },
+    { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ] },
 
     // Группы автоматического измерения задержки (доступности прокси-узлов)
     // Примечание: Проводят тест задержки на всех указанных в outbounds узлах каждые 10 минут и выбирайте тот, у которого наименьшая задержка.
     // tolerance=100: Можно выбрать любой узел с задержкой в ​​пределах 100 мс от максимальной задержки (балансировка нагрузки).
-    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [ "🔒 NAIVE" ],  "interval": "10m", "tolerance": 100 },
+    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [ "🔒 TROYAN" ],  "interval": "10m", "tolerance": 100 },
     { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [ "🇷🇺 TROYAN" ], "interval": "5m", "tolerance": 100 },
 
     // Прямое подключение к правайдеру (DIRECT)
@@ -357,14 +357,13 @@
 
     // Список ваших прокси-узлов
     {
-      "tag": "🔒 NAIVE",
-      "type": "naive",
+      "tag": "🔒 TROYAN",
+      "type": "trojan",
+      "password": "password",
       "server": "example.com",
       "server_port": 443,
-      "username": "jinndi",
-      "password": "password",
-      "udp_over_tcp": true,
-      "tls": { "enabled": true, "server_name": "example.com" }
+      "tls": { "enabled": true, "server_name": "example.com" },
+      "multiplex": { "enabled": true }
     },
     {
       "tag": "🇷🇺 TROYAN",

@@ -28,6 +28,7 @@ readonly NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
+readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 
 readonly SKEEN_NAME="SKeen"
 readonly SKEEN_VERSION="5.1.12"
@@ -38,15 +39,15 @@ readonly SKEEN_API_URL="https://github.com/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 readonly SKEEN_RUN_CONFIG="/tmp/${SKEEN_PROC}.json"
 readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
-SKEEN_SCRIPT_URL="${SKEEN_API_URL}/download/skeen_ru $CURL_RESOLVE_FIX"
+readonly SKEEN_SCRIPT_URL="${SKEEN_API_URL}/download/skeen_ru $CURL_RESOLVE_FIX"
 
 readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
 readonly SINGBOX_BIN_PATH="${ENTWARE_DIR}/bin/skeen-box"
 readonly SINGBOX_DEFAULT_CONFIG_PATH="${WORK_DIR}/config.json"
 readonly SINGBOX_API_URL="https://github.com/SagerNet/sing-box/releases/latest"
+readonly SINGBOX_API_URL_BETA="https://github.com/SagerNet/sing-box/releases.atom"
 readonly SINGBOX_SPACE_MB=128
-SINGBOX_CONFIG_JSON_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/config.json"
 
 readonly FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
 readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
@@ -176,7 +177,7 @@ create_skeen_config() {
   },
   "singbox": {
     "config": {
-      "path": "/opt/etc/skeen/config.json",
+      "path": "${SKEEN_CONFIG}",
       "url": ""
     },
     "external": {
@@ -220,7 +221,7 @@ create_skeen_config() {
   "update": {
     "singbox": {
       "enabled": 1,
-      "beta": 0
+      "beta": ${BETA_ENABLED:-0}
     },
     "skeen": {
       "enabled": 1
@@ -246,16 +247,20 @@ get_skeen_config_path() {
 
 json_get_array() {
   local path="${1:-}"
-  local arr
+  local arr config_path
 
-  arr="$(jsonfilter -i "$(get_skeen_config_path)" -e "${path}[*]")"
+  config_path="$(get_skeen_config_path)"
+
+  [ -z "$config_path" ] && return 1
+
+  arr="$(jsonfilter -i "$config_path" -e "${path}[*]")"
 
   if [ -n "$arr" ]; then
     echo "$arr"
     return
   fi
 
-  jsonfilter -i "$(get_skeen_config_path)" -e "$path" | tr -d '[],"'
+  jsonfilter -i "$config_path" -e "$path" | tr -d '[],"'
 }
 
 check_and_create_or_sync_skeen_config() {
@@ -298,8 +303,11 @@ check_and_kill_old_proc() {
 }
 
 get_auto_start_config() {
-  eval "$(
-    jsonfilter -i "$(get_skeen_config_path)" \
+  local config_path
+  config_path="$(get_skeen_config_path)"
+
+  [ -n "$config_path" ] && eval "$(
+    jsonfilter -i "$config_path" \
       -e AUTO_START_ENABLED='@.auto_start.enabled' \
       -e AUTO_START_DELAY='@.auto_start.delay'
   )"
@@ -308,8 +316,11 @@ get_auto_start_config() {
 }
 
 get_network_config() {
-  eval "$(
-    jsonfilter -i "$(get_skeen_config_path)" \
+  local config_path
+  config_path="$(get_skeen_config_path)"
+
+  [ -n "$config_path" ] && eval "$(
+    jsonfilter -i "$config_path" \
       -e NETWORK_IPV6='@.network.ipv6' \
       -e NETWORK_TUNING='@.network.tuning'
   )"
@@ -319,8 +330,11 @@ get_network_config() {
 }
 
 get_singbox_config() {
-  eval "$(
-    jsonfilter -i "$(get_skeen_config_path)" \
+  local config_path
+  config_path="$(get_skeen_config_path)"
+
+  [ -n "$config_path" ] && eval "$(
+    jsonfilter -i "$config_path" \
       -e sing_config_path='@.singbox.config.path' \
       -e sing_config_url='@.singbox.config.url' \
       -e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
@@ -350,8 +364,11 @@ get_singbox_config() {
 }
 
 get_service_proxy_config() {
-  eval "$(
-    jsonfilter -i "$(get_skeen_config_path)" \
+  local config_path
+  config_path="$(get_skeen_config_path)"
+
+  [ -n "$config_path" ] && eval "$(
+    jsonfilter -i "$config_path" \
       -e SERVICE_PROXY_ENABLED='@.services.proxy.enabled' \
       -e SERVICE_PROXY_PORT='@.services.proxy.port' \
       -e SERVICE_PROXY_USER='@.services.proxy.user' \
@@ -364,8 +381,11 @@ get_service_proxy_config() {
 }
 
 get_firewall_config() {
-  eval "$(
-    jsonfilter -i "$(get_skeen_config_path)" \
+  local config_path
+  config_path="$(get_skeen_config_path)"
+
+  [ -n "$config_path" ] && eval "$(
+    jsonfilter -i "$config_path" \
       -e POLICY_ENABLED='@.policy.enabled' \
       -e POLICY_SEGMENT='@.policy.segment' \
       -e NETWORK_IPV6='@.network.ipv6' \
@@ -393,8 +413,11 @@ get_firewall_config() {
 }
 
 get_update_config() {
-  eval "$(
-    jsonfilter -i "$(get_skeen_config_path)" \
+  local config_path
+  config_path="$(get_skeen_config_path)"
+
+  [ -n "$config_path" ] && eval "$(
+    jsonfilter -i "$config_path" \
       -e UPDATE_SINGBOX_ENABLED='@.update.singbox.enabled' \
       -e UPDATE_SINGBOX_BETA='@.update.singbox.beta' \
       -e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled'
@@ -406,24 +429,22 @@ get_update_config() {
 }
 
 run_curl() {
-  if [ -s "$SKEEN_RUN_CONFIG" ]; then
-    local proxy_opts=""
-    local err_template="Service proxy is enabled but"
+  local proxy_opts=""
+  local err_template="Service proxy is enabled but"
 
-    get_service_proxy_config
+  get_service_proxy_config
 
-    if [ "$SERVICE_PROXY_ENABLED" = "1" ]; then
-      if [ -z "$SERVICE_PROXY_PORT" ]; then
-        echoerr "$err_template 'service_proxy.port' is not set" && return 1
-      elif ! is_running; then
-        echoerr "$err_template $SINGBOX_NAME is not running" && return 1
-      elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
-        echoerr "$err_template no process is listening on port ${SERVICE_PROXY_PORT}" && return 1
-      else
-        proxy_opts="--socks5-hostname 127.0.0.1:${SERVICE_PROXY_PORT}"
-        if [ -n "$SERVICE_PROXY_USER" ] && [ -n "$SERVICE_PROXY_PASS" ]; then
-          proxy_opts="$proxy_opts --proxy-user ${SERVICE_PROXY_USER}:${SERVICE_PROXY_PASS}"
-        fi
+  if [ "$SERVICE_PROXY_ENABLED" = "1" ]; then
+    if [ -z "$SERVICE_PROXY_PORT" ]; then
+      echoerr "$err_template 'service_proxy.port' is not set" && return 1
+    elif ! is_running; then
+      echoerr "$err_template $SINGBOX_NAME is not running" && return 1
+    elif ! netstat -tuln 2>/dev/null | grep -q ":${SERVICE_PROXY_PORT}"; then
+      echoerr "$err_template no process is listening on port ${SERVICE_PROXY_PORT}" && return 1
+    else
+      proxy_opts="--socks5-hostname 127.0.0.1:${SERVICE_PROXY_PORT}"
+      if [ -n "$SERVICE_PROXY_USER" ] && [ -n "$SERVICE_PROXY_PASS" ]; then
+        proxy_opts="$proxy_opts --proxy-user ${SERVICE_PROXY_USER}:${SERVICE_PROXY_PASS}"
       fi
     fi
   fi
@@ -466,13 +487,19 @@ get_current_version() {
 }
 
 get_latest_version() {
-  local api_url="${1:-}" latest_release
+  local api_url="${1:-}" sing_beta="${2:-}" latest_release tag
 
-  latest_release="$(run_curl -sI -H "Cache-Control: no-cache" "${api_url}?$(date +%s)")"
-  # shellcheck disable=SC2181
-  [ $? -ne 0 ] && return 1
+  if [ "$sing_beta" = "1" ]; then
+    latest_release="$(run_curl -s "$api_url")"
+    tag="$(echo "$latest_release" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')"
+  else
+    latest_release="$(run_curl -sI -H "Cache-Control: no-cache" "${api_url}?$(date +%s)")"
+    tag="$(echo "$latest_release" | grep -i "^location:" | sed -E 's/.*tag\/(.*)/\1/' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+  fi
 
-  echo "$latest_release"  | grep -i "^location:" | sed -E 's/.*tag\/(.*)/\1/' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+  [ -z "$tag" ] && return 1
+
+  echo "$tag"
 }
 
 show_header() {
@@ -510,18 +537,20 @@ get_os_release() {
 }
 
 ask_install_singbox() {
+  show_header; printf "\n"
   while :; do
-    printf "You can opt out of installing %s from the official repository\n" "$SINGBOX_NAME"
-    printf "and set up your own instance of the program instead.\n"
-    printf "Skip installing %s? [y/n]: " "$SINGBOX_NAME" >/dev/tty
-    read -r opt </dev/tty
+    cyan "$SINGBOX_NAME installation options:"
+    printf " 1) Latest stable\n 2) Latest alpha/beta/rc\n 3) Use custom binary\n\n"
+    printf "Select an option [1-3]: " >/dev/tty
+    read -r opt </dev/tty;
 
-    opt=${opt:-n}
+    BETA_ENABLED=0; EXTERNAL_ENABLED=0
 
-    case $opt in
-    y | Y) EXTERNAL_ENABLED=1; break ;;
-    n | N) EXTERNAL_ENABLED=0; break ;;
-    *) echoerr "Please enter y (yes) or n (no)." ;;
+    case ${opt:-1} in
+      1) break ;;
+      2) BETA_ENABLED=1; break ;;
+      3) EXTERNAL_ENABLED=1; break ;;
+      *) echoerr "Please enter 1, 2, or 3."; printf "\n" ;;
     esac
   done
 }
@@ -638,12 +667,13 @@ install_dependencies() {
 }
 
 download_singbox() {
-  local version="${1:-$latest_version}"
-  local pkg_url
+  local beta="${1:-}" version="${2:-$latest_version}" pkg_url
 
   if [ -z "$version" ] && [ -z "$MIRROR" ]; then
     echomsg "Fetching the latest version..."
-    version="$(get_latest_version "$SINGBOX_API_URL")"
+    local api_url="$SINGBOX_API_URL"
+    [ "$beta" = "1" ] && api_url="$SINGBOX_API_URL_BETA"
+    version="$(get_latest_version "$api_url" "$beta")"
     [ -z "$version" ] && echoerr "Failed to fetch the latest version" && exit 1
 
     echook "Latest version is $version"
@@ -654,7 +684,9 @@ download_singbox() {
     pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${version}/${PKG_NAME} $CURL_RESOLVE_FIX"
   else
     PKG_NAME="sing-box_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
-    pkg_url="${MIRROR}sing-box/${PKG_NAME}"
+    local sing_folder="sing-box"
+    [ "$beta" = "1" ] && sing_folder="sing-box-beta"
+    pkg_url="${MIRROR}${sing_folder}/${PKG_NAME}"
   fi
 
   echomsg "Downloading ${PKG_NAME}..."
@@ -701,9 +733,9 @@ install_singbox() {
 }
 
 download_singbox_config() {
-  local action="${1:-}"
+  local beta="${1:-}" action="${2:-}"
 
-  get_singbox_config >/dev/null 2>&1
+  get_singbox_config
   local backup_config="${SINGBOX_CONFIG}.bak"
 
   if [ "$act" != "force" ] && [ -f "$SINGBOX_CONFIG" ]; then
@@ -717,11 +749,16 @@ download_singbox_config() {
 
   [ -f "$SINGBOX_CONFIG" ] && mv -f "$SINGBOX_CONFIG" "$backup_config"
 
+  local config_name="config.json" config_url=""
+  [ "$beta" = "1" ] && config_name="config_beta.json"
+
   if [ -n "$MIRROR" ]; then
-    SINGBOX_CONFIG_JSON_URL="${MIRROR}config.json"
+    config_url="${MIRROR}${config_name}"
+  else
+    config_url="${REPO_MAIN_BRANCH}${config_name}"
   fi
 
-  if ! run_curl -o "$SINGBOX_CONFIG" $SINGBOX_CONFIG_JSON_URL; then
+  if ! run_curl -o "$SINGBOX_CONFIG" $config_url; then
     [ -f "$backup_config" ] && mv -f "$backup_config" "$SINGBOX_CONFIG"
     echoerr "Failed to download $SINGBOX_NAME configuration"
     return 1
@@ -786,16 +823,18 @@ create_skeen_group() {
 download_skeen_script() {
   local action="${1:-}"
   local backup_script="${SKEEN_SCRIPT}.bak"
+  local script_url="$SKEEN_SCRIPT_URL"
 
   echomsg "Downloading $SKEEN_NAME script at $SKEEN_SCRIPT"
 
   [ -f "$SKEEN_SCRIPT" ] && mv -f "$SKEEN_SCRIPT" "$backup_script"
 
   if [ -n "$MIRROR" ]; then
-    SKEEN_SCRIPT_URL="${MIRROR}skeen"
+    script_url="${MIRROR}skeen_ru"
   fi
 
-  if ! run_curl -o "$SKEEN_SCRIPT" $SKEEN_SCRIPT_URL; then
+  # shellcheck disable=SC2086
+  if ! run_curl -o "$SKEEN_SCRIPT" $script_url; then
     [ -f "$backup_script" ] && mv -f "$backup_script" "$SKEEN_SCRIPT"
     echoerr "Failed to download $SKEEN_NAME script"
     [ "$action" != "update" ] && exit 1
@@ -838,7 +877,7 @@ install() {
 
   if [ -n "$MIRROR" ]; then
     case "$MIRROR" in
-    https://*static/ | http://*static/) echomsg "Using mirror: $MIRROR"; ;;
+    https://*static/ | http://*static/) echomsg "Using mirror: $MIRROR"; printf "\n"; ;;
     *) exiterr "Mirror URL must start with http(s):// and end with static/"; ;;
     esac
   fi
@@ -848,11 +887,11 @@ install() {
   if [ "$EXTERNAL_ENABLED" != "1" ]; then
     check_free_space
     get_architecture
-    download_singbox
+    download_singbox "$BETA_ENABLED"
     install_singbox
   fi
   install_dependencies
-  download_singbox_config
+  download_singbox_config "$BETA_ENABLED"
   create_autostart_script
   create_skeen_group
   download_skeen_script
@@ -2686,7 +2725,7 @@ ask_and_update() {
   local api="${3:-}"
   local update_fn="${4:-}"
   local releases="${5:-}"
-  local current_version opt
+  local current_version beta opt
   latest_version=""
 
   check_should_run "$proc"
@@ -2696,11 +2735,8 @@ ask_and_update() {
   current_version=$(get_current_version "$proc")
   [ -z "$current_version" ] && current_version="not installed"
 
-  if echo "$api" | grep -q "atom"; then
-    latest_version="$(run_curl -s "$api" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')"
-  else
-    latest_version=$(get_latest_version "$api")
-  fi
+  case "$api" in *atom) beta="1" ;; esac
+  latest_version=$(get_latest_version "$api" "$beta")
   [ -z "$latest_version" ] && echoerr "Failed to fetch the latest version" && return 1
 
   if [ "$current_version" != "$latest_version" ]; then
@@ -2743,13 +2779,11 @@ check_updates() {
   # sing-box
   if get_singbox_config && [ "$SINGBOX_EXTERNAL_ENABLED" != "1" ]; then
     if [ "$UPDATE_SINGBOX_ENABLED" = "1" ]; then
-      if [ "$UPDATE_SINGBOX_BETA" = "1" ]; then
-        ask_and_update "$SINGBOX_NAME" "sing" "https://github.com/SagerNet/sing-box/releases.atom" \
-          update_core "https://github.com/SagerNet/sing-box/releases"
-      else
-        ask_and_update "$SINGBOX_NAME" "sing" "$SINGBOX_API_URL" \
-          update_core "https://github.com/SagerNet/sing-box/releases"
-      fi
+      local api_url="$SINGBOX_API_URL"
+      [ "$UPDATE_SINGBOX_BETA" = "1" ] && api_url="$SINGBOX_API_URL_BETA"
+
+      ask_and_update "$SINGBOX_NAME" "sing" "$api_url" \
+        update_core "https://github.com/SagerNet/sing-box/releases"
     fi
   fi
 
@@ -3032,7 +3066,8 @@ config_reset() {
       if backup_create; then
         rm -rf "$WORK_DIR"
         mkdir -p "$WORK_DIR"
-        download_singbox_config "force"
+        get_update_config
+        download_singbox_config "$UPDATE_SINGBOX_BETA" "force"
         create_skeen_config "force"
         echook "Configuration reset completed"
       else

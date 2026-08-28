@@ -16,40 +16,56 @@ jobs:
         with:
           ref: static
 
-      - name: Download and Rename IPK
+      - name: Download IPK (Stable & Beta)
         id: sync
         run: |
-          RELEASE_DATA=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest)
-          LATEST_TAG=$(echo "$RELEASE_DATA" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          # 1. Забираем последнюю СТАБИЛЬНУЮ версию через HTTP 302 Redirect
+          STABLE_TAG=$(curl -sI "https://github.com/SagerNet/sing-box/releases/latest" | grep -i "^location:" | sed -E 's/.*tag\/(v)?(.*)/\2/' | tr -d '\r')
 
-          mkdir -p sing-box
-          [ -f "sing-box/version.txt" ] && CURRENT_VER=$(cat sing-box/version.txt) || CURRENT_VER="none"
+          # 2. Забираем самый СВЕЖИЙ пререлиз (бета/альфа) через Atom-ленту
+          BETA_TAG=$(curl -s "https://github.com/SagerNet/sing-box/releases.atom" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')
 
-          if [ "$LATEST_TAG" = "$CURRENT_VER" ]; then
-            echo "Version $LATEST_TAG is already mirrored."
-            echo "updated=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          download_assets() {
+            local tag="$1"
+            local dir="$2"
 
-          DOWNLOAD_URLS=$(echo "$RELEASE_DATA" | \
-            grep '"browser_download_url":' | sed -E 's/.*"([^"]+)".*/\1/' | \
-            grep 'openwrt' | \
-            grep '\.ipk$' | \
-            grep -E 'aarch64|mipsel_|mips_')
+            [ -z "$tag" ] && return 0
 
-          rm -f sing-box/*.ipk
+            mkdir -p "$dir"
+            [ -f "$dir/version.txt" ] && local current_ver=$(cat "$dir/version.txt") || local current_ver="none"
 
-          for url in $DOWNLOAD_URLS; do
-            ORIGINAL_NAME="${url##*/}"
-            NEW_NAME=$(echo "$ORIGINAL_NAME" | sed -E 's/sing-box_[0-9]+\.[0-9]+\.[0-9]+_/sing-box_/')
+            if [ "$tag" = "$current_ver" ]; then
+              echo "Версия $tag в $dir уже обновлена."
+              return 0
+            fi
 
-            echo "Downloading $ORIGINAL_NAME as $NEW_NAME"
-            curl -Ls "$url" -o "sing-box/$NEW_NAME"
-          done
+            echo "Скачиваем артефакты $tag в $dir..."
+            rm -f "$dir"/*.ipk
 
-          echo "$LATEST_TAG" > sing-box/version.txt
-          echo "updated=true" >> $GITHUB_OUTPUT
-          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+            # Формируем ссылки на скачивание напрямую со страницы тега (без GitHub API)
+            local tag_param="$tag"
+            [[ "$tag_param" != v* ]] && tag_param="v$tag"
+
+            local download_urls=$(curl -sL "https://github.com/SagerNet/sing-box/releases/tag/$tag_param" | \
+              grep -oE '/SagerNet/sing-box/releases/download/[^"]+\.ipk' | \
+              grep 'openwrt' | \
+              grep -E 'aarch64|mipsel_|mips_' | \
+              sed 's|^|https://github.com|' | sort -u)
+
+            for url in $download_urls; do
+              local original_name="${url##*/}"
+              local new_name=$(echo "$original_name" | sed -E 's/sing-box_[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?_/sing-box_/')
+
+              echo "Загрузка $original_name -> $dir/$new_name"
+              curl -Ls "$url" -o "$dir/$new_name"
+            done
+
+            echo "$tag" > "$dir/version.txt"
+            echo "updated=true" >> $GITHUB_OUTPUT
+          }
+
+          download_assets "$STABLE_TAG" "sing-box"
+          download_assets "$BETA_TAG" "sing-box-beta"
 
       - name: Commit and Push
         if: steps.sync.outputs.updated == 'true'
@@ -57,6 +73,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add sing-box/
-          git commit -m "chore: mirror sing-box ipk ${{ steps.sync.outputs.tag }}"
+          git add sing-box/ sing-box-beta/
+          git commit -m "chore: mirror sing-box stable and beta ipks"
           git push origin static
