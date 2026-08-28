@@ -16,44 +16,45 @@ jobs:
         with:
           ref: static
 
-      - name: Download IPK (Stable & Beta)
+      - name: Download and Rename IPK (Stable & Beta)
         id: sync
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 1. Забираем последнюю СТАБИЛЬНУЮ версию через HTTP 302 Redirect
-          STABLE_TAG=$(curl -sI "https://github.com/SagerNet/sing-box/releases/latest" | grep -i "^location:" | sed -E 's/.*tag\/(v)?(.*)/\2/' | tr -d '\r')
-
-          # 2. Забираем самый СВЕЖИЙ пререлиз (бета/альфа) через Atom-ленту
-          BETA_TAG=$(curl -s "https://github.com/SagerNet/sing-box/releases.atom" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')
-
-          download_assets() {
-            local tag="$1"
+          download_release() {
+            local api_url="$1"
             local dir="$2"
 
-            [ -z "$tag" ] && return 0
+            local release_data=$(curl -sH "Authorization: Bearer $GH_TOKEN" "$api_url")
+            local tag=$(echo "$release_data" | grep '"tag_name":' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
 
-            mkdir -p "$dir"
-            [ -f "$dir/version.txt" ] && local current_ver=$(cat "$dir/version.txt") || local current_ver="none"
-
-            if [ "$tag" = "$current_ver" ]; then
-              echo "Версия $tag в $dir уже обновлена."
+            if [ -z "$tag" ]; then
+              echo "Ошибка: не удалось получить tag_name с $api_url"
               return 0
             fi
 
-            echo "Скачиваем артефакты $tag в $dir..."
-            rm -f "$dir"/*.ipk
+            mkdir -p "$dir"
+            local current_ver="none"
+            [ -f "$dir/version.txt" ] && current_ver=$(cat "$dir/version.txt")
 
-            # Формируем ссылки на скачивание напрямую со страницы тега (без GitHub API)
-            local tag_param="$tag"
-            [[ "$tag_param" != v* ]] && tag_param="v$tag"
+            if [ "$tag" = "$current_ver" ]; then
+              echo "Версия $tag для $dir уже актуальна."
+              return 0
+            fi
 
-            local download_urls=$(curl -sL "https://github.com/SagerNet/sing-box/releases/tag/$tag_param" | \
-              grep -oE '/SagerNet/sing-box/releases/download/[^"]+\.ipk' | \
+            echo "Обновление $dir до $tag..."
+
+            local download_urls=$(echo "$release_data" | \
+              grep '"browser_download_url":' | sed -E 's/.*"([^"]+)".*/\1/' | \
               grep 'openwrt' | \
-              grep -E 'aarch64|mipsel_|mips_' | \
-              sed 's|^|https://github.com|' | sort -u)
+              grep '\.ipk$' | \
+              grep -E 'aarch64|mipsel_|mips_')
+
+            rm -f "$dir"/*.ipk
 
             for url in $download_urls; do
               local original_name="${url##*/}"
+              # Регулярка учитывает суффиксы -rc, -beta, -alpha
               local new_name=$(echo "$original_name" | sed -E 's/sing-box_[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?_/sing-box_/')
 
               echo "Загрузка $original_name -> $dir/$new_name"
@@ -64,8 +65,11 @@ jobs:
             echo "updated=true" >> $GITHUB_OUTPUT
           }
 
-          download_assets "$STABLE_TAG" "sing-box"
-          download_assets "$BETA_TAG" "sing-box-beta"
+          # 1. Последняя стабильная (releases/latest) -> sing-box/
+          download_release "https://api.github.com/repos/SagerNet/sing-box/releases/latest" "sing-box"
+
+          # 2. Самая последняя (включая pre-release) -> sing-box-beta/
+          download_release "https://api.github.com/repos/SagerNet/sing-box/releases?per_page=1" "sing-box-beta"
 
       - name: Commit and Push
         if: steps.sync.outputs.updated == 'true'
