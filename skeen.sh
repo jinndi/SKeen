@@ -2485,6 +2485,8 @@ start_singbox() {
     return 1
   fi
 
+  [ -s "$SINGBOX_PID_FILE" ] && renice -3 -p "$(cat "$SINGBOX_PID_FILE")" >/dev/null 2>&1
+
   echook "$SINGBOX_NAME started"
   logger_notice "$SINGBOX_NAME started"
   return 0
