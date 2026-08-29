@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.2.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.2.0...SKeen-v5.2.1) (2026-08-29)
+
+
+### 🐛 Fix
+
+* exclude non-OpkgTun interfaces from listing and simplify code ([2e83ccf](https://github.com/jinndi/SKeen/commit/2e83ccf16a623b8789345596427ef1b0c7a019f0))
+* refactor firewall clean/apply logic and caller dispatch in skeen scripts ([1a0e29a](https://github.com/jinndi/SKeen/commit/1a0e29a3fbbb65e99b53cc921009689f4c0f4cda))
+* use readonly constant for sing-box version cache path ([d1bf516](https://github.com/jinndi/SKeen/commit/d1bf516849a2379b77b37b60c04f7d27ab30f621))
+
 ## [5.2.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.1.12...SKeen-v5.2.0) (2026-08-28)
 
 
