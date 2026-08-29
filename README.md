@@ -302,6 +302,7 @@ Reasons why:
 - 🔄 Switch between official and third-party Sing-box ✓
 - 🔗 Sing-box config sync via HTTP(S) link ✓
 - 🔌 Config sync via GUI.for.SingBox plugin ✓
+- 📋 Ready-to-use Sing-box config templates ✓
 - 🛡️ Optional proxying for the router itself ✓
 - 🔓 No access token required for RCI requests (none used) ✓
 
