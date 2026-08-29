@@ -3389,7 +3389,7 @@ EOF
 case "$CALLER:$ACTION" in
   netfilter:apply_firewall) apply_firewall "$3"; exit 0 ;;
   run_state:clean_firewall) rm -f "$SKEEN_RUN_SCRIPT"; clean_firewall; exit 0 ;;
-  netfilter:) exit 0 ;;
+  netfilter:*) exit 0 ;;
 esac
 
 if [ -f "$SKEEN_SCRIPT" ]; then
