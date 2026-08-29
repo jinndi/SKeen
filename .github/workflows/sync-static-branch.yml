@@ -53,10 +53,9 @@ jobs:
             git commit -m "dist: update optimized scripts and config $(date +'%Y-%m-%d %H:%M')"
             git push origin static
 
-            curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/skeen"
-            curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/skeen_ru"
-            curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/config.json"
-            curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/config_beta.json"
+            for file in skeen skeen_ru config.json config_beta.json; do
+              curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/$file"
+            done
           else
             echo "No changes to commit"
           fi
