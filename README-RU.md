@@ -567,7 +567,7 @@ exec /opt/etc/init.d/S51dropbear start
                        // исключения подсетей и порты исключения учитываются.
   },
   "update": {          /// Настройки обновления (skeen update)
-    "singbox": {
+    "singbox": {       // Обновления Sing-box (не работает при singbox.external.enabled=1)
       "enabled": 1,    // Включить проверку обновлений Sing-box (0 = выкл)
       "beta": 0        // Если 1, включает проверку самых свежих версий (alpha, beta, rc)
     },

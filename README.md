@@ -568,7 +568,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // subnet exclusions, as well as port bypass and interception rules, are respected.
   },
   "update": {          /// Update settings (skeen update)
-    "singbox": {
+    "singbox": {       // Sing-box updates (does not work with singbox.external.enabled=1)
       "enabled": 1,    // Enable Sing-box update check (0 = disabled)
       "beta": 0        // If set to 1, enables checking for pre-release versions (alpha, beta, rc)
     },
