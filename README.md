@@ -397,25 +397,26 @@ Manage the package further using the `skeen` command.
 **File and directory structure after successful installation:**
 
 ```
-/opt/
-├── bin/
-│   ├── skeen         # SKeen management script
-│   └── skeen-box     # Sing-box binary (if you didn't skip the installation)
-├── etc/
-│   ├── init.d/
-│   │   └── S99SKeen  # Autostart script
-│   ├── ndm/
-│   │   └── netfilter.d/
-│   │       └── skeen_firewall.sh  # Created on start
-│   └── skeen/
-│       ├── skeen.json    # SKeen configuration
-│       └── config.json   # Sing-box configuration
-└── tmp/
-    └── (temporary download files)
+📁 /opt/
+├── 📂 bin/
+│   ├── 📜 skeen                  # Main SKeen management script
+│   └── ⚙️ skeen-box              # sing-box binary (if installation selected)
+├── 📂 etc/
+│   ├── 📂 init.d/
+│   │   └── 🚀 S99SKeen           # System startup / autostart script
+│   ├── 📂 ndm/netfilter.d/
+│   │   └── 🛡️ skeen_firewall.sh  # Firewall rules (generated on startup)
+│   └── 📂 skeen/
+│       ├── 📄 skeen.json        # SKeen configuration
+│       └── 📄 config.json       # Sing-box configuration
+└── 📂 tmp/                      # Temporary download files
 
-/tmp/            # Synced to RAM:
-├── skeen.sh     # SKeen management script - synced after boot/full restart
-└── skeen.json   # SKeen configuration - on any changes to the source file
+⚡ /tmp/ (RAM Disk) - synced into memory:
+├── 📜 skeen.sh                  # Script copy - updated after start/reboot
+├── 📄 skeen.json                # Config cache - synced on source changes
+├── 📄 skeen_singbox_version     # Sing-box version cache - updated on binary change
+└── 📂 run/
+    └── 📌 skeen.pid             # PID file of the sing-box process
 ```
 
 ### ⚡ Commands
