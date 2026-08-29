@@ -291,18 +291,19 @@ Reasons why:
 
 ### 🚀 Features
 
-  - TProxy/Redirect/Hybrid/Tun/DNS modes ✓
-  - IPv4 and IPv6 support ✓
-  - Functional Sing-box DNS module ✓
-  - Functional Sing-box FakeIP ✓
-  - FakeIP proxying at the iptables level ✓
-  - Configured web interface via the built-in API ✓
-  - Network settings optimization ✓
-  - Commands accessible via router WEB CLI ✓
-  - Sing-box configuration synchronization via HTTP(S) link ✓
-  - Configuration sync via GUI.for.SingBox plugin ✓
-  - Optional proxying for the router itself ✓
-  - No access token required for RCI requests (none are used) ✓
+- 🔀 TProxy/Redirect/Hybrid/Tun/DNS modes ✓
+- 🌐 IPv4 and IPv6 support ✓
+- 🧩 Working Sing-box DNS module ✓
+- 🎭 Working Sing-box FakeIP ✓
+- ⚡ FakeIP proxying at iptables level ✓
+- 🖥️ Configured Web UI via built-in API ✓
+- 🚀 Network settings optimization ✓
+- 💻 Commands working via router's WEB CLI ✓
+- 🔄 Switch between official and third-party Sing-box ✓
+- 🔗 Sing-box config sync via HTTP(S) link ✓
+- 🔌 Config sync via GUI.for.SingBox plugin ✓
+- 🛡️ Optional proxying for the router itself ✓
+- 🔓 No access token required for RCI requests (none used) ✓
 
 ### 📋 Requirements
 - Entware installed and configured
