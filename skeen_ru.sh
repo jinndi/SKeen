@@ -43,6 +43,7 @@ readonly SKEEN_SCRIPT_URL="${SKEEN_API_URL}/download/skeen_ru $CURL_RESOLVE_FIX"
 
 readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
+readonly SINGBOX_RUN_VERSION="/tmp/skeen_singbox_version"
 readonly SINGBOX_BIN_PATH="${ENTWARE_DIR}/bin/skeen-box"
 readonly SINGBOX_DEFAULT_CONFIG_PATH="${WORK_DIR}/config.json"
 readonly SINGBOX_API_URL="https://github.com/SagerNet/sing-box/releases/latest"
@@ -459,16 +460,14 @@ get_current_version() {
 
   case "$proc" in
   "sing")
-    local cache_file="/tmp/skeen_singbox_version"
-
     if [ -f "$SINGBOX_BIN" ]; then
       local cached_path cached_ver
 
-      if [ -f "$cache_file" ]; then
-        IFS='|' read -r cached_path cached_ver < "$cache_file" 2>/dev/null
+      if [ -f "$SINGBOX_RUN_VERSION" ]; then
+        IFS='|' read -r cached_path cached_ver < "$SINGBOX_RUN_VERSION" 2>/dev/null
       fi
 
-      if [ "$cached_path" = "$SINGBOX_BIN" ] && [ "$SINGBOX_BIN" -ot "$cache_file" ]; then
+      if [ "$cached_path" = "$SINGBOX_BIN" ] && [ "$SINGBOX_BIN" -ot "$SINGBOX_RUN_VERSION" ]; then
         echo "$cached_ver"
         return 0
       fi
@@ -478,7 +477,7 @@ get_current_version() {
       set -- $raw_output
       ver="${3:-unknown}"
 
-      echo "${SINGBOX_BIN}|${ver}" > "$cache_file"
+      echo "${SINGBOX_BIN}|${ver}" > "$SINGBOX_RUN_VERSION"
       echo "$ver"
     fi
     ;;
@@ -924,9 +923,10 @@ uninstall() {
   rm -f "$FIREWALL_HOOK_FILE"
 
   echomsg "Удаление скрипта ${SKEEN_NAME}..."
-  rm -f "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG"
+  rm -f "$SKEEN_SCRIPT"
 
-  rm -f /tmp/skeen_singbox_version
+  chomsg "Удаление кешей ${SKEEN_NAME}..."
+  rm -f "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG" "$SINGBOX_RUN_VERSION"
 
   echomsg "Удаление группы ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
@@ -945,10 +945,13 @@ uninstall() {
   fi
 
   if [ -d "$WORK_DIR" ]; then
-    echomsg "Каталог конфигурации $WORK_DIR незатронут"
-    echomsg "Для удаления вручную выполните: rm -rf $WORK_DIR"
+    echowarn "Каталог конфигурации $WORK_DIR незатронут"
+    echowarn "Для удаления вручную выполните: rm -rf $WORK_DIR"
   fi
   echook "${SKEEN_NAME} успешно удалён"
+  echo "$DELIMETER"
+  cyan "Для повторной установки используйте:"
+  green "curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru $CURL_RESOLVE_FIX | sh"
   exit 0
 }
 
