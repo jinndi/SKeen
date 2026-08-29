@@ -2247,7 +2247,7 @@ apply_firewall() {
 
 clean_firewall() {
   if [ -f "$SKEEN_RUN_SCRIPT" ]; then
-    "$SKEEN_RUN_SCRIPT" clean_firewall old
+    "$SKEEN_RUN_SCRIPT" clean_firewall run_state
     return 0
   fi
 
@@ -3386,8 +3386,14 @@ OpkgTun (KeeneticOS v5+):
 EOF
 }
 
+case "$CALLER:$ACTION" in
+  netfilter:apply_firewall) apply_firewall "$3"; exit 0 ;;
+  run_state:clean_firewall) rm -f "$SKEEN_RUN_SCRIPT"; clean_firewall; exit 0 ;;
+  netfilter:) exit 0 ;;
+esac
+
 if [ -f "$SKEEN_SCRIPT" ]; then
-  [ "$CALLER" != "netfilter" ] && check_and_create_or_sync_skeen_config
+  check_and_create_or_sync_skeen_config
 
   case "$ACTION" in
   start) start ;;
@@ -3396,10 +3402,8 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   reload) reload ;;
   kill) kill_proc ;;
   status) status ;;
-
   version) version ;;
   update) check_updates ;;
-
   test) test_firewall ;;
   deps)
     install_dependencies
@@ -3424,8 +3428,6 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     *) show_help | awk '/OpkgTun / {flag=1} flag' ;;
     esac
     ;;
-  apply_firewall) [ "$CALLER" = "netfilter" ] && apply_firewall "$3" ;;
-  clean_firewall) [ "$CALLER" = "old" ] && rm -f "$SKEEN_RUN_SCRIPT"; clean_firewall ;;
   "") show_menu ;;
   help | *) show_help ;;
   esac
