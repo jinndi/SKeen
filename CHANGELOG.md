@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.2.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.2.1...SKeen-v5.2.2) (2026-08-29)
+
+
+### 🐛 Fix
+
+* correct cache removal message and bump version to 5.2.2 ([da9d668](https://github.com/jinndi/SKeen/commit/da9d66802d3011180aac2098e634809a558ea566))
+
 ## [5.2.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.2.0...SKeen-v5.2.1) (2026-08-29)
 
 
