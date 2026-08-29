@@ -1771,11 +1771,7 @@ tun_delete() {
 
 tun_list() {
   local opkgtun_list
-  opkgtun_list="$(
-    ndmc -c show interface | awk '/^Interface, name = "OpkgTun/ { print_block=1 }
-      print_block { print }
-      /^Interface, name =/ && $0 !~ /^Interface, name = "OpkgTun/ { print_block=0 }'
-  )"
+  opkgtun_list="$(ndmc -c show interface | awk '/^Interface, name = "OpkgTun/ {p=1} /^Interface, name =/ && !/^Interface, name = "OpkgTun/ {p=0} p')"
   [ -z "$opkgtun_list" ] && echomsg "No OpkgTun interfaces found" || echo "$opkgtun_list"
 }
 
