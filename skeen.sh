@@ -31,7 +31,7 @@ readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:18
 readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.2.1"
+readonly SKEEN_VERSION="5.2.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
@@ -925,7 +925,7 @@ uninstall() {
   echomsg "Removing $SKEEN_NAME script..."
   rm -f "$SKEEN_SCRIPT"
 
-  chomsg "Removing ${SKEEN_NAME} caches..."
+  echomsg "Removing ${SKEEN_NAME} caches..."
   rm -f "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG" "$SINGBOX_RUN_VERSION"
 
   echomsg "Delete group ${SKEEN_PROC}..."
