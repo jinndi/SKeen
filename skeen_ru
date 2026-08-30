@@ -14,7 +14,7 @@ readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.2.2"
+readonly SKEEN_VERSION="5.3.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -147,15 +147,17 @@ cat <<EOF >"$SKEEN_CONFIG"
   },
   "singbox": {
     "config": {
-      "path": "$SKEEN_CONFIG",
-      "url": ""
+      "path": "$SINGBOX_DEFAULT_CONFIG_PATH",
+      "url": "",
+      "split": 1
     },
     "external": {
       "enabled": ${EXTERNAL_ENABLED:-0},
       "path": "",
       "config": {
         "path": "",
-        "url": ""
+        "url": "",
+        "split": 1
       }
     }
   },
@@ -225,16 +227,43 @@ jsonfilter -i "$config_path" -e "$path"|tr -d '[],"'
 check_and_create_or_sync_skeen_config(){
 [ ! -f "$SKEEN_CONFIG" ]&&create_skeen_config
 if [ ! -f "$SKEEN_RUN_CONFIG" ]||[ "$SKEEN_CONFIG" -nt "$SKEEN_RUN_CONFIG" ];then
-echomsg "Синхронизируем конфигурацию..."
 if cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG";then
 chmod 644 "$SKEEN_RUN_CONFIG"
-echook "Конфигурация синхронизирована"
 else
-exiterr "Не удалось синхронизировать конфигурацию"
+exiterr "Не удалось синхронизировать $SKEEN_CONFIG в память"
 fi
 fi
 }
-check_and_kill_old_proc(){
+check_and_merge_singbox_config(){
+case "$SINGBOX_CONFIG" in
+/*);;
+*)SINGBOX_CONFIG="$WORK_DIR/$SINGBOX_CONFIG"
+esac
+SINGBOX_CONFIG="${SINGBOX_CONFIG%/}"
+local merged_path="$WORK_DIR/.merged.json"
+[ "$SINGBOX_EXTERNAL_ENABLED" = "1" ]&&merged_path="$WORK_DIR/.merged_external.json"
+SINGBOX_CONFIG_DIR=""
+if [ -d "$SINGBOX_CONFIG" ];then
+SINGBOX_CONFIG_DIR="$SINGBOX_CONFIG"
+if [ ! -f "$merged_path" ]||[ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -newer "$merged_path" -print -quit)" ];then
+if [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -print -quit)" ];then
+if ! "$SINGBOX_BIN" merge "$merged_path" -C "$SINGBOX_CONFIG_DIR" >/dev/null 2>&1;then
+exiterr "Ошибка слияния конфига $SINGBOX_NAME из $SINGBOX_CONFIG_DIR"
+fi
+else
+echowarn "Папка $SINGBOX_CONFIG_DIR пуста (нет конфигов $SINGBOX_NAME)"
+sleep 2
+fi
+fi
+SINGBOX_CONFIG="$merged_path"
+elif [ "$SINGBOX_CONFIG" = "$merged_path" ];then
+exiterr "Путь $SINGBOX_CONFIG для $SINGBOX_NAME зарезервирован"
+elif [ ! -f "$SINGBOX_CONFIG" ];then
+echowarn "$SINGBOX_NAME конфиг отсутствует по пути $SINGBOX_CONFIG"
+sleep 2
+fi
+}
+check_and_kill_old_singbox_proc(){
 local sing_pid sing_path
 if [ -f "$SINGBOX_PID_FILE" ];then
 read -r sing_pid <"$SINGBOX_PID_FILE"
@@ -281,26 +310,34 @@ config_path="$(get_skeen_config_path)"
 [ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
 -e sing_config_path='@.singbox.config.path' \
 -e sing_config_url='@.singbox.config.url' \
+-e sing_config_split='@.singbox.config.split' \
 -e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
 -e sing_external_path='@.singbox.external.path' \
 -e sing_external_config_path='@.singbox.external.config.path' \
--e sing_external_config_url='@.singbox.external.config.url')"
+-e sing_external_config_url='@.singbox.external.config.url' \
+-e sing_external_config_split='@.singbox.external.config.split')"
 : "${sing_config_path:=$SINGBOX_DEFAULT_CONFIG_PATH}"
 : "${sing_config_url:=}"
+: "${sing_config_split:=1}"
 : "${SINGBOX_EXTERNAL_ENABLED:=0}"
 : "${sing_external_path:=/opt/bin/sing-box}"
 : "${sing_external_config_path:=$sing_config_path}"
 : "${sing_external_config_url:=$sing_config_url}"
+: "${sing_external_config_split:=$sing_config_split}"
 if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ];then
+[ -f "$sing_external_path" ]||sing_external_path="$(command -v "$sing_external_path")"
 SINGBOX_BIN="$sing_external_path"
 SINGBOX_CONFIG="$sing_external_config_path"
 SINGBOX_CONFIG_URL="$sing_external_config_url"
+SINGBOX_CONFIG_SPLIT="$sing_external_config_split"
 else
 SINGBOX_BIN="$SINGBOX_BIN_PATH"
 SINGBOX_CONFIG="$sing_config_path"
 SINGBOX_CONFIG_URL="$sing_config_url"
+SINGBOX_CONFIG_SPLIT="$sing_config_split"
 fi
-check_and_kill_old_proc
+check_and_merge_singbox_config
+check_and_kill_old_singbox_proc
 }
 get_service_proxy_config(){
 local config_path
@@ -1971,6 +2008,7 @@ echoerr "$msg"
 logger_error "$msg"
 return 1
 fi
+[ -s "$SINGBOX_PID_FILE" ]&&renice -3 -p "$(cat "$SINGBOX_PID_FILE")" >/dev/null 2>&1
 echook "$SINGBOX_NAME запущен"
 logger_notice "$SINGBOX_NAME запущен"
 return 0
@@ -2067,11 +2105,12 @@ local sk_version sb_version
 get_singbox_config
 sk_version="$(get_current_version "skeen")"
 sb_version="$(get_current_version "sing")"
+{ [ -z "$sb_version" ]&&sb_version="$(red "не найден")";}||sb_version="$(cyan "v$sb_version")"
 if [ "$CALLER" = "cli" ];then
 echo "$DELIMETER"
 printf "$SKEEN_NAME: %s\n" "$(cyan "v$sk_version")"
 echo "$DELIMETER"
-printf "$SINGBOX_NAME: %s\n" "$(cyan "v$sb_version")"&&$SINGBOX_BIN version|sed -nE '/^(Environment|Tags|Revision|CGO):/p'&&echo "$DELIMETER"
+printf "$SINGBOX_NAME: %s\n" "$sb_version"&&[ -f "$SINGBOX_BIN" ]&&$SINGBOX_BIN version|sed -nE '/^(Environment|Tags|Revision|CGO):/p'&&echo "$DELIMETER"
 fi
 }
 switch_state(){
@@ -2480,10 +2519,12 @@ echoerr "$err_msg"
 exit 0
 fi
 }
-check_sing_config(){
+check_singbox_config(){
 if get_singbox_config&&[ -f "$SINGBOX_BIN" ];then
 echomsg "Проверка конфигурации $SINGBOX_NAME..."
-if $SINGBOX_BIN check -c $SINGBOX_CONFIG;then
+local config="-c $SINGBOX_CONFIG"
+[ -n "$SINGBOX_CONFIG_DIR" ]&&config="-C $SINGBOX_CONFIG_DIR"
+if $SINGBOX_BIN check $config;then
 echook "Конфигурация $SINGBOX_NAME корректна"
 else
 local err_msg="$SINGBOX_NAME конфигурация не корректна"
@@ -2495,12 +2536,14 @@ fi
 }
 check_config(){
 check_skeen_config
-check_sing_config
+check_singbox_config
 }
 format_config(){
 if get_singbox_config&&[ -f "$SINGBOX_BIN" ];then
 echomsg "Форматирование конфигурации $SINGBOX_NAME..."
-if $SINGBOX_BIN format -w -c $SINGBOX_CONFIG;then
+local config="-c $SINGBOX_CONFIG"
+[ -n "$SINGBOX_CONFIG_DIR" ]&&config="-C $SINGBOX_CONFIG_DIR"
+if $SINGBOX_BIN format -w $config;then
 echook "Конфигурация отформатирована успешно"
 else
 echoerr "Ошибка форматирования конфигурации"
@@ -2508,6 +2551,31 @@ fi
 else
 echoerr "Исполняемый файл $SINGBOX_NAME отсутствует"
 fi
+}
+split_singbox_config(){
+local src_file="${1:-}"
+local target_dir="${2:-}"
+mkdir -p "$target_dir"
+local KEYS=""
+eval $(jsonfilter -i "$src_file" -e 'KEYS=@')
+local schema_val=""
+schema_val=$(jsonfilter -i "$src_file" -e "@['\$schema']")
+local schema_prefix=""
+if [ -n "$schema_val" ];then
+schema_val=$(echo "$schema_val"|sed 's#\\/#/#g')
+schema_prefix=$(printf '  "$schema": "%s",\n' "$schema_val")
+fi
+for key in $KEYS;do
+case "$key" in
+\$*)continue
+esac
+local val
+val=$(jsonfilter -i "$src_file" -e "@['$key']")
+if [ -n "$val" ];then
+val=$(echo "$val"|sed 's#\\/#/#g')
+printf '{\n%s  "%s": %s\n}\n' "$schema_prefix" "$key" "$val" >"$target_dir/$key.json"
+fi
+done
 }
 sync_config(){
 local address="${1:-}"
@@ -2523,14 +2591,37 @@ fi
 if ! run_curl -s "$address" -o "$config_tmp";then
 echoerr "Не удалось загрузить конфигурацию с $address"&&return 1
 fi
-if is_tty&&! $SINGBOX_BIN check -c "$config_tmp";then
+if ! $SINGBOX_BIN check -c "$config_tmp";then
 echoerr "$SINGBOX_NAME конфигурация недействительна, синхронизация отменена!"
 rm -f "$config_tmp"
 return 1
 fi
-[ -f "$SINGBOX_CONFIG" ]&&cp -f "$SINGBOX_CONFIG" "$SINGBOX_CONFIG.bak"
+if [ -n "$SINGBOX_CONFIG_DIR" ];then
+if [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -print -quit)" ];then
+local parent_dir folder_name archive_path
+parent_dir=$(dirname "$SINGBOX_CONFIG_DIR")
+folder_name=$(basename "$SINGBOX_CONFIG_DIR")
+archive_path="$parent_dir/${folder_name}_backup.tar"
+if tar -cf "$archive_path" -C "$parent_dir" "$folder_name";then
+rm -rf "${SINGBOX_CONFIG_DIR:?}"/*
+else
+echoerr "Ошибка при создании архива $archive_path"&&return 1
+fi
+fi
+if [ "$SINGBOX_CONFIG_SPLIT" = "1" ];then
+split_singbox_config "$config_tmp" "$SINGBOX_CONFIG_DIR"&&rm -f "$config_tmp"
+else
+mv -f "$config_tmp" "$SINGBOX_CONFIG_DIR/config.json"
+fi
+elif [ -f "$SINGBOX_CONFIG" ]&&cp -f "$SINGBOX_CONFIG" "$SINGBOX_CONFIG.bak";then
 mv -f "$config_tmp" "$SINGBOX_CONFIG"
+fi
+if [ ! -f "$config_tmp" ]&&[ -f "$SINGBOX_CONFIG" ];then
 echook "Конфигурация синхронизирована, перезапустите $SKEEN_NAME для применения изменений"
+else
+rm -f "$config_tmp"
+echoerr "Не удалось сохранить новую конфигурацию, синхранизация отменена!"
+fi
 }
 show_iface(){
 check_tty
