@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.3.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.2.2...SKeen-v5.3.0) (2026-08-30)
+
+
+### 🚀 Feat
+
+* add sing-box config directory merge support and split config option ([89b254f](https://github.com/jinndi/SKeen/commit/89b254f3b4479c441f352759e665aae7c5546f8e))
+
+
+### ⚡ Perf
+
+* slightly increase sing-box process priority to nice -3 ([d283f88](https://github.com/jinndi/SKeen/commit/d283f886f96dd2f9731f0796a3f0c7dc724e0bc9))
+
 ## [5.2.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.2.1...SKeen-v5.2.2) (2026-08-29)
 
 
