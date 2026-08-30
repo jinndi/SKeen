@@ -31,7 +31,7 @@ readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:18
 readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.2.2"
+readonly SKEEN_VERSION="5.3.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
