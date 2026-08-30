@@ -505,10 +505,14 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
   },
   "singbox": {         //// Sing-box configuration
     "config": {        // + Configuration file
-      "path": "",      // Full path to the local Sing-box configuration file
-                       // Default is /opt/etc/skeen/config.json
-      "url": ""        // URL (http:// or https://) for syncing configuration
+      "path": "",      // Absolute path or relative to the working directory /opt/etc/skeen
+                       // to a local file or Sing-box configuration directory.
+                       // By default, the file at /opt/etc/skeen/config.json is used.
+      "url": "",       // URL (http:// or https://) for syncing configuration
                        // via `skeen sync` by default (optional)
+      "split": 1       // If 1, the synced config via link (skeen sync) will be split
+                       // into files named after the top-level Sing-box configuration keys.
+                       // Available only if path points to a directory.
     },
     "external": {      // + External Sing-box usage
       "enabled": 0,    // If set to 1, an external Sing-box binary is used;
@@ -516,7 +520,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "path": "",      // Full path to binary (default: /opt/bin/sing-box).
       "config": {      // Configuration file for external Sing-box (optional)
         "path": "",    // Similar to the singbox.config object above;
-        "url": ""      // its data will be used if left blank here.
+        "url": "",     // its data will be used if left blank here.
+        "split": 1
       }
     }
   },
