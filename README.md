@@ -231,6 +231,27 @@ Domain blocking and resolution inside Sing-box are objectively better: requests 
 
 The Sing-box + web interface stack fully covers all needs for speed, analytics, and routing-level blocking. Adding AdGuard Home on a VPS to this chain is an unnecessary complication of the infrastructure and a potential single point of failure.
 
+**Why Encrypted DNS (DoH/DoT) Inside a Proxy Tunnel is Essential**
+
+Even if the proxy server sees the destination IP address when establishing a connection, routing encrypted DNS (DoH/DoT) inside an encrypted proxy tunnel remains a fundamental security requirement. It ensures strict separation of duties, data integrity, and protection against traffic analysis—regardless of the underlying proxy protocol.
+
+1. Protection Against Tampering (Data Integrity)
+
+When using plain, unencrypted DNS (Plain UDP/53), the hosting provider or any transit node between the proxy server and the DNS resolver can intercept and forge DNS responses (**DNS Spoofing / MITM**).
+* **Risk:** You request a banking website IP, and an intermediary node spoofs the response, directing your traffic to a phishing server.
+* **DoH/DoT Solution:** Encryption is established directly from the local client to the public resolver (Cloudflare, Google, AdGuard) with TLS certificate verification. The proxy server and intermediate networks are physically unable to modify the returned IP address.
+
+2. Concealment Behind Shared IPs & CDNs (Privacy)
+
+Modern web infrastructure relies heavily on CDN networks (Cloudflare, Fastly, Akamai). A single IP address often serves tens of thousands of independent websites simultaneously.
+* **Without DoH:** The proxy server sees the destination IP and the plain-text DNS query (`target-site.com`). The server knows precisely which domain you are visiting.
+* **With DoH:** The DNS query is fully encrypted. The proxy server only observes a connection attempt to an anonymized IP address (e.g., `104.21.32.1`). It cannot determine which specific site behind that IP is being accessed.
+
+3. Zero-Trust Architecture
+
+Remote server infrastructure should not be trusted with the ability to inspect, log, or filter your DNS activity.
+* **Outcome:** Wrapping DoH/DoT inside the tunnel reduces the proxy server to a **"dumb L4 pipe."** The server merely relays encrypted packets, leaving it with zero technical capability to log visited domain names or manipulate the resolution process.
+
 So, we've established that configuring DNS inside Sing-box is essential for safe and stable operation (provided it is set up correctly). But what about the DNS settings on the router itself?
 
 My recommendations are as follows: the main rule is to use 100% working servers in your country (for example, Yandex DNS for Russia) and specify no more than two addresses. Beyond that, it doesn't matter whether it's DoH or DoT-this task should be handled by Sing-box itself, so even a standard DNS from your ISP will do fine. It also doesn't matter if "DNS Transit" is enabled-it literally changes nothing at all.
@@ -456,7 +477,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 1 - archive name can be passed as the second parameter with a `.tar` extension to immediately start the backup restore process
 
-2 - clears the cache file. This is required when using the `experimental.cache_file` feature in sing-box, for example, to reset the cache of loaded rule_set and DNS query history. Starting with sing-box version 1.14, all DNS responses are stored in the cache (previously only rejected ones)
+2 - clears the cache file. This is required when using the `experimental.cache_file` feature in sing-box, for example, to reset the cache of loaded rule_set and DNS query history.
 
 3 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `singbox.config.url`
 
