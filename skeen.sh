@@ -764,7 +764,7 @@ install_singbox() {
   [ -f "$SINGBOX_BIN_PATH" ] && rm -f "$SINGBOX_BIN_PATH"
   mv ./usr/bin/sing-box "$SINGBOX_BIN_PATH"
   chmod 755 "$SINGBOX_BIN_PATH"
-  chmod +x "$SINGBOX_BIN_PATH"
+  rm -f "$SINGBOX_RUN_VERSION"
 
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${PKG_NAME}"
