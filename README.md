@@ -596,6 +596,9 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 
 **`network.tuning`** - when this option is enabled, the script applies a set of Linux kernel parameters (sysctl) adapted for the operation of high-performance proxy services (sing-box) on Keenetic routers.
 
+<details>
+  <summary>🔽 More details</summary>
+
 | Category | Change | Result |
 | :--- | :--- | :--- |
 | **Network Capacity** | Increases connection limits (`conntrack`) by 1.5x | Allows the router to handle more simultaneous sessions without table overflows. |
@@ -608,14 +611,16 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 | **Security** | Enabled SYN Cookies and port reuse | Enhances network security and improves ephemeral port allocation. |
 | **ARM Buffers** | Optimized `rmem`/`wmem` buffers (ARM Only) | Boosts peak throughput for high-end models like Giga, Ultra, and Hero. |
 
+</details>
+
 To reset the settings to their defaults, simply set `network.tuning` to `0` and reboot your router.
 
 **`network.check`** - specify only those IP addresses or domain names that are guaranteed to be reachable (pingable) in your network to ensure the script can verify the connection and start services successfully after a router reboot.
 
-**`firewall.intercept.fakeip`** - this feature relies on the sing-box DNS module, meaning it must be engaged via `firewall.intercept.dns` or `firewall.redirect_dns` and configured correctly (see examples in the `examples` folder, starting from sing-box version 1.13). Everything flagged as FakeIP will always be routed through sing-box via Redirect and/or TProxy, while everything else will bypass it at the Linux kernel level. This can be highly beneficial if you primarily use domestic services and want to offload your aging mips(el) router, as FakeIP is meant to be used mainly for the foreign segment.
+**`firewall.intercept.fakeip`** - this feature relies on the sing-box DNS module, meaning it must be engaged via `firewall.intercept.dns` or `firewall.redirect_dns` and configured correctly (see examples in the `examples` folder). Everything flagged as FakeIP will always be routed through sing-box via Redirect and/or TProxy, while everything else will bypass it at the Linux kernel level. This can be highly beneficial if you primarily use domestic services and want to offload your aging mips(el) router, as FakeIP is meant to be used mainly for the foreign segment.
 
 <details>
-  <summary>🚀 Advantages over GeoIP IPset Country-Based Filtering</summary>
+  <summary>🔽 Advantages over GeoIP IPset Country-Based Filtering</summary>
 
 * **Minimal RAM Consumption:** The `geoipset` method requires loading tens of thousands of Russian subnets into the router's RAM just to exclude them. FakeIP does not store massive IP address databases at all. It operates dynamically and "on the fly" within a single small local subnet, freeing up precious memory for system needs.
 
