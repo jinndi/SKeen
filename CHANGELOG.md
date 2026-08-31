@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.3.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.3.0...SKeen-v5.3.1) (2026-08-31)
+
+
+### 🐛 Fix
+
+* remove redundant chmod and clean up sing-box run version file ([b5aa7de](https://github.com/jinndi/SKeen/commit/b5aa7de1a091f9bdf20d9db7fe385a2388d8d3a1))
+
+
+### 🧰 Chore
+
+* **config:** update stable configuration templates following the release of sing-box v1.14 ([6a71dee](https://github.com/jinndi/SKeen/commit/6a71deea08fa3ea08733f687f10f86b797362645))
+
 ## [5.3.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.2.2...SKeen-v5.3.0) (2026-08-30)
 
 
