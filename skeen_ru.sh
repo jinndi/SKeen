@@ -3142,7 +3142,7 @@ clean_cache() {
       -e cache_file_path='@.experimental.cache_file.path'
   )"
 
-  if [ "$cache_file_enabled" != "true" ]; then
+  if [ "$cache_file_enabled" != "1" ]; then
     echowarn "Кэш файл отключен в конфигурации $SINGBOX_NAME"
   fi
 

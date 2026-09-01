@@ -3142,7 +3142,7 @@ clean_cache() {
       -e cache_file_path='@.experimental.cache_file.path'
   )"
 
-  if [ "$cache_file_enabled" != "true" ]; then
+  if [ "$cache_file_enabled" != "1" ]; then
     echowarn "Cache file is disabled in $SINGBOX_NAME configuration"
   fi
 
