@@ -4,7 +4,7 @@ ACTION="${1:-}"
 CALLER="${2:-}"
 [ -z "$CALLER" ]&&CALLER="cli"
 [ -z "$ACTION" ]&&CALLER="menu"
-readonly DEPENDENCIES="start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
+readonly DEPENDENCIES="iptables ip-full ipset net-tools curl tar jsonfilter logger"
 readonly ENTWARE_DIR="/opt"
 readonly WORK_DIR="$ENTWARE_DIR/etc/skeen"
 readonly TMP_DIR="$ENTWARE_DIR/tmp"
@@ -14,7 +14,7 @@ readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.3.1"
+readonly SKEEN_VERSION="5.3.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -569,20 +569,16 @@ local pkg_list
 pkg_list="$(opkg list 2>/dev/null|awk '{print $1}')"
 for pkg_name in $DEPENDENCIES;do
 printf "[%s] " "$pkg_name" >&2
-if command -v "$pkg_name" >/dev/null 2>&1;then
-echook "Already installed"
-continue
-fi
 case "$pkg_list" in
 *"$pkg_name"*)if
 opkg install "$pkg_name" >/dev/null 2>&1
 then
 echook "Installed"
 else
-exiterr "Installation error"
+echoerr "Installation error"
 fi
 ;;
-*)exiterr "Package not found in opkg repositories"
+*)echoerr "Package not found in opkg repo"
 esac
 done
 echook "All dependencies are installed"
@@ -2488,7 +2484,7 @@ fi
 eval "$(jsonfilter -i "$SINGBOX_CONFIG" \
 -e cache_file_enabled='@.experimental.cache_file.enabled' \
 -e cache_file_path='@.experimental.cache_file.path')"
-if [ "$cache_file_enabled" != "true" ];then
+if [ "$cache_file_enabled" != "1" ];then
 echowarn "Cache file is disabled in $SINGBOX_NAME configuration"
 fi
 if [ -z "$cache_file_path" ];then
