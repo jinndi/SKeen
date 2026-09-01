@@ -19,7 +19,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-readonly DEPENDENCIES="start-stop-daemon iptables ip-full ipset net-tools curl tar jsonfilter logger"
+readonly DEPENDENCIES="iptables ip-full ipset net-tools curl tar jsonfilter logger"
 
 readonly ENTWARE_DIR="/opt"
 readonly WORK_DIR="${ENTWARE_DIR}/etc/skeen"
@@ -686,20 +686,15 @@ install_dependencies() {
   for pkg_name in $DEPENDENCIES; do
     printf "[%s] " "$pkg_name" >&2
 
-    if command -v "$pkg_name" >/dev/null 2>&1; then
-      echook "Уже установлено"
-      continue
-    fi
-
     case "$pkg_list" in
     *"$pkg_name"*)
       if opkg install "$pkg_name" >/dev/null 2>&1; then
         echook "Установлено"
       else
-        exiterr "Ошибка установки"
+        echoerr "Ошибка установки"
       fi
       ;;
-    *) exiterr "Пакет не найден в opkg" ;;
+    *) echoerr "Пакет не найден в opkg" ;;
     esac
   done
 
