@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.3.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.3.1...SKeen-v5.3.2) (2026-09-01)
+
+
+### 🐛 Fix
+
+* correct cache file enabled check to compare against "1" ([b895958](https://github.com/jinndi/SKeen/commit/b895958bed76e76d76a8f868d1693a16519c9bb0))
+* **deps:** simplify dependency installation and remove start-stop-daemon ([0ee94bf](https://github.com/jinndi/SKeen/commit/0ee94bf5c10dcca352889a5da074a2a7c03148e2))
+
 ## [5.3.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.3.0...SKeen-v5.3.1) (2026-08-31)
 
 
