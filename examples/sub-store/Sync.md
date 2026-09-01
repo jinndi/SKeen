@@ -42,8 +42,7 @@
       {
         "tag": "hosts", "type": "hosts",
         "predefined": {
-          "cloudflare-dns.com": [ "104.16.248.249", "104.16.249.249" ],
-          "dns.quad9.net": [ "9.9.9.9", "149.112.112.112" ],
+          "cloudflare-dns.com": [ "1.1.1.1", "1.0.0.1" ],
           "dns.google": [ "8.8.8.8", "8.8.4.4" ],
           "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ]
         }
@@ -51,7 +50,6 @@
       { "tag": "dns_local",    "type": "local" },
       { "tag": "dns_direct",   "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
       { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
-      { "tag": "dns_proxy_q9", "type": "https",  "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
       { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
       { "tag": "dns_fakeip",   "type": "fakeip", "inet4_range": "198.18.0.0/15" }
     ],
@@ -63,15 +61,16 @@
       { "rule_set": "private", "server": "dns_local" },
       { "clash_mode": "Direct", "server": "dns_direct" },
       { "rule_set": "adguard", "action": "predefined" },
-      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "action": "evaluate", "rule_set": "cheburnet", "server": "dns_direct", "tag": "chebur1" },
+      { "match_response": "chebur1",  "action": "respond", "race": true },
+      { "action": "evaluate", "rule_set": "cheburnet", "server": "dns_local",  "tag": "chebur2", "speculative": true },
+      { "match_response": "chebur2",  "action": "respond", "race": true },
       { "rule_set": "trackers", "server": "dns_direct" },
       { "rule_set": "filter", "server": "dns_direct" },
       { "rule_set": "proxy", "rewrite_ttl": 300, "server": "dns_fakeip" },
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
-      { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
       { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
-      { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
       { "server": "dns_fakeip" },
       { "clash_mode": "Global", "server": "dns_fakeip" }
@@ -99,7 +98,9 @@
     {
       "tag": "default",
       "version": 2,
-      "detour": "🌍 Proxy"
+      "detour": "🌍 Proxy",
+      "stream_receive_window": 0,
+      "connection_receive_window": 0
     }
   ],
 
@@ -113,16 +114,16 @@
   ],
 
   "outbounds": [
-    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [] },
-    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [] },
-    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [] },
-    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [] },
-    { "tag": "🤖 AI",      "type": "selector", "outbounds": [] },
-    { "tag": "🌍 Auto",    "type": "urltest",  "outbounds": [], "interval": "10m", "tolerance": 100 },
-    { "tag": "🇷🇺 Auto",    "type": "urltest",  "outbounds": [], "interval": "5m",  "tolerance": 100 },
+    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🤖 AI",      "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🌍 Auto",    "type": "urltest",  "outbounds": [], "interval": "10m", "tolerance": 75 },
+    { "tag": "🇷🇺 Auto",    "type": "urltest",  "outbounds": [], "interval": "5m",  "tolerance": 75 },
     { "tag": "🔌 DIRECT",  "type": "direct",   "domain_resolver": "dns_direct" },
     { "tag": "❌ REJECT",  "type": "block" },
-    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ] }
+    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ], "interrupt_exist_connections": true }
   ],
 
   "route": {

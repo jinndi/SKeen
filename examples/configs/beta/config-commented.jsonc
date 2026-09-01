@@ -81,9 +81,9 @@
       {
         "tag": "hosts", "type": "hosts",
         "predefined": {
-          "cloudflare-dns.com": [ "104.16.248.249", "104.16.249.249" ],
-          "dns.quad9.net": [ "9.9.9.9", "149.112.112.112" ],
+          "cloudflare-dns.com": [ "1.1.1.1", "1.0.0.1" ],
           "dns.google": [ "8.8.8.8", "8.8.4.4" ],
+          //"dns.quad9.net": [ "9.9.9.9", "149.112.112.112" ],
           "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ]
         }
       },
@@ -110,13 +110,14 @@
       // Краткое описание: Это наиболее распространенный вариант для современных зашифрованных DNS-серверов.
       { "tag": "dns_proxy_cf", "type": "https", "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
 
-      // DNS-сервер 5: Quad9 DNS-over-HTTPS для параллельных запросов через прокси с целью гонки ответов
-      { "tag": "dns_proxy_q9",  "type": "https", "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
-
-      // DNS-сервер 6: Google DNS-over-HTTPS для параллельных запросов через прокси с целью гонки ответов
+      // DNS-сервер 5: Google DNS-over-HTTPS для параллельных запросов через прокси с целью гонки ответов
       { "tag": "dns_proxy_gg",  "type": "https", "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
 
-      // DNS-сервер 7: FakeIP (для международного, проксируемого трафика)
+      // DNS-сервер 5++: Quad9 DNS-over-HTTPS для параллельных запросов через прокси с целью гонки ответов
+      // Здесь показан для примера, что можно использовать несколько DNS-серверов для гонки ответов, но в данной конфигурации оставим два.
+      // { "tag": "dns_proxy_q9",  "type": "https", "server": "dns.quad9.net", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
+
+      // DNS-сервер 6: FakeIP (для международного, проксируемого трафика)
       // Примечание: Вместо реального IP-адреса будет возвращен фиктивный IP-адрес (198.18.xx).
       // Зачем использовать FakeIP:
       // 1. Предотвращение утечек DNS: Иностранные доменные имена не используют вышестоящие DNS-серверы.
@@ -164,8 +165,15 @@
       // Это самый мягкий способ блокировки: приложения/сайты не зависают и не спамят повторными запросами.
       { "rule_set": "adguard", "action": "predefined" },
 
-      // Правило 8: Для RU доменов белого списка -> разолвим через Yandex DNS
-      { "rule_set": "cheburnet", "server": "dns_direct" },
+      // Правило 8: Для RU доменов белого списка -> разолвим через Yandex DNS и локальный DNS с гонкой ответов.
+      // Примечание: Локальный DNS роутера должен быть DNS провайдера либо так-же настроен на Yandex DNS.
+      // Почему гонка ответов: Если один из DNS-серверов не отвечает, другой может вернуть результат,
+      // dns_local может быть быстрее, чем dns_direct, он так же использует своё кэширование.
+      // Подробнее о принципах работы читайте ниже в АЛЬТЕРНАТИВА правилам 12-13
+      { "action": "evaluate", "rule_set": "cheburnet", "server": "dns_direct", "tag": "chebur1" },
+      { "match_response": "chebur1",  "action": "respond", "race": true },
+      { "action": "evaluate", "rule_set": "cheburnet", "server": "dns_local",  "tag": "chebur2", "speculative": true },
+      { "match_response": "chebur2",  "action": "respond", "race": true },
 
       // Правило 9: Локальный DNS для торрент-трекеров (оптимизация P2P-скорости и защита Fake-IP).
       { "rule_set": "trackers", "server": "dns_direct" },
@@ -182,33 +190,41 @@
       // это значительно ускорит первоначальную обработку DNS, т.к. реальных запросов на разрешение доменов будет меньше.
       { "rule_set": "proxy", "rewrite_ttl": 300, "server": "dns_fakeip" },
 
-      // Правило 12: Для доменов, которые не прошли по правилам выше -> Параллельный запрос к 3-м прокси-DNS серверам
+      // Правило 12: Для доменов, которые не прошли по правилам выше, запускаем DNS-запросы к 2м прокси-DNS серверам.
+      // evaluate не завершает обработку правил, поэтому запросы могут выполняться параллельно.
       { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
-      { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
       { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24" },
+      // { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24" },
 
-      // Правило 13: Гонка ответов. Если любой из серверов вернул IP из списка ruip -> отдаем самый быстрый ответ
+      // Правило 13: Гонка подходящих ответов.
+      // Если ответ DNS содержит IP из списка ruip, соответствующее правило участвует в гонке.
+      // Побеждает первое совпавшее правило, а не просто самый быстрый DNS-ответ.
       { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
-      { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
       { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
+      // { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
 
-      // // АЛЬТЕРНАТИВА правилам 12+13 (Приоритет Cloudflare + фоновые Quad9/Google)
+      // // АЛЬТЕРНАТИВА правилам 12-13:
       // // Примечание: Можно использовать в оптимизированном варианте (ниже) убрав "rule_set": "ruip".
-      // // P.S. Можно делать и комбинации, вообще полностью обнулив существование Adguard Home как инструмент.
+      // // Приоритет Cloudflare + упреждающий запуск резервных DNS-запросов.
+      // // В отличие от варианта выше, резервные evaluate запускаются только при наличии
+      // // предшествующего незавершённого race; speculative позволяет не ждать его завершения.
+      // // Поэтому порядок правил здесь принципиален.
       // // ---
-      // // Правило 12: Основной приоритетный DNS (Cloudflare).
+      // // Правило 12: Основной DNS - Cloudflare.
       // { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf", "client_subnet": "77.88.8.0/24" },
-      // // Включаем гонку для CF. Отбираем только российские IP (ruip) и отдаем результат.
+      // // Проверяем ответ Cloudflare по ruip.
+      // // race позволяет продолжить обработку правил, пока ответ ещё ожидается.
       // { "match_response": "final-cf", "rule_set": "ruip", "action": "respond", "race": true },
       //
-      // // Правило 13: Резервные DNS (Quad9 и Google) с упреждающим запуском (speculative).
-      // // Отправляются в сеть параллельно с CF, не дожидаясь его таймаута при сбое или блокировке.
-      // { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24", "speculative": true },
-      // // Подключаем резервный ответ к гонке с той же проверкой на ruip.
-      // { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
-      // // + Тоже самое для dns_proxy_gg (запрос через прокси DNS Google DoH)
+      // // Правило 13: Резервный DNS - Google с упреждающим запуском.
+      // // speculative позволяет отправить запрос сразу, не дожидаясь завершения предшествующего race для Cloudflare.
       // { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg", "client_subnet": "77.88.8.0/24", "speculative": true },
+      // // Если ответ Google содержит IP из ruip, он также участвует в гонке.
       // { "match_response": "final-gg", "rule_set": "ruip", "action": "respond", "race": true },
+      // // // Аналогично запускаем Quad9 DNS упреждающе.
+      // // // Здесь speculative также имеет смысл благодаря предшествующему race.
+      // // { "action": "evaluate", "server": "dns_proxy_q9", "tag": "final-q9", "client_subnet": "77.88.8.0/24", "speculative": true },
+      // // { "match_response": "final-q9", "rule_set": "ruip", "action": "respond", "race": true },
 
       // Правило 14: Для зарубежных айпи (доменов) -> назначаем Fake-IP
       { "server": "dns_fakeip" },
@@ -229,8 +245,8 @@
       //
       // // Правило 13: Гонка ответов (убрали: "rule_set": "ruip").
       // { "match_response": "final-cf", "action": "respond", "race": true },
-      // { "match_response": "final-q9", "action": "respond", "race": true },
       // { "match_response": "final-gg", "action": "respond", "race": true },
+      //// { "match_response": "final-q9", "action": "respond", "race": true },
       //
       // // Правило 14: УБИРАЕМ ПОЛНОСТЬЮ!
       //
@@ -311,7 +327,10 @@
     {
       "tag": "default",
       "version": 2,
-      "detour": "🌍 Proxy"
+      "detour": "🌍 Proxy",          // Направлять в прокси
+      "stream_receive_window": 0,    // Размер окна приема потока, 0 означает использование системного/внутреннего значения по умолчанию.
+      "connection_receive_window": 0 // Размер окна приема соединения, значение по умолчанию — 0.
+                                     // Для обычного использования тонкая настройка не требуется; просто оставьте значение равным 0.
     }
   ],
 
@@ -335,17 +354,19 @@
   // ══════════════════════════════════════════════
   "outbounds": [
     // Селекторы для переключения прокси в веб панели для конкретных наборов правил/протоколов
-    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [ "🌍 Auto", "🔒 TROYAN" ], "default": "🔒 TROYAN" },
-    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ] },
-    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ] },
-    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ] },
-    { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ] },
+    // "interrupt_exist_connections": true - Переключение прерываний. Это очень важно для переключения узлов в середине просмотра видео;
+    // в противном случае видео зависнет до тех пор, пока не истечет время ожидания старого соединения.
+    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [ "🌍 Auto", "🔒 TROYAN" ], "default": "🔒 TROYAN", "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🏴‍☠️ Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
 
     // Группы автоматического измерения задержки (доступности прокси-узлов)
     // Примечание: Проводят тест задержки на всех указанных в outbounds узлах каждые 10 минут и выбирайте тот, у которого наименьшая задержка.
     // tolerance=100: Можно выбрать любой узел с задержкой в ​​пределах 100 мс от максимальной задержки (балансировка нагрузки).
-    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [ "🔒 TROYAN" ],  "interval": "10m", "tolerance": 100 },
-    { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [ "🇷🇺 TROYAN" ], "interval": "5m", "tolerance": 100 },
+    { "tag": "🌍 Auto",    "type": "urltest",  "outbounds": [ "🌍 TROYAN" ], "interval": "10m", "tolerance": 100, "idle_timeout": "30m0s" },
+    { "tag": "🇷🇺 Auto",    "type": "urltest",  "outbounds": [ "🇷🇺 TROYAN" ], "interval": "5m",  "tolerance": 100, "idle_timeout": "30m0s" },
 
     // Прямое подключение к правайдеру (DIRECT)
     { "tag": "🔌 DIRECT", "type": "direct", "domain_resolver": "dns_direct" },
@@ -354,7 +375,7 @@
     { "tag": "❌ REJECT", "type": "block" },
 
     // Селектор для указания на конечный выходной узел если не одно правило маршрутизации не совпало
-    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ] },
+    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ], "interrupt_exist_connections": true },
 
     // Список ваших прокси-узлов
     {
@@ -610,7 +631,12 @@
       "cache_id": "v1_14",  // Идентификатор кэша (используется для разделения разных кэшей при переключении конфигураций)
       "store_fakeip": true, // Сохраняет сопоставления FakeIP в файле кэша
                             // Пояснение: Включение этой функции улучшает работу после перезагрузки и обеспечивает бесперебойное соединение.
+                            // Без этой функции поддельные IP-адреса, кэшированные локально в браузере, становятся недействительными после перезагрузки,
+                            // что приводит к сетевым ошибкам при повторном открытии вкладок, которые не успели инициировать новые DNS-запросы.
+                            // Включение этой функции полностью решает проблему разрыва соединения после перезагрузки.
       "store_dns": true     // Сохранить в кэш разрешенные DNS-запросы
+                            // Включите постоянное кэширование DNS-записей, чтобы расширить область действия механизма оптимистичного DNS,
+                            // обеспечив его эффективность даже после перезапуска.
     },
 
     // API Clash - можно использовать вместо API sing-box (Zashboard не поддерживает Sing-box с версии 3.23.0)
