@@ -614,6 +614,8 @@
       "listen": "::",
       "listen_port": 9999,  // Адрес прослушивания API
       "secret": "",         // Задайте пароль доступа если порт 9999 и любой другой указанный выше открыт наружу!
+      "access_control_allow_origin": "http://sing-box-dashboard.sagernet.org", // Разрешить доступ к панели только с этого домена
+      "access_control_allow_private_network": true, // Разрешить доступ к панели с локальной сети (LAN)
       "dashboard": true     // Включить панель, файлы по умолчанию сохраняются в папку /opt/etc/skeen/dashboard
     }
   ],

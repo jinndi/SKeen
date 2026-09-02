@@ -180,6 +180,8 @@
       "listen": "::",
       "listen_port": 9999,
       "secret": "",
+      "access_control_allow_origin": "http://sing-box-dashboard.sagernet.org",
+      "access_control_allow_private_network": true,
       "dashboard": true
     }
   ],
