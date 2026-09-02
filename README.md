@@ -468,6 +468,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 | `deps` | Check dependencies | ✓ |
 | `check` | Check configuration | ✓ |
 | `format` | Format Sing-box configuration | ✓ |
+| `api` | Sing-box API management commands | - |
 | `backup` | Create archive of `/opt/etc/skeen` | ✓ |
 | `backups` | List created archives in `/opt` | ✓ |
 | `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ |
@@ -535,6 +536,11 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // into files named after the top-level Sing-box configuration keys.
                        // Available only if path points to a directory.
     },
+    "api": {           // + sing-box API settings for commands via the intermediary layer (skeen api)
+                       // sing-box version 1.14.beta.15 or higher is required
+      "url": "",       // URL to the sing-box API service; default http://127.0.0.1:9999
+      "secret": ""     // API secret key; specify this if it is set in the sing-box configuration.
+    },
     "external": {      // + External Sing-box usage
       "enabled": 0,    // If set to 1, an external Sing-box binary is used;
                        // its installation, updates, and removal are managed manually.
@@ -543,6 +549,10 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
         "path": "",    // Similar to the singbox.config object above;
         "url": "",     // its data will be used if left blank here.
         "split": 1
+      },
+      "api": {         // Parameters for accessing the sing-box API (optional)
+        "url": "",     // Similar to the singbox.api object above,
+        "secret": ""   // its data will be used if not specified here.
       }
     }
   },

@@ -31,7 +31,7 @@ readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:18
 readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.3.2"
+readonly SKEEN_VERSION="5.4.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
@@ -182,6 +182,10 @@ create_skeen_config() {
       "url": "",
       "split": 1
     },
+    "api": {
+      "url": "http://127.0.0.1:9999",
+      "secret": ""
+    },
     "external": {
       "enabled": ${EXTERNAL_ENABLED:-0},
       "path": "",
@@ -189,6 +193,10 @@ create_skeen_config() {
         "path": "",
         "url": "",
         "split": 1
+      },
+      "api": {
+        "url": "",
+        "secret": ""
       }
     }
   },
@@ -372,21 +380,29 @@ get_singbox_config() {
       -e sing_config_path='@.singbox.config.path' \
       -e sing_config_url='@.singbox.config.url' \
       -e sing_config_split='@.singbox.config.split' \
+      -e sing_api_url='@.singbox.api.url' \
+      -e sing_api_secret='@.singbox.api.secret' \
       -e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
       -e sing_external_path='@.singbox.external.path' \
       -e sing_external_config_path='@.singbox.external.config.path' \
       -e sing_external_config_url='@.singbox.external.config.url' \
-      -e sing_external_config_split='@.singbox.external.config.split'
+      -e sing_external_config_split='@.singbox.external.config.split' \
+      -e sing_external_api_url='@.singbox.external.api.url' \
+      -e sing_external_api_secret='@.singbox.external.api.secret'
   )"
 
   : "${sing_config_path:=$SINGBOX_DEFAULT_CONFIG_PATH}"
   : "${sing_config_url:=}"
   : "${sing_config_split:=1}"
+  : "${sing_api_url:=http://127.0.0.1:9999}"
+  : "${sing_api_secret:=}"
   : "${SINGBOX_EXTERNAL_ENABLED:=0}"
   : "${sing_external_path:=/opt/bin/sing-box}"
   : "${sing_external_config_path:=$sing_config_path}"
   : "${sing_external_config_url:=$sing_config_url}"
   : "${sing_external_config_split:=$sing_config_split}"
+  : "${sing_external_api_url:=$sing_api_url}"
+  : "${sing_external_api_secret:=$sing_api_secret}"
 
   if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ]; then
     [ -f "$sing_external_path" ] || sing_external_path="$(command -v "$sing_external_path")"
@@ -394,11 +410,15 @@ get_singbox_config() {
     SINGBOX_CONFIG="$sing_external_config_path"
     SINGBOX_CONFIG_URL="$sing_external_config_url"
     SINGBOX_CONFIG_SPLIT="$sing_external_config_split"
+    export BOX_API_URL="$sing_external_api_url"
+    export BOX_API_SECRET="$sing_external_api_secret"
   else
     SINGBOX_BIN="$SINGBOX_BIN_PATH"
     SINGBOX_CONFIG="$sing_config_path"
     SINGBOX_CONFIG_URL="$sing_config_url"
     SINGBOX_CONFIG_SPLIT="$sing_config_split"
+    export BOX_API_URL="$sing_api_url"
+    export BOX_API_SECRET="$sing_api_secret"
   fi
 
   check_and_merge_singbox_config
@@ -3210,6 +3230,22 @@ format_config() {
   fi
 }
 
+run_api(){
+  shift
+  local version
+
+  get_singbox_config
+  if [ -f "$SINGBOX_BIN" ]; then
+    version="$(get_current_version "sing")"
+    case "$version" in
+      1.14*) "$SINGBOX_BIN" api "$@" ;;
+      *) exiterr "Only supported in $SINGBOX_NAME 1.14 +" ;;
+    esac
+  else
+    exiterr "Executable file $SINGBOX_NAME is missing"
+  fi
+}
+
 split_singbox_config() {
   local src_file="${1:-}"
   local target_dir="${2:-}"
@@ -3468,6 +3504,7 @@ Available Commands:
   deps    - Check dependencies
   check   - Check configuration
   format  - Format $SINGBOX_NAME configuration
+  api     - $SINGBOX_NAME API management commands
   backup  - Create archive of $WORK_DIR
   backups - List created archives in $ENTWARE_DIR
   restore - Restore $WORK_DIR from archive in $ENTWARE_DIR
@@ -3507,6 +3544,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     ;;
   check) check_config ;;
   format) format_config ;;
+  api) run_api "$@" ;;
   backup) backup_create ;;
   backups) backup_list ;;
   restore) backup_restore "$2" ;;
