@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.4.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.3.2...SKeen-v5.4.0) (2026-09-02)
+
+
+### 🚀 Feat
+
+* **cli:** add sing-box API management command ([f0f916f](https://github.com/jinndi/SKeen/commit/f0f916f5a456d3ea08ee5a4cd1e93336156db5f1))
+
 ## [5.3.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.3.1...SKeen-v5.3.2) (2026-09-01)
 
 
