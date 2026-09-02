@@ -3230,10 +3230,11 @@ format_config() {
   fi
 }
 
-run_api(){
+run_api() {
   shift
   local version
 
+  check_tty
   get_singbox_config
   if [ -f "$SINGBOX_BIN" ]; then
     version="$(get_current_version "sing")"
