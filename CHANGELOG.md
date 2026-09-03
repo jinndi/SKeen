@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.4.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.4.0...SKeen-v5.4.1) (2026-09-03)
+
+
+### 🐛 Fix
+
+* **cli:** add tty check to sing-box api command ([4df028e](https://github.com/jinndi/SKeen/commit/4df028ed670df9ce44339790bca7a03252814166))
+
 ## [5.4.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.3.2...SKeen-v5.4.0) (2026-09-02)
 
 
