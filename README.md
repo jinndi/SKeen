@@ -50,7 +50,7 @@ Notes:
   <summary>🖥️ Web UI ?</summary>
 <br>
 
-💡 For easier setup, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). For more flexible manual configuration, automation, and synchronization, use [Sub-Store](https://github.com/jinndi/Sub-Store-Docker).
+💡 For easy setup, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available, allowing you to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). For more flexible manual configuration, automation, and synchronization, use [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) for deployment on a VPS or [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) for PC.
 
 The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
 
@@ -322,7 +322,7 @@ Reasons why:
 - 💻 Commands working via router's WEB CLI ✓
 - 🔄 Switch between official and third-party Sing-box ✓
 - 🔗 Sing-box config sync via HTTP(S) link ✓
-- 🔌 Config sync via GUI.for.SingBox plugin ✓
+- 📦 Sub-Store Usage Examples for Synchronization ✓
 - 📋 Ready-to-use Sing-box config templates ✓
 - 🛡️ Optional proxying for the router itself ✓
 - 🔓 No access token required for RCI requests (none used) ✓
@@ -682,8 +682,9 @@ Is this solution right for you? Everyone decides for themselves based on current
 
 ### 🔗 Useful links
 
-- Sub-Store-Docker: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
-- Sync plugin: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
+- Sub-Store-GUI 🔥: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
+- Sub-Store-Docker 🔥: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
+- Plugin GUI.for.SingBox: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
 - Custom rulesets: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
 - Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
 - Tutorial: [https://core-tutorial.argsment.com/singbox](https://core-tutorial.argsment.com/singbox)

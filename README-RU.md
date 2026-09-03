@@ -50,7 +50,7 @@ TProxy и Redirect для Keenetic/Netcraze на базе sing-box
   <summary>🖥️ Веб-интерфейс ?</summary>
 <br>
 
-💡 Для упрощения настройки доступен [плагин синхронизации](https://github.com/jinndi/sync-profile-to-skeen), позволяющий импортировать профили через [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). Для более гибкой ручной настройки, автоматизации и синхронизации используйте [Sub-Store](https://github.com/jinndi/Sub-Store-Docker).
+💡 Для настройки доступен [плагин синхронизации](https://github.com/jinndi/sync-profile-to-skeen), позволяющий импортировать профили через [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). Для более гибкой ручной конфигурации, автоматизации и синхронизации используйте [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) для установки на VPS либо [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) для ПК.
 
 Проект сознательно не включает отдельную панель управления. Вот почему это выгодно для вашего роутера:
 
@@ -321,7 +321,7 @@ ADGuard Home в первую очередь отвечает за фильтра
 - 💻 Команды, работающие через WEB CLI роутера ✓
 - 🔄 Переключение между официальным и сторонним Sing-box ✓
 - 🔗 Синхронизация конфигурации Sing-box по HTTP(S)-ссылке ✓
-- 🔌 Синхронизация конфигурации через плагин к GUI.for.SingBox ✓
+- 📦 Примеры использования Sub-Store для синхронизации ✓
 - 📋 Готовые шаблоны конфигураций Sing-box ✓
 - 🛡️ Опциональное проксирование самого роутера ✓
 - 🔓 Не требует токена доступа для RCI запросов (их нет) ✓
@@ -680,8 +680,9 @@ exec /opt/etc/init.d/S51dropbear start
 
 ### 🔗 Полезные ссылки
 
-- Sub-Store-Docker: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
-- Плагин синхронизации: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
+- Sub-Store-GUI 🔥: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
+- Sub-Store-Docker 🔥: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
+- Плагин GUI.for.SingBox: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
 - Наборы правил Karing: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
 - Кастомные наборы правил: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
 - Справочник: [https://core-tutorial.argsment.com/singbox](https://core-tutorial.argsment.com/singbox)
