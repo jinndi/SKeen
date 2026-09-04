@@ -179,9 +179,10 @@
     "cache_file": {
       "enabled": true,
       "path": "cache.db",
-      "cache_id": "v1_14",
+      "cache_id": "v1_15",
       "store_fakeip": true,
-      "store_dns": true
+      "store_dns": true,
+      "buffer_size": "1MB"
     },
     "debug": {
       "gc_percent": 100,
