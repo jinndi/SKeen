@@ -5,6 +5,7 @@
 [
   // 1. NaïveProxy (режим TCP с UoT)
   // Протокол NaïveProxy (протокол прокси Chrome), туннелирование TLS+HTTP/2
+  // Не рекомендуется для роутеров на mipsel, а mips не имеет поддержки.
   // udp_over_tcp: true - трафик UDP передается через TCP-туннель
   {
     "type": "naive",

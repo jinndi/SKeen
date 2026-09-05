@@ -141,6 +141,7 @@
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
       { "rule_set": "games", "outbound": "🕹️ Games" },
       { "rule_set": "ai", "outbound": "🤖 AI" },
+      { "rule_set": "telegramip", "outbound": "🌍 Proxy" },
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
       { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
       { "rule_set": "proxy", "outbound": "🌍 Proxy" },
@@ -162,7 +163,10 @@
     "rule_set": [
       {
         "type": "remote",
-        "tag": [ "ipdetect", "private", "adguard", "cheburnet", "trackers", "filter", "games", "ai", "proxy", "ru", "ruip" ],
+        "tag": [ 
+          "ipdetect", "private", "adguard", "cheburnet", "trackers", "filter", 
+          "games", "ai", "proxy", "ru", "ruip", "telegramip" 
+        ],
         "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs",
         "update_interval": "48h0m0s"
       }

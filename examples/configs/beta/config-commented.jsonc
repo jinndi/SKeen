@@ -466,10 +466,11 @@
       // Отправляем в селектор "🇷🇺 RU" чтобы гибко управлять трафиком NTP (NTP в KeeneticOS)
       { "protocol": "ntp", "outbound": "🇷🇺 RU" },
 
-      // Правила 12: Назаначаем выходы (outbound) Нашим "Гибким" селекторам
+      // Правила 12: Назаначаем выходы (outbound) Нашим "Гибким" селекторам/рулсетам
       { "protocol": "bittorrent", "outbound": "🏴‍☠️ Torrent" },
       { "rule_set": "games", "outbound": "🕹️ Games" },
       { "rule_set": "ai", "outbound": "🤖 AI" },
+      { "rule_set": "telegramip", "outbound": "🌍 Proxy" },
 
       // Правило 13: Частные IP-адреса (192.168.xx и т. д.) → Прямой доступ
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
@@ -587,12 +588,15 @@
       // jinndi (https://github.com/jinndi/singbox_ruleset)
       {
         "type": "remote",
-        "tag": [ "ipdetect", "private", "adguard", "cheburnet", "trackers", "filter", "games", "ai", "proxy", "ru", "ruip" ],
+        "tag": [ 
+          "ipdetect", "private", "adguard", "cheburnet", "trackers", "filter", 
+          "games",    "ai",      "proxy",    "ru",       "ruip",     "telegramip" 
+        ],
         "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs",
         "update_interval": "48h0m0s"
       }
     ],
-
+    
     // Глобальные настройки маршрутизатора
     "final": "🚦 FINAL",  // Крайний вариант: если ни одно правило не подходит → Используйте выбор из "🚦 FINAL"
                           // Окончательное правило: Весь несовпадающий трафик проходит через выбранный outboind
