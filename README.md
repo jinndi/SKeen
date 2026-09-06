@@ -682,7 +682,8 @@ Is this solution right for you? Everyone decides for themselves based on current
 
 ### 🔗 Useful links
 
-- Sub-Store-GUI 🔥: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
+- Sub-Store-Desktop 🔥: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
+- Sub-Store-Android 🔥: [https://github.com/sionnx/SubCase](https://github.com/sionnx/SubCase)
 - Sub-Store-Docker 🔥: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
 - Plugin GUI.for.SingBox: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
 - Custom rulesets: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)

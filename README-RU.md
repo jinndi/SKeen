@@ -680,7 +680,8 @@ exec /opt/etc/init.d/S51dropbear start
 
 ### 🔗 Полезные ссылки
 
-- Sub-Store-GUI 🔥: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
+- Sub-Store-Desktop 🔥: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
+- Sub-Store-Android 🔥: [https://github.com/sionnx/SubCase](https://github.com/sionnx/SubCase)
 - Sub-Store-Docker 🔥: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
 - Плагин GUI.for.SingBox: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
 - Наборы правил Karing: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)

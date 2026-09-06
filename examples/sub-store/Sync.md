@@ -8,7 +8,7 @@
 
 ### Настройка Sub-Store
 
-1. Устанавливаем [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) на удаленный сервер VPS либо [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) на локальный компьютер в сети вашего роутера.
+1. Устанавливаем [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) на удаленный сервер VPS либо [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) на локальный компьютер в сети вашего роутера, есть вариант и [на Android](https://github.com/sionnx/SubCase).
 
 2. Настраиваем `Sub-Store`:
 
