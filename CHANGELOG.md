@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.4.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.4.1...SKeen-v5.4.2) (2026-09-06)
+
+
+### ⚙️ Config
+
+* add telegramip rule set for proxy handling in configurations ([9e27b85](https://github.com/jinndi/SKeen/commit/9e27b857c7bf556f103eb9d4edd34fc29dca4a63))
+* **beta:** update cache configuration with buffer size and increment cache ID ([4e85d37](https://github.com/jinndi/SKeen/commit/4e85d371ef5057b41dd45e7a772ea12824b0fcdd))
+
 ## [5.4.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.4.0...SKeen-v5.4.1) (2026-09-03)
 
 
