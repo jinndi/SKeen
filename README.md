@@ -1,12 +1,8 @@
 <p align="center">
   <img src="/logo.png" alt="SKeen" width="512" style="max-width: 100%; height: auto; display: block; margin: 0 auto; padding: 20px 0;" />
 </p>
-<h1 align="center">
-  SKeen
-</h1>
-<h3 align="center">
-Lightweight transparent proxy for Keenetic/Netcraze powered by sing-box
-</h3>
+<h1 align="center">SKeen</h1>
+<h3 align="center">Lightweight transparent proxy for Keenetic/Netcraze powered by sing-box</h3>
 
 <p align="center">
 <a href="https://github.com/jinndi/SKeen/releases/latest"><img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen"></a>
@@ -16,6 +12,8 @@ Lightweight transparent proxy for Keenetic/Netcraze powered by sing-box
 </p>
 
 🇺🇸 **English** | [🇷🇺 На русском](README-RU.md)
+
+SKeen configures transparent proxying on Keenetic and Netcraze routers using sing-box. It manages firewall rules, service lifecycle and configuration synchronization.
 
 <details>
   <summary>Why sing-box?</summary>
@@ -78,30 +76,31 @@ The complete FAQ is available in [docs/FAQ.md](docs/FAQ.md).
 
 </details>
 
-### Features
+## Features
 
-- TProxy/Redirect/Hybrid/Tun/DNS modes ✓
-- IPv4 and IPv6 support ✓
-- Working Sing-box DNS module ✓
-- Working Sing-box FakeIP ✓
-- FakeIP proxying at iptables level ✓
-- Configured Web UI via built-in API ✓
-- Network settings optimization ✓
-- Commands working via router's WEB CLI ✓
-- Switch between official and third-party Sing-box ✓
-- Sing-box config sync via HTTP(S) link ✓
-- Sub-Store Usage Examples for Synchronization ✓
-- Ready-to-use Sing-box config templates ✓
-- Optional proxying for the router itself ✓
-- No access token required for RCI requests (none used) ✓
+- TProxy, Redirect, Hybrid, Tun and DNS modes
+- IPv4 and IPv6 support
+- Working sing-box DNS module
+- Working sing-box FakeIP
+- FakeIP proxying at iptables level
+- Configured Web UI via built-in API
+- Network settings optimization
+- Commands working via router's Web CLI
+- Switch between official and third-party sing-box
+- Sing-box config sync via HTTP(S) link
+- Sub-Store usage examples for synchronization
+- Ready-to-use sing-box config templates
+- Optional proxying for the router itself
+- No access token required for RCI requests
 
-### Requirements
-- Entware installed and configured
-- Netfilter Subsystem Kernel Module installed
-- `curl` installed via `opkg install curl`
-- Recommended: at least 256 MB of RAM and an ARM processor to unlock full potential
+## Requirements
 
-### Installation
+- Entware installed and configured.
+- Netfilter Subsystem Kernel Module installed.
+- `curl` installed via `opkg install curl`.
+- Recommended: at least 256 MB of RAM and an ARM processor to unlock full potential.
+
+## Installation
 
 Make sure that Entware is installed. Otherwise, find the instructions for your model in the [Support Center](https://support.keenetic.com/) → User Guide → Management → OPKG → Installing the Entware repository on a USB drive / Installing OPKG Entware on internal router memory.
 
@@ -139,42 +138,42 @@ Manage the package further using the `skeen` command.
 ```
 /opt/
 ├── bin/
-│   ├── skeen                     # Main SKeen management script
-│   └── skeen-box                 # sing-box binary (if installation selected)
+│   ├── skeen                  # Main SKeen management script
+│   └── skeen-box              # sing-box binary (if installation selected)
 ├── etc/
 │   ├── init.d/
-│   │   └── S99SKeen              # System startup / autostart script
+│   │   └── S99SKeen           # System startup / autostart script
 │   ├── ndm/netfilter.d/
-│   │   └── skeen_firewall.sh     # Firewall rules (generated on startup)
+│   │   └── skeen_firewall.sh  # Firewall rules (generated on startup)
 │   └── skeen/
-│       ├── skeen.json           # SKeen configuration
-│       └── config.json          # Sing-box configuration
-└── tmp/                         # Temporary download files
+│       ├── skeen.json         # SKeen configuration
+│       └── config.json        # sing-box configuration
+└── tmp/                       # Temporary download files
 
 /tmp/ (RAM Disk) - synced into memory:
-├── skeen.sh                     # Script copy - updated after start/reboot
-├── skeen.json                   # Config cache - synced on source changes
-├── skeen_singbox_version        # Sing-box version cache - updated on binary change
+├── skeen.sh                   # Script copy - updated after start/reboot
+├── skeen.json                 # Config cache - synced on source changes
+├── skeen_singbox_version      # sing-box version cache - updated on binary change
 └── run/
-  └── skeen.pid                # PID file of the sing-box process
+    └── skeen.pid              # PID file of the sing-box process
 ```
 
-### Commands
+## Commands
 
 Example Usage from SSH: start the daemon `skeen start`
 
 When using the router’s Web CLI, add `exec` before the command. For example: `exec skeen reload`
 
-> The output in the WEB CLI is limited to 8 lines and a certain execution time, but this does not affect the correct execution of commands
+> The output in the Web CLI is limited to 8 lines and a certain execution time, but this does not affect the correct execution of commands.
 
 `skeen` without parameters launches the management menu from SSH, use `skeen help` for help
 
-| Command | Description | WEB CLI |
+| Command | Description | Web CLI |
 | :--- | :--- | :---: |
 | `start` | Start service | ✓ |
 | `stop` | Stop service | ✓ |
 | `restart` | Full restart | ✓ |
-| `reload` | Reload Sing-box only | ✓ |
+| `reload` | Reload sing-box only | ✓ |
 | `kill` | Force stop | ✓ |
 | `status` | Show status | ✓ |
 | `version` | Show version | ✓ |
@@ -184,21 +183,21 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 | `test` | Test firewall rules | ✓ |
 | `deps` | Check dependencies | ✓ |
 | `check` | Check configuration | ✓ |
-| `format` | Format Sing-box configuration | ✓ |
-| `api` | Sing-box API management commands | - |
+| `format` | Format sing-box configuration | ✓ |
+| `api` | sing-box API management commands | - |
 | `backup` | Create archive of `/opt/etc/skeen` | ✓ |
 | `backups` | List created archives in `/opt` | ✓ |
 | `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ |
 | `reset` | Reset `/opt/etc/skeen` to default | - |
-| `clean`² | Clear Sing-box cache file | ✓ |
-| `sync`³ | Synchronize Sing-box configuration | ✓ |
+| `clean`² | Clear sing-box cache file | ✓ |
+| `sync`³ | Synchronize sing-box configuration | ✓ |
 | `headers` | Generate fake client headers for subscriptions | - |
 
 1 - archive name can be passed as the second parameter with a `.tar` extension to immediately start the backup restore process
 
 2 - clears the cache file. This is required when using the `experimental.cache_file` feature in sing-box, for example, to reset the cache of loaded rule_set and DNS query history.
 
-3 - accepts the Sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `singbox.config.url`
+3 - accepts the sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `singbox.config.url`
 
 | OpkgTun manager (KeeneticOS v5+, only from SSH) |
 | -------------------------------------------------------------------------- |
@@ -212,11 +211,11 @@ If access to Entware SSH is lost, run the following command in the Web CLI:
 exec /opt/etc/init.d/S51dropbear restart
 ```
 
-### Settings
+## Settings
 
 The full configuration reference is available in [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
 
-### Useful links
+## Useful links
 
 - Sub-Store-Desktop: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
 - Sub-Store-Android: [https://github.com/sionnx/SubCase](https://github.com/sionnx/SubCase)

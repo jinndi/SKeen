@@ -1,12 +1,8 @@
 <p align="center">
   <img src="/logo_ru.png" alt="SKeen" width="400" style="max-width: 100%; height: auto; display: block; margin: 0 auto; padding: 20px 0;" />
 </p>
-<h1 align="center">
-  SKeen
-</h1>
-<h3 align="center">
-Лёгкий прозрачный прокси для Keenetic/Netcraze на базе sing-box
-</h3>
+<h1 align="center">SKeen</h1>
+<h3 align="center">Лёгкий прозрачный прокси для Keenetic/Netcraze на базе sing-box</h3>
 
 <p align="center">
 <a href="https://github.com/jinndi/SKeen/releases/latest"><img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen"></a>
@@ -16,6 +12,8 @@
 </p>
 
 🇷🇺 **Русский** | [🇺🇸 English](README.md)
+
+SKeen настраивает прозрачное проксирование на роутерах Keenetic и Netcraze с использованием sing-box. Проект управляет правилами firewall, сервисом и синхронизацией конфигурации.
 
 <details>
   <summary>Почему sing-box?</summary>
@@ -77,31 +75,31 @@
 
 </details>
 
-### Особенности
+## Особенности
 
-- Режимы TProxy/Redirect/Hybrid/Tun/DNS ✓
-- Поддержка IPv4 и IPv6 ✓
-- Рабочий модуль Sing-box DNS ✓
-- Рабочий Sing-box FakeIP ✓
-- Проксирование по FakeIP на уровне iptables ✓
-- Настроенный веб-интерфейс через встроенный API ✓
-- Оптимизация сетевых настроек ✓
-- Команды, работающие через WEB CLI роутера ✓
-- Переключение между официальным и сторонним Sing-box ✓
-- Синхронизация конфигурации Sing-box по HTTP(S)-ссылке ✓
-- Примеры использования Sub-Store для синхронизации ✓
-- Готовые шаблоны конфигураций Sing-box ✓
-- Опциональное проксирование самого роутера ✓
-- Не требует токена доступа для RCI запросов (их нет) ✓
+- Режимы TProxy, Redirect, Hybrid, Tun и DNS
+- Поддержка IPv4 и IPv6
+- Рабочий модуль sing-box DNS
+- Рабочий sing-box FakeIP
+- Проксирование по FakeIP на уровне iptables
+- Настроенный веб-интерфейс через встроенный API
+- Оптимизация сетевых настроек
+- Команды, работающие через WEB CLI роутера
+- Переключение между официальным и сторонним sing-box
+- Синхронизация конфигурации sing-box по HTTP(S)-ссылке
+- Примеры использования Sub-Store для синхронизации
+- Готовые шаблоны конфигураций Sing-box
+- Опциональное проксирование самого роутера
+- Не требует токена доступа для RCI запросов
 
-### Требования
+## Требования
 
-  - Установленный и настроенный Entware
-  - Установленный компонент «Модули ядра подсистемы Netfilter»
-  - Установленный `curl` (`opkg install curl`)
-  - Рекомендуется: минимум 256 МБ ОЗУ и процессор ARM для раскрытия полного потенциала
+  - Установленный и настроенный Entware.
+  - Установленный компонент «Модули ядра подсистемы Netfilter».
+  - Установленный `curl` (`opkg install curl`).
+  - Рекомендуется: минимум 256 МБ ОЗУ и процессор ARM для раскрытия полного потенциала.
 
-### Установка
+## Установка
 
 Убедитесь, что установлен Entware. В противном случае найдите инструкцию для вашей модели в [Центре поддержки](https://support.netcraze.ru/): «Руководство пользователя» → «Управление» → «OPKG» → «Установка репозитория Entware на USB-накопитель» или «Установка OPKG Entware на встроенную память роутера».
 
@@ -137,42 +135,42 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 ```
 /opt/
 ├── bin/
-│   ├── skeen                     # Основной скрипт управления SKeen
-│   └── skeen-box                 # Банарник sing-box (если выбрали установку)
+│   ├── skeen                   # Основной скрипт управления SKeen
+│   └── skeen-box               # Банарник sing-box (если выбрали установку)
 ├── etc/
 │   ├── init.d/
-│   │   └── S99SKeen              # Скрипт автозапуска при старте системы
+│   │   └── S99SKeen            # Скрипт автозапуска при старте системы
 │   ├── ndm/netfilter.d/
-│   │   └── skeen_firewall.sh     # Правила файрвола (создается при запуске)
+│   │   └── skeen_firewall.sh   # Правила файрвола (создается при запуске)
 │   └── skeen/
-│       ├── skeen.json           # Конфигурация SKeen
-│       └── config.json          # Конфигурация Sing-box
-└── tmp/                         # Временные файлы загрузки
+│       ├── skeen.json          # Конфигурация SKeen
+│       └── config.json         # Конфигурация sing-box
+└── tmp/                        # Временные файлы загрузки
 
 /tmp/ (RAM-диск) - синхранизируется в память:
-├── skeen.sh                     # Копия скрипта - после старта/перезапуска
-├── skeen.json                   # Кэш конфига - при изменениях в источнике
-├── skeen_singbox_version        # Кэш версии sing-box - при смене бинарника
+├── skeen.sh                    # Копия скрипта - после старта/перезапуска
+├── skeen.json                  # Кэш конфига - при изменениях в источнике
+├── skeen_singbox_version       # Кэш версии sing-box - при смене бинарного файла
 └── run/
-  └── skeen.pid                # PID-файл sing-box процесса
+    └── skeen.pid               # PID-файл sing-box процесса
 ```
 
-### Команды
+## Команды
 
 Пример использования через SSH: запуск демона `skeen start`
 
 При использовании Web CLI роутера добавляйте `exec` перед командой. Например: `exec skeen reload`
 
-> Вывод ответа в WEB CLI ограничен 8 строками и определенным временем, но это не влияет на корректное выполнение команд
+> Вывод ответа в Web CLI ограничен 8 строками и определенным временем, но это не влияет на корректное выполнение команд.
 
 Команда `skeen` без параметров запускает меню управления в SSH. Используйте `skeen help` для справки.
 
-| Команда | Описание | WEB CLI |
+| Команда | Описание | Web CLI |
 | :--- | --- | :---: |
 | `start` | Запустить сервис | ✓ |
 | `stop` | Остановить сервис | ✓ |
 | `restart` | Полный перезапуск | ✓ |
-| `reload` | Перезагрузка только Sing-box | ✓ |
+| `reload` | Перезагрузка только sing-box | ✓ |
 | `kill` | Принудительно остановить | ✓ |
 | `status` | Показать статус | ✓ |
 | `version` | Показать версию | ✓ |
@@ -182,21 +180,21 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 | `test` | Проверить правила фаервола | ✓ |
 | `deps` | Проверить зависимости | ✓ |
 | `check` | Проверить конфигурацию | ✓ |
-| `format` | Форматировать конфигурацию Sing-box | ✓ |
-| `api` | Команды API управления Sing-box | - |
+| `format` | Форматировать конфигурацию sing-box | ✓ |
+| `api` | Команды API управления sing-box | - |
 | `backup` | Создать архив `/opt/etc/skeen` | ✓ |
 | `backups` | Список созданных архивов в `/opt` | ✓ |
 | `restore`¹ | Восстановить `/opt/etc/skeen` из архива `/opt` | ✓ |
 | `reset` | Сбросить `/opt/etc/skeen` до состояния по умолчанию | - |
-| `clean`² | Очистить кэш файл Sing-box | ✓ |
-| `sync`³ | Синхронизировать конфигурацию Sing-box | ✓ |
+| `clean`² | Очистить кэш файл sing-box | ✓ |
+| `sync`³ | Синхронизировать конфигурацию sing-box | ✓ |
 | `headers` | Сгенерировать фейковые заголовки клиента для подписок | - |
 
 1 - в качестве второго параметра можно передать имя архива с расширением `.tar` для немедленного запуска восстановления
 
 2 - очищает файл кэша. Это необходимо при использовании функции `experimental.cache_file` в sing-box, например, для сброса кэша загруженных правил (rule_set) и истории DNS-запросов.
 
-3 - принимает URL JSON-конфигурации Sing-box в качестве второго параметра (HTTP или HTTPS), необязательно указывать, если прописан адрес в `singbox.config.url`.
+3 - принимает URL JSON-конфигурации sing-box в качестве второго параметра (HTTP или HTTPS), необязательно указывать, если прописан адрес в `singbox.config.url`.
 
 | Менеджер OpkgTun (KeeneticOS v5+, только через SSH) |
 | :--- |
@@ -210,11 +208,11 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 exec /opt/etc/init.d/S51dropbear restart
 ```
 
-### Настройки
+## Настройки
 
 Полный справочник конфигурации доступен в [docs/CONFIGURATION-RU.md](docs/CONFIGURATION-RU.md).
 
-### Полезные ссылки
+## Полезные ссылки
 
 - Sub-Store-Desktop: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
 - Sub-Store-Android: [https://github.com/sionnx/SubCase](https://github.com/sionnx/SubCase)
