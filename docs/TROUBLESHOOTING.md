@@ -1,7 +1,7 @@
 # Troubleshooting
 
 <details>
-  <summary>Installation failed? (click to expand)</summary>
+  <summary>Installation failed?</summary>
 <br>
 
 If the primary download method is unavailable, use one of the options below:
@@ -56,5 +56,19 @@ m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; 
 ```sh
 m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen" | MIRROR="$m" sh
 ```
+
+</details>
+
+<details>
+  <summary>Lost access to SSH Entware?</summary>
+<br>
+
+If access to Entware over SSH is lost, run the following in the router's Web CLI:
+
+```sh
+exec /opt/etc/init.d/S51dropbear restart
+```
+
+This restarts the Dropbear SSH service and usually restores access to Entware quickly.
 
 </details>

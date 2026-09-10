@@ -1,7 +1,7 @@
 # Устранение неполадок
 
 <details>
-  <summary>Не устанавливается? (кликнуть)</summary>
+  <summary>Не устанавливается?</summary>
 <br>
 
 Если основной способ загрузки недоступен, воспользуйтесь одним из вариантов ниже:
@@ -56,5 +56,19 @@ m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; 
 ```sh
 m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
 ```
+
+</details>
+
+<details>
+  <summary>Пропал доступ к SSH Entware?</summary>
+<br>
+
+Если доступ к Entware по SSH пропал, выполните в Web CLI роутера:
+
+```sh
+exec /opt/etc/init.d/S51dropbear restart
+```
+
+Это перезапускает сервис Dropbear SSH и обычно быстро восстанавливает доступ к Entware.
 
 </details>
