@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.5.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.0...SKeen-v5.5.1) (2026-09-10)
+
+
+### 🧰 Chore
+
+* **docs:** restructure localization files ([0a95f89](https://github.com/jinndi/SKeen/commit/0a95f8987f9930494dc247cc33ab6b9d3bf99cf5))
+
 ## [5.5.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.4.2...SKeen-v5.5.0) (2026-09-09)
 
 
