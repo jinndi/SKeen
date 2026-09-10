@@ -208,16 +208,16 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 
 ## Полезные ссылки
 
-### Синхронизация и GUI
+**Синхронизация и GUI**
 - [Sub-Store Desktop](https://github.com/jinndi/sub-store-gui) — десктопная версия для управления подписками.
 - [Sub-Store Android](https://github.com/sionnx/SubCase) — Android-версия для мобильного управления.
 - [Sub-Store Docker](https://github.com/jinndi/Sub-Store-Docker) — Docker-сборка для VPS/серверов.
 - [GUI.for.SingBox sync plugin](https://github.com/jinndi/sync-profile-to-skeen) — плагин для импорта профилей в SKeen.
 
-### Правила и наборы
+**Правила и наборы**
 - [Karing ruleset](https://github.com/KaringX/karing-ruleset/tree/sing) — наборы правил для sing-box.
-- [Custom sing-box rulesets](https://github.com/jinndi/singbox_ruleset) — кастомные наборы правил и примеры.
+- [Custom sing-box rulesets](https://github.com/jinndi/singbox_ruleset) — кастомные наборы правил.
 
-### Документация и справочники
-- [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — справочник по sing-box и роутингу.
+**Документация и справочники**
+- [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — справочник по sing-box.
 - [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — альтернативное ядро для XHTTP.

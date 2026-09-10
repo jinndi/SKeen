@@ -212,16 +212,16 @@ The full configuration reference is available in [docs/CONFIGURATION.md](docs/CO
 
 ## Useful links
 
-### Sync and GUI
+**Sync and GUI**
 - [Sub-Store Desktop](https://github.com/jinndi/sub-store-gui) — desktop subscription manager.
 - [Sub-Store Android](https://github.com/sionnx/SubCase) — Android app for managing subscriptions.
 - [Sub-Store Docker](https://github.com/jinndi/Sub-Store-Docker) — Docker deployment for VPS and servers.
 - [GUI.for.SingBox sync plugin](https://github.com/jinndi/sync-profile-to-skeen) — plugin for importing profiles into SKeen.
 
-### Rulesets
+**Rulesets**
 - [Karing ruleset](https://github.com/KaringX/karing-ruleset/tree/sing) — rule sets for sing-box.
-- [Custom sing-box rulesets](https://github.com/jinndi/singbox_ruleset) — custom rule sets and examples.
+- [Custom sing-box rulesets](https://github.com/jinndi/singbox_ruleset) — custom rule sets.
 
-### Documentation and references
-- [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — documentation and routing reference for sing-box.
+**Documentation and references**
+- [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — sing-box reference guide.
 - [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — alternative XHTTP-capable core.
