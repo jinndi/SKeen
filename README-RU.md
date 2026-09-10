@@ -5,7 +5,7 @@
   SKeen
 </h1>
 <h3 align="center">
-TProxy и Redirect для Keenetic/Netcraze на базе sing-box
+Лёгкий прозрачный прокси для Keenetic/Netcraze на базе sing-box
 </h3>
 
 <p align="center">
