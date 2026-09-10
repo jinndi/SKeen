@@ -208,11 +208,16 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 
 ## Полезные ссылки
 
-- Sub-Store-Desktop: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
-- Sub-Store-Android: [https://github.com/sionnx/SubCase](https://github.com/sionnx/SubCase)
-- Sub-Store-Docker: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
-- Плагин GUI.for.SingBox: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
-- Наборы правил Karing: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
-- Кастомные наборы правил: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
-- Справочник: [https://core-tutorial.argsment.com/singbox](https://core-tutorial.argsment.com/singbox)
-- Ядро sing-box-lx (XHTTP): [https://github.com/Leadaxe/sing-box-lx](https://github.com/Leadaxe/sing-box-lx)
+### Синхронизация и GUI
+- [Sub-Store Desktop](https://github.com/jinndi/sub-store-gui) — десктопная версия для управления подписками.
+- [Sub-Store Android](https://github.com/sionnx/SubCase) — Android-версия для мобильного управления.
+- [Sub-Store Docker](https://github.com/jinndi/Sub-Store-Docker) — Docker-сборка для VPS/серверов.
+- [GUI.for.SingBox sync plugin](https://github.com/jinndi/sync-profile-to-skeen) — плагин для импорта профилей в SKeen.
+
+### Правила и наборы
+- [Karing ruleset](https://github.com/KaringX/karing-ruleset/tree/sing) — наборы правил для sing-box.
+- [Custom sing-box rulesets](https://github.com/jinndi/singbox_ruleset) — кастомные наборы правил и примеры.
+
+### Документация и справочники
+- [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — справочник по sing-box и роутингу.
+- [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — альтернативное ядро для XHTTP.

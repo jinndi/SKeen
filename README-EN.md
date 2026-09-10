@@ -212,11 +212,16 @@ The full configuration reference is available in [docs/CONFIGURATION.md](docs/CO
 
 ## Useful links
 
-- Sub-Store-Desktop: [https://github.com/jinndi/sub-store-gui](https://github.com/jinndi/sub-store-gui)
-- Sub-Store-Android: [https://github.com/sionnx/SubCase](https://github.com/sionnx/SubCase)
-- Sub-Store-Docker: [https://github.com/jinndi/Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker)
-- Plugin GUI.for.SingBox: [https://github.com/jinndi/sync-profile-to-skeen](https://github.com/jinndi/sync-profile-to-skeen)
-- Custom rulesets: [https://github.com/jinndi/singbox_ruleset](https://github.com/jinndi/singbox_ruleset)
-- Karing ruleset: [https://github.com/KaringX/karing-ruleset/tree/sing](https://github.com/KaringX/karing-ruleset/tree/sing)
-- Tutorial: [https://core-tutorial.argsment.com/singbox](https://core-tutorial.argsment.com/singbox)
-- sing-box-lx core (XHTTP): [https://github.com/Leadaxe/sing-box-lx](https://github.com/Leadaxe/sing-box-lx)
+### Sync and GUI
+- [Sub-Store Desktop](https://github.com/jinndi/sub-store-gui) — desktop subscription manager.
+- [Sub-Store Android](https://github.com/sionnx/SubCase) — Android app for managing subscriptions.
+- [Sub-Store Docker](https://github.com/jinndi/Sub-Store-Docker) — Docker deployment for VPS and servers.
+- [GUI.for.SingBox sync plugin](https://github.com/jinndi/sync-profile-to-skeen) — plugin for importing profiles into SKeen.
+
+### Rulesets
+- [Karing ruleset](https://github.com/KaringX/karing-ruleset/tree/sing) — rule sets for sing-box.
+- [Custom sing-box rulesets](https://github.com/jinndi/singbox_ruleset) — custom rule sets and examples.
+
+### Documentation and references
+- [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — documentation and routing reference for sing-box.
+- [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — alternative XHTTP-capable core.
