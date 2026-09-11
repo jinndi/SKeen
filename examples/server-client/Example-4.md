@@ -44,7 +44,7 @@ server {
   location /static/get/video/chunk.ts {
 
     # Проксируем запросы на Xray, который слушает локально на порту 10112 по HTTPS.
-    proxy_pass                       https://127.0.0.1:10112; 
+    proxy_pass                       https://127.0.0.1:10112;
     proxy_http_version               1.1;
 
     # Заголовки, передаваемые на бэкенд Xray.
@@ -174,8 +174,8 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
         "maxConcurrency": "",
         "maxConnections": "2",
         "cMaxReuseTimes": "",
-        "hMaxRequestTimes": "100-200",
-        "hMaxReusableSecs": "300-600",
+        "hMaxRequestTimes": "1000-1200",
+        "hMaxReusableSecs": "100-100",
         "hKeepAlivePeriod": 0
       },
       "enableXmux": true
@@ -272,7 +272,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 Для начала ознакомьтесь со [структурой полей транспорта XHTTP](https://github.com/Leadaxe/sing-box-lx/blob/lx/docs-lx/lx-config.ru.md#0-%D0%B2%D1%81%D0%B5-%D0%BF%D0%BE%D0%BB%D1%8F-%D1%80%D0%B0%D0%B7%D0%BE%D0%BC-%D0%B8%D1%81%D1%87%D0%B5%D1%80%D0%BF%D1%8B%D0%B2%D0%B0%D1%8E%D1%89%D0%B8%D0%B9-%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%80)) в sing-box-lx.
 
 Далее - пример самого прокси-узла для подключения к нашему серверу:
- 
+
 ```json
 {
   "type": "vless",
@@ -308,8 +308,8 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
     "sc_min_posts_interval_ms": "20-80",
     "xmux": {
       "max_connections": "2",
-      "h_max_request_times": "100-200",
-      "h_max_reusable_secs": "300-600"
+      "h_max_request_times": "1000-1200",
+      "h_max_reusable_secs": "100-100"
     }
   }
 }

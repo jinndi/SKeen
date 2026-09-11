@@ -61,7 +61,7 @@ The project intentionally does not include a dedicated management panel. This ap
   <summary>Architecture?</summary>
 <br>
 
-The same architecture description is available as a standalone document: [Architecture](docs/ARCHITECTURE.md).
+The description is provided in the [Architecture](docs/ARCHITECTURE.md) document.
 
 </details>
 
