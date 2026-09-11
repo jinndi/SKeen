@@ -6,7 +6,8 @@
 
 > Лёгкий прозрачный прокси для роутеров Keenetic/Netcraze на базе sing-box. Поддерживает TProxy, Redirect, TUN, DNS и Fake IP.
 
-[![SKeen](https://img.shields.io/github/v/release/jinndi/SKeen)](https://github.com/jinndi/SKeen/releases/latest) [![License](https://img.shields.io/github/license/jinndi/SKeen)](https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/LICENSE) [![sing-box](https://repology.org/badge/version-for-repo/homebrew/sing-box.svg?header=sing-box-latest)](https://github.com/SagerNet/sing-box) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jinndi/SKeen)
+[![Build](https://github.com/jinndi/SKeen/actions/workflows/build.yml/badge.svg)](https://github.com/jinndi/SKeen/actions/workflows/release.yml) [![SKeen](https://img.shields.io/github/v/release/jinndi/SKeen)](https://github.com/jinndi/SKeen/releases/latest) [![License](https://img.shields.io/github/license/jinndi/SKeen)](https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/LICENSE) [![sing-box](https://repology.org/badge/version-for-repo/homebrew/sing-box.svg?header=sing-box-latest)](https://github.com/SagerNet/sing-box) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jinndi/SKeen)
+
 🇷🇺 **Русский** | [🇺🇸 English](README.md)
 
 SKeen настраивает прозрачное проксирование на роутерах Keenetic и Netcraze с использованием sing-box. Проект управляет правилами firewall, сервисом и синхронизацией конфигурации.
