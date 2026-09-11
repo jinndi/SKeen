@@ -66,7 +66,7 @@ The description is provided in the [Architecture](docs/ARCHITECTURE.md) document
 </details>
 
 <details>
-  <summary>FakeIP?</summary>
+  <summary>ADGuard Home & DNS?</summary>
 <br>
 
 The complete FAQ is available in [docs/FAQ.md](docs/FAQ.md).

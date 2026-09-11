@@ -1,20 +1,6 @@
 # FAQ
 
 <details>
-  <summary>FakeIP?</summary>
-<br>
-
-The following are intentionally **excluded** from the bypass list (local network exceptions):
-
-1.  **Subnet `198.18.0.0/15`**
-    In the script, the `198.18.0.0/15` line is commented out. This means traffic to Sing-Box FakeIP addresses will be intercepted and processed by the kernel as intended. This is a deliberate design choice for proper routing.
-
-2.  **Subnet `fc00::/18`**
-    The IPv6 segment `fc00::/18` (Sing-Box Fake-IP range for IPv6) is also excluded from the bypass list for the same reason.
-
-</details>
-
-<details>
 <summary>ADGuard Home & DNS?</summary>
 <br>
 
@@ -63,6 +49,20 @@ Remote server infrastructure should not be trusted with the ability to inspect, 
 So, we've established that configuring DNS inside Sing-box is essential for safe and stable operation (provided it is set up correctly). But what about the DNS settings on the router itself?
 
 My recommendations are as follows: the main rule is to use 100% working servers in your country (for example, Yandex DNS for Russia) and specify no more than two addresses. Beyond that, it doesn't matter whether it's DoH or DoT-this task should be handled by Sing-box itself, so even a standard DNS from your ISP will do fine. It also doesn't matter if "DNS Transit" is enabled-it literally changes nothing at all.
+</details>
+
+<details>
+  <summary>FakeIP?</summary>
+<br>
+
+The following are intentionally **excluded** from the bypass list (local network exceptions):
+
+1.  **Subnet `198.18.0.0/15`**
+    In the script, the `198.18.0.0/15` line is commented out. This means traffic to Sing-Box FakeIP addresses will be intercepted and processed by the kernel as intended. This is a deliberate design choice for proper routing.
+
+2.  **Subnet `fc00::/18`**
+    The IPv6 segment `fc00::/18` (Sing-Box Fake-IP range for IPv6) is also excluded from the bypass list for the same reason.
+
 </details>
 
 <details>
