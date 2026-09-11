@@ -11,7 +11,7 @@
 <a href="https://deepwiki.com/jinndi/SKeen"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
-🇷🇺 **Русский** | [🇺🇸 English](README-EN.md)
+🇷🇺 **Русский** | [🇺🇸 English](README.md)
 
 SKeen настраивает прозрачное проксирование на роутерах Keenetic и Netcraze с использованием sing-box. Проект управляет правилами firewall, сервисом и синхронизацией конфигурации.
 

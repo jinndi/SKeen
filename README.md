@@ -11,7 +11,7 @@
 <a href="https://deepwiki.com/jinndi/SKeen"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
-🇺🇸 **English** | [🇷🇺 На русском](README.md)
+🇺🇸 **English** | [🇷🇺 На русском](README-RU.md)
 
 SKeen configures transparent proxying on Keenetic and Netcraze routers using sing-box. It manages firewall rules, service lifecycle and configuration synchronization.
 
