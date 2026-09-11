@@ -2,7 +2,7 @@
   <img src="/logo.png" alt="SKeen" width="512" style="max-width: 100%; height: auto; display: block; margin: 0 auto; padding: 20px 0;" />
 </p>
 <h1 align="center">SKeen</h1>
-<h3 align="center">Lightweight transparent proxy for Keenetic/Netcraze routers, powered by sing-box. Supports TProxy, Redirect, Hybrid, TUN, DNS interception and Fake IP.</h3>
+<h3 align="center">Lightweight transparent proxy for Keenetic/Netcraze routers, powered by sing-box. Supports TProxy, Redirect, TUN, DNS and Fake IP.</h3>
 
 <p align="center">
 <a href="https://github.com/jinndi/SKeen/releases/latest"><img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen"></a>
