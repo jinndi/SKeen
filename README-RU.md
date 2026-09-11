@@ -193,11 +193,11 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 
 3 - принимает URL JSON-конфигурации sing-box в качестве второго параметра (HTTP или HTTPS), необязательно указывать, если прописан адрес в `singbox.config.url`.
 
-| Менеджер OpkgTun (KeeneticOS v5+, только через SSH) |
-| :--- |
-| `skeen tun create <ipv4> <name>` - Создать интерфейс с IP-адресом и именем |
-| `skeen tun delete <name>` - Удалить интерфейс по имени |
-| `skeen tun list` - Показать все интерфейсы OpkgTun |
+| Менеджер OpkgTun (KeeneticOS v5+, только через SSH) | |
+| :--- | :--- |
+| `skeen tun create <ipv4> <name>` | Создать интерфейс с IP-адресом и именем |
+| `skeen tun delete <name>` | Удалить интерфейс по имени |
+| `skeen tun list` | Показать все интерфейсы OpkgTun |
 
 ## Настройки
 
