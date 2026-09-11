@@ -120,15 +120,17 @@ See the <a href="docs/TROUBLESHOOTING.md">troubleshooting guide</a>.
 > [!NOTE]
 > You will be prompted to install `sing-box` from the official repository (either the stable or beta version). You can also skip the installation to configure a custom binary file later in `/opt/etc/skeen/skeen.json`.
 
-**Configure SKeen**. Its configuration file is located at `/opt/etc/skeen/skeen.json`.
+**Configure the following:**
 
-**Configure the sing-box JSON configuration file**, located by default at `/opt/etc/skeen/config.json`.
+1. SKeen in `/opt/etc/skeen/skeen.json`.
+2. sing-box in `/opt/etc/skeen/config.json`.
+3. The web dashboard at `http://192.168.1.1:9999`. By default, it is available at the router's IP address (typically `192.168.1.1`).
 
-**The WEB dashboard** is configured by default and accessible at your router's IP address (typically 192.168.1.1) at `http://192.168.1.1:9999`.
+**Important:**
 
-The `/opt/etc/skeen` directory is not removed during program uninstallation (it must be deleted manually if necessary) and is not overwritten during reinstallation if it already exists.
+The `/opt/etc/skeen` directory is preserved when the program is uninstalled and is not overwritten during reinstallation if it already exists. Delete it manually if necessary.
 
-Manage the package further using the `skeen` command.
+Manage SKeen using the `skeen` command.
 
 **File and directory structure after successful installation:**
 
