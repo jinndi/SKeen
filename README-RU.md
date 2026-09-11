@@ -1,8 +1,10 @@
 <p align="center">
   <img src="/logo_ru.png" alt="SKeen" width="512" style="max-width: 100%; height: auto; display: block; margin: 0 auto; padding: 20px 0;" />
 </p>
+
 <h1 align="center">SKeen</h1>
-<h3 align="center">Лёгкий прозрачный прокси для роутеров Keenetic/Netcraze на базе sing-box. Поддерживает TProxy, Redirect, TUN, DNS и Fake IP.</h3>
+
+> Лёгкий прозрачный прокси для роутеров Keenetic/Netcraze на базе sing-box. Поддерживает TProxy, Redirect, TUN, DNS и Fake IP.
 
 <p align="center">
 <a href="https://github.com/jinndi/SKeen/releases/latest"><img alt="SKeen" src="https://img.shields.io/github/v/release/jinndi/SKeen"></a>
