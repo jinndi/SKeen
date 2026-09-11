@@ -196,7 +196,9 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 3 - accepts the sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `singbox.config.url`
 
-| OpkgTun manager (KeeneticOS v5+, only from SSH) | |
+**OpkgTun manager (KeeneticOS v5+, only from SSH)**
+
+| Command | Description |
 | :--- | :--- |
 | `skeen tun create <ipv4> <name>` | Create interface with IP address and name |
 | `skeen tun delete <name>` | Delete interface by name |
