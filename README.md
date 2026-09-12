@@ -45,16 +45,16 @@ Notes:
   <summary>Web UI?</summary>
 <br>
 
-💡 For easy setup, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available, allowing you to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). For more flexible manual configuration, automation, and synchronization, use [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) for deployment on a VPS or [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) for PC.
+💡 For easy setup, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available, allowing you to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). For more flexible manual configuration, automation, and synchronization, use [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) on a VPS or [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on a PC.
 
 The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
 
-* **Resource Efficiency**: Bypassing heavy WebUIs saves RAM and reduces CPU overhead, preserving system resources for high-speed routing and encryption.
-* **Seamless Integration**: Management and monitoring are efficiently implemented through built-in APIs for popular interfaces, eliminating redundancy.
-* **System Security & Stability**: Fewer active web services and open ports minimize the potential attack surface and reduce the risk of software conflicts within KeeneticOS.
-* **No Functional Limits**: Direct configuration via CLI/files ensures access to 100% of Sing-Box's features, which are often restricted or oversimplified in graphical interfaces.
-* **Minimalist Footprint**: The script remains lightweight with zero dependencies, requiring no extra packages like web servers or interpreters that consume valuable flash storage.
-* **A Tool, Not a Toy**: SKeen focuses on packet forwarding. I believe that building heavy dashboards for a network script is bad form and shows an inability to work with the system directly.
+* **Resource Efficiency**: Not having a separate management panel saves RAM and reduces CPU overhead, leaving more resources for traffic routing.
+* **Integration**: Management and monitoring are available through the sing-box API and router tools, without duplicating their functions in a separate panel.
+* **Security and Stability**: Fewer continuously running services and components mean fewer potential points of failure and conflicts within the system.
+* **Full Control**: Directly editing the configuration provides access to sing-box features without the limitations of simplified graphical interfaces. Implementing all these features as buttons requires developers to continually update and promptly maintain the panel.
+* **No Constant Need**: In general, a separate management panel is not required: a correctly configured setup is created for specific tasks and usually does not need regular changes.
+* **Focus on the Main Task**: SKeen is designed for transparent traffic forwarding and routing. For a network tool of this kind, a separate heavy management panel would generally be excessive.
 </details>
 
 <details>
@@ -118,7 +118,7 @@ See the <a href="docs/TROUBLESHOOTING.md">troubleshooting guide</a>.
 </details>
 
 > [!NOTE]
-> You will be prompted to install `sing-box` from the official repository (either the stable or beta version). You can also skip the installation to configure a custom binary file later in `/opt/etc/skeen/skeen.json`.
+> You will be prompted to install `sing-box` from the official repository (either the stable or beta version). You can also skip the installation to configure a custom binary file later in `skeen.json`.
 
 **Configure the following:**
 
