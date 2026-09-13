@@ -1,5 +1,5 @@
 // TUN OpkgTun KeeneticOS v5+
-// CPU usage is ~20% higher TProxy
+// CPU usage is ~20% higher TProxy (up to sing-box 1.15.alpha.3)
 // DNS via redirect only (firewall.redirect_dns in skeen.json configuration, see inbounds_dns-redirect.json)
 
 // Create OpkgTun
@@ -15,7 +15,7 @@
 // RU -----------------------------------------------------------------------------------
 
 // TUN OpkgTun KeeneticOS v5+
-// Нагрузка на CPU примерно на 20% выше, чем у TProxy
+// Нагрузка на CPU примерно на 20% выше, чем у TProxy (до версии sing-box 1.15.alpha.3)
 // DNS только через редирект (firewall.redirect_dns в skeen.json конфигурации, см. inbounds_dns-redirect.json)
 
 // Создать OpkgTun
