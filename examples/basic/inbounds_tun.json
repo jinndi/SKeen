@@ -36,9 +36,7 @@
       "interface_name": "opkgtun0",
       "address": "172.18.0.1/30", // NOT use IP v6 / Не используйте IP v6
       "auto_route": false,        // not enable default route to this tun / не включать маршрут по умолчанию к этому туннелю
-      "mtu": 1500,                // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
-      "udp_timeout": "1m",        // UDP timeout, not needed to be too large / таймаут для UDP, не нужен слишком большой
-      "stack": "mixed"            // NOT use gvisor value !!! / НЕ используйте значение gvisor !!!
+      "mtu": 1500                 // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
     },
     {
       "type": "tun",
@@ -46,10 +44,21 @@
       "interface_name": "opkgtun1",
       "address": "172.19.0.1/30",
       "auto_route": false,
-      "mtu": 1500,
-      "udp_timeout": "1m",
-      "stack": "mixed"
+      "mtu": 1500
     },
     ..., // and as many as needed / и столько, скольно нужно
   ]
 }
+
+P.S. Начиная с версии sing-box 1.15.alpha.3,
+параметр `stack` указывать не нужно - по умолчанию будет использоваться только собственная реализация на Go.
+По заявлениям автора, это даёт прирост производительности более чем в 2 раза:
+  https://sekai.icu/posts/sing-tun-new-stack-introduction/
+На роутерах необходимо тестировать.
+
+P.S. Starting with sing-box 1.15.alpha.3,
+the `stack` parameter no longer needs to be specified - only the native Go implementation will be used by default.
+According to the author, this provides more than a 2× performance improvement:
+  https://sekai.icu/posts/sing-tun-new-stack-introduction/
+It needs to be tested on routers.
+
