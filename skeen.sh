@@ -1633,7 +1633,9 @@ add_skeen_rules() {
     ;;
 
   "proxy_router_mark")
-    add_rule "$iptables" "$table" "$chain" -j MARK --set-mark "$TABLE_MARK"
+    for proto in $protocols; do
+      add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
+    done
     add_rule "$iptables" "$table" "$chain" -j ACCEPT
     ;;
   esac
@@ -2291,7 +2293,7 @@ apply_firewall() {
       check_and_create_chain "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING" || return 0
       protocols="$(get_protocols "$TABLE_REDIRECT")"
       set_chain_rules "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING" "$protocols"
-      goto_chain_rules "$iptables" "$TABLE_REDIRECT" PREROUTING "$CHAIN_PREROUTING" "$protocols"
+      goto_chain_rules "$iptables" "$TABLE_REDIRECT" PREROUTING "$CHAIN_PREROUTING"
       [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$TABLE_REDIRECT"
     fi
   done

@@ -1633,7 +1633,9 @@ add_skeen_rules() {
     ;;
 
   "proxy_router_mark")
-    add_rule "$iptables" "$table" "$chain" -j MARK --set-mark "$TABLE_MARK"
+    for proto in $protocols; do
+      add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
+    done
     add_rule "$iptables" "$table" "$chain" -j ACCEPT
     ;;
   esac
