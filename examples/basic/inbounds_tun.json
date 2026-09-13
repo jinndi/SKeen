@@ -37,6 +37,9 @@
       "address": "172.18.0.1/30", // NOT use IP v6 / Не используйте IP v6
       "auto_route": false,        // not enable default route to this tun / не включать маршрут по умолчанию к этому туннелю
       "mtu": 1500                 // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
+      //, "multi_queue": true     // Enable multi-queue mode if the CPU has 2 or more cores, starting with sing-box 1.15.alpha.3.
+                                  // Включить мультиочередность если 2 и более ядер CPU начиная с sing-box 1.15.alpha.3 +
+
     },
     {
       "type": "tun",
@@ -45,6 +48,7 @@
       "address": "172.19.0.1/30",
       "auto_route": false,
       "mtu": 1500
+      //, "multi_queue": true
     },
     ..., // and as many as needed / и столько, скольно нужно
   ]
