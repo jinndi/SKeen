@@ -195,7 +195,7 @@ create_skeen_config() {
         "split": 1
       },
       "api": {
-        "url": ""
+        "url": "",
         "secret": ""
       }
     }
