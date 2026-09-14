@@ -14,7 +14,7 @@ readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.5.0"
+readonly SKEEN_VERSION="5.5.1"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -164,7 +164,7 @@ cat <<EOF >"$SKEEN_CONFIG"
         "split": 1
       },
       "api": {
-        "url": ""
+        "url": "",
         "secret": ""
       }
     }
@@ -989,7 +989,7 @@ real_v6=$(ip -6 addr show scope global 2>/dev/null|grep -i 'inet6 [23]'|grep -iv
 if [ -n "$real_v6" ]&&ip -6 route show default|grep -q ".";then
 ipt_list="${ipt_list:+$ipt_list }ip6tables"
 else
-echowarn "IPv6 активен в конфиге $SKEEN_NAME, но внешнее IPv6 соединение отсутствует" >&2
+echowarn "IPv6 активен в конфиге $SKEEN_NAME, но внешнее IPv6 соединение отсутствует; если IPv6 не используется, отключите его: network.ipv6=0" >&2
 fi
 fi
 echo "$ipt_list"
@@ -1323,7 +1323,10 @@ chain="$CHAIN_DNS_OUT"
 fi
 add_rule "$iptables" "$table" "$chain" -j ACCEPT
 ;;
-"proxy_router_mark")add_rule "$iptables" "$table" "$chain" -j MARK --set-mark "$TABLE_MARK"
+"proxy_router_mark")for proto in $protocols
+do
+add_rule "$iptables" "$table" "$chain" -p "$proto" -j MARK --set-mark "$TABLE_MARK"
+done
 add_rule "$iptables" "$table" "$chain" -j ACCEPT
 esac
 }
@@ -1885,8 +1888,8 @@ done
 done
 for ip_ver in 4 6;do
 ip -"$ip_ver" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1||true
+ip -"$ip_ver" route flush table "$TABLE_ID" 2>/dev/null
 done
-ip route flush table "$TABLE_ID" 2>/dev/null
 if command -v ipset >/dev/null 2>&1;then
 for ip_ver in 4 6;do
 for name in $NET_EXCLUDE_SET $FAKEIP_INTERCEPT_SET;do
