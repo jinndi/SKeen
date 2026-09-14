@@ -74,6 +74,33 @@ Workflow Algorithm:
   * `connmark match 0x12 TPROXY / TPROXY`
   * **Essence:** Final stage. All remaining TCP/UDP traffic that did not match any exclusions is forcibly redirected to the Sing-Box TProxy port.
 
+### Performance and Rule Order
+
+The order of rules in the `skeen` chain is designed to reduce the number of expensive checks:
+
+1. `socket --transparent` handles TCP packets quickly when a transparent socket has already been found.
+2. `ctdir REPLY ACCEPT` immediately bypasses response traffic.
+3. DNS is intercepted separately when DNS TProxy is enabled.
+4. Port and network exclusions are checked through `ipset`.
+5. FakeIP exclusions are processed before the general interception rule.
+6. Connmark `0x12` is set for new TCP connections.
+7. Remaining TCP/UDP traffic is sent through `TPROXY`.
+
+This order reduces router overhead: exclusion lists are stored in `ipset`, while the decision for a TCP connection is retained in conntrack. UDP is processed through TPROXY for every packet because connmark is not used by the general UDP interception rule.
+
+Mark `0x12` uses a dedicated policy-routing rule:
+
+```text
+ip rule:   from all fwmark 0x12 lookup 12
+table 12:  local default dev lo scope host
+```
+
+This sends the marked packet back through the local `lo` interface, where the Sing-box TPROXY inbound accepts it. The `net.ipv4.conf.all.rp_filter=0` setting is required so reverse-path filtering does not drop this traffic.
+
+Chains are created through the Keenetic netfilter hook. On a repeated hook invocation, an existing chain is intentionally not rebuilt, preventing duplicate rules from being added. During a SKeen restart, `clean_firewall` first removes the chains, jumps, ip rules, routing table, and ipsets; the rules are then created again from the current configuration.
+
+DNS interception is placed before the user exclusions intentionally: when DNS TProxy is enabled, DNS requests must be intercepted even if their port or destination network is included in the general exclusion list.
+
 > **Note:** Local subnets (listed in the source code) are already excluded from proxying. However, if you need to exclude specific, you must specify them manually in `skeen.json` or within the `sing-box` configuration itself.
 
 ## Hybrid
