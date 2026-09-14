@@ -2359,8 +2359,8 @@ clean_firewall() {
   # 5. routing cleanup
   for ip_ver in 4 6; do
     ip -"$ip_ver" rule del fwmark "$TABLE_MARK" lookup "$TABLE_ID" >/dev/null 2>&1 || true
+    ip -"$ip_ver" route flush table "$TABLE_ID" 2>/dev/null
   done
-  ip route flush table "$TABLE_ID" 2>/dev/null
 
   # 6. ipset cleanup
   if command -v ipset >/dev/null 2>&1; then
