@@ -1220,7 +1220,7 @@ get_iptables_list() {
     if [ -n "$real_v6" ] && ip -6 route show default | grep -q "."; then
       ipt_list="${ipt_list:+$ipt_list }ip6tables"
     else
-      echowarn "IPv6 активен в конфиге ${SKEEN_NAME}, но внешнее IPv6 соединение отсутствует" >&2
+      echowarn "IPv6 активен в конфиге ${SKEEN_NAME}, но внешнее IPv6 соединение отсутствует; если IPv6 не используется, отключите его: network.ipv6=0" >&2
     fi
   fi
 

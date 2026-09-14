@@ -1220,7 +1220,7 @@ get_iptables_list() {
     if [ -n "$real_v6" ] && ip -6 route show default | grep -q "."; then
       ipt_list="${ipt_list:+$ipt_list }ip6tables"
     else
-      echowarn "IPv6 enabled in ${SKEEN_NAME}, but no IPv6 connectivity detected" >&2
+      echowarn "IPv6 enabled in ${SKEEN_NAME}, but no IPv6 connectivity detected; if IPv6 is not used, disable it with network.ipv6=0" >&2
     fi
   fi
 
