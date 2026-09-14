@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.5.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.0...SKeen-v5.5.1) (2026-09-14)
+
+
+### 🐛 Fix
+
+* add trailing comma to api object in skeen_ru.sh ([86ed784](https://github.com/jinndi/SKeen/commit/86ed784d8332a84e0cc5d1fcfeab66b2d273ccc3))
+* apply marks to specific protocols in proxy router mode ([c94d381](https://github.com/jinndi/SKeen/commit/c94d3814264698e02d0c818379943907de5a80fd))
+* flush ip routes for both ipv4 and ipv6 during cleanup ([48642fe](https://github.com/jinndi/SKeen/commit/48642feca730c7601a92360f33a0e4eb01b5b0e2))
+
+
+### 🧰 Chore
+
+* add IPv6 disable instruction to warning message ([deea94d](https://github.com/jinndi/SKeen/commit/deea94d16e71d0a43b14e6f67b29dccaf36ed6b5))
+
 ## [5.5.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.4.2...SKeen-v5.5.0) (2026-09-09)
 
 
