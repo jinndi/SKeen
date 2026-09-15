@@ -92,16 +92,16 @@
       "type": "tun",
       "tag": "tun-in",
       "interface_name": "tun0",
-      "address": "172.18.0.1/30",
-      "loopback_address": "10.7.0.1",
+      "address": "30.0.0.1/24",
       "mtu": 1500,
       "dns_mode": "hijack",
-      "dns_address": "172.18.0.2",
       "auto_route": true,
-      "auto_redirect": true, // ВАЖНО!: в Windows поставить значение false
+      "auto_redirect": false, // в Linux поставьте значение true
       "strict_route": true,
-      "stack": "mixed",
       "udp_nat_max": 4096,
+      // Для версий sing-box 1.15.0.beta.4+ можно включить multi_queue,
+      // Поддерживается только в Linux
+      // "multi_queue": true,
       "endpoint_independent_nat": true
     }
   ],
