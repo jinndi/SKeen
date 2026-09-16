@@ -1,5 +1,24 @@
 # Changelog
 
+## [5.5.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.1...SKeen-v5.5.2) (2026-09-16)
+
+
+### 🐛 Fix
+
+* **firewall:** optimize TUN mode rule application and cleanup ([238896e](https://github.com/jinndi/SKeen/commit/238896e7980dfe5f0a0dec33aa5fe87a311ab0c7))
+
+
+### ⚙️ Config
+
+* optimize ICMP routing for TUN mode ([cdaa168](https://github.com/jinndi/SKeen/commit/cdaa1683fcce5a23984d4da154ea14c97f44125f))
+
+
+### 🧰 Chore
+
+* **cli:** update test chain reference for TUN mode ([b2e50a8](https://github.com/jinndi/SKeen/commit/b2e50a89a82b732a6fea4d43c7fad0702acd9323))
+* update  TUN configuration examples ([902f527](https://github.com/jinndi/SKeen/commit/902f5279b7da8b6f2d8b9079b9781c6d02c4d8ca))
+* update documentation links in shell scripts ([e33d210](https://github.com/jinndi/SKeen/commit/e33d21033bb864691a8c7e7027072a727a6b6d5a))
+
 ## [5.5.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.0...SKeen-v5.5.1) (2026-09-14)
 
 
