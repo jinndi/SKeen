@@ -1835,19 +1835,13 @@ tun_list() {
 }
 
 set_tun_rules() {
-  apply_rule() {
-    table="$1"
-    shift
-
-    iptables -w -t "$table" -C "$@" 2>/dev/null || \
-    iptables -w -t "$table" -A "$@"
-  }
-
-  iptables -t filter -N "$CHAIN_TUN" 2>/dev/null
-  apply_rule filter INPUT -i opkgtun+ -j "$CHAIN_TUN"
-  apply_rule filter "$CHAIN_TUN" -i opkgtun+ -j ACCEPT
-  apply_rule filter "$CHAIN_TUN" -o opkgtun+ -j ACCEPT
-  apply_rule nat POSTROUTING -o opkgtun+ -j MASQUERADE -m comment --comment "$CHAIN_TUN"
+  iptables -w -t filter -S "$CHAIN_TUN" >/dev/null 2>&1 && return 0
+  iptables -w -t filter -N "$CHAIN_TUN" 2>/dev/null
+  iptables -w -t filter -F "$CHAIN_TUN" 2>/dev/null
+  iptables -w -t filter -A "$CHAIN_TUN" -i opkgtun+ -j ACCEPT
+  iptables -w -t filter -A "$CHAIN_TUN" -o opkgtun+ -j ACCEPT
+  iptables -w -t filter -A INPUT -i opkgtun+ -j "$CHAIN_TUN"
+  iptables -w -t filter -A OUTPUT -o opkgtun+ -j "$CHAIN_TUN"
 }
 
 get_skeen_run_script_cmd() {
@@ -1945,7 +1939,7 @@ prepare_firewall() {
       echo "#!/bin/sh"
       echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
-      local tables="nat|filter"
+      local tables="filter"
       if [ "$SKEEN_FIREWALL_MODE" = "dns" ]; then
         tables="nat"
         SKEEN_IPTABLES_LIST="$(get_iptables_list)"
@@ -1967,8 +1961,7 @@ prepare_firewall() {
 
       if [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
         loading_modules xt_comment.ko
-        [ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ] &&
-          SKEEN_MARK_POLICY="$(get_mark_policy)"
+        [ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ] && SKEEN_MARK_POLICY="$(get_mark_policy)"
         echo "export SKEEN_REDIRECT_DNS_ENABLED=\"$SKEEN_REDIRECT_DNS_ENABLED\""
         echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
         echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
@@ -2153,12 +2146,8 @@ prepare_firewall() {
     echo "echo \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
 
     local postfix_tables=""
-    if [ "$SKEEN_TUN_ENABLED" = "1" ]; then
-      postfix_tables="|filter"
-      [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && postfix_tables="|filter|nat"
-    elif [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
-      postfix_tables="|nat"
-    fi
+    [ "$SKEEN_TUN_ENABLED" = "1" ] && postfix_tables="|filter"
+    [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ] && postfix_tables="${postfix_tables}|nat"
 
     local redirect="${TABLE_REDIRECT}${postfix_tables}"
     local hybrid="${TABLE_REDIRECT}|${TABLE_TPROXY}${postfix_tables}"
@@ -2245,7 +2234,7 @@ apply_firewall() {
   fi
 
   # TUN
-  [ "$SKEEN_TUN_ENABLED" = "1" ] && check_hook_table "filter|nat" "$hook_table" && set_tun_rules
+  [ "$SKEEN_TUN_ENABLED" = "1" ] && check_hook_table "filter" "$hook_table" && set_tun_rules
 
   # Exclude modes && tables
   echo "tun|dns|none" | grep -q "$SKEEN_FIREWALL_MODE" && return 0
@@ -2329,9 +2318,9 @@ clean_firewall() {
   }
 
   # 1. tun rules
-  iptables -w -t nat -S POSTROUTING 2>/dev/null | \
-    grep "$CHAIN_TUN" | sed "s/^-A/iptables -w -t nat -D/" | sh 2>/dev/null
-  clean_chain "iptables" "filter" "$CHAIN_TUN" "INPUT"
+  for ch in INPUT OUTPUT; do
+    clean_chain "iptables" "filter" "$CHAIN_TUN" "$ch"
+  done
 
   for ipt_cmd in iptables ip6tables; do
     # 2. DNS redirect
@@ -2928,7 +2917,6 @@ fw_test_chain() {
 
   if [ "$2" = "$CHAIN_TUN" ]; then
     fw_test "$1" "$2" "$content" "skeen_tun" "Accept"
-    fw_test "nat" "POSTROUTING" "$($3 -w -t nat -S POSTROUTING 2>/dev/null)" "skeen_tun" "Masquerade"
     return 0
   fi
 
