@@ -112,7 +112,8 @@
 
   "route": {
     "rules": [
-      { "network": "icmp", "outbound": "🔌 DIRECT" },
+      { "network": "icmp", "action": "resolve" },
+      { "network": "icmp", "action": "bypass", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
       { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
       { "ip_version": 6, "action": "reject" },
