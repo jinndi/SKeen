@@ -2886,7 +2886,7 @@ fw_test_chain() {
 
   local ref="PREROUTING"
   [ "$2" = "$CHAIN_OUTPUT" ] && ref="OUTPUT"
-  [ "$2" = "$CHAIN_DNS" ] && ref="INPUT/OUTPUT"
+  [ "$2" = "$CHAIN_TUN" ] && ref="INPUT/OUTPUT"
 
   cyan "Тест $ref $1 $2"
 
