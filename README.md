@@ -26,6 +26,7 @@ SKeen configures transparent proxying on Keenetic and Netcraze routers using sin
 |Protocol Support        |✅ Advanced       |⚠️ Limited        |✅ Extensive     |
 |Multiplexing            |✅ Superior       |⚠️ Legacy         |✅ Good          |
 |DNS Logic               |🥇 Native (+Fake-IP)|🥉 Sniffing (+FakeDNS)|🥈 Fake-IP (+Real)|
+|TUN efficiency          |✅ High           |⚠️ Basic          |⚠️ Basic         |
 |L7 Sniffing (Protocols) |✅ Leader         |⚠️ Mid-tier       |❌ Domain-only   |
 |Routing                 |✅ Flexible       |⚠️ Basic          |✅ (but heavier) |
 |Rule Management         |✅ Rule-sets (bin)|⚠️ Geo-files (dat)|✅ Rule-providers|
