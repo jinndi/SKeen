@@ -1,0 +1,67 @@
+// TProxy and TUN modes (TCP and UDP) in different network segments
+
+// Required settings in skeen.json: enable a policy for the segment — the br1 interface for TProxy mode.
+// Create a TUN (see the inbounds_tun.json file)
+
+// Router settings:
+// 1. Two segments have been created: one for TProxy mode (br1), and another for TUN mode (br2).
+// 2. Connection priorities: Add two policies — one for TProxy (ISP connection) and one for TUN (TUN connection).
+// 2.1. Applying policies: In the segment's default policy, move all your devices to it.
+// 3. Segments: Select the policies created in step 2 for our segments,
+//    add wireless networks to them if necessary, and enable access to the applications on your device.
+// 4. Internet filters:
+//     4.1. Remove all DNS servers with the "Default" type.
+//     4.2. Add DNS server(s) for the ISP interface (for example, 77.88.8.8 and https://common.dot.dns.yandex.net/dns-query).
+//     4.3. Add a regular DNS server with the address 172.18.0.2 for the TUN interface.
+// 5. Use the sing-box DNS configuration from the ready-made templates as an example.
+
+// P.S. Instead of TProxy, you can also use Hybrid mode or Redirect with DNS redirect,
+// as well as scale policies using additional TUNs with separate network segments.
+
+
+// RU -----------------------------------------------------------------------------------
+
+// TProxy и TUN режим  (TCP и UDP) в разных сегментах сети
+
+// Необходимые настройки в skeen.json: включена политика по сегмену - интрерфейс br1 для TProxy режима.
+// Создайте TUN (смотрите в файле inbounds_tun.json)
+
+// Настройки роутера:
+// 1. Созданы 2 сегмента: один для TProxy режима (br1), другой для TUN (br2)
+// 2. Приоритеры подключений: Добавлены 2 политики для TProxy (подключение провайдер) и TUN (подключение TUN)
+// 2.1. Применение политик: Политика по умолчанию сегмента - перенесли в неё все ваши устройства.
+// 3. Сегменты: Выбираем для наших сегментов созданные политики во 2-м шаге,
+//    добавляем при необходимости беспроводные сети в Wi-FI и включаем доступ к приложениям вашего устройства.
+// 4. Интернет-фильтры:
+//     4.1. Убраны все DNS с типом "По умолчанию".
+//     4.2. Добавлен(ы) DNS сервер для интерфейса провайдера (например 77.88.8.8 и https://common.dot.dns.yandex.net/dns-query)
+//     4.3. Для интерфейса TUN добавлен обычный DNS с адресом 172.18.0.2
+// 5. Используем настройку sing-box DNS по примеру из готовых шаблонов.
+
+// P.S. Вместо TProxy можно использовать и Hybrid режим и Redirect c dns-redirect,
+// а так же масштабировать политики на основе дополнительных TUN с сегментами.
+
+{
+  ...,
+  "inbounds": [
+    {
+      "type": "tproxy",
+      "tag": "tproxy-in",
+      "listen": "::",
+      "listen_port": 65082
+    },
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "opkgtun0",
+      "address": "172.18.0.1/30",
+      "mtu": 1500,
+      "dns_mode": "hijack",
+      "dns_address": "172.18.0.2",
+      "auto_route": false,
+      "udp_nat_max": 4096,
+      "multi_queue": true
+    }
+  ],
+  ...
+}
