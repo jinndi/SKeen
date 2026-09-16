@@ -161,7 +161,7 @@ create_skeen_config() {
   mkdir -p "$(dirname "$SKEEN_CONFIG")"
 
   cat <<EOF >"$SKEEN_CONFIG"
-// https://github.com/jinndi/SKeen
+// https://github.com/jinndi/SKeen/blob/main/docs/CONFIGURATION.md
 {
   "auto_start": {
     "enabled": 1,
