@@ -59,8 +59,8 @@
       "dns_mode": "hijack",
       "dns_address": "172.18.0.2",
       "auto_route": false,
-      "udp_nat_max": 4096,
-      "multi_queue": true
+      "udp_nat_max": 4096
+      //,"multi_queue": true
     }
   ],
   ...

@@ -57,8 +57,8 @@ P.S. В Keenetic/Netcraze роутерах по преджнему оптима�
       "dns_mode": "hijack",       // hijack DNS requests to this tun / перехватывать DNS запросы к этому туннелю
       "dns_address": "172.18.0.2",// DNS server address for this tun / адрес DNS сервера для этого туннеля
       "auto_route": false,        // not enable default route to this tun / не включать маршрут по умолчанию к этому туннелю
-      "mtu": 1500,                // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
-      "multi_queue": true         // Enable multi-queue mode if the CPU has 2 or more cores, starting with sing-box 1.15.alpha.3.
+      "mtu": 1500                 // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
+      //,"multi_queue": true      // Enable multi-queue mode if the CPU has 2 or more cores, starting with sing-box 1.15.alpha.3.
                                   // Включить мультиочередность если 2 и более ядер CPU начиная с sing-box 1.15.alpha.3 +
 
     },
@@ -69,8 +69,8 @@ P.S. В Keenetic/Netcraze роутерах по преджнему оптима�
       "address": "172.19.0.1/30",
       "dns_mode": "disabled",
       "auto_route": false,
-      "mtu": 1500,
-      "multi_queue": true
+      "mtu": 1500
+      //,"multi_queue": true
     },
     ..., // and as many as needed / и столько, скольно нужно
 
