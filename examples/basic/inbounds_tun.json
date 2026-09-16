@@ -1,32 +1,51 @@
-// TUN OpkgTun KeeneticOS v5+
-// CPU usage is ~20% higher TProxy (up to sing-box 1.15.alpha.3)
-// DNS via redirect only (firewall.redirect_dns in skeen.json configuration, see inbounds_dns-redirect.json)
+TUN OpkgTun KeeneticOS v5+
+CPU load is approximately 20% higher than with TProxy (up to sing-box 1.15.alpha.3).
+DNS can be configured via the firewall.redirect_dns redirect option in the skeen.json configuration; see inbounds_dns-redirect.json.
+Alternatively, for each TUN interface, you can specify the interception address defined in the dns_address field
+of the TUN configuration as the DNS server in policies other than the default policy.
 
 // Create OpkgTun
-// skeen tun create 172.18.0.1 "SKeenTUN"
+skeen tun create 172.18.0.1 "SKeenTUN"
 
 // List OpkgTun
-// skeen tun list
+skeen tun list
 
 // Delete OpkgTun
-// skeen tun delete "SKeenTUN"
+skeen tun delete "SKeenTUN"
+
+Starting with sing-box 1.15.alpha.3,
+the `stack` parameter no longer needs to be specified - only the native Go implementation will be used by default.
+According to the author, this provides more than a 2× performance improvement:
+https://sekai.icu/posts/sing-tun-new-stack-introduction/
+
+P.S. On Keenetic/Netcraze routers, TProxy is still more efficient, since they use a rather old Linux kernel.
+It also means fewer connections and, accordingly, lower memory usage. Still, it works quite well as an alternative or as a complement.
 
 
 // RU -----------------------------------------------------------------------------------
 
-// TUN OpkgTun KeeneticOS v5+
-// Нагрузка на CPU примерно на 20% выше, чем у TProxy (до версии sing-box 1.15.alpha.3)
-// DNS только через редирект (firewall.redirect_dns в skeen.json конфигурации, см. inbounds_dns-redirect.json)
+TUN OpkgTun KeeneticOS v5+
+Нагрузка на CPU примерно на 20% выше, чем у TProxy (до версии sing-box 1.15.alpha.3),
+DNS можно настроить через редирект опцию firewall.redirect_dns в skeen.json конфигурации, см. inbounds_dns-redirect.json,
+либо назначив в качестве DNS для каждого интерфейса TUN в политиках отличных от политики по умолчанию -
+адрес перехвата указанный в поле dns_address конфигурации TUN.
 
 // Создать OpkgTun
-// skeen tun create 172.18.0.1 "SKeenTUN"
+skeen tun create 172.18.0.1 "SKeenTUN"
 
 // Список OpkgTun
-// skeen tun list
+skeen tun list
 
 // Удалить OpkgTun
-// skeen tun delete "SKeenTUN"
+skeen tun delete "SKeenTUN"
 
+Начиная с версии sing-box 1.15.alpha.3,
+параметр `stack` указывать не нужно - по умолчанию будет использоваться только собственная реализация на Go.
+По заявлениям автора, это даёт прирост производительности более чем в 2 раза:
+https://sekai.icu/posts/sing-tun-new-stack-introduction/
+
+P.S. В Keenetic/Netcraze роутерах по преджнему оптимальней TProxy, т.к. слишком старое Linux ядро испльзуется,
+ну и меньше соединений соответсвенно и потребления памяти, но как альтернатива или дополнение вполне себе подходит.
 
 {
   "inbounds": [
@@ -35,9 +54,11 @@
       "tag": "tun-in",
       "interface_name": "opkgtun0",
       "address": "172.18.0.1/30", // NOT use IP v6 / Не используйте IP v6
+      "dns_mode": "hijack",       // hijack DNS requests to this tun / перехватывать DNS запросы к этому туннелю
+      "dns_address": "172.18.0.2",// DNS server address for this tun / адрес DNS сервера для этого туннеля
       "auto_route": false,        // not enable default route to this tun / не включать маршрут по умолчанию к этому туннелю
-      "mtu": 1500                 // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
-      //, "multi_queue": true     // Enable multi-queue mode if the CPU has 2 or more cores, starting with sing-box 1.15.alpha.3.
+      "mtu": 1500,                // not less than 1200 and not more than 1500 / не менее 1200 и не более 1500
+      "multi_queue": true         // Enable multi-queue mode if the CPU has 2 or more cores, starting with sing-box 1.15.alpha.3.
                                   // Включить мультиочередность если 2 и более ядер CPU начиная с sing-box 1.15.alpha.3 +
 
     },
@@ -46,23 +67,30 @@
       "tag": "tun2-in",
       "interface_name": "opkgtun1",
       "address": "172.19.0.1/30",
+      "dns_mode": "disabled",
       "auto_route": false,
-      "mtu": 1500
-      //, "multi_queue": true
+      "mtu": 1500,
+      "multi_queue": true
     },
     ..., // and as many as needed / и столько, скольно нужно
+
+    // Please note that when using DNS interception via the firewall.redirect_dns redirect option for all policies
+    // (redirect_dns.use_policy=0), or when used together with TProxy without a policy (for the entire device) with
+    // firewall.intercept.dns=1, you should disable dns_mode=disabled for all TUNs.
+
+    // Otherwise, for DNS interception when using TUN only: enable DNS hijacking (`dns_mode": "hijack"`),
+    // configuring a separate DNS server for each interface in the router's Internet filter:
+    // use the provider's external DNS address for the ISP interface, and the DNS addresses specified
+    // in `dns_address` for TUN interfaces located in other network segments.
+
+    // RU -----------------------------------------------------------------------------------
+
+    // Обратитите внимание, при использовании перехвата DNS через редирект firewall.redirect_dns для всех политик
+    // (опция redirect_dns.use_policy=0), или если используется совместно с TProxy без политики (на все устройство) с опцией
+    // firewall.intercept.dns=1 - то стоит отключить dns_mode=disabled для всех TUN.
+
+    // В противном случае для перехвата DNS при использовании одних TUN: укажите перехват DNS (dns_mode": "hijack")
+    // настроив для каждого интерфейса раздельный DNS и интрернет фильтре роутера:
+    // для провайдера свой внешний адрес, для TUN находящихся в других сегментах сети - свои указанные в "dns_address"
   ]
 }
-
-P.S. Начиная с версии sing-box 1.15.alpha.3,
-параметр `stack` указывать не нужно - по умолчанию будет использоваться только собственная реализация на Go.
-По заявлениям автора, это даёт прирост производительности более чем в 2 раза:
-  https://sekai.icu/posts/sing-tun-new-stack-introduction/
-На роутерах необходимо тестировать.
-
-P.S. Starting with sing-box 1.15.alpha.3,
-the `stack` parameter no longer needs to be specified - only the native Go implementation will be used by default.
-According to the author, this provides more than a 2× performance improvement:
-  https://sekai.icu/posts/sing-tun-new-stack-introduction/
-It needs to be tested on routers.
-
