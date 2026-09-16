@@ -2885,7 +2885,8 @@ fw_test_chain() {
   # $3 — iptables
 
   local ref="PREROUTING"
-  [ "$2" = "skeen_mask" ] && ref="OUTPUT"
+  [ "$2" = "$CHAIN_OUTPUT" ] && ref="OUTPUT"
+  [ "$2" = "$CHAIN_DNS" ] && ref="INPUT/OUTPUT"
 
   cyan "Test $ref $1 $2"
 
