@@ -667,9 +667,10 @@
                             // Если у вас есть особые требования, вы можете увеличить его до 2MB или 4MB.
     },
 
-    // API Clash - можно использовать вместо API sing-box (Zashboard не поддерживает Sing-box с версии 3.23.0)
+    // API Clash - можно использовать вместо API sing-box
     // Предоставляет REST API, совместимый с Clash, которым можно управлять через такие панели, как Yacd, metacubexd и т.д.
     // Подробней см. https://sing-box.sagernet.org/configuration/experimental/clash-api/#structure
+    // Пример для скачивание фронтенда панели для запуска из Entware
     // "clash_api": {
     //   "external_controller": "0.0.0.0:9090", // Адрес прослушивания API
     //   "secret": "", // Задайте пароль доступа если порт 9090 и любой другой указанный выше открыт наружу!
@@ -677,6 +678,17 @@
     //   "external_ui_download_url": "https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip", // URL адрес .zip панели
     //   "external_ui_download_detour": "🌍 Proxy" // Скачивание файлов панели через прокси селектор
     // },
+
+    // Используем API Clash для определенных сайтов, в примере для доступа к фронту Zashboard панели из локальной сети роутера.
+    // Для использования - откройте ссылку http://board.zash.run.place,
+    // выберите протокол HTTP, в качестве адреса введите 198.162.1.1 и указанный порт 9090
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "access_control_allow_origin": [
+        "http://board.zash.run.place"
+      ],
+      "access_control_allow_private_network": true
+    },
 
     // Конфигурация отладки/производительности
     "debug": {

@@ -192,6 +192,13 @@
       "store_dns": true,
       "buffer_size": "1MB"
     },
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "access_control_allow_origin": [
+        "http://board.zash.run.place"
+      ],
+      "access_control_allow_private_network": true
+    },
     "debug": {
       "gc_percent": 100,
       "memory_limit": "200MB"
