@@ -76,8 +76,9 @@ services:
       # Внешняя папка для уже существующих сертификатов (опционально)
       # - /etc/ssl/cert:/etc/ssl/cert/
 
-      # Папкаи для хранения состояния tailscale и файлов taildrop (опционально)
+      # Папкаи для хранения состояния tailscale, derper и файлов taildrop (опционально)
       # - /root/sing-box/tailscale:/opt/tailscale/
+      # - /root/sing-box/derper:/opt/derper/
       # - /root/sing-box/files:/opt/files/
 
     # Флаги запуска ядра sing-box:

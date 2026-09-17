@@ -1,0 +1,116 @@
+/// Tailcat - это плоскость данных Tailscale без плоскости управления:
+// туннели WireGuard типа «точка-точка», устанавливаемые через DERP с обходом NAT.
+// Подробнее: https://tailscale.com/tailcat
+
+// ВАЖНО: Не стоит использовать это на роутере, если у него процессор не архитектуры ARM и объем оперативной памяти менее 512 МБ,
+// в принципе, как и для настройки любого типа подключения типа endpoint, работающего в userspace.
+
+// Эту штуку я вынес отдельно от Server-sing-box.md и outbounds.jsonc, чтобы было легче ориентироваться.
+// По сути, это продолжение, так что ознакомьтесь сначала хотя бы с файлом Server-sing-box.md.
+
+// Рассмотрим простейший способ настройки сервер-клиент конфигурации,
+// а затем немного посложнее - с настройкой собственного DERP-сервиса.
+
+/// СЕРВЕР (inbounds)
+
+// ВНИМАНИЕ: Не размещайте это на сервере к которому у вас нет доступа по обычному WireGuad,
+// т.к. в основе Tailcat используется именно он для передачи данных.
+
+// Получаем ключи на сервере:
+docker exec -it sing-box sing-box generate tailcat-keypair
+
+PrivateKey:   ПРИВАТНЫЙ_КЛЮЧ_СЕРВЕРА
+PublicKey:    ПУБЛИЧНЫЙ_КЛЮЧ_СЕРВЕРА
+DiscoKey:     DISCO_КЛЮЧ_СЕРВЕРА
+PreSharedKey: ОБЩИЙ_PSK_КЛЮЧ_ЕСЛИ_ИСПОЛЬЗУЕТСЯ
+
+{
+  "type": "tailcat",
+  "tag": "tailcat-in",
+  "private_key": "ПРИВАТНЫЙ_КЛЮЧ_СЕРВЕРА",
+  "pre_shared_key": "ОБЩИЙ_PSK_КЛЮЧ_ЕСЛИ_ИСПОЛЬЗУЕТСЯ",
+  "derp_map_url": "https://tailcat.dev/derpmap.json",
+  "derp_region": 303,
+  "users": [
+    {
+      "name": "router",
+      "public_key": "ПУБЛИЧНЫЙ_КЛЮЧ_КЛИЕНТА"
+    }
+  ]
+}
+
+// ПРИМЕЧАНИЕ: в derp_map_url адрес с настройками по умолчанию,
+// откройте и посмотрите какие доступны регионы,
+// затем укажите нужный в derp_region (цифра)
+
+
+/// КЛИЕНТ (outbounds)
+
+// Получаем ключи на клиенте:
+skeen-box generate tailcat-keypair
+
+PrivateKey:   ПРИВАТНЫЙ_КЛЮЧ_КЛИЕНТА
+PublicKey:    ПУБЛИЧНЫЙ_КЛЮЧ_КЛИЕНТА
+DiscoKey:     не используем
+PreSharedKey: используе из первой комманды (серверной)
+
+{
+  "type": "tailcat",
+  "tag": "tailcat-out",
+  "private_key": "ПРИВАТНЫЙ_КЛЮЧ_КЛИЕНТА",
+  "server_public_key": "ПУБЛИЧНЫЙ_КЛЮЧ_СЕРВЕРА",
+  "server_disco_key": "DISCO_КЛЮЧ_СЕРВЕРА",
+  "pre_shared_key": "ОБЩИЙ_PSK_КЛЮЧ_ЕСЛИ_ИСПОЛЬЗУЕТСЯ",
+  "derp_map_url": "https://tailcat.dev/derpmap.json",
+  "derp_region": 303,
+  // Ниже настройка необходима если https://tailcat.dev/derpmap.json заблокирован.
+  // В detour укажите тег прокси узла для обходного пути.
+  "http_client": {
+    "detour": "😎 Trojan"
+  }
+}
+
+/// СЕРВЕР (services) DERP
+
+// В блок (массив) services на сервере добавляем следующего типа конфигурацию DERP
+
+{
+  "type": "derp",
+  "tag": "derp-service",
+  "listen": "::",
+  "listen_port": 443, // Любой свободный порт, не обязательно 443
+  "tls": {
+    "enabled": true,
+    "server_name": "<ваш_домен.com>",
+    "certificate_provider": "LetsEncrypt"
+    // Либо вместо certificate_provider:
+    // "certificate_path": "/path/to/fullchain.pem",
+    // "key_path": "/path/to/privkey.pem"
+  },
+  "config_path": "/opt/derper/derper.key", // Примантируйте папку в volumes (файл compose.yml, сервис sing-box)
+                                           // Например, так: - /root/sing-box/derper:/opt/derper/
+  "stun": 3478, // Любой порт, по умолчанию используется 3478
+  "verify_client_inbound": [
+    "tailcat-in" // в этом массиве указываем теги tailcat откуда возьмутся клиенты для их верификации,
+  ]              // чтобы никто другой не cмог использовать наш DERP сервис в интеренете.
+}
+
+/// Используем свой DERP сервис в конфигурациях
+
+// Для этого в примерах выше СЕРВЕР (inbounds) и КЛИЕНТ (outbounds)
+
+// вместо:
+
+  "derp_map_url": "https://tailcat.dev/derpmap.json",
+  "derp_region": 303,
+
+// укажите:
+
+  "derp_servers": [
+    {
+      "host": "<ваш_домен.com>",
+      "ipv4": "IP_ВАШЕГО_VPS",
+      "derp_port": 443,  // Ваш порт DERP сервиса
+      "stun_port": 3478  // Ваш порт STUN
+    }
+  ]
