@@ -118,3 +118,15 @@ Reasons why:
 **A:** Learn how to build routing using Sing-box rules, and use FakeIP to filter traffic.
 </details>
 
+<details>
+  <summary>Memory Usage?</summary>
+<br>
+
+If using protocols like VLESS or Trojan in TPROXY mode with 60 active connections and standard routing templates (over 200,000 domains for DNS and routing), Zashboard shows the following metrics:
+
+<img width="541" height="196" alt="5656" src="https://github.com/user-attachments/assets/74d196db-baf7-4f13-b104-ba47d308a56f" />
+
+Meaning around 30–40 MB.
+
+P.S. sing-box 1.15.0-alpha.6
+</details>
