@@ -1,5 +1,25 @@
 # Changelog
 
+## [5.5.3](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.2...SKeen-v5.5.3) (2026-09-18)
+
+
+### 🐛 Fix
+
+* **cli:** update test chain reference for TUN mode ([0c1133a](https://github.com/jinndi/SKeen/commit/0c1133ad5fff16447629c5e757f2a44f37adbc2f))
+
+
+### ⚙️ Config
+
+* add clash_api configuration ([e0c5db8](https://github.com/jinndi/SKeen/commit/e0c5db8d1dcc53b670833005c366bfe3bee44edb))
+* **clash_api:** add metacubex domains to allowed origins ([c259bc5](https://github.com/jinndi/SKeen/commit/c259bc5de0fc745b19aa14aa8f36fca63f8ce9de))
+* **examples:** add tailcat+DERP configuration ([b697479](https://github.com/jinndi/SKeen/commit/b69747977920c81a42a9ed809b46e72818c0c825))
+* support https origins for dashboard and clash_api ([1cd0d2c](https://github.com/jinndi/SKeen/commit/1cd0d2c473f4085daf20599f132cfa20030f0dd3))
+
+
+### 🧰 Chore
+
+* **docs:** document supported web panels in README ([f93c7c3](https://github.com/jinndi/SKeen/commit/f93c7c30698827b6d72455c94012008b0e83c093))
+
 ## [5.5.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.1...SKeen-v5.5.2) (2026-09-16)
 
 
