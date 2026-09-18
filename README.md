@@ -158,6 +158,18 @@ Manage SKeen using the `skeen` command.
     └── skeen.pid              # PID file of the sing-box process
 ```
 
+### Web Panels for Local Network
+
+The following domains are pre-configured in the base `config.json` template for accessing the panels from the router's local network:
+
+| Dashboard URL | Used API | Panel Connection Address | Brief Description |
+| :--- | :--- | :--- | :--- |
+| **[sing-box-dashboard.sagernet.org](https://sing-box-dashboard.sagernet.org)** *(in Chrome)*<br>[HTTP version](http://sing-box-dashboard.sagernet.org) *(others)* | Native `sing-box` API (`9999`) | `http://192.168.1.1:9999` | Built-in `sing-box` web dashboard (files are stored locally on the router). |
+| **[sdash.u1.pw](https://sdash.u1.pw)** *(in Chrome)*<br>[HTTP version](http://sdash.u1.pw) *(others)* | Native `sing-box` API (`9999`) | `http://192.168.1.1:9999` | Very lightweight web interface for `sing-box` management. |
+| **[board.zash.run.place](https://board.zash.run.place)** *(in Chrome)*<br>[HTTP version](http://board.zash.run.place) *(others)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Remote **Zashboard** frontend for managing proxy connections. |
+| **[d.metacubex.one](https://d.metacubex.one)** / **[metacubexd.pages.dev](https://metacubexd.pages.dev)** *(Chrome only)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Alternative **MetacubexD** (Yacd-meta) web interface for Clash API. |
+
+
 ## Commands
 
 Example Usage from SSH: start the daemon `skeen start`
