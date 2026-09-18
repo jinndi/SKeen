@@ -632,9 +632,10 @@
       "listen_port": 9999,  // Адрес прослушивания API
       "secret": "",         // Задайте пароль доступа если порт 9999 и любой другой указанный выше открыт наружу!
       "access_control_allow_origin": [
-        "http://sing-box-dashboard.sagernet.org",
-        "http://sdash.u1.pw"
+        "http://sing-box-dashboard.sagernet.org", "https://sing-box-dashboard.sagernet.org",
+        "http://sdash.u1.pw", "https://sdash.u1.pw"
       ], // Разрешить доступ только к этим доменным именам панелей (CORS)
+         // В Chrome можно использовать HTTPS, но в других браузерах - нет.
       "access_control_allow_private_network": true, // Разрешить доступ к панели с локальной сети (LAN)
       "dashboard": true     // Включить панель, файлы по умолчанию сохраняются в папку /opt/etc/skeen/dashboard
     }
@@ -680,12 +681,13 @@
     // },
 
     // Используем API Clash для определенных сайтов, в примере для доступа к фронту Zashboard панели из локальной сети роутера.
-    // Для использования - откройте ссылку http://board.zash.run.place,
-    // выберите протокол HTTP, в качестве адреса введите 198.162.1.1 и указанный порт 9090
+    // Для использования - откройте ссылку http://board.zash.run.place, либо с https://board.zash.run.place (Chrome)
+    // В Chrome можно использовать HTTPS, но в других браузерах - нет.
+    // выберите протокол HTTP, в качестве адреса введите 192.168.1.1 и указанный порт 9090
     "clash_api": {
       "external_controller": "0.0.0.0:9090",
       "access_control_allow_origin": [
-        "http://board.zash.run.place"
+        "http://board.zash.run.place", "https://board.zash.run.place"
       ],
       "access_control_allow_private_network": true
     },
