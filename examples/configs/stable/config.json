@@ -194,7 +194,8 @@
     "clash_api": {
       "external_controller": "0.0.0.0:9090",
       "access_control_allow_origin": [
-        "http://board.zash.run.place", "https://board.zash.run.place"
+        "http://board.zash.run.place", "https://board.zash.run.place",
+        "https://d.metacubex.one", "https://metacubexd.pages.dev"
       ],
       "access_control_allow_private_network": true
     },
