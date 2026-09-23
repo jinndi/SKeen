@@ -94,6 +94,20 @@ function operator(proxies = [], targetPlatform, context) {
 
 20. Hysteria 2 поддерживает установку параметра `disable_chrome_parrot` через строковое поле `disable-chrome-parrot` в узлах.
 
+21. WireGuard/Tailscale поддерживает `_on_demand` для настройки `on_demand`. Принимает логическое значение `true`/`false`, позволяя endpoint отключаться по мере необходимости; поддерживается в sing-box начиная с версии 1.15.0. Пример: $server._on_demand = true
+
+22. WireGuard/Tailscale поддерживает `_listen_port` для настройки локального порта прослушивания UDP `listen_port`. Принимает целое число от 0 до 65535 или строку с числом, где `0` означает автоматический выбор; для Tailscale требуется sing-box 1.14.0+. Ненулевой `listen_port` для WireGuard нельзя использовать одновременно с `detour`/`dialer-proxy`. Пример: $server._listen_port = 51820
+
+23. WireGuard поддерживает `_name` для настройки имени системного интерфейса `name`, используется совместно с `system: true`; значение `name` узла по-прежнему используется для вывода `tag`. Пример: $server._name = 'wg0'
+
+24. WireGuard поддерживает `_udp_mapping` для настройки `udp_mapping`. Доступные варианты: `endpoint_independent` (по умолчанию), `address_dependent`, `address_and_port_dependent`; управляет повторным использованием сопоставления UDP NAT, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_mapping = 'endpoint_independent'
+
+25. WireGuard поддерживает `_udp_filtering` для настройки `udp_filtering`. Доступные варианты: `endpoint_independent` (по умолчанию), `address_dependent`, `address_and_port_dependent`; управляет тем, какие входящие пакеты от удаленного узла принимает UDP NAT, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_filtering = 'address_and_port_dependent'
+
+26. WireGuard поддерживает `_udp_nat_max` для настройки `udp_nat_max`. Принимает целое число от 0 до 4294967295 или строку с числом, ограничивая количество сессий UDP NAT; `0` использует значение по умолчанию для платформы sing-box, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_nat_max = 8192
+
+27. sing-box Tailscale поддерживает `_taildrop_directory` для настройки директории получения файлов Taildrop `taildrop_directory`, значение — строка; относительный путь отсчитывается от рабочей директории sing-box, по умолчанию `Taildrop`, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._taildrop_directory = './taildrop'
+
 **Описание некоторых возможностей**
 
 ```js
