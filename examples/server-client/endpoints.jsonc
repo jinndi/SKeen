@@ -1,11 +1,11 @@
 // Примеры конфигурации конечных точек на стороне клиента sing-box
 // На стороне сервера смотрите в файле Server-sing-box.md папка server-client
-// АКТУАЛЬНОСТЬ: Sing-box 1.14.0-beta.15 + версии.
 
 {
   "endpoints": [
     // 1. Tailscale на роутере в качестве клиента с выходом на серверную точку (server-ep)
     // Для управления и просмотра информации используйте панель Zashboard через api sing-box
+    // Требоване: Sing-box 1.14.0-beta.15 + версии.
     {
       "type": "tailscale",
       "tag": "ts-router-ep",
@@ -18,6 +18,30 @@
       "detour": "😎 Trojan" // Если доступа к панели управления Tailscale нет укажите тут тег прокси узла для подключения
                             // ВНИМАНИЕ: Влияет только на способ подключения к плоскости управления
                             // и не имеют никакого отношения к фактическим соединениям.
+    },
+
+    // 2. MASQUE Client на роутере с выходом на серверную точку (server-ep)
+    // Требование: Sing-box 1.15.0-alpha.7 + версии.
+    {
+      "type": "masque-client",
+      "tag": "masque-router-ep",
+      "server": "<ваш.домен.com>",
+      "server_port": 8443,
+      "username": "<ваше_имя_пользователя>",
+      "password": "<ваш_пароль>",
+      "version": 3,     // Задаёт версию HTTP (1, 2 или 3)
+      "disable_version_fallback": true, // Отключить возможность понижения версии HTTP
+      "tls": {
+        "enabled": true,
+        "server_name": "<ваш.домен.com>"
+      },
+      "system": false, // Если эта функция отключена, sing-box использует внутренний сетевой стек.
+      "mtu": 1280,
+      "on_demand": false, // Разрешите отключение конечной точки при необходимости.
+      // HTTP2 настройки
+      "stream_receive_window": 0,
+      "connection_receive_window": 0,
+      "max_concurrent_streams": 48
     }
   ]
 }
