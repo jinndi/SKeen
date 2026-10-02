@@ -174,6 +174,7 @@
           "games", "ai", "proxy", "ru", "ruip", "telegramip"
         ],
         "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs",
+        "initial_path": "ruleset/{tag}.srs",
         "update_interval": "48h0m0s"
       }
     ],
