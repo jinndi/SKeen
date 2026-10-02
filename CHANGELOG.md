@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.6.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.3...SKeen-v5.6.0) (2026-10-02)
+
+
+### 🚀 Feat
+
+* add initial ruleset download functionality ([181d6f6](https://github.com/jinndi/SKeen/commit/181d6f6843185c793918c37ffbb99c5175fc1534))
+
+
+### ⚙️ Config
+
+* add initial_path to rule_set configuration ([9afa46d](https://github.com/jinndi/SKeen/commit/9afa46d4fccc192460eabe1b18a427b856adfe0d))
+
+
+### 🧰 Chore
+
+* localize error message in skeen.sh ([b970ceb](https://github.com/jinndi/SKeen/commit/b970cebc38dcae37638badfb31322bfceb1f359d))
+
 ## [5.5.3](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.2...SKeen-v5.5.3) (2026-09-18)
 
 
