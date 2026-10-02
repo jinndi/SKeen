@@ -823,6 +823,37 @@ download_singbox_config() {
   echook "$SINGBOX_NAME configuration downloaded successfully"
 }
 
+download_initial_ruleset() {
+  local ruleset_url="https://github.com/jinndi/singbox_ruleset/raw/refs/heads/main/ruleset.tar.gz"
+  local ruleset_path="${WORK_DIR}/ruleset"
+  local tar_file="${ruleset_path}.tar.gz"
+  local bak_path="${ruleset_path}_bak"
+
+  [ -n "$MIRROR" ] && ruleset_url="${MIRROR}ruleset.tar.gz"
+  mkdir -p "$WORK_DIR"
+
+  if [ -d "$ruleset_path" ]; then
+    rm -rf "$bak_path"; mv -f "$ruleset_path" "$bak_path"
+  fi
+
+  echomsg "Downloading initial ruleset..."
+
+  if ! run_curl -o "$tar_file" "$ruleset_url"; then
+    rm -f "$tar_file"; rm -rf "$ruleset_path"
+    [ -d "$bak_path" ] && mv -f "$bak_path" "$ruleset_path"
+    echoerr "Failed to download initial ruleset"; return 1
+  fi
+
+  if ! tar -tzf "$tar_file" >/dev/null 2>&1 || ! tar -xzf "$tar_file" -C "$WORK_DIR" >/dev/null 2>&1; then
+    rm -f "$tar_file"; rm -rf "$ruleset_path"
+    [ -d "$bak_path" ] && mv -f "$bak_path" "$ruleset_path"
+    echoerr "Failed to extract ruleset archive or it is corrupted"; return 1
+  fi
+
+  rm -f "$tar_file"; rm -rf "$bak_path"
+  echook "Initial ruleset downloaded successfully"
+}
+
 create_autostart_script() {
   echomsg "Create $SKEEN_NAME autostart script..."
 
@@ -948,6 +979,7 @@ install() {
   fi
   install_dependencies
   download_singbox_config "$BETA_ENABLED"
+  download_initial_ruleset
   create_autostart_script
   create_skeen_group
   download_skeen_script
@@ -3118,6 +3150,7 @@ config_reset() {
         mkdir -p "$WORK_DIR"
         get_update_config
         download_singbox_config "$UPDATE_SINGBOX_BETA" "force"
+        download_initial_ruleset
         create_skeen_config "force"
         echook "Configuration reset completed"
       else

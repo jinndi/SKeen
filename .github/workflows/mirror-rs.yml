@@ -1,0 +1,64 @@
+name: Mirror ruleset
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Запуск каждые 3 дня в 03:00 UTC
+    - cron: "0 3 */3 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-archive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: static
+          fetch-depth: 1
+
+      - name: Download and verify ruleset.tar.gz
+        run: |
+          URL="https://github.com/jinndi/singbox_ruleset/raw/refs/heads/main/ruleset.tar.gz"
+          TAR_FILE="ruleset.tar.gz"
+
+          echo "Скачивание архива..."
+          curl -fL --retry 3 --retry-delay 5 -o "$TAR_FILE" "$URL"
+
+          # Защита от скачивания HTML-страницы с ошибкой (например, 503) вместо tar.gz
+          if head -c 5 "$TAR_FILE" | grep -q "<html"; then
+            echo "Ошибка: Получен HTML-ответ вместо tar.gz архива"
+            exit 1
+          fi
+
+          # Проверка целостности tar.gz архива
+          if ! tar -tzf "$TAR_FILE" >/dev/null 2>&1; then
+            echo "Ошибка: Скачанный файл поврежден или не является валидным tar.gz архивом"
+            exit 1
+          fi
+
+          echo "Архив успешно скачан и проверен."
+
+      - name: Commit and Push changes
+        run: |
+          # Проверяем, изменился ли сам ruleset.tar.gz
+          if [ -z "$(git status --porcelain 'ruleset.tar.gz')" ]; then
+            echo "Архив не изменился. Выходим."
+            exit 0
+          fi
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ruleset.tar.gz
+          git commit -m "[auto] Update ruleset.tar.gz $(date '+%Y-%m-%d %H:%M:%S')"
+          git push origin static
+
+      - name: Purge jsDelivr Cache
+        run: |
+          # Сбрасываем кэш jsDelivr для обновленного архива
+          curl -sfL "https://purge.jsdelivr.net/gh/jinndi/singbox_ruleset@static/ruleset.tar.gz"
+          echo "Кэш jsDelivr очищен."
