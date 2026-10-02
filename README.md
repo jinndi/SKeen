@@ -140,6 +140,7 @@ Manage SKeen using the `skeen` command.
 ├── bin/
 │   ├── skeen                  # Main SKeen management script
 │   └── skeen-box              # sing-box binary (if installation selected)
+│
 ├── etc/
 │   ├── init.d/
 │   │   └── S99SKeen           # System startup / autostart script
@@ -147,7 +148,9 @@ Manage SKeen using the `skeen` command.
 │   │   └── skeen_firewall.sh  # Firewall rules (generated on startup)
 │   └── skeen/
 │       ├── skeen.json         # SKeen configuration
-│       └── config.json        # sing-box configuration
+│       ├── config.json        # sing-box configuration
+│       └── ruleset/           # Folder with .srs files for the initial start
+│
 └── tmp/                       # Temporary download files
 
 /tmp/ (RAM Disk) - synced into memory:

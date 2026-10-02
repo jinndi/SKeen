@@ -138,6 +138,7 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 ├── bin/
 │   ├── skeen                   # Основной скрипт управления SKeen
 │   └── skeen-box               # Банарник sing-box (если выбрали установку)
+│
 ├── etc/
 │   ├── init.d/
 │   │   └── S99SKeen            # Скрипт автозапуска при старте системы
@@ -145,7 +146,9 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 │   │   └── skeen_firewall.sh   # Правила файрвола (создается при запуске)
 │   └── skeen/
 │       ├── skeen.json          # Конфигурация SKeen
-│       └── config.json         # Конфигурация sing-box
+│       ├── config.json         # Конфигурация sing-box
+│       └── ruleset/            # Папка с .srs файлами для начального старта
+│
 └── tmp/                        # Временные файлы загрузки
 
 /tmp/ (RAM-диск) - синхранизируется в память:
