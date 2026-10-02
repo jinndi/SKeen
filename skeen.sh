@@ -3325,7 +3325,7 @@ sync_config() {
   get_singbox_config
 
   if [ -z "$address" ]; then
-    [ -z "$SINGBOX_CONFIG_URL" ] && echoerr "Адрес для синхронизации не указан" && return 1
+    [ -z "$SINGBOX_CONFIG_URL" ] && echoerr "Sync URL not specified" && return 1
     address="$SINGBOX_CONFIG_URL"
   fi
 
