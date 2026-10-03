@@ -235,6 +235,7 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 - [Karing ruleset](https://github.com/KaringX/karing-ruleset/tree/sing) — наборы правил для sing-box.
 - [Custom sing-box rulesets](https://github.com/jinndi/singbox_ruleset) — кастомные наборы правил.
 
-**Документация и справочники**
+**Прочее**
 - [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — справочник по sing-box.
-- [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — альтернативное ядро для XHTTP.
+- [jinndi/sing-box](https://github.com/jinndi/sing-box) — sing-box билды с gRPC и UPX сжатием.
+- [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — альтернативное ядро c XHTTP.

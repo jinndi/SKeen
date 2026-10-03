@@ -239,6 +239,7 @@ The full configuration reference is available in [docs/CONFIGURATION.md](docs/CO
 - [Karing ruleset](https://github.com/KaringX/karing-ruleset/tree/sing) — rule sets for sing-box.
 - [Custom sing-box rulesets](https://github.com/jinndi/singbox_ruleset) — custom rule sets.
 
-**Documentation and references**
+**Other**
 - [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — sing-box reference guide.
-- [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — alternative XHTTP-capable core.
+- [jinndi/sing-box](https://github.com/jinndi/sing-box) — sing-box builds with gRPC and UPX compression.
+- [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — alternative core with XHTTP.
