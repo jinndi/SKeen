@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.7.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.6.0...SKeen-v5.7.0) (2026-10-05)
+
+
+### 🚀 Feat
+
+* **cli:** add connection diagnostics command ([4564634](https://github.com/jinndi/SKeen/commit/45646348551f1ced7c61acb9f6eed8bb42591288))
+
+
+### 🐛 Fix
+
+* correct curl argument injection in download function ([55b696d](https://github.com/jinndi/SKeen/commit/55b696d237474d752de12ff0050b72b1e2a76e02))
+
 ## [5.6.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.5.3...SKeen-v5.6.0) (2026-10-02)
 
 
