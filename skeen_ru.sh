@@ -19,7 +19,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-readonly DEPENDENCIES="iptables ip-full ipset net-tools curl tar jsonfilter logger"
+readonly DEPENDENCIES="iptables ip-full ipset net-tools conntrack curl tar jsonfilter logger"
 
 readonly ENTWARE_DIR="/opt"
 readonly WORK_DIR="${ENTWARE_DIR}/etc/skeen"
@@ -126,6 +126,7 @@ is_tty() {
 }
 
 cyan() { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+cyan_bold() { is_tty && printf '\033[1;38;5;30m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 red() { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 yellow() { is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
@@ -2762,6 +2763,228 @@ status() {
   fi
 }
 
+print_aligned_table() {
+  LC_ALL=C awk -v max_width="${1:-28}" -F'|' '
+    function trim(s) { sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
+    function width(s) { gsub(/[\200-\277]/,"",s); return length(s) }
+    function repeat(c,n,o,i) { for(i=0;i<n;i++) o=o c; return o }
+    function border(i) { printf "+"; for(i=1;i<=columns;i++) printf "%s+",repeat("-",widths[i]+2); printf "\n" }
+    function wrap(r,c,s,w,n,i,x,l) {
+      n=split(s,w,/[ \t]+/); l=1
+      for(i=1;i<=n;i++) {
+        if(x=="") x=w[i]
+        else if(width(x " " w[i])<=widths[c]) x=x " " w[i]
+        else { wrapped[r,c,l++]=x; x=w[i] } }
+      wrapped[r,c,l]=x; if(l>row_lines[r]) row_lines[r]=l }
+    { rows=NR; if(NF>columns) columns=NF
+      for(i=1;i<=NF;i++) { cells[NR,i]=trim($i); w=width(cells[NR,i]); if(w>max_width) w=max_width; if(w>widths[i]) widths[i]=w } }
+    END {
+      if(!rows) exit
+      for(r=1;r<=rows;r++) for(c=1;c<=columns;c++) wrap(r,c,cells[r,c])
+      border()
+      for(r=1;r<=rows;r++) {
+        for(l=1;l<=row_lines[r];l++) {
+          printf "|"; for(c=1;c<=columns;c++) { v=wrapped[r,c,l]; printf " %s%s |",v,repeat(" ",widths[c]-width(v)) }
+          printf "\n" }
+        if(r==1) border() }
+      border() }
+  ' | while IFS= read -r line; do
+        case "$line" in +*) cyan "$line" ;; "| Протокол "* | "| Метка "* | "| Счётчик "* | "| Состояние TCP "*) cyan "$line" ;; *) printf '%s\n' "$line" ;; esac
+      done
+}
+
+show_connstat() {
+  local ct_count ct_max percent conntrack_report ct_summary mark_summary message
+  local conntrack_stats tcp_summary
+
+  check_tty
+
+  cyan_bold "=== Диагностика соединений ==="
+  printf '\n'
+  if [ -r /proc/sys/net/netfilter/nf_conntrack_count ] && [ -r /proc/sys/net/netfilter/nf_conntrack_max ]; then
+    if command -v conntrack >/dev/null 2>&1; then ct_count="$(conntrack -C 2>/dev/null)"; fi
+    case "$ct_count" in
+      '' | *[!0-9]*) ct_count="$(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null)" ;;
+    esac
+    ct_max="$(cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null)"
+    case "$ct_count:$ct_max" in
+      *[!0-9:]* | :* | *: | *:0) echowarn "Таблица conntrack: не удалось прочитать число записей/лимит" ;;
+      *)
+        if [ "$ct_count" -gt "$ct_max" ]; then
+          message="Счётчики conntrack противоречат друг другу:"
+          message="$message count=$ct_count, max=$ct_max;"
+          echowarn "$message оценить заполнение нельзя"
+        else
+          percent=$((ct_count * 1000 / ct_max))
+          printf 'Таблица conntrack: %s / %s записей (заполнена на %s.%s%%)\n' \
+            "$ct_count" "$ct_max" "$((percent / 10))" "$((percent % 10))"
+          if [ "$percent" -ge 950 ]; then
+            red "Оценка: КРИТИЧНО — таблица conntrack почти заполнена"
+          elif [ "$percent" -ge 800 ]; then
+            yellow "Оценка: ВНИМАНИЕ — таблица conntrack заполняется"
+          else
+            green "Оценка: нормально — заполнение не опасно"
+          fi
+        fi
+        ;;
+    esac
+  else
+    echowarn "Таблица conntrack: системные счётчики недоступны"
+  fi
+
+  printf '\n'
+  cyan_bold "--- Отслеживаемые соединения conntrack ---"
+  if command -v conntrack >/dev/null 2>&1; then
+    conntrack_report="$(conntrack -L -o extended 2>/dev/null | awk '
+      { proto=$3; state=(proto=="tcp" ? $6 : "UDP"); mark="unmarked"
+        for(i=1;i<=NF;i++) {
+          if(proto=="udp" && $i=="[UNREPLIED]") state="UNREPLIED"
+          else if(proto=="udp" && $i=="[ASSURED]") state="ASSURED"
+          else if($i~/^mark=/) mark=substr($i,6) }
+        count[proto "|" state]++; marks[mark]++ }
+      END {
+        for(key in count) {
+          split(key,p,"|")
+          printf "C|%s|%s|%s\n",p[1],p[2],count[key] }
+        for(mark in marks) printf "M|%s|%s\n",mark,marks[mark] }
+      ')"
+    ct_summary="$(printf '%s\n' "$conntrack_report" |
+      awk -F'|' '$1=="C" { print $2 "|" $3 "|" $4 }' |
+      sort -t'|' -k1,1 -k2,2)"
+    mark_summary="$(printf '%s\n' "$conntrack_report" |
+      awk -F'|' '$1=="M" { print $2 "|" $3 }' |
+      sort -t'|' -k2,2nr)"
+
+    if [ -n "$ct_summary" ]; then
+      { printf '%s\n' "Протокол|Состояние|Значение|Количество"
+        printf '%s\n' "$ct_summary" | awk -F'|' '
+        { s=$2
+          if($1=="tcp") {
+            if(s=="ESTABLISHED") m="TCP-соединение установлено"
+            else if(s=="SYN_SENT") m="Ожидается ответ удалённой стороны"
+            else if(s=="SYN_RECV") m="Ожидается завершение TCP handshake"
+            else if(s=="FIN_WAIT") m="Соединение закрывается"
+            else if(s=="CLOSE_WAIT") m="Удалённая сторона закрыла соединение"
+            else if(s=="LAST_ACK") m="Ожидается подтверждение закрытия"
+            else if(s=="TIME_WAIT") m="Недавно закрыто; запись истечёт сама"
+            else if(s=="CLOSE") m="Закрыто или отслежено не полностью"
+            else m="Состояние TCP из conntrack"
+          } else if(s=="UNREPLIED") m="Ответ пока не замечен (это может быть нормально)"
+          else if(s=="ASSURED") m="Ответ получен; поток подтверждён"
+          else m="UDP-поток; у UDP нет состояний как у TCP"
+          printf "%s|%s|%s|%s\n",$1,s,m,$3 }
+        '
+      } | print_aligned_table
+    else
+      echowarn "conntrack не вернул данные (пусто или нет доступа)"
+    fi
+  else
+    echowarn "Утилита conntrack не установлена; сводка недоступна"
+  fi
+
+  printf '\n'
+  cyan_bold "--- Счётчики событий conntrack ---"
+  if command -v conntrack >/dev/null 2>&1; then
+    conntrack_stats="$(conntrack -S 2>/dev/null | awk '
+      { for(i=1;i<=NF;i++) {
+          split($i,p,"=")
+          if(p[2]~/^[0-9]+$/) total[p[1]]+=p[2]
+      } }
+      END { for(key in total) print key,total[key] }
+    ' | sort -k1,1)"
+    if [ -n "$conntrack_stats" ]; then
+      printf '%s\n' "$conntrack_stats" | awk '
+        BEGIN { print "Счётчик|Значение|Пояснение" }
+        $1=="insert_failed" {
+          m="Не удалось добавить запись; "
+          m=m "проверьте, растёт ли" }
+        $1=="early_drop" { m="Записи удалялись раньше срока; проверьте рост" }
+        $1=="drop" { m="Пакеты отброшены conntrack; проверьте рост" }
+        $1=="invalid" {
+          m="Пакеты не сопоставлены; "
+          m=m "часто это обычный сетевой шум" }
+        $1=="error" { m="Ошибки обработки; счётчик накопительный" }
+        $1=="ignore" {
+          m="Пакеты намеренно не отслеживались; "
+          m=m "часто это нормально" }
+        $1=="found" { m="Найдена существующая запись; информационный счётчик" }
+        $1=="insert" { m="Добавлены новые записи; информационный счётчик" }
+        $1=="search_restart" {
+          m="Перезапуск поиска; "
+          m=m "обычно информативно" }
+        m!="" { print $1 "|" $2 "|" m; m="" }
+      ' | print_aligned_table
+      message="Счётчики накопительные с момента загрузки."
+      message="$message Ненулевые значения не доказывают сбой."
+      echomsg "$message"
+      echomsg "При сбое сравните снимки; рост insert_failed, early_drop или drop требует проверки."
+      if printf '%s\n' "$conntrack_stats" | awk '
+        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") && $2>0 {
+          found=1 }
+        END { exit !found }
+      '; then
+        message="Зафиксированы возможные потери пакетов или записей."
+        message="$message По снимку неясно, продолжаются ли потери."
+        echowarn "$message"
+      else
+        echook "Счётчики insert_failed, early_drop и drop равны нулю."
+        echo "Признаков потерь по ним нет."
+      fi
+    else
+      echowarn "Данные счётчиков недоступны"
+    fi
+  else
+    echowarn "Счётчики недоступны без утилиты conntrack"
+  fi
+
+  printf '\n'
+  cyan_bold "--- Локальные TCP-сокеты (netstat) ---"
+  echo "netstat показывает сокеты роутера; conntrack учитывает трафик клиентов."
+  if ! command -v netstat >/dev/null 2>&1; then
+    echo "netstat не установлен"
+  else
+    tcp_summary="$(netstat -ntp 2>/dev/null | awk '
+      $1~/^tcp/ && $6!="" { count[$6]++ }
+      END { for(s in count) printf "%s|%s\n",s,count[s] }
+    ')"
+    if [ -z "$tcp_summary" ]; then
+      echo "Данные TCP-сокетов недоступны"
+    else
+      printf '%s\n' "$tcp_summary" | sort -t'|' -k1,1 | awk -F'|' '
+        BEGIN { print "Состояние TCP|Значение|Количество" }
+        { s=$1; m=s
+          if(s=="ESTABLISHED") m="Соединение активно"
+          else if(s=="SYN_SENT") m="Ожидается ответ удалённой стороны"
+          else if(s=="SYN_RECV") m="Ожидается завершение TCP handshake"
+          else if(s=="FIN_WAIT1" || s=="FIN_WAIT2") m="Соединение закрывается"
+          else if(s=="CLOSE_WAIT") { m="Удалённая сторона закрыла; "; m=m "приложение ещё не закрыло сокет" }
+          else if(s=="LAST_ACK") m="Ожидается подтверждение закрытия"
+          else if(s=="TIME_WAIT") m="Недавно закрыто; запись истечёт сама"
+          else if(s=="LISTEN") m="Ожидание входящих подключений"
+          printf "%s|%s|%s\n",s,m,$2 }' | print_aligned_table
+      echomsg "Итог: проверяйте долго открытые сокеты и рост их числа."
+    fi
+  fi
+
+  printf '\n'
+  cyan_bold "--- Метки соединений ---"
+  if [ -n "$mark_summary" ]; then
+    printf '%s\n' "$mark_summary" | awk -F'|' '
+      BEGIN { print "Метка (dec / hex)|Количество|Назначение" }
+      { mark=$1; value=mark; count=$2
+        if(mark=="unmarked") { value="нет"; d="conntrack не видит метку" }
+        else {
+          if(mark~/^[0-9]+$/) value=mark " / " sprintf("0x%x",mark+0)
+          if(mark=="0" || mark=="0x0") d="Метка не установлена"
+          else if(mark=="18" || mark=="0x12") d="SKeen: метка TProxy/policy routing (0x12)"
+          else d="Другая метка; источник неизвестен по значению" }
+        printf "%s|%s|%s\n",value,count,d }
+    ' | print_aligned_table
+  else
+    echo "Соединения с меткой не найдены"
+  fi
+}
+
 update_core() {
   check_free_space
   get_os_release
@@ -3557,6 +3780,7 @@ show_help() {
   version - Показать версию
   help    - Помощь по любой команде
   iface   - Показать таблицу сетевых интерфейсов
+  connstat- Диагностика соединений
   update  - Проверить и установить обновления
   test    - Тестировать правила фаервола
   deps    - Проверить зависимости
@@ -3596,6 +3820,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   status) status ;;
   version) version ;;
   iface) show_iface ;;
+  connstat) show_connstat ;;
   update) check_updates ;;
   test) test_firewall ;;
   deps)

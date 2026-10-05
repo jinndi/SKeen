@@ -194,6 +194,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 | `version` | Show version | ✓ |
 | `help` | Help about any command | - |
 | `iface` | Show network interface table | - |
+| `connstat` | Connection diagnostics | - |
 | `update` | Check and install updates | - |
 | `test` | Test firewall rules | ✓ |
 | `deps` | Check dependencies | ✓ |

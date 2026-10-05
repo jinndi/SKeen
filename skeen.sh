@@ -19,7 +19,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-readonly DEPENDENCIES="iptables ip-full ipset net-tools curl tar jsonfilter logger"
+readonly DEPENDENCIES="iptables ip-full ipset net-tools conntrack curl tar jsonfilter logger"
 
 readonly ENTWARE_DIR="/opt"
 readonly WORK_DIR="${ENTWARE_DIR}/etc/skeen"
@@ -126,6 +126,7 @@ is_tty() {
 }
 
 cyan() { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+cyan_bold() { is_tty && printf '\033[1;38;5;30m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 red() { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 yellow() { is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
@@ -2762,6 +2763,228 @@ status() {
   fi
 }
 
+print_aligned_table() {
+  LC_ALL=C awk -v max_width="${1:-28}" -F'|' '
+    function trim(s) { sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
+    function width(s) { gsub(/[\200-\277]/,"",s); return length(s) }
+    function repeat(c,n,o,i) { for(i=0;i<n;i++) o=o c; return o }
+    function border(i) { printf "+"; for(i=1;i<=columns;i++) printf "%s+",repeat("-",widths[i]+2); printf "\n" }
+    function wrap(r,c,s,w,n,i,x,l) {
+      n=split(s,w,/[ \t]+/); l=1
+      for(i=1;i<=n;i++) {
+        if(x=="") x=w[i]
+        else if(width(x " " w[i])<=widths[c]) x=x " " w[i]
+        else { wrapped[r,c,l++]=x; x=w[i] } }
+      wrapped[r,c,l]=x; if(l>row_lines[r]) row_lines[r]=l }
+    { rows=NR; if(NF>columns) columns=NF
+      for(i=1;i<=NF;i++) { cells[NR,i]=trim($i); w=width(cells[NR,i]); if(w>max_width) w=max_width; if(w>widths[i]) widths[i]=w } }
+    END {
+      if(!rows) exit
+      for(r=1;r<=rows;r++) for(c=1;c<=columns;c++) wrap(r,c,cells[r,c])
+      border()
+      for(r=1;r<=rows;r++) {
+        for(l=1;l<=row_lines[r];l++) {
+          printf "|"; for(c=1;c<=columns;c++) { v=wrapped[r,c,l]; printf " %s%s |",v,repeat(" ",widths[c]-width(v)) }
+          printf "\n" }
+        if(r==1) border() }
+      border() }
+  ' | while IFS= read -r line; do
+        case "$line" in +*) cyan "$line" ;; "| Protocol "* | "| State "* | "| Mark "* | "| Counter "* | "| TCP state "*) cyan "$line" ;; *) printf '%s\n' "$line" ;; esac
+      done
+}
+
+show_connstat() {
+  local ct_count ct_max percent conntrack_report ct_summary mark_summary message
+  local conntrack_stats tcp_summary
+
+  check_tty
+
+  cyan_bold "=== Connection diagnostics ==="
+  printf '\n'
+  if [ -r /proc/sys/net/netfilter/nf_conntrack_count ] && [ -r /proc/sys/net/netfilter/nf_conntrack_max ]; then
+    if command -v conntrack >/dev/null 2>&1; then ct_count="$(conntrack -C 2>/dev/null)"; fi
+    case "$ct_count" in
+      '' | *[!0-9]*) ct_count="$(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null)" ;;
+    esac
+    ct_max="$(cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null)"
+    case "$ct_count:$ct_max" in
+      *[!0-9:]* | :* | *: | *:0) echowarn "Conntrack table: unable to read count/max" ;;
+      *)
+        if [ "$ct_count" -gt "$ct_max" ]; then
+          message="Conntrack table counters inconsistent:"
+          message="$message count=$ct_count, max=$ct_max;"
+          echowarn "$message utilization cannot be assessed"
+        else
+          percent=$((ct_count * 1000 / ct_max))
+          printf 'Conntrack table: %s / %s entries (%s.%s%% full)\n' \
+            "$ct_count" "$ct_max" "$((percent / 10))" "$((percent % 10))"
+          if [ "$percent" -ge 950 ]; then
+            red "Assessment: CRITICAL — conntrack table is almost full"
+          elif [ "$percent" -ge 800 ]; then
+            yellow "Assessment: WARNING — conntrack table is filling up"
+          else
+            green "Assessment: normal — current table size is not a concern"
+          fi
+        fi
+        ;;
+    esac
+  else
+    echowarn "Conntrack table: kernel count/max counters are unavailable"
+  fi
+
+  printf '\n'
+  cyan_bold "--- Tracked conntrack connections ---"
+  if command -v conntrack >/dev/null 2>&1; then
+    conntrack_report="$(conntrack -L -o extended 2>/dev/null | awk '
+      { proto=$3; state=(proto=="tcp" ? $6 : "UDP"); mark="unmarked"
+        for(i=1;i<=NF;i++) {
+          if(proto=="udp" && $i=="[UNREPLIED]") state="UNREPLIED"
+          else if(proto=="udp" && $i=="[ASSURED]") state="ASSURED"
+          else if($i~/^mark=/) mark=substr($i,6) }
+        count[proto "|" state]++; marks[mark]++ }
+      END {
+        for(key in count) {
+          split(key,p,"|")
+          printf "C|%s|%s|%s\n",p[1],p[2],count[key] }
+        for(mark in marks) printf "M|%s|%s\n",mark,marks[mark] }
+      ')"
+    ct_summary="$(printf '%s\n' "$conntrack_report" |
+      awk -F'|' '$1=="C" { print $2 "|" $3 "|" $4 }' |
+      sort -t'|' -k1,1 -k2,2)"
+    mark_summary="$(printf '%s\n' "$conntrack_report" |
+      awk -F'|' '$1=="M" { print $2 "|" $3 }' |
+      sort -t'|' -k2,2nr)"
+
+    if [ -n "$ct_summary" ]; then
+      { printf '%s\n' "Protocol|State|Meaning|Count"
+        printf '%s\n' "$ct_summary" | awk -F'|' '
+        { s=$2
+          if($1=="tcp") {
+            if(s=="ESTABLISHED") m="TCP connection established"
+            else if(s=="SYN_SENT") m="Waiting for peer response"
+            else if(s=="SYN_RECV") m="Waiting for final handshake"
+            else if(s=="FIN_WAIT") m="Connection is closing"
+            else if(s=="CLOSE_WAIT") m="Peer closed; local side not closed"
+            else if(s=="LAST_ACK") m="Waiting for final close acknowledgement"
+            else if(s=="TIME_WAIT") m="Recently closed; expires automatically"
+            else if(s=="CLOSE") m="Closed or not fully tracked"
+            else m="TCP state reported by conntrack"
+          } else if(s=="UNREPLIED") m="No reply observed yet (may be normal)"
+          else if(s=="ASSURED") m="Reply observed; flow is confirmed"
+          else m="UDP flow; UDP has no TCP-like states"
+          printf "%s|%s|%s|%s\n",$1,s,m,$3 }
+        '
+      } | print_aligned_table
+    else
+      echowarn "conntrack returned no data (empty table or access unavailable)"
+    fi
+  else
+    echowarn "'conntrack' utility missing; detailed summary unavailable"
+  fi
+
+  printf '\n'
+  cyan_bold "--- Conntrack event counters ---"
+  if command -v conntrack >/dev/null 2>&1; then
+    conntrack_stats="$(conntrack -S 2>/dev/null | awk '
+      { for(i=1;i<=NF;i++) {
+          split($i,p,"=")
+          if(p[2]~/^[0-9]+$/) total[p[1]]+=p[2]
+      } }
+      END { for(key in total) print key,total[key] }
+    ' | sort -k1,1)"
+    if [ -n "$conntrack_stats" ]; then
+      printf '%s\n' "$conntrack_stats" | awk '
+        BEGIN { print "Counter|Value|Meaning" }
+        $1=="insert_failed" {
+          m="New entries could not be added; "
+          m=m "check if increasing" }
+        $1=="early_drop" { m="Entries evicted early; check if increasing" }
+        $1=="drop" { m="Packets dropped by conntrack; check if increasing" }
+        $1=="invalid" {
+          m="Packets did not match conntrack; "
+          m=m "often unrelated noise" }
+        $1=="error" { m="Processing errors; cumulative, compare over time" }
+        $1=="ignore" { m="Packets intentionally not tracked; often normal" }
+        $1=="found" { m="Existing entry found; informational" }
+        $1=="insert" { m="New entries inserted; informational" }
+        $1=="search_restart" {
+          m="Hash search restarted; usually "
+          m=m "informational" }
+        m!="" { print $1 "|" $2 "|" m; m="" }
+      ' | print_aligned_table
+      message="Summary: counters are cumulative since boot."
+      message="$message Nonzero values alone do not prove a current fault."
+      echomsg "$message"
+      message="Compare counter snapshots during a fault."
+      message="$message Rising insert_failed, early_drop, or drop"
+      message="$message needs investigation."
+      echomsg "$message"
+      if printf '%s\n' "$conntrack_stats" | awk '
+        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") && $2>0 {
+          found=1 }
+        END { exit !found }
+      '; then
+        message="Assessment: possible packet/entry drops were recorded."
+        message="$message One snapshot cannot show if they continue."
+        echowarn "$message"
+      else
+        echook "Assessment: insert_failed, early_drop, and drop are zero."
+        echo "These counters show no loss signal."
+      fi
+    else
+      echowarn "Counter data is unavailable"
+    fi
+  else
+    echowarn "Counters unavailable without the 'conntrack' utility"
+  fi
+
+  printf '\n'
+  cyan_bold "--- Local TCP sockets (netstat) ---"
+  echo "netstat shows router sockets; conntrack also tracks client traffic."
+  if ! command -v netstat >/dev/null 2>&1; then
+    echowarn "netstat is not installed"
+  else
+    tcp_summary="$(netstat -ntp 2>/dev/null | awk '
+      $1~/^tcp/ && $6!="" { count[$6]++ }
+      END { for(s in count) printf "%s|%s\n",s,count[s] }
+    ')"
+    if [ -z "$tcp_summary" ]; then
+      echowarn "No TCP socket data available"
+    else
+      printf '%s\n' "$tcp_summary" | sort -t'|' -k1,1 | awk -F'|' '
+        BEGIN { print "TCP state|Meaning|Count" }
+        { s=$1; m=s
+          if(s=="ESTABLISHED") m="Active connection"; else if(s=="SYN_SENT") m="Waiting for peer response"
+          else if(s=="SYN_RECV") m="Waiting for final handshake"
+          else if(s=="FIN_WAIT1" || s=="FIN_WAIT2") m="Connection is closing"
+          else if(s=="CLOSE_WAIT") { m="Peer closed; local process may not "; m=m "have closed" }
+          else if(s=="LAST_ACK") m="Waiting for final close acknowledgement"
+          else if(s=="TIME_WAIT") m="Recently closed; expires automatically"
+          else if(s=="LISTEN") m="Waiting for incoming connections"
+          printf "%s|%s|%s\n",s,m,$2 }' | print_aligned_table
+      echomsg "Summary: investigate sockets that persist or keep increasing."
+    fi
+  fi
+
+  printf '\n'
+  cyan_bold "--- Connection marks ---"
+  if [ -n "$mark_summary" ]; then
+    printf '%s\n' "$mark_summary" | awk -F'|' '
+      BEGIN { print "Mark (dec / hex)|Count|Purpose" }
+      { mark=$1; value=mark; count=$2
+        if(mark=="unmarked") { value="none"; d="No conntrack mark" }
+        else {
+          if(mark~/^[0-9]+$/) value=mark " / " sprintf("0x%x",mark+0)
+          if(mark=="0" || mark=="0x0") d="Mark is not set"
+          else if(mark=="18" || mark=="0x12") d="SKeen: TProxy/policy-routing mark (0x12)"
+          else d="Other mark; source unknown from value" }
+        printf "%s|%s|%s\n",value,count,d }
+    ' | print_aligned_table
+  else
+    echo "No marked connections available"
+  fi
+}
+
 update_core() {
   check_free_space
   get_os_release
@@ -3557,6 +3780,7 @@ Available Commands:
   version - Show version
   help    - Help about any command
   iface   - Show network interface table
+  connstat- Connection diagnostics
   update  - Check and install updates
   test    - Test firewall rules
   deps    - Check dependencies
@@ -3596,6 +3820,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   status) status ;;
   version) version ;;
   iface) show_iface ;;
+  connstat) show_connstat ;;
   update) check_updates ;;
   test) test_firewall ;;
   deps)
