@@ -28,6 +28,16 @@
 return $server['skip-cert-verify'] !== true && $server.network !== 'grpc'
 ```
 
+2. Задать VLESS-REALITY узлам отпечаток `randomized` а прочим VLESS узлам `firefox`, например чтобы иметь возможность подключаться к серверу с Xray 26.9.8+ версии (подробнее https://github.com/jinndi/sing-box)
+
+```javascript
+if  ( $server.type === 'vless' && $server['reality-opts'] ) {
+  $server['client-fingerprint'] = 'randomized'
+} else if ( $server.type === 'vless' ) {
+  $server['client-fingerprint'] = 'firefox'
+}
+```
+
 ### Модификация узлов (Скрипт-модификатор JS)
 
 В Sub-Store уже из коробки доступны простые и очевидные действия модификаций такие как:
