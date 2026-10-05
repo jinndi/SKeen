@@ -39,7 +39,7 @@ readonly SKEEN_API_URL="https://github.com/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 readonly SKEEN_RUN_CONFIG="/tmp/${SKEEN_PROC}.json"
 readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
-readonly SKEEN_SCRIPT_URL="${SKEEN_API_URL}/download/skeen_ru $CURL_RESOLVE_FIX"
+readonly SKEEN_SCRIPT_URL="${SKEEN_API_URL}/download/skeen_ru"
 
 readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
@@ -910,7 +910,7 @@ create_skeen_group() {
 download_skeen_script() {
   local action="${1:-}"
   local backup_script="${SKEEN_SCRIPT}.bak"
-  local script_url="$SKEEN_SCRIPT_URL"
+  local script_url="$SKEEN_SCRIPT_URL $CURL_RESOLVE_FIX"
 
   echomsg "Загрузка скрипта $SKEEN_NAME..."
 
