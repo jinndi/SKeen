@@ -237,5 +237,5 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 
 **Прочее**
 - [core-tutorial.argsment.com](https://core-tutorial.argsment.com/singbox) — справочник по sing-box.
-- [jinndi/sing-box](https://github.com/jinndi/sing-box) — sing-box билды с gRPC и UPX сжатием.
+- [jinndi/sing-box](https://github.com/jinndi/sing-box) — sing-box билды с gRPC, патчем REALITY и UPX сжатием.
 - [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — альтернативное ядро c XHTTP.
