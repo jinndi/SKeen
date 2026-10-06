@@ -28,16 +28,6 @@
 return $server['skip-cert-verify'] !== true && $server.network !== 'grpc'
 ```
 
-2. Задать VLESS-REALITY узлам отпечаток `randomized` а прочим VLESS узлам `firefox`, например чтобы иметь возможность подключаться к серверу с Xray 26.9.8+ версии (подробнее https://github.com/jinndi/sing-box)
-
-```javascript
-if  ( $server.type === 'vless' && $server['reality-opts'] ) {
-  $server['client-fingerprint'] = 'randomized'
-} else if ( $server.type === 'vless' ) {
-  $server['client-fingerprint'] = 'firefox'
-}
-```
-
 ### Модификация узлов (Скрипт-модификатор JS)
 
 В Sub-Store уже из коробки доступны простые и очевидные действия модификаций такие как:
@@ -56,7 +46,11 @@ if  ( $server.type === 'vless' && $server['reality-opts'] ) {
 
 В [настройке сервера](./Server-sing-box.md) уже описано что и для чего это нужно, но мы не будем делать это вручную, а предоставим работу скрипту.
 
-**Обратите внимание:** в этом нет необходимости, если ваша подписка полностью состоит из прокси узлов с транспортом `REALITY`
+**Обратите внимание:** в этом нет необходимости, если ваша подписка полностью состоит из прокси узлов с транспортом `REALITY` или протоколов `naive`.
+
+> **NOTICE:** Для наилучшей совместимости и эффективности рекомендуется использовать это с бэкендом **Sub-Store версии 2.42.3 или выше**. В этой версии добавлена автоматическая конвертация в опцию `certificate_sha256`, поддерживаемую `sing-box` начиная с версии **1.15.0-alpha.7**.
+>
+> Это позволяет избежать проблем совместимости, например: *«Почему на телефоне в приложении серверы работают, а на роутере - нет?»*
 
 ```javascript
 const tls = require("tls")
@@ -164,6 +158,7 @@ async function operator(proxies, targetPlatform, context) {
     const hasCert = proxy.certificate || proxy._certificate
     const hasCertPath = proxy._certificate_path
     const hasPubKey = proxy._certificate_public_key_sha256
+    const hasCertSha256 = proxy['tls-fingerprint'] || proxy._certificate_sha256
 
     // ПРОПУСКАЕМ узел, если:
     if (
@@ -173,7 +168,8 @@ async function operator(proxies, targetPlatform, context) {
       isRealityNaive ||          // REALITY / Naive
       hasCert ||                 // Уже прописан сертификат
       hasCertPath ||             // Уже прописан путь к сертификату
-      hasPubKey                  // Ключ уже прописан
+      hasPubKey ||               // Ключ уже прописан
+      hasCertSha256              // Уже прописан certificate_sha256
     ) {
       skipCount++
       return proxy
@@ -189,7 +185,7 @@ async function operator(proxies, targetPlatform, context) {
       certCache[cacheKey] = getCertificateInfo(server, port, sni, 2000)
     }
 
-    // Дожидаемся результата из кэша (если запрос уже был, берется готовый ответ)
+    // Дожидаемся результата из кэша
     const cert = await certCache[cacheKey]
 
     if (cert.publicKeySha256) {
@@ -208,9 +204,25 @@ async function operator(proxies, targetPlatform, context) {
   const processedCount = successCount + failCount
 
   // Выводим итоговую статистику
-  console.log(`[Сертификаты] INFO: Обработка завершена. Успешно: ${successCount} из ${processedCount} (пропущено: ${skipCount}).`)
+  console.log(
+    `[Сертификаты] INFO: Обработка завершена. ` +
+    `Успешно: ${successCount}, ` +
+    `Ошибки: ${failCount}, ` +
+    `Пропущено: ${skipCount}. ` +
+    `Обработано: ${processedCount}.`
+  )
 
   return proxies
+}
+```
+
+2. Задать VLESS-REALITY узлам отпечаток `randomized` а прочим VLESS узлам `firefox`, например чтобы иметь возможность подключаться к серверу с Xray 26.9.8+ версии (подробнее https://github.com/jinndi/sing-box)
+
+```javascript
+if  ( $server.type === 'vless' && $server['reality-opts'] ) {
+  $server['client-fingerprint'] = 'randomized'
+} else if ( $server.type === 'vless' ) {
+  $server['client-fingerprint'] = 'firefox'
 }
 ```
 
