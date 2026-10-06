@@ -3117,11 +3117,10 @@ check_updates() {
       update_skeen "https://github.com/jinndi/SKeen/releases"
   fi
 
-  [ "$CALLER" != "menu" ] && exit 0
-
   if [ "$is_update_skeen" -eq 1 ]; then
     exec sh "$SKEEN_SCRIPT" deps menu
   else
+    [ "$CALLER" != "menu" ] && exit 0
     press_any_key_to_menu reload
   fi
 }
