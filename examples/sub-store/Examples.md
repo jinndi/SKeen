@@ -62,7 +62,7 @@ if  ( $server.type === 'vless' && $server['reality-opts'] ) {
 const tls = require("tls")
 const crypto = require("crypto")
 
-function getCertificateInfo(host, port = 443, timeoutMs = 1000) {
+function getCertificateInfo(server, port = 443, sni = server, timeoutMs = 1000) {
   return new Promise((resolve) => {
     let isResolved = false
 
@@ -74,7 +74,12 @@ function getCertificateInfo(host, port = 443, timeoutMs = 1000) {
     }
 
     const socket = tls.connect(
-      { host, port, servername: host, rejectUnauthorized: false },
+      {
+        host: server,              // Реальный адрес TCP-сервера
+        port,                      // Реальный TCP-порт
+        servername: sni,           // SNI, передаваемый TLS-серверу
+        rejectUnauthorized: false,
+      },
       () => {
         try {
           const cert = socket.getPeerCertificate(true)
@@ -110,9 +115,10 @@ function getCertificateInfo(host, port = 443, timeoutMs = 1000) {
     socket.on("timeout", () => {
       socket.destroy()
       finish({ publicKeySha256: "" })
-    });
+    })
+
     socket.on("error", () => {
-      socket.destroy();
+      socket.destroy()
       finish({ publicKeySha256: "" })
     })
   })
@@ -133,13 +139,21 @@ async function operator(proxies, targetPlatform, context) {
   const certCache = {}
 
   const promises = proxies.map(async (proxy) => {
-    const host = proxy.sni || proxy.server
+    // Адрес, к которому устанавливаем TCP-соединение
+    const server = proxy.server
+
+    // TCP-порт
     const port = proxy.port || 443
+
+    // SNI: если явно указан — используем его,
+    // иначе используем server
+    const sni = proxy.sni || server
 
     // 1. Выключен ли TLS вообще
     const tlsDisabled = proxy.tls === false
     // 2. Является ли узел REALITY?
-    const isRealityNaive = proxy['reality-opts'] || proxy.type === 'naive'
+    const isRealityNaive = proxy["reality-opts"] || proxy.type === "naive"
+
     // 3. Есть ли уже какие-то другие настройки сертификатов?
     const hasCert = proxy.certificate || proxy._certificate
     const hasCertPath = proxy._certificate_path
@@ -147,24 +161,26 @@ async function operator(proxies, targetPlatform, context) {
 
     // ПРОПУСКАЕМ узел, если:
     if (
-      !host ||                  // Нет хоста
-      ProxyUtils.isIP(host) ||  // Хоcт является IP адресом
-      tlsDisabled ||            // TLS выключен
-      isRealityNaive ||         // Это REALITY или Naive (отпечаток не нужен)
-      hasCert ||                // Уже прописан сам сертификат
-      hasCertPath ||            // Уже прописан путь к файлу сертификата
-      hasPubKey                 // Ключ уже прописан ранее
+      !server ||                 // Нет адреса сервера
+      ProxyUtils.isIP(sni) ||    // SNI является IP
+      tlsDisabled ||             // TLS выключен
+      isRealityNaive ||          // REALITY / Naive
+      hasCert ||                 // Уже прописан сертификат
+      hasCertPath ||             // Уже прописан путь к сертификату
+      hasPubKey                  // Ключ уже прописан
     ) {
       skipCount++
       return proxy
     }
 
-    // Уникальный ключ кэша: домен + порт
-    const cacheKey = `${host}:${port}`
+    // Учитываем server, port и SNI:
+    // один сервер может обслуживать несколько сертификатов
+    // в зависимости от SNI.
+    const cacheKey = `${server}:${port}:${sni}`
 
     // Если запрос для этого хоста еще не делался, запускаем и сохраняем Promise
     if (!certCache[cacheKey]) {
-      certCache[cacheKey] = getCertificateInfo(host, port)
+      certCache[cacheKey] = getCertificateInfo(server, port, sni)
     }
 
     // Дожидаемся результата из кэша (если запрос уже был, берется готовый ответ)
