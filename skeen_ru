@@ -14,7 +14,7 @@ readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.7.0"
+readonly SKEEN_VERSION="5.7.1"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="/tmp/$SKEEN_PROC.sh"
@@ -438,19 +438,31 @@ case "$proc" in
 "sing")if
 [ -f "$SINGBOX_BIN" ]
 then
-local cached_path cached_ver
+local cached_path="" cached_size="" cached_mtime="" cached_inode="" cached_hash="" cached_ver=""
+local file_metadata hash_output binary_hash ver raw_output
 if [ -f "$SINGBOX_RUN_VERSION" ];then
-IFS='|' read -r cached_path cached_ver <"$SINGBOX_RUN_VERSION" 2>/dev/null
+IFS='|' read -r cached_path cached_size cached_mtime cached_inode cached_hash cached_ver <"$SINGBOX_RUN_VERSION" 2>/dev/null
 fi
-if [ "$cached_path" = "$SINGBOX_BIN" ]&&[ "$SINGBOX_BIN" -ot "$SINGBOX_RUN_VERSION" ];then
+file_metadata="$(stat -L -t "$SINGBOX_BIN" 2>/dev/null|awk 'NF >= 15 { print $(NF - 13) "|" $(NF - 2) "|" $(NF - 7) }')"
+if [ -n "$file_metadata" ]&&[ "$cached_path" = "$SINGBOX_BIN" ]&&[ "$cached_size|$cached_mtime|$cached_inode" = "$file_metadata" ];then
 echo "$cached_ver"
 return 0
 fi
-local ver raw_output
+hash_output="$(sha256sum "$SINGBOX_BIN" 2>/dev/null)"
+binary_hash="${hash_output%% *}"
+if [ -n "$binary_hash" ]&&[ "$cached_hash" = "$binary_hash" ];then
+if [ -n "$file_metadata" ];then
+echo "$SINGBOX_BIN|$file_metadata|$binary_hash|$cached_ver" >"$SINGBOX_RUN_VERSION"
+fi
+echo "$cached_ver"
+return 0
+fi
 raw_output="$("$SINGBOX_BIN" version 2>/dev/null)"
 set -- $raw_output
 ver="${3:-unknown}"
-echo "$SINGBOX_BIN|$ver" >"$SINGBOX_RUN_VERSION"
+if [ -n "$file_metadata" ]&&[ -n "$binary_hash" ];then
+echo "$SINGBOX_BIN|$file_metadata|$binary_hash|$ver" >"$SINGBOX_RUN_VERSION"
+fi
 echo "$ver"
 fi
 ;;
@@ -2240,7 +2252,7 @@ case "$line" in +*)cyan "$line";;"| Протокол "*|"| Метка "*|"| Сч
 done
 }
 show_connstat(){
-local ct_count ct_max percent conntrack_report ct_summary mark_summary message
+local ct_count ct_max percent conntrack_report ct_summary mark_summary message loss_counter_status
 local conntrack_stats tcp_summary
 check_tty
 cyan_bold "=== Диагностика соединений ==="
@@ -2253,24 +2265,19 @@ esac
 ct_max="$(cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null)"
 case "$ct_count:$ct_max" in
 *[!0-9:]*|:*|*:|*:0)echowarn "Таблица conntrack: не удалось прочитать число записей/лимит";;
-*)if
-[ "$ct_count" -gt "$ct_max" ]
-then
-message="Счётчики conntrack противоречат друг другу:"
-message="$message count=$ct_count, max=$ct_max;"
-echowarn "$message оценить заполнение нельзя"
-else
-percent=$((ct_count*1000/ct_max))
+*)percent="$(awk -v count="$ct_count" -v max="$ct_max" 'BEGIN { printf "%d", count * 1000 / max }')"
 printf 'Таблица conntrack: %s / %s записей (заполнена на %s.%s%%)\n' \
 "$ct_count" "$ct_max" "$((percent/10))" "$((percent%10))"
-if [ "$percent" -ge 950 ];then
+if [ "$percent" -ge 1000 ];then
+red "Оценка: КРИТИЧНО — достигнут или превышен лимит таблицы conntrack"
+elif [ "$percent" -ge 950 ];then
 red "Оценка: КРИТИЧНО — таблица conntrack почти заполнена"
 elif [ "$percent" -ge 800 ];then
-yellow "Оценка: ВНИМАНИЕ — таблица conntrack заполняется"
+yellow "Оценка: ВНИМАНИЕ — таблица заполнена более чем на 80%"
 else
-green "Оценка: нормально — заполнение не опасно"
+green "Оценка: ниже порога предупреждения"
 fi
-fi
+echomsg "Пороги 80% и 95% ориентировочные; скорость роста не измеряется."
 esac
 else
 echowarn "Таблица conntrack: системные счётчики недоступны"
@@ -2279,10 +2286,11 @@ printf '\n'
 cyan_bold "--- Отслеживаемые соединения conntrack ---"
 if command -v conntrack >/dev/null 2>&1;then
 conntrack_report="$(conntrack -L -o extended 2>/dev/null|awk '
-      { proto=$3; state=(proto=="tcp" ? $6 : "UDP"); mark="unmarked"
+      { proto=$3; state=(proto=="tcp" ? $6 : "—")
+        mark="unmarked"
         for(i=1;i<=NF;i++) {
-          if(proto=="udp" && $i=="[UNREPLIED]") state="UNREPLIED"
-          else if(proto=="udp" && $i=="[ASSURED]") state="ASSURED"
+          if(proto!="tcp" && $i=="[UNREPLIED]") state="UNREPLIED"
+          else if(proto!="tcp" && $i=="[ASSURED]") state="ASSURED"
           else if($i~/^mark=/) mark=substr($i,6) }
         count[proto "|" state]++; marks[mark]++ }
       END {
@@ -2308,9 +2316,11 @@ printf '%s\n' "$ct_summary"|awk -F'|' '
             else if(s=="TIME_WAIT") m="Недавно закрыто; запись истечёт сама"
             else if(s=="CLOSE") m="Закрыто или отслежено не полностью"
             else m="Состояние TCP из conntrack"
-          } else if(s=="UNREPLIED") m="Ответ пока не замечен (это может быть нормально)"
-          else if(s=="ASSURED") m="Ответ получен; поток подтверждён"
-          else m="UDP-поток; у UDP нет состояний как у TCP"
+          } else if(s=="UNREPLIED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-обмен ещё не замечен" : "Ответ пока не замечен (это может быть нормально)")
+          else if(s=="ASSURED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-обмен получен; запись подтверждена" : "Ответ получен; поток подтверждён")
+          else if($1=="udp") m="UDP-поток; состояния TCP неприменимы"
+          else if($1=="icmp" || $1=="icmpv6") m="ICMP-пакет отслеживается conntrack; состояния TCP неприменимы"
+          else m="Поток протокола; состояния TCP неприменимы"
           printf "%s|%s|%s|%s\n",$1,s,m,$3 }
         '
 }|print_aligned_table
@@ -2324,10 +2334,7 @@ printf '\n'
 cyan_bold "--- Счётчики событий conntrack ---"
 if command -v conntrack >/dev/null 2>&1;then
 conntrack_stats="$(conntrack -S 2>/dev/null|awk '
-      { for(i=1;i<=NF;i++) {
-          split($i,p,"=")
-          if(p[2]~/^[0-9]+$/) total[p[1]]+=p[2]
-      } }
+      { for(i=1;i<=NF;i++) { split($i,p,"="); if(p[1]!="cpu" && p[2]~/^[0-9]+$/) total[p[1]]+=p[2] } }
       END { for(key in total) print key,total[key] }
     '|sort -k1,1)"
 if [ -n "$conntrack_stats" ];then
@@ -2339,7 +2346,7 @@ printf '%s\n' "$conntrack_stats"|awk '
         $1=="early_drop" { m="Записи удалялись раньше срока; проверьте рост" }
         $1=="drop" { m="Пакеты отброшены conntrack; проверьте рост" }
         $1=="invalid" {
-          m="Пакеты не сопоставлены; "
+          m="Пакеты помечены INVALID; "
           m=m "часто это обычный сетевой шум" }
         $1=="error" { m="Ошибки обработки; счётчик накопительный" }
         $1=="ignore" {
@@ -2352,21 +2359,24 @@ printf '%s\n' "$conntrack_stats"|awk '
           m=m "обычно информативно" }
         m!="" { print $1 "|" $2 "|" m; m="" }
       '|print_aligned_table
-message="Счётчики накопительные с момента загрузки."
+message="Счётчики накопительные; после перезагрузки системы они сбрасываются."
 message="$message Ненулевые значения не доказывают сбой."
 echomsg "$message"
 echomsg "При сбое сравните снимки; рост insert_failed, early_drop или drop требует проверки."
-if printf '%s\n' "$conntrack_stats"|awk '
-        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") && $2>0 {
-          found=1 }
-        END { exit !found }
-      ';then
+loss_counter_status="$(printf '%s\n' "$conntrack_stats"|awk '
+        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") { seen[$1]=1; if($2>0) nonzero=1 }
+        END { if(nonzero) print "nonzero"
+          else if(seen["insert_failed"] && seen["early_drop"] && seen["drop"]) print "zero"
+          else print "missing" } ')"
+if [ "$loss_counter_status" = "nonzero" ];then
 message="Зафиксированы возможные потери пакетов или записей."
 message="$message По снимку неясно, продолжаются ли потери."
 echowarn "$message"
-else
+elif [ "$loss_counter_status" = "zero" ];then
 echook "Счётчики insert_failed, early_drop и drop равны нулю."
 echo "Признаков потерь по ним нет."
+else
+echowarn "Некоторые счётчики потерь недоступны; по этому снимку нельзя подтвердить их отсутствие."
 fi
 else
 echowarn "Данные счётчиков недоступны"
@@ -2380,7 +2390,7 @@ echo "netstat показывает сокеты роутера; conntrack учи
 if ! command -v netstat >/dev/null 2>&1;then
 echo "netstat не установлен"
 else
-tcp_summary="$(netstat -ntp 2>/dev/null|awk '
+tcp_summary="$(netstat -antp 2>/dev/null|awk '
       $1~/^tcp/ && $6!="" { count[$6]++ }
       END { for(s in count) printf "%s|%s\n",s,count[s] }
     ')"
@@ -2509,10 +2519,10 @@ if [ "$UPDATE_SKEEN_ENABLED" = "1" ];then
 ask_and_update "$SKEEN_NAME" "skeen" "$SKEEN_API_URL" \
 update_skeen "https://github.com/jinndi/SKeen/releases"
 fi
-[ "$CALLER" != "menu" ]&&exit 0
 if [ "$is_update_skeen" -eq 1 ];then
 exec sh "$SKEEN_SCRIPT" deps menu
 else
+[ "$CALLER" != "menu" ]&&exit 0
 press_any_key_to_menu reload
 fi
 }
