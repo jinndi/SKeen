@@ -85,6 +85,7 @@ function getCertificateInfo(server, port = 443, sni = server, timeoutMs = 1000) 
           const cert = socket.getPeerCertificate(true)
 
           if (!cert || !cert.raw) {
+            console.warn(`[Сертификаты] ERROR: ${server}:${port} SNI=${sni} — сертификат не получен`)
             socket.destroy()
             return finish({ publicKeySha256: "" })
           }
@@ -101,9 +102,12 @@ function getCertificateInfo(server, port = 443, sni = server, timeoutMs = 1000) 
             .update(publicKeyDer)
             .digest("base64")
 
+          console.log(`[Сертификаты] OK: ${server}:${port} SNI=${sni} -> ${publicKeySha256}`)
+
           socket.destroy()
           finish({ publicKeySha256 })
-        } catch {
+        } catch(err) {
+          console.warn(`[Сертификаты] ERROR: ${server}:${port} SNI=${sni} — ${err.message}`)
           socket.destroy()
           finish({ publicKeySha256: "" })
         }
@@ -113,11 +117,13 @@ function getCertificateInfo(server, port = 443, sni = server, timeoutMs = 1000) 
     socket.setTimeout(timeoutMs)
 
     socket.on("timeout", () => {
+      console.warn(`[Сертификаты] TIMEOUT: ${server}:${port} SNI=${sni}`)
       socket.destroy()
       finish({ publicKeySha256: "" })
     })
 
-    socket.on("error", () => {
+    socket.on("error", (err) => {
+      console.warn(`[Сертификаты] ERROR: ${server}:${port} SNI=${sni} — ${err.code || ""} ${err.message}`)
       socket.destroy()
       finish({ publicKeySha256: "" })
     })
@@ -126,7 +132,7 @@ function getCertificateInfo(server, port = 443, sni = server, timeoutMs = 1000) 
 
 async function operator(proxies, targetPlatform, context) {
   if (targetPlatform !== 'sing-box'){
-    console.log(`[Сертификаты] WARN: Обработка доступна только для платформы sing-box и в разделе "Подписки"...`)
+    console.warn(`[Сертификаты] WARN: Обработка доступна только для платформы sing-box и в разделе "Подписки"...`)
     return proxies
   }
 
@@ -180,7 +186,7 @@ async function operator(proxies, targetPlatform, context) {
 
     // Если запрос для этого хоста еще не делался, запускаем и сохраняем Promise
     if (!certCache[cacheKey]) {
-      certCache[cacheKey] = getCertificateInfo(server, port, sni)
+      certCache[cacheKey] = getCertificateInfo(server, port, sni, 2000)
     }
 
     // Дожидаемся результата из кэша (если запрос уже был, берется готовый ответ)
