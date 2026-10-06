@@ -2810,7 +2810,7 @@ print_aligned_table() {
 }
 
 show_connstat() {
-  local ct_count ct_max percent conntrack_report ct_summary mark_summary message
+  local ct_count ct_max percent conntrack_report ct_summary mark_summary message loss_counter_status
   local conntrack_stats tcp_summary
 
   check_tty
@@ -2826,22 +2826,19 @@ show_connstat() {
     case "$ct_count:$ct_max" in
       *[!0-9:]* | :* | *: | *:0) echowarn "Conntrack table: unable to read count/max" ;;
       *)
-        if [ "$ct_count" -gt "$ct_max" ]; then
-          message="Conntrack table counters inconsistent:"
-          message="$message count=$ct_count, max=$ct_max;"
-          echowarn "$message utilization cannot be assessed"
+        percent="$(awk -v count="$ct_count" -v max="$ct_max" 'BEGIN { printf "%d", count * 1000 / max }')"
+        printf 'Conntrack table: %s / %s entries (%s.%s%% full)\n' \
+          "$ct_count" "$ct_max" "$((percent / 10))" "$((percent % 10))"
+        if [ "$percent" -ge 1000 ]; then
+          red "Assessment: CRITICAL — conntrack table limit reached or exceeded"
+        elif [ "$percent" -ge 950 ]; then
+          red "Assessment: CRITICAL — conntrack table is almost full"
+        elif [ "$percent" -ge 800 ]; then
+          yellow "Assessment: WARNING — conntrack table is over 80% full"
         else
-          percent=$((ct_count * 1000 / ct_max))
-          printf 'Conntrack table: %s / %s entries (%s.%s%% full)\n' \
-            "$ct_count" "$ct_max" "$((percent / 10))" "$((percent % 10))"
-          if [ "$percent" -ge 950 ]; then
-            red "Assessment: CRITICAL — conntrack table is almost full"
-          elif [ "$percent" -ge 800 ]; then
-            yellow "Assessment: WARNING — conntrack table is filling up"
-          else
-            green "Assessment: normal — current table size is not a concern"
-          fi
+          green "Assessment: below the warning threshold"
         fi
+        echomsg "80% and 95% thresholds are heuristics; growth rate is not measured."
         ;;
     esac
   else
@@ -2852,7 +2849,7 @@ show_connstat() {
   cyan_bold "--- Tracked conntrack connections ---"
   if command -v conntrack >/dev/null 2>&1; then
     conntrack_report="$(conntrack -L -o extended 2>/dev/null | awk '
-      { proto=$3; state=(proto=="tcp" ? $6 : proto=="udp" ? "UDP" : proto=="icmp" || proto=="icmpv6" ? "ICMP" : "—")
+      { proto=$3; state=(proto=="tcp" ? $6 : "—")
         mark="unmarked"
         for(i=1;i<=NF;i++) {
           if(proto!="tcp" && $i=="[UNREPLIED]") state="UNREPLIED"
@@ -2886,10 +2883,10 @@ show_connstat() {
             else if(s=="TIME_WAIT") m="Recently closed; expires automatically"
             else if(s=="CLOSE") m="Closed or not fully tracked"
             else m="TCP state reported by conntrack"
-          } else if(s=="UNREPLIED") m=($1=="icmp" || $1=="icmpv6" ? "No reply to ICMP request observed yet" : "No reply observed yet (may be normal)")
-          else if(s=="ASSURED") m=($1=="icmp" || $1=="icmpv6" ? "Reply to ICMP request observed; entry is confirmed" : "Reply observed; flow is confirmed")
-          else if($1=="udp") m="UDP flow; UDP has no TCP-like states"
-          else if($1=="icmp" || $1=="icmpv6") m="ICMP packet is tracked by conntrack"
+          } else if(s=="UNREPLIED") m=($1=="icmp" || $1=="icmpv6" ? "No reply to ICMP exchange observed yet" : "No reply observed yet (may be normal)")
+          else if(s=="ASSURED") m=($1=="icmp" || $1=="icmpv6" ? "Reply to ICMP exchange observed; entry is confirmed" : "Reply observed; flow is confirmed")
+          else if($1=="udp") m="UDP flow; TCP states do not apply"
+          else if($1=="icmp" || $1=="icmpv6") m="ICMP packet is tracked by conntrack; TCP states do not apply"
           else m="Protocol flow; TCP states do not apply"
           printf "%s|%s|%s|%s\n",$1,s,m,$3 }
         '
@@ -2905,10 +2902,7 @@ show_connstat() {
   cyan_bold "--- Conntrack event counters ---"
   if command -v conntrack >/dev/null 2>&1; then
     conntrack_stats="$(conntrack -S 2>/dev/null | awk '
-      { for(i=1;i<=NF;i++) {
-          split($i,p,"=")
-          if(p[2]~/^[0-9]+$/) total[p[1]]+=p[2]
-      } }
+      { for(i=1;i<=NF;i++) { split($i,p,"="); if(p[1]!="cpu" && p[2]~/^[0-9]+$/) total[p[1]]+=p[2] } }
       END { for(key in total) print key,total[key] }
     ' | sort -k1,1)"
     if [ -n "$conntrack_stats" ]; then
@@ -2920,7 +2914,7 @@ show_connstat() {
         $1=="early_drop" { m="Entries evicted early; check if increasing" }
         $1=="drop" { m="Packets dropped by conntrack; check if increasing" }
         $1=="invalid" {
-          m="Packets did not match conntrack; "
+          m="Packets classified INVALID; "
           m=m "often unrelated noise" }
         $1=="error" { m="Processing errors; cumulative, compare over time" }
         $1=="ignore" { m="Packets intentionally not tracked; often normal" }
@@ -2931,24 +2925,27 @@ show_connstat() {
           m=m "informational" }
         m!="" { print $1 "|" $2 "|" m; m="" }
       ' | print_aligned_table
-      message="Summary: counters are cumulative since boot."
+      message="Summary: counters accumulate and reset when the system reboots."
       message="$message Nonzero values alone do not prove a current fault."
       echomsg "$message"
       message="Compare counter snapshots during a fault."
       message="$message Rising insert_failed, early_drop, or drop"
       message="$message needs investigation."
       echomsg "$message"
-      if printf '%s\n' "$conntrack_stats" | awk '
-        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") && $2>0 {
-          found=1 }
-        END { exit !found }
-      '; then
+      loss_counter_status="$(printf '%s\n' "$conntrack_stats" | awk '
+        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") { seen[$1]=1; if($2>0) nonzero=1 }
+        END { if(nonzero) print "nonzero"
+          else if(seen["insert_failed"] && seen["early_drop"] && seen["drop"]) print "zero"
+          else print "missing" } ')"
+      if [ "$loss_counter_status" = "nonzero" ]; then
         message="Assessment: possible packet/entry drops were recorded."
         message="$message One snapshot cannot show if they continue."
         echowarn "$message"
-      else
+      elif [ "$loss_counter_status" = "zero" ]; then
         echook "Assessment: insert_failed, early_drop, and drop are zero."
         echo "These counters show no loss signal."
+      else
+        echowarn "Some loss counters are unavailable; this snapshot cannot confirm their absence."
       fi
     else
       echowarn "Counter data is unavailable"
@@ -2963,7 +2960,7 @@ show_connstat() {
   if ! command -v netstat >/dev/null 2>&1; then
     echowarn "netstat is not installed"
   else
-    tcp_summary="$(netstat -ntp 2>/dev/null | awk '
+    tcp_summary="$(netstat -antp 2>/dev/null | awk '
       $1~/^tcp/ && $6!="" { count[$6]++ }
       END { for(s in count) printf "%s|%s\n",s,count[s] }
     ')"

@@ -2810,7 +2810,7 @@ print_aligned_table() {
 }
 
 show_connstat() {
-  local ct_count ct_max percent conntrack_report ct_summary mark_summary message
+  local ct_count ct_max percent conntrack_report ct_summary mark_summary message loss_counter_status
   local conntrack_stats tcp_summary
 
   check_tty
@@ -2826,22 +2826,19 @@ show_connstat() {
     case "$ct_count:$ct_max" in
       *[!0-9:]* | :* | *: | *:0) echowarn "Таблица conntrack: не удалось прочитать число записей/лимит" ;;
       *)
-        if [ "$ct_count" -gt "$ct_max" ]; then
-          message="Счётчики conntrack противоречат друг другу:"
-          message="$message count=$ct_count, max=$ct_max;"
-          echowarn "$message оценить заполнение нельзя"
+        percent="$(awk -v count="$ct_count" -v max="$ct_max" 'BEGIN { printf "%d", count * 1000 / max }')"
+        printf 'Таблица conntrack: %s / %s записей (заполнена на %s.%s%%)\n' \
+          "$ct_count" "$ct_max" "$((percent / 10))" "$((percent % 10))"
+        if [ "$percent" -ge 1000 ]; then
+          red "Оценка: КРИТИЧНО — достигнут или превышен лимит таблицы conntrack"
+        elif [ "$percent" -ge 950 ]; then
+          red "Оценка: КРИТИЧНО — таблица conntrack почти заполнена"
+        elif [ "$percent" -ge 800 ]; then
+          yellow "Оценка: ВНИМАНИЕ — таблица заполнена более чем на 80%"
         else
-          percent=$((ct_count * 1000 / ct_max))
-          printf 'Таблица conntrack: %s / %s записей (заполнена на %s.%s%%)\n' \
-            "$ct_count" "$ct_max" "$((percent / 10))" "$((percent % 10))"
-          if [ "$percent" -ge 950 ]; then
-            red "Оценка: КРИТИЧНО — таблица conntrack почти заполнена"
-          elif [ "$percent" -ge 800 ]; then
-            yellow "Оценка: ВНИМАНИЕ — таблица conntrack заполняется"
-          else
-            green "Оценка: нормально — заполнение не опасно"
-          fi
+          green "Оценка: ниже порога предупреждения"
         fi
+        echomsg "Пороги 80% и 95% ориентировочные; скорость роста не измеряется."
         ;;
     esac
   else
@@ -2852,7 +2849,7 @@ show_connstat() {
   cyan_bold "--- Отслеживаемые соединения conntrack ---"
   if command -v conntrack >/dev/null 2>&1; then
     conntrack_report="$(conntrack -L -o extended 2>/dev/null | awk '
-      { proto=$3; state=(proto=="tcp" ? $6 : proto=="udp" ? "UDP" : proto=="icmp" || proto=="icmpv6" ? "ICMP" : "—")
+      { proto=$3; state=(proto=="tcp" ? $6 : "—")
         mark="unmarked"
         for(i=1;i<=NF;i++) {
           if(proto!="tcp" && $i=="[UNREPLIED]") state="UNREPLIED"
@@ -2886,10 +2883,10 @@ show_connstat() {
             else if(s=="TIME_WAIT") m="Недавно закрыто; запись истечёт сама"
             else if(s=="CLOSE") m="Закрыто или отслежено не полностью"
             else m="Состояние TCP из conntrack"
-          } else if(s=="UNREPLIED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-запрос ещё не замечен" : "Ответ пока не замечен (это может быть нормально)")
-          else if(s=="ASSURED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-запрос получен; запись подтверждена" : "Ответ получен; поток подтверждён")
-          else if($1=="udp") m="UDP-поток; у UDP нет состояний как у TCP"
-          else if($1=="icmp" || $1=="icmpv6") m="ICMP-пакет отслеживается conntrack"
+          } else if(s=="UNREPLIED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-обмен ещё не замечен" : "Ответ пока не замечен (это может быть нормально)")
+          else if(s=="ASSURED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-обмен получен; запись подтверждена" : "Ответ получен; поток подтверждён")
+          else if($1=="udp") m="UDP-поток; состояния TCP неприменимы"
+          else if($1=="icmp" || $1=="icmpv6") m="ICMP-пакет отслеживается conntrack; состояния TCP неприменимы"
           else m="Поток протокола; состояния TCP неприменимы"
           printf "%s|%s|%s|%s\n",$1,s,m,$3 }
         '
@@ -2905,10 +2902,7 @@ show_connstat() {
   cyan_bold "--- Счётчики событий conntrack ---"
   if command -v conntrack >/dev/null 2>&1; then
     conntrack_stats="$(conntrack -S 2>/dev/null | awk '
-      { for(i=1;i<=NF;i++) {
-          split($i,p,"=")
-          if(p[2]~/^[0-9]+$/) total[p[1]]+=p[2]
-      } }
+      { for(i=1;i<=NF;i++) { split($i,p,"="); if(p[1]!="cpu" && p[2]~/^[0-9]+$/) total[p[1]]+=p[2] } }
       END { for(key in total) print key,total[key] }
     ' | sort -k1,1)"
     if [ -n "$conntrack_stats" ]; then
@@ -2920,7 +2914,7 @@ show_connstat() {
         $1=="early_drop" { m="Записи удалялись раньше срока; проверьте рост" }
         $1=="drop" { m="Пакеты отброшены conntrack; проверьте рост" }
         $1=="invalid" {
-          m="Пакеты не сопоставлены; "
+          m="Пакеты помечены INVALID; "
           m=m "часто это обычный сетевой шум" }
         $1=="error" { m="Ошибки обработки; счётчик накопительный" }
         $1=="ignore" {
@@ -2933,21 +2927,24 @@ show_connstat() {
           m=m "обычно информативно" }
         m!="" { print $1 "|" $2 "|" m; m="" }
       ' | print_aligned_table
-      message="Счётчики накопительные с момента загрузки."
+      message="Счётчики накопительные; после перезагрузки системы они сбрасываются."
       message="$message Ненулевые значения не доказывают сбой."
       echomsg "$message"
       echomsg "При сбое сравните снимки; рост insert_failed, early_drop или drop требует проверки."
-      if printf '%s\n' "$conntrack_stats" | awk '
-        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") && $2>0 {
-          found=1 }
-        END { exit !found }
-      '; then
+      loss_counter_status="$(printf '%s\n' "$conntrack_stats" | awk '
+        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") { seen[$1]=1; if($2>0) nonzero=1 }
+        END { if(nonzero) print "nonzero"
+          else if(seen["insert_failed"] && seen["early_drop"] && seen["drop"]) print "zero"
+          else print "missing" } ')"
+      if [ "$loss_counter_status" = "nonzero" ]; then
         message="Зафиксированы возможные потери пакетов или записей."
         message="$message По снимку неясно, продолжаются ли потери."
         echowarn "$message"
-      else
+      elif [ "$loss_counter_status" = "zero" ]; then
         echook "Счётчики insert_failed, early_drop и drop равны нулю."
         echo "Признаков потерь по ним нет."
+      else
+        echowarn "Некоторые счётчики потерь недоступны; по этому снимку нельзя подтвердить их отсутствие."
       fi
     else
       echowarn "Данные счётчиков недоступны"
@@ -2962,7 +2959,7 @@ show_connstat() {
   if ! command -v netstat >/dev/null 2>&1; then
     echo "netstat не установлен"
   else
-    tcp_summary="$(netstat -ntp 2>/dev/null | awk '
+    tcp_summary="$(netstat -antp 2>/dev/null | awk '
       $1~/^tcp/ && $6!="" { count[$6]++ }
       END { for(s in count) printf "%s|%s\n",s,count[s] }
     ')"
