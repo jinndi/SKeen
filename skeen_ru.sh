@@ -2852,10 +2852,11 @@ show_connstat() {
   cyan_bold "--- Отслеживаемые соединения conntrack ---"
   if command -v conntrack >/dev/null 2>&1; then
     conntrack_report="$(conntrack -L -o extended 2>/dev/null | awk '
-      { proto=$3; state=(proto=="tcp" ? $6 : "UDP"); mark="unmarked"
+      { proto=$3; state=(proto=="tcp" ? $6 : proto=="udp" ? "UDP" : proto=="icmp" || proto=="icmpv6" ? "ICMP" : "—")
+        mark="unmarked"
         for(i=1;i<=NF;i++) {
-          if(proto=="udp" && $i=="[UNREPLIED]") state="UNREPLIED"
-          else if(proto=="udp" && $i=="[ASSURED]") state="ASSURED"
+          if(proto!="tcp" && $i=="[UNREPLIED]") state="UNREPLIED"
+          else if(proto!="tcp" && $i=="[ASSURED]") state="ASSURED"
           else if($i~/^mark=/) mark=substr($i,6) }
         count[proto "|" state]++; marks[mark]++ }
       END {
@@ -2885,9 +2886,11 @@ show_connstat() {
             else if(s=="TIME_WAIT") m="Недавно закрыто; запись истечёт сама"
             else if(s=="CLOSE") m="Закрыто или отслежено не полностью"
             else m="Состояние TCP из conntrack"
-          } else if(s=="UNREPLIED") m="Ответ пока не замечен (это может быть нормально)"
-          else if(s=="ASSURED") m="Ответ получен; поток подтверждён"
-          else m="UDP-поток; у UDP нет состояний как у TCP"
+          } else if(s=="UNREPLIED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-запрос ещё не замечен" : "Ответ пока не замечен (это может быть нормально)")
+          else if(s=="ASSURED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-запрос получен; запись подтверждена" : "Ответ получен; поток подтверждён")
+          else if($1=="udp") m="UDP-поток; у UDP нет состояний как у TCP"
+          else if($1=="icmp" || $1=="icmpv6") m="ICMP-пакет отслеживается conntrack"
+          else m="Поток протокола; состояния TCP неприменимы"
           printf "%s|%s|%s|%s\n",$1,s,m,$3 }
         '
       } | print_aligned_table
