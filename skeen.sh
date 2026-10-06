@@ -523,24 +523,40 @@ get_current_version() {
   case "$proc" in
   "sing")
     if [ -f "$SINGBOX_BIN" ]; then
-      local cached_path cached_ver
+      local cached_path="" cached_size="" cached_mtime="" cached_inode="" cached_hash="" cached_ver=""
+      local file_metadata hash_output binary_hash ver raw_output
 
       if [ -f "$SINGBOX_RUN_VERSION" ]; then
-        IFS='|' read -r cached_path cached_ver < "$SINGBOX_RUN_VERSION" 2>/dev/null
+        IFS='|' read -r cached_path cached_size cached_mtime cached_inode cached_hash cached_ver < "$SINGBOX_RUN_VERSION" 2>/dev/null
       fi
 
-      if [ "$cached_path" = "$SINGBOX_BIN" ] && [ "$SINGBOX_BIN" -ot "$SINGBOX_RUN_VERSION" ]; then
+      file_metadata="$(stat -L -t "$SINGBOX_BIN" 2>/dev/null | awk 'NF >= 15 { print $(NF - 13) "|" $(NF - 2) "|" $(NF - 7) }')"
+
+      if [ -n "$file_metadata" ] && [ "$cached_path" = "$SINGBOX_BIN" ] &&
+        [ "$cached_size|$cached_mtime|$cached_inode" = "$file_metadata" ]; then
         echo "$cached_ver"
         return 0
       fi
 
-      local ver raw_output
+      hash_output="$(sha256sum "$SINGBOX_BIN" 2>/dev/null)"
+      binary_hash="${hash_output%% *}"
+
+      if [ -n "$binary_hash" ] && [ "$cached_hash" = "$binary_hash" ]; then
+        if [ -n "$file_metadata" ]; then
+          echo "${SINGBOX_BIN}|${file_metadata}|${binary_hash}|${cached_ver}" > "$SINGBOX_RUN_VERSION"
+        fi
+        echo "$cached_ver"
+        return 0
+      fi
+
       raw_output="$("$SINGBOX_BIN" version 2>/dev/null)"
       # shellcheck disable=SC2086
       set -- $raw_output
       ver="${3:-unknown}"
 
-      echo "${SINGBOX_BIN}|${ver}" > "$SINGBOX_RUN_VERSION"
+      if [ -n "$file_metadata" ] && [ -n "$binary_hash" ]; then
+        echo "${SINGBOX_BIN}|${file_metadata}|${binary_hash}|${ver}" > "$SINGBOX_RUN_VERSION"
+      fi
       echo "$ver"
     fi
     ;;
