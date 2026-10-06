@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.7.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.7.0...SKeen-v5.7.1) (2026-10-06)
+
+
+### 🐛 Fix
+
+* enhance conntrack statistics reporting and threshold alerts ([f65dfb2](https://github.com/jinndi/SKeen/commit/f65dfb2b3ff156822e54c7e549c608be191bf464))
+* improve conntrack connection statistics reporting ([e887ccf](https://github.com/jinndi/SKeen/commit/e887ccf4555606b80ceb0568234587f1b598844a))
+
+
+### 🛠 Refactor
+
+* adjust update check exit logic ([2494c1f](https://github.com/jinndi/SKeen/commit/2494c1fb739d6eaf1b6070f3ff8d1f85222cdaf5))
+* improve sing-box version caching mechanism ([cb1904e](https://github.com/jinndi/SKeen/commit/cb1904e9726dce670b4b49c453a7fd80c0b19999))
+
 ## [5.7.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.6.0...SKeen-v5.7.0) (2026-10-05)
 
 
