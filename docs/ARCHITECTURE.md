@@ -42,12 +42,12 @@ The **skeen** `goto` chain is used in `PREROUTING` of the `mangle` table. If the
 
 Workflow Algorithm:
 
+**Directional Filtering (REPLY optimization)**
+  * `ctdir REPLY ACCEPT` - Instantly bypasses all incoming response traffic. This ensures maximum download speeds and minimal latency by focusing only on outgoing requests.
+
 **Socket Fast Path (TCP)**
   * `match socket --transparent` -> `MARK set 0x12 + ACCEPT`
   * **Essence:** Speed-up magic. If the system already has an open transparent socket for the packet, we simply apply a mark and pass it directly to the socket, bypassing heavy checks.
-
-**Directional Filtering (REPLY optimization)**
-  * `ctdir REPLY ACCEPT` - Instantly bypasses all incoming response traffic. This ensures maximum download speeds and minimal latency by focusing only on outgoing requests.
 
 **DNS TProxy**
   * `tcp/udp dpt:53 TPROXY`
@@ -78,8 +78,8 @@ Workflow Algorithm:
 
 The order of rules in the `skeen` chain is designed to reduce the number of expensive checks:
 
-1. `socket --transparent` handles TCP packets quickly when a transparent socket has already been found.
-2. `ctdir REPLY ACCEPT` immediately bypasses response traffic.
+1. `ctdir REPLY ACCEPT` immediately bypasses response traffic.
+2. `socket --transparent` handles TCP packets quickly when a transparent socket has already been found.
 3. DNS is intercepted separately when DNS TProxy is enabled.
 4. Port and network exclusions are checked through `ipset`.
 5. FakeIP exclusions are processed before the general interception rule.

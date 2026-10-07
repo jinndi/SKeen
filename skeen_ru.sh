@@ -1699,8 +1699,8 @@ set_chain_rules() {
   case "$chain" in
   "$CHAIN_PREROUTING")
     if [ "$table" = "mangle" ]; then
-      add_skeen_rules "$iptables" "$table" "$chain" "socket" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
+      add_skeen_rules "$iptables" "$table" "$chain" "socket" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "intercept_dns" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
       add_skeen_rules "$iptables" "$table" "$chain" "intercept_fakeip" "$protocols"
