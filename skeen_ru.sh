@@ -1562,12 +1562,10 @@ add_skeen_rules() {
   add_conntrack_mark() {
     local chain="${1:-}"
 
-    if echo "$protocols" | grep -q "tcp"; then
-      connmark_match_opt="-m connmark --mark $TABLE_MARK"
+    connmark_match_opt="-m connmark --mark $TABLE_MARK"
 
-      add_rule "$iptables" "$table" "$chain" \
-          -p tcp -m conntrack --ctstate NEW -j CONNMARK --set-mark "$TABLE_MARK"
-    fi
+    add_rule "$iptables" "$table" "$chain" \
+      -p tcp -m conntrack --ctstate NEW -j CONNMARK --set-mark "$TABLE_MARK"
   }
 
   get_connmark_match_opt() {
@@ -1583,7 +1581,7 @@ add_skeen_rules() {
     ;;
 
   "socket")
-    if echo "$protocols" | grep -q "tcp"; then
+    if printf '%s\n' "$protocols" | grep -q "tcp"; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_DIVERT" || return 0
       add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j MARK --set-mark "$TABLE_MARK"
       add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j ACCEPT
@@ -1628,9 +1626,7 @@ add_skeen_rules() {
     ;;
 
   "tproxy")
-    if echo "$protocols" | grep -q "tcp"; then
-      add_conntrack_mark "$chain"
-    fi
+    printf '%s\n' "$protocols" | grep -q "tcp" && add_conntrack_mark "$chain"
 
     for proto in $protocols; do
       # shellcheck disable=SC2046
@@ -1996,8 +1992,8 @@ prepare_firewall() {
         SKEEN_IPTABLES_LIST="iptables"
       fi
 
-      echo "[ \"$SKEEN_IPTABLES_LIST\" = \"\$type\" ] || exit 0"
-      echo "echo \"$tables\" | grep -q \"\$table\" || exit 0"
+      printf '%s\n' "printf '%s\n' \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
+      printf '%s\n' "printf '%s\n' \"$tables\" | grep -q \"\$table\" || exit 0"
 
       echo "logger -p notice -t \"$SKEEN_NAME\" \"Обновление \$type правил \$table таблицы\""
 
@@ -2103,11 +2099,11 @@ prepare_firewall() {
     } | ipset restore
   }
 
-  if echo "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
+  if printf '%s\n' "$SKEEN_IPTABLES_LIST" | grep -q "iptables"; then
     setup_net_ipset 4 inet
   fi
 
-  if [ "$NETWORK_IPV6" = "1" ] && echo "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
+  if [ "$NETWORK_IPV6" = "1" ] && printf '%s\n' "$SKEEN_IPTABLES_LIST" | grep -q "ip6tables"; then
     setup_net_ipset 6 inet6
   fi
 
@@ -2192,7 +2188,7 @@ prepare_firewall() {
     echo "#!/bin/sh"
     echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
 
-    echo "echo \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
+    printf '%s\n' "printf '%s\n' \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
 
     local postfix_tables=""
     [ "$SKEEN_TUN_ENABLED" = "1" ] && postfix_tables="|filter"
@@ -2203,10 +2199,10 @@ prepare_firewall() {
     local tproxy="${TABLE_TPROXY}${postfix_tables}"
 
     case "$SKEEN_FIREWALL_MODE" in
-    hybrid) echo "echo \"$hybrid\" | grep -q \"\$table\" || exit 0" ;;
-    tproxy) echo "echo \"$tproxy\" | grep -q \"\$table\" || exit 0" ;;
-    redirect) echo "echo \"$redirect\" | grep -q \"\$table\" || exit 0" ;;
-    *) echo "exit 0" ;;
+      hybrid) printf '%s\n' "printf '%s\n' \"$hybrid\" | grep -q \"\$table\" || exit 0" ;;
+      tproxy) printf '%s\n' "printf '%s\n' \"$tproxy\" | grep -q \"\$table\" || exit 0" ;;
+      redirect) printf '%s\n' "printf '%s\n' \"$redirect\" | grep -q \"\$table\" || exit 0" ;;
+      *) printf '%s\n' "exit 0" ;;
     esac
 
     echo "logger -p notice -t \"$SKEEN_NAME\" \"Обновление \$type правил \$table таблицы\""
@@ -2242,7 +2238,7 @@ check_hook_table() {
   [ -z "$hook_table" ] && return 0
 
   if [ -n "$match" ]; then
-    echo "$match" | grep -q "$hook_table" || return 1
+    printf '%s\n' "$match" | grep -q "$hook_table" || return 1
   fi
 }
 
@@ -2286,7 +2282,7 @@ apply_firewall() {
   [ "$SKEEN_TUN_ENABLED" = "1" ] && check_hook_table "filter" "$hook_table" && set_tun_rules
 
   # Exclude modes && tables
-  echo "tun|dns|none" | grep -q "$SKEEN_FIREWALL_MODE" && return 0
+  case "$SKEEN_FIREWALL_MODE" in tun|dns|none) return 0 ;; esac
   check_hook_table "nat|mangle" "$hook_table" || return 0
 
   # Redirect, Tproxy and Hybrid modes
