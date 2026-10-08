@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.7.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.7.1...SKeen-v5.7.2) (2026-10-08)
+
+
+### 🛠 Refactor
+
+* modernize string output and logic flow ([49581ea](https://github.com/jinndi/SKeen/commit/49581ea1b15537255c74ed321a3f1fbf6092aa71))
+* reorder ctdir_reply case in add_skeen_rules ([10e9b5d](https://github.com/jinndi/SKeen/commit/10e9b5d048ae4bda8f2fefeb5fe1c63a83404d8e))
+* tproxy socket test into mangle case ([926c95e](https://github.com/jinndi/SKeen/commit/926c95e5c402aa6193e135048d7b38757d82ea9e))
+
+
+### ⚡ Perf
+
+* **iptables:** prioritize reply traffic bypass in skeen chain ([e1c89df](https://github.com/jinndi/SKeen/commit/e1c89df2c20c517f67fe74baf4f1352cc068d525))
+
 ## [5.7.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.7.0...SKeen-v5.7.1) (2026-10-06)
 
 
