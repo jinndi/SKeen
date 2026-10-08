@@ -3169,10 +3169,6 @@ fw_test_chain() {
     fw_test "$1" "$2" "$content" "connmark match" "Connmark match"
   fi
 
-  if [ "$2" = "$CHAIN_PREROUTING" ] && [ "$SKEEN_FIREWALL_MODE" = "tproxy" ]; then
-    fw_test "$1" "$2" "$content" "$CHAIN_DIVERT" "Socket accept"
-  fi
-
   if [ "$2" = "$CHAIN_OUTPUT" ]; then
     fw_test "$1" "$2" "$content" "owner" "Process owner"
   fi
@@ -3192,6 +3188,7 @@ fw_test_chain() {
   if [ "$1" = "mangle" ]; then
     case "$2" in
     "$CHAIN_PREROUTING")
+      [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && fw_test "$1" "$2" "$content" "$CHAIN_DIVERT" "Socket accept"
       [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] && comment="DNS intercept" || comment="DNS exclude"
       fw_test "$1" "$2" "$content" "dpt:${DNS_PORT}" "$comment"
       ;;
