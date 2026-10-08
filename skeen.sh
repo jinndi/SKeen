@@ -1578,6 +1578,10 @@ add_skeen_rules() {
   }
 
   case "$type" in
+  "ctdir_reply")
+    add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
+    ;;
+
   "socket")
     if echo "$protocols" | grep -q "tcp"; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_DIVERT" || return 0
@@ -1585,10 +1589,6 @@ add_skeen_rules() {
       add_rule "$iptables" "$table" "$CHAIN_DIVERT" -j ACCEPT
       add_rule "$iptables" "$table" "$chain" -p tcp -m socket --transparent -g "$CHAIN_DIVERT"
     fi
-    ;;
-
-  "ctdir_reply")
-    add_rule "$iptables" "$table" "$chain" -m conntrack --ctdir REPLY -j ACCEPT
     ;;
 
   "intercept_dns")
