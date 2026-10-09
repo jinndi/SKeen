@@ -86,27 +86,40 @@ function operator(proxies = [], targetPlatform, context) {
 
 16. Поддерживает `_certificate`, `_certificate_path`, `_certificate_public_key_sha256`, `_client_certificate`, `_client_certificate_path`, `_client_key`, `_client_key_path`. Устанавливает в `tls` соответсвенно: `certificate`, `certificate_path`, `certificate_public_key_sha256`, `client_certificate`, `client_certificate_path`, `client_key`, `client_key_path`
 
-17. Поддерживает установку `curve_preferences` для `tls` с использованием полной структуры `_curve_preferences`.
+17. Поддерживает параметры `_certificate`, `_certificate_path`, `_certificate_sha256`, `_certificate_public_key_sha256`, `_client_certificate`, `_client_certificate_path`, `_client_key`, `_client_key_path` для настройки соответствующих параметров TLS: `certificate`, `certificate_path`, `certificate_sha256`, `certificate_public_key_sha256`, `client_certificate`, `client_certificate_path`, `client_key`, `client_key_path`.
 
-18.  Snell протокол по умолчанию допускает версии 4/5/6, при этом версия 5 будет выводиться как версия 4 в соответствии с поведением Sing-box. Параметр `quic_proxy_mode` можно установить через поле `quic-proxy-mode` на узле, `_userkey` на узле будет выводиться как `userkey` Sing-box.
+>
+> Начиная с sing-box 1.15.0 поддерживается `certificate_sha256`: значение `tls-fingerprint` автоматически декодируется из hex в массив > > Base64. При ручной настройке `_certificate_sha256` указанное значение используется без изменений и имеет приоритет. Например:
+> $server._certificate_sha256 = ['47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=']
+>
+> Для обычного TLS и ShadowTLS используется одинаковая логика настройки сертификатов сервера. Если уже задан непустой `certificate`, `certificate_path` или `certificate_public_key_sha256`, автоматическое преобразование не выполняется. Пустые массивы `certificate` и `certificate_public_key_sha256` не препятствуют преобразованию. При этом вручную заданный `_certificate_sha256: []` по-прежнему имеет приоритет. Если при автоматическом преобразовании обнаруживается некорректное hex-значение SHA-256, возникает ошибка, и узел исключается из обработки.
+>
+> Reality не использует проверку сертификата или хеша открытого ключа, поэтому автоматическое преобразование не выполняется. Если вручную задать непустой `_certificate_sha256` или `_certificate_public_key_sha256`, этот параметр будет проигнорирован, а в журнал будет выведено предупреждение (`warn`).
+>
+> Непустые `certificate` или `certificate_path` нельзя одновременно использовать с непустыми `certificate_sha256` или `certificate_public_key_sha256`. При конфликте возникает ошибка, и узел исключается из обработки. Параметры `certificate_sha256` и `certificate_public_key_sha256` можно использовать одновременно: достаточно совпадения по любому из них.
+>
 
-19. AnyTLS поддерживает установку параметра `client_metadata` через строковое поле `client-metadata` в узле.
+18. Поддерживает установку `curve_preferences` для `tls` с использованием полной структуры `_curve_preferences`.
 
-20. Hysteria 2 поддерживает установку параметра `disable_chrome_parrot` через строковое поле `disable-chrome-parrot` в узлах.
+19.  Snell протокол по умолчанию допускает версии 4/5/6, при этом версия 5 будет выводиться как версия 4 в соответствии с поведением Sing-box. Параметр `quic_proxy_mode` можно установить через поле `quic-proxy-mode` на узле, `_userkey` на узле будет выводиться как `userkey` Sing-box.
 
-21. WireGuard/Tailscale поддерживает `_on_demand` для настройки `on_demand`. Принимает логическое значение `true`/`false`, позволяя endpoint отключаться по мере необходимости; поддерживается в sing-box начиная с версии 1.15.0. Пример: $server._on_demand = true
+20. AnyTLS поддерживает установку параметра `client_metadata` через строковое поле `client-metadata` в узле.
 
-22. WireGuard/Tailscale поддерживает `_listen_port` для настройки локального порта прослушивания UDP `listen_port`. Принимает целое число от 0 до 65535 или строку с числом, где `0` означает автоматический выбор; для Tailscale требуется sing-box 1.14.0+. Ненулевой `listen_port` для WireGuard нельзя использовать одновременно с `detour`/`dialer-proxy`. Пример: $server._listen_port = 51820
+21. Hysteria 2 поддерживает установку параметра `disable_chrome_parrot` через строковое поле `disable-chrome-parrot` в узлах.
 
-23. WireGuard поддерживает `_name` для настройки имени системного интерфейса `name`, используется совместно с `system: true`; значение `name` узла по-прежнему используется для вывода `tag`. Пример: $server._name = 'wg0'
+22. WireGuard/Tailscale поддерживает `_on_demand` для настройки `on_demand`. Принимает логическое значение `true`/`false`, позволяя endpoint отключаться по мере необходимости; поддерживается в sing-box начиная с версии 1.15.0. Пример: $server._on_demand = true
 
-24. WireGuard поддерживает `_udp_mapping` для настройки `udp_mapping`. Доступные варианты: `endpoint_independent` (по умолчанию), `address_dependent`, `address_and_port_dependent`; управляет повторным использованием сопоставления UDP NAT, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_mapping = 'endpoint_independent'
+23. WireGuard/Tailscale поддерживает `_listen_port` для настройки локального порта прослушивания UDP `listen_port`. Принимает целое число от 0 до 65535 или строку с числом, где `0` означает автоматический выбор; для Tailscale требуется sing-box 1.14.0+. Ненулевой `listen_port` для WireGuard нельзя использовать одновременно с `detour`/`dialer-proxy`. Пример: $server._listen_port = 51820
 
-25. WireGuard поддерживает `_udp_filtering` для настройки `udp_filtering`. Доступные варианты: `endpoint_independent` (по умолчанию), `address_dependent`, `address_and_port_dependent`; управляет тем, какие входящие пакеты от удаленного узла принимает UDP NAT, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_filtering = 'address_and_port_dependent'
+24. WireGuard поддерживает `_name` для настройки имени системного интерфейса `name`, используется совместно с `system: true`; значение `name` узла по-прежнему используется для вывода `tag`. Пример: $server._name = 'wg0'
 
-26. WireGuard поддерживает `_udp_nat_max` для настройки `udp_nat_max`. Принимает целое число от 0 до 4294967295 или строку с числом, ограничивая количество сессий UDP NAT; `0` использует значение по умолчанию для платформы sing-box, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_nat_max = 8192
+25. WireGuard поддерживает `_udp_mapping` для настройки `udp_mapping`. Доступные варианты: `endpoint_independent` (по умолчанию), `address_dependent`, `address_and_port_dependent`; управляет повторным использованием сопоставления UDP NAT, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_mapping = 'endpoint_independent'
 
-27. sing-box Tailscale поддерживает `_taildrop_directory` для настройки директории получения файлов Taildrop `taildrop_directory`, значение — строка; относительный путь отсчитывается от рабочей директории sing-box, по умолчанию `Taildrop`, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._taildrop_directory = './taildrop'
+26. WireGuard поддерживает `_udp_filtering` для настройки `udp_filtering`. Доступные варианты: `endpoint_independent` (по умолчанию), `address_dependent`, `address_and_port_dependent`; управляет тем, какие входящие пакеты от удаленного узла принимает UDP NAT, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_filtering = 'address_and_port_dependent'
+
+27. WireGuard поддерживает `_udp_nat_max` для настройки `udp_nat_max`. Принимает целое число от 0 до 4294967295 или строку с числом, ограничивая количество сессий UDP NAT; `0` использует значение по умолчанию для платформы sing-box, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._udp_nat_max = 8192
+
+28. sing-box Tailscale поддерживает `_taildrop_directory` для настройки директории получения файлов Taildrop `taildrop_directory`, значение — строка; относительный путь отсчитывается от рабочей директории sing-box, по умолчанию `Taildrop`, поддерживается в sing-box начиная с версии 1.14.0. Пример: $server._taildrop_directory = './taildrop'
 
 **Описание некоторых возможностей**
 
