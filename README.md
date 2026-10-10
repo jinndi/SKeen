@@ -46,7 +46,9 @@ Notes:
   <summary>Web UI?</summary>
 <br>
 
-💡 For easy setup, a [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) is available, allowing you to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox). For more flexible manual configuration, automation, and synchronization, use [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) on a VPS or [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on a PC.
+💡 For flexible manual configuration, automation, and synchronization, use [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) in a Docker container on a VPS or local host, or [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on your PC.
+
+A [synchronization plugin](https://github.com/jinndi/sync-profile-to-skeen) is also available, allowing you to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox), although **Sub-Store is the preferred option**.
 
 The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
 
@@ -54,6 +56,7 @@ The project intentionally does not include a dedicated management panel. This ap
 * **Integration**: Management and monitoring are available through the sing-box API and router tools, without duplicating their functions in a separate panel.
 * **Security and Stability**: Fewer continuously running services and components mean fewer potential points of failure and conflicts within the system.
 * **Full Control**: Directly editing the configuration provides access to sing-box features without the limitations of simplified graphical interfaces. Implementing all these features as buttons requires developers to continually update and promptly maintain the panel.
+- **Configuration Sync Priority**: Full sing-box configuration synchronization with support for advanced external tools such as Sub-Store.
 * **No Constant Need**: In general, a separate management panel is not required: a correctly configured setup is created for specific tasks and usually does not need regular changes.
 * **Focus on the Main Task**: SKeen is designed for transparent traffic forwarding and routing. For a network tool of this kind, a separate heavy management panel would generally be excessive.
 </details>
@@ -231,9 +234,9 @@ The full configuration reference is available in [docs/CONFIGURATION.md](docs/CO
 ## Useful links
 
 **Sync and GUI**
+- [Sub-Store Docker](https://github.com/jinndi/Sub-Store-Docker) — Docker build for VPS or local deployment.
 - [Sub-Store Desktop](https://github.com/jinndi/sub-store-gui) — desktop subscription manager.
 - [Sub-Store Android](https://github.com/sionnx/SubCase) — Android app for managing subscriptions.
-- [Sub-Store Docker](https://github.com/jinndi/Sub-Store-Docker) — Docker deployment for VPS and servers.
 - [GUI.for.SingBox sync plugin](https://github.com/jinndi/sync-profile-to-skeen) — plugin for importing profiles into SKeen.
 
 **Rulesets**
