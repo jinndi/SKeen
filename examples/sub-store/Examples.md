@@ -44,11 +44,163 @@ return $server['skip-cert-verify'] !== true
 
 **Наболее полезные примеры использования Скрипт-модификатор JS:**
 
-1. Автоматически сделать привязку открытого ключа `certificate_public_key_sha256` из раздела "Подписки"
+1. Проверка доступности узлов по TCP и ICMP. Узлы помечаются как недоступные, только если обе проверки не проходят. UDP-протоколы исключены из проверки. По оценке, в 90% случаев позволяет выявить узлы, которые не будут работать или будут работать нестабильно.
+
+> Чтобы вместо исключения недоступных узлов из результата помечать их, раскомментируйте строку маркировки и закомментируйте строку исключения.
+
+**Важно**: запускайте скрипт только в Sub-Store, установленном на VPS.
+
+```javascript
+const net = require("net")
+const dns = require("dns").promises
+const { execFile } = require("child_process")
+const { promisify } = require("util")
+
+const execFileAsync = promisify(execFile)
+
+const TCP_TIMEOUT = 800
+const PING_TIMEOUT = 100
+const MAX_CONCURRENT = 50
+
+function checkTcp(server, port, timeout = TCP_TIMEOUT) {
+  return new Promise((resolve) => {
+    const socket = net.createConnection({
+      host: server,
+      port: Number(port),
+    })
+
+    let finished = false
+
+    const done = (available) => {
+      if (finished) return
+      finished = true
+      socket.destroy()
+      resolve(available)
+    }
+
+    socket.setTimeout(timeout)
+    socket.once("connect", () => done(true))
+    socket.once("timeout", () => done(false))
+    socket.once("error", () => done(false))
+  })
+}
+
+async function checkPing(server, timeoutMs = PING_TIMEOUT) {
+  try {
+    const { address, family } = await dns.lookup(server)
+
+    const args = family === 6
+      ? ["-6", "-c", "1", "-W", "2", address]
+      : ["-4", "-c", "1", "-W", "2", address]
+
+    await execFileAsync("ping", args, {
+      timeout: timeoutMs,
+      windowsHide: true,
+    })
+
+    return true
+  } catch (err) {
+    return false
+  }
+}
+
+async function operator(proxies, targetPlatform, context) {
+  if (targetPlatform !== "sing-box") {
+    console.warn("[TCP+Ping] Проверка доступна только для sing-box.")
+    return proxies
+  }
+
+  console.log(`[TCP+Ping] Проверка ${proxies.length} узлов...`)
+
+  const output = new Array(proxies.length)
+  let nextIndex = 0
+  let available = 0
+  let unavailable = 0
+  let skipped = 0
+
+  async function worker() {
+    while (true) {
+      const index = nextIndex++
+
+      if (index >= proxies.length) return
+
+      const proxy = proxies[index]
+      const server = proxy.server
+      const port = Number(proxy.port)
+      const type = String(proxy.type || "").toLowerCase()
+
+      // QUIC/UDP-протоколы пропускаем.
+      if (["hysteria2", "tuic", "hysteria"].includes(type)) {
+        output[index] = proxy
+        skipped++
+        continue
+      }
+
+      if (
+        !server ||
+        !Number.isInteger(port) ||
+        port < 1 ||
+        port > 65535
+      ) {
+        output[index] = proxy
+        skipped++
+        continue
+      }
+
+      const [tcpAvailable, pingAvailable] = await Promise.all([
+        checkTcp(server, port),
+        checkPing(server),
+      ])
+
+      if (tcpAvailable || pingAvailable) {
+        // Хотя бы одна проверка прошла — тег не меняем.
+        output[index] = proxy
+        available++
+      } else {
+        // Обе проверки не прошли:
+
+        // 1-й вариант — исключаем узел из результата:
+        output[index] = null
+
+        // 2-й вариант — добавляем пометку 🚫 без дублирования:
+        // proxy.name = `🚫 ${String(proxy.name).replace(/^🚫\s*/, "")}`
+        // output[index] = proxy
+
+        unavailable++
+
+        console.warn(
+          `[TCP+Ping] Обе проверки не пройдены: ` +
+          `${proxy.name} (${server}:${port})`
+        )
+      }
+    }
+  }
+
+  const workerCount = Math.min(MAX_CONCURRENT, proxies.length)
+
+  await Promise.all(
+    Array.from({ length: workerCount }, () => worker())
+  )
+
+  const result = output.filter(Boolean)
+
+  console.log(
+    `[TCP+Ping] Готово. ` +
+    `Хотя бы одна проверка пройдена: ${available}, ` +
+    `обе не пройдены: ${unavailable}, ` +
+    `пропущено: ${skipped}. ` +
+    `Осталось: ${result.length}/${proxies.length}.`
+  )
+
+  return result
+}
+```
+
+2. Автоматически сделать привязку открытого ключа `certificate_public_key_sha256` из раздела "Подписки" для TCP протоколов.
 
 В [настройке сервера](./Server-sing-box.md) уже описано что и для чего это нужно, но мы не будем делать это вручную, а предоставим работу скрипту.
 
-**Обратите внимание:** в этом нет необходимости, если ваша подписка полностью состоит из прокси узлов с транспортом `REALITY` или протоколов `naive`.
+**Обратите внимание:** скрипт не требуется, если ваша подписка полностью состоит из прокси-узлов с транспортом `REALITY` или протоколом `naive`. QUIC-протоколы (`Hysteria2`, `TUIC`, `Hysteria`) также пропускаются при обработке.
 
 > **NOTICE:** Для наилучшей совместимости и эффективности рекомендуется использовать это с бэкендом **Sub-Store версии 2.42.3 или выше**. В этой версии добавлена автоматическая конвертация в опцию `certificate_sha256`, поддерживаемую `sing-box` начиная с версии **1.15.0-alpha.7**.
 >
@@ -155,8 +307,10 @@ async function operator(proxies, targetPlatform, context) {
     const tlsDisabled = proxy.tls === false
     // 2. Является ли узел REALITY?
     const isRealityNaive = proxy["reality-opts"] || proxy.type === "naive"
+    // 3. Если протокол на QUIC
+    const isQuic = ["hysteria2", "tuic", "hysteria"].includes(proxy.type)
 
-    // 3. Есть ли уже какие-то другие настройки сертификатов?
+    // 4. Есть ли уже какие-то другие настройки сертификатов?
     const hasCert = proxy.certificate || proxy._certificate
     const hasCertPath = proxy._certificate_path
     const hasPubKey = proxy._certificate_public_key_sha256
@@ -168,6 +322,7 @@ async function operator(proxies, targetPlatform, context) {
       ProxyUtils.isIP(sni) ||    // SNI является IP
       tlsDisabled ||             // TLS выключен
       isRealityNaive ||          // REALITY / Naive
+      isQuic ||                  // QUIC/UDP-протокол
       hasCert ||                 // Уже прописан сертификат
       hasCertPath ||             // Уже прописан путь к сертификату
       hasPubKey ||               // Ключ уже прописан
