@@ -373,13 +373,13 @@ async function operator(proxies, targetPlatform, context) {
 }
 ```
 
-2. Задать VLESS-REALITY узлам отпечаток `randomized` а прочим VLESS узлам `firefox`, например чтобы иметь возможность подключаться к серверу с Xray 26.9.8+ версии (подробнее https://github.com/jinndi/sing-box)
+2. Задать VLESS-REALITY узлам отпечаток `firefox` а прочим VLESS узлам `chrome`, например чтобы иметь возможность подключаться к серверу с Xray 26.9.8+ версии (подробнее https://github.com/jinndi/skeen-box)
 
 ```javascript
 if  ( $server.type === 'vless' && $server['reality-opts'] ) {
-  $server['client-fingerprint'] = 'randomized'
-} else if ( $server.type === 'vless' ) {
   $server['client-fingerprint'] = 'firefox'
+} else if ( $server.type === 'vless' ) {
+  $server['client-fingerprint'] = 'chrome'
 }
 ```
 
