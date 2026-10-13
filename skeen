@@ -491,12 +491,14 @@ check_free_space(){
 local required_mb="${1:-$SINGBOX_SPACE_MB}"
 local path="${2:-$ENTWARE_DIR}"
 local free_mb
-free_mb="$(df -m "$path" 2>/dev/null|tail -1|awk '{print $4}')"
-if [ -z "$free_mb" ];then
-exiterr "Failed to determine free space on $path"
-elif [ "$free_mb" -lt "$required_mb" ];then
+free_mb="$(df -Pm "$path" 2>/dev/null|awk 'NR == 2 {print $4}')"
+case "$free_mb" in ''|*[!0-9]*)echowarn "Unable to determine free space on $path (${free_mb:-0})"
+return 0
+esac
+if [ "$free_mb" -lt "$required_mb" ];then
 exiterr "Insufficient free space on $path: ${required_mb}MB required, ${free_mb}MB available"
 fi
+return 0
 }
 get_os_release(){
 local release_path
@@ -816,9 +818,7 @@ BETA_ENABLED=0
 EXTERNAL_ENABLED=0
 if [ -n "$MIRROR" ];then
 case "$MIRROR" in
-https://*static/|http://*static/)echomsg "Using mirror: $MIRROR"
-printf "\n"
-;;
+https://*static/|http://*static/)echomsg "Using mirror: $MIRROR";;
 *)exiterr "Mirror URL must start with http(s):// and end with static/"
 esac
 fi
