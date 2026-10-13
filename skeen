@@ -609,24 +609,16 @@ echo >/dev/tty
 }
 install_dependencies(){
 echomsg "Checking dependencies"
-opkg update >/dev/null 2>&1
-local pkg_list
-pkg_list="$(opkg list 2>/dev/null|awk '{print $1}')"
+opkg update >/dev/null 2>&1||true
 for pkg_name in $DEPENDENCIES;do
-printf "[%s] " "$pkg_name" >&2
-case "$pkg_list" in
-*"$pkg_name"*)if
-opkg install "$pkg_name" >/dev/null 2>&1
-then
+printf "[%s] " "$pkg_name"
+if opkg install "$pkg_name" >/dev/null 2>&1;then
 echook "Installed"
 else
-echoerr "Installation error"
+echoerr "Installation failed"
 fi
-;;
-*)echoerr "Package not found in opkg repo"
-esac
 done
-echook "All dependencies are installed"
+echook "Dependency check completed"
 }
 download_singbox(){
 local beta="${1:-}" version="${2:-$latest_version}" pkg_url
