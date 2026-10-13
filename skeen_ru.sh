@@ -733,26 +733,19 @@ wait_input() {
 install_dependencies() {
   echomsg "Проверка зависимостей"
 
-  opkg update >/dev/null 2>&1
-  local pkg_list
-  pkg_list="$(opkg list 2>/dev/null | awk '{print $1}')"
+  opkg update >/dev/null 2>&1 || true
 
   for pkg_name in $DEPENDENCIES; do
-    printf "[%s] " "$pkg_name" >&2
+    printf "[%s] " "$pkg_name"
 
-    case "$pkg_list" in
-    *"$pkg_name"*)
-      if opkg install "$pkg_name" >/dev/null 2>&1; then
-        echook "Установлено"
-      else
-        echoerr "Ошибка установки"
-      fi
-      ;;
-    *) echoerr "Пакет не найден в opkg" ;;
-    esac
+    if opkg install "$pkg_name" >/dev/null 2>&1; then
+      echook "Установлено"
+    else
+      echoerr "Не удалось установить"
+    fi
   done
 
-  echook "Все зависимости установлены"
+  echook "Все зависимости проверены"
 }
 
 download_singbox() {

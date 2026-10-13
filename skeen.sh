@@ -733,26 +733,19 @@ wait_input() {
 install_dependencies() {
   echomsg "Checking dependencies"
 
-  opkg update >/dev/null 2>&1
-  local pkg_list
-  pkg_list="$(opkg list 2>/dev/null | awk '{print $1}')"
+  opkg update >/dev/null 2>&1 || true
 
   for pkg_name in $DEPENDENCIES; do
-    printf "[%s] " "$pkg_name" >&2
+    printf "[%s] " "$pkg_name"
 
-    case "$pkg_list" in
-    *"$pkg_name"*)
-      if opkg install "$pkg_name" >/dev/null 2>&1; then
-        echook "Installed"
-      else
-        echoerr "Installation error"
-      fi
-      ;;
-    *) echoerr "Package not found in opkg repo" ;;
-    esac
+    if opkg install "$pkg_name" >/dev/null 2>&1; then
+      echook "Installed"
+    else
+      echoerr "Installation failed"
+    fi
   done
 
-  echook "All dependencies are installed"
+  echook "Dependency check completed"
 }
 
 download_singbox() {
