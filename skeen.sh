@@ -592,13 +592,15 @@ check_free_space() {
   local path="${2:-$ENTWARE_DIR}"
   local free_mb
 
-  free_mb="$(df -m "$path" 2>/dev/null | tail -1 | awk '{print $4}')"
+  free_mb="$(df -Pm "$path" 2>/dev/null | awk 'NR == 2 {print $4}')"
 
-  if [ -z "$free_mb" ]; then
-    exiterr "Failed to determine free space on $path"
-  elif [ "$free_mb" -lt "$required_mb" ]; then
+  case "$free_mb" in ''|*[!0-9]*) echowarn "Unable to determine free space on $path (${free_mb:-0})"; return 0 ;; esac
+
+  if [ "$free_mb" -lt "$required_mb" ]; then
     exiterr "Insufficient free space on $path: ${required_mb}MB required, ${free_mb}MB available"
   fi
+
+  return 0
 }
 
 get_os_release() {
@@ -615,22 +617,36 @@ get_os_release() {
 }
 
 ask_install_singbox() {
-  show_header; printf "\n"
-  while :; do
+  local opt channel
+
+  if [ -n "$AUTO" ]; then
+    opt=$AUTO
+  else
+    check_tty; show_header; printf "\n"
+
     cyan "$SINGBOX_NAME installation options:"
     printf " 1) Latest stable\n 2) Latest alpha/beta/rc\n 3) Use custom binary\n\n"
-    printf "Select an option [1-3]: " >/dev/tty
-    read -r opt </dev/tty;
 
-    BETA_ENABLED=0; EXTERNAL_ENABLED=0
+    while :; do
+      printf "Select an option [1-3]: " >/dev/tty
+      read -r opt </dev/tty
 
-    case ${opt:-1} in
-      1) break ;;
-      2) BETA_ENABLED=1; break ;;
-      3) EXTERNAL_ENABLED=1; break ;;
-      *) echoerr "Please enter 1, 2, or 3."; printf "\n" ;;
-    esac
-  done
+      opt=${opt:-1}
+      case "$opt" in
+        1|2|3) break ;;
+        *) echoerr "Enter 1, 2, or 3."; printf "\n" ;;
+      esac
+    done
+  fi
+
+  case "$opt" in
+    1) channel="stable" ;;
+    2) BETA_ENABLED=1; channel="beta" ;;
+    3) EXTERNAL_ENABLED=1; channel="external" ;;
+    *) exiterr "AUTO must be 1 (stable), 2 (beta), or 3 (external)" ;;
+  esac
+
+  echomsg "Selected $channel installation option for $SINGBOX_NAME"
 }
 
 arch_elf() {
@@ -977,11 +993,12 @@ is_running() {
 }
 
 install() {
-  MIRROR="${MIRROR:-}"
+  MIRROR="${MIRROR:-}"; AUTO="${AUTO:-}";
+  BETA_ENABLED=0; EXTERNAL_ENABLED=0
 
   if [ -n "$MIRROR" ]; then
     case "$MIRROR" in
-    https://*static/ | http://*static/) echomsg "Using mirror: $MIRROR"; printf "\n"; ;;
+    https://*static/ | http://*static/) echomsg "Using mirror: $MIRROR" ;;
     *) exiterr "Mirror URL must start with http(s):// and end with static/"; ;;
     esac
   fi
@@ -1012,9 +1029,7 @@ install() {
   echomsg "Configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
   echook "Installation completed"
 
-  MIRROR=""
-
-  press_any_key_to_menu
+  if [ -z "$AUTO" ]; then press_any_key_to_menu; fi
 }
 
 uninstall() {
