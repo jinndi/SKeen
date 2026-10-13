@@ -513,6 +513,7 @@ local opt channel
 if [ -n "$AUTO" ];then
 opt=$AUTO
 else
+check_tty
 show_header
 printf "\n"
 cyan "Варианты установки $SINGBOX_NAME:"
@@ -813,7 +814,6 @@ MIRROR="${MIRROR:-}"
 AUTO="${AUTO:-}"
 BETA_ENABLED=0
 EXTERNAL_ENABLED=0
-check_tty
 if [ -n "$MIRROR" ];then
 case "$MIRROR" in
 https://*static/|http://*static/)echomsg "Используем зеркало: $MIRROR"
