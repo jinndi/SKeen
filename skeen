@@ -845,7 +845,7 @@ fi
 echomsg "Configure $SINGBOX_NAME by editing: $CONFIG_DIR"
 echomsg "Configure $SKEEN_NAME by editing: $SKEEN_CONFIG"
 echook "Installation completed"
-[ -z "$AUTO" ]&&press_any_key_to_menu
+if [ -z "$AUTO" ];then press_any_key_to_menu;fi
 }
 uninstall(){
 echomsg "Uninstalling $SKEEN_NAME..."
