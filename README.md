@@ -8,7 +8,7 @@
 
 [![Build](https://github.com/jinndi/SKeen/actions/workflows/release.yml/badge.svg)](https://github.com/jinndi/SKeen/actions/workflows/release.yml) [![SKeen](https://img.shields.io/github/v/release/jinndi/SKeen)](https://github.com/jinndi/SKeen/releases/latest) [![License](https://img.shields.io/github/license/jinndi/SKeen)](https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/LICENSE) [![sing-box-latest](https://img.shields.io/github/v/release/SagerNet/sing-box?label=sing-box-latest&display_name=tag)](https://github.com/SagerNet/sing-box/releases/latest) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jinndi/SKeen)
 
-🇺🇸 **English** | [🇷🇺 На русском](./docs/README-RU.md)
+🇺🇸 **English** | [🇷🇺 На русском](./README-RU.md)
 
 SKeen configures transparent proxying on Keenetic and Netcraze routers using sing-box. It manages firewall rules, service lifecycle and configuration synchronization.
 
@@ -105,7 +105,11 @@ The complete FAQ is available in [docs/FAQ.md](docs/FAQ.md).
 
 Make sure that Entware is installed. Otherwise, find the instructions for your model in the [Support Center](https://support.keenetic.com/) → User Guide → Management → OPKG → Installing the Entware repository on a USB drive / Installing OPKG Entware on internal router memory.
 
-**Run from Entware via SSH:**
+Nothing gets installed **at all**?
+
+[Try the offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
+
+**Run the following command via SSH from the Entware environment:**
 
 ```sh
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen --resolve release-assets.githubusercontent.com:443:185.199.108.133 | sh
@@ -114,10 +118,11 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen --resolv
 Russian-localized version: See [README-RU.md](README-RU.md)
 
 <details>
-  <summary>Installation failed? (click to expand)</summary>
+  <summary>Still can't install it? (click to expand)</summary>
 <br>
 
-See the <a href="docs/TROUBLESHOOTING.md">troubleshooting guide</a>.
+1. [Try the offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
+2. See also the [troubleshooting guide](docs/TROUBLESHOOTING-EN.md).
 
 </details>
 

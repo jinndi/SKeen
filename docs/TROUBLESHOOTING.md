@@ -4,7 +4,9 @@
   <summary>Installation failed?</summary>
 <br>
 
-If the primary download method is unavailable, use one of the options below:
+1. [Try the offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
+
+2. If the primary download method is unavailable, use one of the options below:
 
 **`Automatic mirror selection (recommended):`**
 
