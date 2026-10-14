@@ -275,12 +275,14 @@ json_get_array() {
   jsonfilter -i "$config_path" -e "$path" | tr -d '[],"'
 }
 
+files_differ() { [ "$(sha256sum "$1" | cut -d ' ' -f 1)" != "$(sha256sum "$2" | cut -d ' ' -f 1)" ]; }
+
 check_and_create_or_sync_skeen_config() {
   [ ! -f "$SKEEN_CONFIG" ] && create_skeen_config
 
-  if [ ! -f "$SKEEN_RUN_CONFIG" ] || [ "$SKEEN_CONFIG" -nt "$SKEEN_RUN_CONFIG" ]; then
+  if [ ! -f "$SKEEN_RUN_CONFIG" ] || files_differ "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"; then
     if cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"; then
-      chmod 644 "$SKEEN_RUN_CONFIG"
+        chmod 644 "$SKEEN_RUN_CONFIG"
     else
       exiterr "Не удалось синхронизировать $SKEEN_CONFIG в память"
     fi
@@ -321,7 +323,7 @@ check_and_merge_singbox_config() {
 }
 
 check_and_kill_old_singbox_proc() {
-  local sing_pid sing_path
+  local sing_pid sing_path kill_old=0
 
   if [ -f "$SINGBOX_PID_FILE" ]; then
     read -r sing_pid < "$SINGBOX_PID_FILE"
@@ -330,15 +332,16 @@ check_and_kill_old_singbox_proc() {
     fi
   fi
 
-  case "$sing_path" in
-    "" | "$SINGBOX_BIN") ;;
-    *)
-      if kill -0 "$sing_pid" 2>/dev/null; then
-        echomsg "Завершаем $SINGBOX_NAME (старый процесс)..."
-        kill -9 "$sing_pid"; clean_firewall; rm -f "$SINGBOX_PID_FILE"
-      fi
-    ;;
-  esac
+  case "$sing_path" in "" | "$SINGBOX_BIN") ;; *) kill_old=1 ;; esac
+
+  if [ "$kill_old" = "0" ] && [ -n "$sing_pid" ] && [ -d "/proc/$sing_pid" ]; then
+    [ ! -f "$SINGBOX_BIN" ] && kill_old=1
+  fi
+
+  if [ "$kill_old" = "1" ] && kill -0 "$sing_pid" 2>/dev/null; then
+    echomsg "Завершаем $SINGBOX_NAME (pid: $sing_pid)..."
+    kill -9 "$sing_pid"; clean_firewall; rm -f "$SINGBOX_PID_FILE"
+  fi
 
   if [ -f "$SINGBOX_BIN" ] && [ ! -x "$SINGBOX_BIN" ]; then
     chmod +x "$SINGBOX_BIN" 2>/dev/null || true
@@ -1898,7 +1901,7 @@ set_tun_rules() {
 }
 
 get_skeen_run_script_cmd() {
-  if [ ! -f "$SKEEN_RUN_SCRIPT" ] || [ "$SKEEN_SCRIPT" -nt "$SKEEN_RUN_SCRIPT" ]; then
+  if [ ! -f "$SKEEN_RUN_SCRIPT" ] || files_differ "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT"; then
     if cp -fp "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT"; then
       chmod 755 "$SKEEN_RUN_SCRIPT"
       echo "$SKEEN_RUN_SCRIPT apply_firewall netfilter \"\$table\""
