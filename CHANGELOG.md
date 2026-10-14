@@ -1,5 +1,35 @@
 # Changelog
 
+## [5.8.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.7.2...SKeen-v5.8.0) (2026-10-14)
+
+
+### 🚀 Feat
+
+* **install:** add non-interactive installation support via AUTO variable ([afeb5fc](https://github.com/jinndi/SKeen/commit/afeb5fc1403e95bfbe4f602425e2f9e0a0cfed8f))
+
+
+### 🐛 Fix
+
+* **config:** update "🌍 Auto" outbound to "🔒 TROYAN" ([7544253](https://github.com/jinndi/SKeen/commit/75442535a57c37cddaa0d2f0b35f46d7353ba514))
+* **deps:** streamline dependency installation and error handling ([fec74ba](https://github.com/jinndi/SKeen/commit/fec74bad778c353ecd2c9da84710db3aced0f71c))
+
+
+### 🛠 Refactor
+
+* improve configuration syncing and process management ([9542f8b](https://github.com/jinndi/SKeen/commit/9542f8ba7850ca4f7431e05a18efeea80a8a4fac))
+
+
+### 🤖 CI/CD
+
+* **entware:** implement build pipeline Entware SKeen Offline ([b543789](https://github.com/jinndi/SKeen/commit/b54378972c7c356211f728ccc9cb247b3bc14dcb))
+* **entware:** optimize rootfs archive synchronization ([34bccab](https://github.com/jinndi/SKeen/commit/34bccab44311d4af4de2ed103756e4a18d021691))
+
+
+### 🧰 Chore
+
+* improve warning message clarity and guidance ([ddee280](https://github.com/jinndi/SKeen/commit/ddee280ec9e613b10e6c5d8fecdce19c8c93f9c5))
+* **readme:** add offline installation guidance ([0674f4a](https://github.com/jinndi/SKeen/commit/0674f4a476f12f04ac3246f51ea705bfb0f0e0e0))
+
 ## [5.7.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.7.1...SKeen-v5.7.2) (2026-10-08)
 
 
