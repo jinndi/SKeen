@@ -68,7 +68,7 @@
 
     { "tag": "GLOBAL", "type": "selector", "outbounds": [ "🌍 Proxy" ] },
 
-    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [ "🌍 TROYAN" ], "interval": "10m", "tolerance": 100 },
+    { "tag": "🌍 Auto", "type": "urltest", "outbounds": [ "🔒 TROYAN" ], "interval": "10m", "tolerance": 100 },
     { "tag": "🇷🇺 Auto", "type": "urltest", "outbounds": [ "🇷🇺 TROYAN" ], "interval": "10m", "tolerance": 100 },
 
     {
