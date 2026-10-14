@@ -85,7 +85,7 @@
     { "tag": "🧲 Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
-    { "tag": "🌍 Auto",    "type": "urltest",  "outbounds": [ "🌍 TROYAN" ], "interval": "10m", "tolerance": 100, "idle_timeout": "30m0s" },
+    { "tag": "🌍 Auto",    "type": "urltest",  "outbounds": [ "🔒 TROYAN" ], "interval": "10m", "tolerance": 100, "idle_timeout": "30m0s" },
     { "tag": "🇷🇺 Auto",    "type": "urltest",  "outbounds": [ "🇷🇺 TROYAN" ], "interval": "5m",  "tolerance": 100, "idle_timeout": "30m0s" },
     { "tag": "🔌 DIRECT",  "type": "direct",   "domain_resolver": "dns_direct" },
     { "tag": "❌ REJECT",  "type": "block" },
