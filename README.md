@@ -1,6 +1,6 @@
 # SKeen Static Assets (Mirror)
 
-This directory contains mirrored `sing-box` packages for OpenWrt, optimized for the **SKeen** project.
+This directory contains mirrored `sing-box` packages, optimized for the **SKeen** project.
 
 ## Credits & License
 
@@ -13,6 +13,6 @@ The binary files (`.ipk`) hosted here are part of the [SagerNet/sing-box](https:
 ---
 
 ### About this Mirror
-To ensure reliable installation on Keenetic and OpenWrt devices, these packages are fetched directly from official SagerNet releases. Filenames are normalized (version numbers removed) to provide **permanent links** for automated installation scripts.
+To ensure reliable installation on Keenetic and Netcraze devices, these packages are fetched directly from official SagerNet releases. Filenames are normalized (version numbers removed) to provide **permanent links** for automated installation scripts.
 
 **Original Source Code:** [github.com/SagerNet/sing-box](https://github.com/SagerNet/sing-box)
