@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="/logo_ru.png" alt="SKeen" width="512" style="max-width: 100%; height: auto; display: block; margin: 0 auto; padding: 20px 0;" />
+  <img src="/assets/logo_ru.png" alt="SKeen" width="512" style="max-width: 100%; height: auto; display: block; margin: 0 auto; padding: 20px 0;" />
 </p>
 
 <h1 align="center">SKeen</h1>
@@ -8,7 +8,7 @@
 
 [![Build](https://github.com/jinndi/SKeen/actions/workflows/release.yml/badge.svg)](https://github.com/jinndi/SKeen/actions/workflows/release.yml) [![SKeen](https://img.shields.io/github/v/release/jinndi/SKeen)](https://github.com/jinndi/SKeen/releases/latest) [![License](https://img.shields.io/github/license/jinndi/SKeen)](https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/LICENSE) [![sing-box-latest](https://img.shields.io/github/v/release/SagerNet/sing-box?label=sing-box-latest&display_name=tag)](https://github.com/SagerNet/sing-box/releases/latest) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jinndi/SKeen)
 
-🇷🇺 **Русский** | [🇺🇸 English](README.md)
+🇷🇺 **Русский** | [🇺🇸 English](../README.md)
 
 SKeen настраивает прозрачное проксирование на роутерах Keenetic и Netcraze с использованием sing-box. Проект управляет правилами firewall, сервисом и синхронизацией конфигурации.
 
