@@ -1,0 +1,82 @@
+#!/bin/sh
+
+unset LD_BIND_NOW
+unset LD_LIBRARY_PATH
+unset LD_PRELOAD
+
+if [ -f "/var/TZ" ]; then
+  timezone="$(cat /var/TZ)"
+  export TZ="$timezone"
+else
+  export TZ="UTC"
+fi
+
+logger -t installer '[1/4] Начало установки "Entware Offline SKeen"...'
+
+check_fs_opt="$(mount | grep 'on /opt ' | cut -d' ' -f5)"
+
+case "$check_fs_opt" in
+  ext*)
+    logger -t installer 'Info: Раздел пригоден для установки.'
+  ;;
+  *hfs*)
+    logger -t installer 'Info: Раздел с HFS! (!не тестировалось!)'
+    logger -t installer 'При возникновении проблем, используйте накопитель с файловой системой ext2/ext3/ext4.'
+  ;;
+  ubifs)
+    logger -t installer 'Info: Раздел с UBIFS! (!не тестировалось!)'
+    logger -t installer 'При возникновении проблем, используйте внешний накопитель с файловой системой ext2/ext3/ext4.'
+  ;;
+  *)
+    logger -t installer "Critical error: Раздел $check_fs_opt не пригоден для установки!"
+    logger -t installer 'Используйте накопитель с файловой системой ext2/ext3/ext4.'
+    logger -t installer 'Выход из установки.'
+    exit 1
+  ;;
+esac
+
+# keygen
+logger -t installer '[2/4] Генерация SSH-ключей...'
+
+for key in rsa ed25519; do
+  key_file="/opt/etc/dropbear/dropbear_${key}_host_key"
+
+  rm -f "$key_file" "${key_file}.pub"
+
+  logger -t installer "Info: Генерируется ключ \"$key\"..."
+
+  if ! dropbearkey -t "$key" -f "$key_file" >/dev/null 2>&1 ||
+     [ ! -s "$key_file" ]; then
+    logger -t installer "Critical error: Во время генерации ключа \"$key\" произошла ошибка."
+    logger -t installer 'Выход из установки.'
+    exit 1
+  else
+    logger -t installer "Info: Ключ \"$key\" создан."
+    sleep 1
+  fi
+done
+
+logger -t installer '[3/4] Настройка сценария запуска...'
+
+# TZ
+timezone="$(ndmc -c 'show running-config' | awk '/clock timezone/ {print $3}')"
+
+if [ -n "$timezone" ]; then
+  ln -sf /opt/share/zoneinfo/"$timezone" /opt/etc/localtime
+fi
+
+for f in rc.func rc.unslung S51dropbear S99SKeen; do
+  mv "/opt/root/$f" "/opt/etc/init.d/$f"
+done
+
+# SSH
+/opt/etc/init.d/S51dropbear start
+
+ndmc -c 'opkg initrc /opt/etc/init.d/rc.unslung'
+ndmc -c 'system configuration save'
+
+logger -t installer 'Можно открыть SSH (логин - root, пароль - keenetic, порт - 222).'
+logger -t installer 'Не забудьте настроить SKeen (файл /opt/etc/skeen.json)'
+logger -t installer '[4/4] Установка "Entware Offline SKeen" успешно завершена!'
+
+rm "$0"

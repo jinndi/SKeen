@@ -1,0 +1,245 @@
+name: Build Entware Offline SKeen Rootfs
+
+on:
+  workflow_dispatch:
+    inputs:
+      install_skeen:
+        description: 'Install SKeen'
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: write
+
+env:
+  BACKUP_PREFIX: ${{ inputs.install_skeen && 'entware-offline-skeen' || 'entware-offline' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [mipsel, mips, aarch64]
+        include:
+          - arch: mipsel
+            qemu_arch: mipsel
+            installer_url: https://bin.entware.net/mipselsf-k3.4/installer/mipsel-installer.tar.gz
+            installer_file: mipsel-installer.tar.gz
+          - arch: mips
+            qemu_arch: mips
+            installer_url: https://bin.entware.net/mipssf-k3.4/installer/mips-installer.tar.gz
+            installer_file: mips-installer.tar.gz
+          - arch: aarch64
+            qemu_arch: aarch64
+            installer_url: https://bin.entware.net/aarch64-k3.10/installer/aarch64-installer.tar.gz
+            installer_file: aarch64-installer.tar.gz
+      fail-fast: false
+
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.qemu_arch }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            binfmt-support qemu-user-static debootstrap wget rsync curl
+
+      - name: Download installer
+        run: |
+          wget -q "${{ matrix.installer_url }}" \
+            -O "${{ matrix.installer_file }}"
+
+      - name: Prepare Entware root at /opt
+        run: |
+          mkdir -p "rootfs-${{ matrix.arch }}"
+          tar -xzf "${{ matrix.installer_file }}" \
+            -C "rootfs-${{ matrix.arch }}"
+
+          cp "/usr/bin/qemu-${{ matrix.qemu_arch }}-static" \
+            "rootfs-${{ matrix.arch }}/bin/"
+
+      - name: Prepare libraries and opkg configuration
+        run: |
+          cd "rootfs-${{ matrix.arch }}"
+
+          sudo mkdir -p opt/lib opt/etc opt/etc/init.d
+          sudo rsync -a lib/ opt/lib/
+          sudo cp etc/opkg.conf opt/etc/opkg.conf
+          sudo cp /etc/resolv.conf etc/resolv.conf
+          sudo cp "${GITHUB_WORKSPACE}/.github/entware/doinstall" opt/etc/init.d/doinstall
+          sudo chmod +x opt/etc/init.d/doinstall
+
+      - name: Initialize opkg and install base packages
+        run: |
+          cd "rootfs-${{ matrix.arch }}"
+
+          sudo mkdir -p dev proc sys dev/pts
+          sudo mount --bind /dev dev
+          sudo mount --bind /proc proc
+          sudo mount --bind /sys sys
+          sudo mount --bind /dev/pts dev/pts
+
+          sudo chroot . /bin/sh -c '
+            unset LD_BIND_NOW
+            unset LD_LIBRARY_PATH
+            unset LD_PRELOAD
+
+            export PATH=/opt/bin:/opt/sbin:$PATH
+
+            mkdir -p /opt/lib/opkg /opt/tmp /opt/var/lock \
+              /opt/etc/dropbear /opt/bin /opt/etc/init.d /opt/home
+            chmod 777 /opt/tmp
+            ln -sf /bin/busybox /opt/bin/busybox
+
+            opkg update
+
+            for pkg in libgcc libc libpthread librt \
+              entware-release findutils grep ldconfig locales \
+              opkg zoneinfo-asia zoneinfo-europe opt-ndmsv2 \
+              dropbear curl poorbox busybox; do
+              echo "Installing $pkg..."
+              if ! opkg install "$pkg" --force-overwrite; then
+                echo "=== Installation failed: $pkg ==="
+                ls -la /opt/tmp
+                exit 1
+              fi
+            done
+
+            ldconfig
+
+            for f in rc.func rc.unslung S51dropbear; do
+              if [ -f "/opt/etc/init.d/$f" ]; then
+                mv "/opt/etc/init.d/$f" /opt/root/
+              else
+                echo "Warning: /opt/etc/init.d/$f not found"
+              fi
+            done
+
+            rm -rf /opt/etc/dropbear/*
+            sed -i "s/PORT=22$/PORT=222/" \
+              /opt/etc/config/dropbear.conf 2>/dev/null || true
+          '
+
+      - name: Install SKeen
+        if: inputs.install_skeen
+        env:
+          MIRROR: https://raw.githack.com/jinndi/SKeen/static/
+          AUTO: '3'
+        run: |
+          cd "rootfs-${{ matrix.arch }}"
+
+          echo "Installing SKeen for ${{ matrix.arch }}"
+          echo "sing-box option: AUTO=3 (external)"
+
+          curl -fsSL --connect-timeout 10 \
+            "${MIRROR}skeen_ru" |
+            sudo env MIRROR="$MIRROR" AUTO="3" \
+              chroot . /opt/bin/sh
+
+          sudo mv opt/etc/init.d/S99SKeen opt/root/S99SKeen
+
+      - name: Get SKeen-Box URL
+        if: inputs.install_skeen
+        id: skeen-box
+        env:
+          SKEEN_BOX_RELEASE_API: https://api.github.com/repos/jinndi/skeen-box/releases/latest
+          ARCH: ${{ matrix.arch }}
+        run: |
+          case "$ARCH" in
+            mipsel)  asset_arch="mipsel"; suffix="_mipsle_naive_upx" ;;
+            mips)    asset_arch="mips";   suffix="_mips_upx" ;;
+            aarch64) asset_arch="arm64";  suffix="_arm64_naive_upx" ;;
+            *) echo "::error::Unsupported architecture: $ARCH"; exit 1 ;;
+          esac
+
+          url=$(curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 5 "$SKEEN_BOX_RELEASE_API" |
+            jq -er --arg arch "$asset_arch" --arg suffix "$suffix" \
+              '[.assets[] | select(.name | test("^skeen-box_[0-9].*_linux" + $suffix + "$"))][0].browser_download_url')
+
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Download SKeen-Box
+        if: inputs.install_skeen
+        env:
+          URL: ${{ steps.skeen-box.outputs.url }}
+        run: |
+          curl -fL --retry 3 --retry-delay 2 "$URL" -o /tmp/sing-box
+          sudo install -m 755 /tmp/sing-box \
+            "rootfs-${{ matrix.arch }}/opt/bin/sing-box"
+          rm -f /tmp/sing-box
+
+      - name: Cleanup chroot mounts
+        if: always()
+        run: |
+          cd "rootfs-${{ matrix.arch }}"
+
+          sudo umount dev/pts 2>/dev/null || true
+          sudo umount sys 2>/dev/null || true
+          sudo umount proc 2>/dev/null || true
+          sudo umount dev 2>/dev/null || true
+
+      - name: Create rootfs backup
+        run: |
+          cd "rootfs-${{ matrix.arch }}/opt"
+
+          BACKUP_NAME="${BACKUP_PREFIX}-${{ matrix.arch }}.tar.gz"
+
+          sudo tar -czf "${GITHUB_WORKSPACE}/${BACKUP_NAME}" .
+          sudo chown "$(id -u):$(id -g)" \
+            "${GITHUB_WORKSPACE}/${BACKUP_NAME}"
+
+          echo "BACKUP_FILE=${BACKUP_NAME}" >> "$GITHUB_ENV"
+
+      - name: Upload rootfs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${BACKUP_PREFIX}-${{ matrix.arch }}
+          path: ${{ env.BACKUP_FILE }}
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout static branch
+        uses: actions/checkout@v4
+        with:
+          ref: static
+          fetch-depth: 1
+
+      - name: Download all Offline rootfs archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${BACKUP_PREFIX}-*
+          path: entware
+          merge-multiple: true
+
+      - name: Commit and Push to static branch
+        run: |
+          # Удаляем старые архивы с тем же префиксом, чтобы в ветке
+          # всегда были только актуальные rootfs для каждой архитектуры.
+          rm -f entware/${BACKUP_PREFIX}-*.tar.gz
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add entware/${BACKUP_PREFIX}-*.tar.gz
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Rootfs archives not changed. Exiting."
+            exit 0
+          fi
+
+          git commit -m "[auto] Update Entware rootfs (${BACKUP_PREFIX})"
+          git push origin static
