@@ -228,14 +228,18 @@ jobs:
 
       - name: Commit and Push to static branch
         run: |
-          # Удаляем старые архивы с тем же префиксом, чтобы в ветке
-          # всегда были только актуальные rootfs для каждой архитектуры.
-          rm -f entware/${BACKUP_PREFIX}-*.tar.gz
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add entware/${BACKUP_PREFIX}-*.tar.gz
+          # Удаляем из индекса (и с диска) старые архивы с тем же префиксом,
+          # чтобы в ветке static всегда были только актуальные rootfs.
+          git ls-files -z "entware/${BACKUP_PREFIX}-*.tar.gz" |
+            xargs -0 -r git rm -f --ignore-unmatch
+
+          # Добавляем только что скаченные архивы.
+          find entware -maxdepth 1 -name "${BACKUP_PREFIX}-*.tar.gz" -print0 |
+            xargs -0 -r git add
+
           if [ -z "$(git status --porcelain)" ]; then
             echo "Rootfs archives not changed. Exiting."
             exit 0
