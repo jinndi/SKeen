@@ -1280,7 +1280,7 @@ get_iptables_list() {
     if [ -n "$real_v6" ] && ip -6 route show default | grep -q "."; then
       ipt_list="${ipt_list:+$ipt_list }ip6tables"
     else
-      echowarn "IPv6 enabled in ${SKEEN_NAME}, but no IPv6 connectivity detected; if IPv6 is not used, disable it with network.ipv6=0" >&2
+      echowarn "IPv6 is enabled in the ${SKEEN_NAME} configuration, but external IPv6 connectivity is unavailable. Disable IPv6: network.ipv6=0" >&2
     fi
   fi
 
@@ -2057,7 +2057,7 @@ prepare_firewall() {
     cyan " - Segment policy routing: $POLICY_SEGMENT"
     route_all=0
   fi
-  [ "$route_all" = 1 ] && echowarn "Routing entire device"
+  [ "$route_all" = 1 ] && echowarn "Full device routing. You can configure the segment policy in skeen.json (policy.segment)."
 
   SKEEN_PROXY_ROUTER="0"
   [ "$FIREWALL_PROXY_ROUTER" = "1" ] && SKEEN_PROXY_ROUTER="1"

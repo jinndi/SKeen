@@ -1280,7 +1280,7 @@ get_iptables_list() {
     if [ -n "$real_v6" ] && ip -6 route show default | grep -q "."; then
       ipt_list="${ipt_list:+$ipt_list }ip6tables"
     else
-      echowarn "IPv6 активен в конфиге ${SKEEN_NAME}, но внешнее IPv6 соединение отсутствует; если IPv6 не используется, отключите его: network.ipv6=0" >&2
+      echowarn "IPv6 включён в конфигурации ${SKEEN_NAME}, но внешнее IPv6-соединение недоступно. Отключите IPv6: network.ipv6=0" >&2
     fi
   fi
 
@@ -2057,7 +2057,7 @@ prepare_firewall() {
     cyan " - Маршрутизация политики сегмента: $POLICY_SEGMENT"
     route_all=0
   fi
-  [ "$route_all" = 1 ] && echowarn "Маршрутизация всего устройства"
+  [ "$route_all" = 1 ] && echowarn "Маршрутизация всего устройства. Настроить политику для сегмента можно в skeen.json (policy.segment)."
 
   SKEEN_PROXY_ROUTER="0"
   [ "$FIREWALL_PROXY_ROUTER" = "1" ] && SKEEN_PROXY_ROUTER="1"
