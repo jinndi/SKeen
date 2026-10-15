@@ -192,7 +192,7 @@ jobs:
         run: |
           cd "rootfs-${{ matrix.arch }}/opt"
 
-          BACKUP_NAME="${BACKUP_PREFIX}-${{ matrix.arch }}.tar.gz"
+          BACKUP_NAME="${{ env.BACKUP_PREFIX }}-${{ matrix.arch }}.tar.gz"
 
           sudo tar -czf "${GITHUB_WORKSPACE}/${BACKUP_NAME}" .
           sudo chown "$(id -u):$(id -g)" \
@@ -203,7 +203,7 @@ jobs:
       - name: Upload rootfs artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${BACKUP_PREFIX}-${{ matrix.arch }}
+          name: ${{ env.BACKUP_PREFIX }}-${{ matrix.arch }}
           path: ${{ env.BACKUP_FILE }}
           if-no-files-found: error
           retention-days: 1
@@ -223,22 +223,24 @@ jobs:
       - name: Download all Offline rootfs archives
         uses: actions/download-artifact@v4
         with:
-          pattern: ${BACKUP_PREFIX}-*
+          pattern: ${{ env.BACKUP_PREFIX }}-*
           path: entware
           merge-multiple: true
 
       - name: Commit and Push to static branch
         run: |
+          PREFIX="${{ env.BACKUP_PREFIX }}"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Удаляем из индекса (и с диска) старые архивы с тем же префиксом,
           # чтобы в ветке static всегда были только актуальные rootfs.
-          git ls-files -z "entware/${BACKUP_PREFIX}-*.tar.gz" |
+          git ls-files -z "entware/${PREFIX}-*.tar.gz" |
             xargs -0 -r git rm -f --ignore-unmatch
 
           # Добавляем только что скаченные архивы.
-          find entware -maxdepth 1 -name "${BACKUP_PREFIX}-*.tar.gz" -print0 |
+          find entware -maxdepth 1 -name "${PREFIX}-*.tar.gz" -print0 |
             xargs -0 -r git add
 
           if [ -z "$(git status --porcelain)" ]; then
@@ -246,5 +248,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "[auto] Update Entware rootfs (${BACKUP_PREFIX})"
+          git commit -m "[auto] Update Entware rootfs (${PREFIX})"
           git push origin static
