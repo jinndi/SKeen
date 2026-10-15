@@ -130,3 +130,17 @@ Meaning around 30–40 MB.
 
 P.S. sing-box 1.15.0-alpha.6
 </details>
+
+<details>
+  <summary>I see ads - what should I do?</summary>
+<br>
+
+There's no escaping ads entirely. DNS filtering alone won't get rid of them because it only blocks domain requests, leaving direct IP requests and embedded JS scripts in HTML pages untouched.
+
+The best approach to eliminate ads (use these together):
+
+1. Use specialized software or extensions for client devices, such as [uBlock Origin](https://github.com/gorhill/uBlock#ublock-origin) for your browser.
+2. Configure domain-based blocklists in sing-box DNS routing. This is mainly needed for applications and devices where extensions or modifications aren't available. While it doesn't guarantee a 100% success rate, it will filter out thousands of unnecessary requests at the routing stage (doing this on the server is highly inefficient).
+
+This allows you to use global DNS providers like Google DNS and Cloudflare, which is the proper approach (and proxying them through a tunnel is best left unmentioned).
+</details>
