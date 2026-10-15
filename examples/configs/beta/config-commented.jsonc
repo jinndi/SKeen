@@ -639,6 +639,13 @@
          // В Chrome можно использовать HTTPS, но в других браузерах - нет.
       "access_control_allow_private_network": true, // Разрешить доступ к панели с локальной сети (LAN)
       "dashboard": true     // Включить панель, файлы по умолчанию сохраняются в папку /opt/etc/skeen/dashboard
+      //// Или настраиваем так для локальной панели, если память ограничена:
+      //// https://github.com/imduaky/duakboard - в распакованном виде занимает менее 600 КБ.
+      // "dashboard": {
+      //   "enabled": true,
+      //   "path": "dashboard",
+      //   "download_url": "https://github.com/imduaky/duakboard/releases/latest/download/duakboard.zip"
+      // }
     }
   ],
 
