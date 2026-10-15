@@ -122,7 +122,7 @@ Russian-localized version: See [README-RU.md](README-RU.md)
 <br>
 
 1. [Try the offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
-2. See also the [troubleshooting guide](docs/TROUBLESHOOTING-EN.md).
+2. See also the [troubleshooting guide](docs/TROUBLESHOOTING.md).
 
 </details>
 

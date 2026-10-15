@@ -155,15 +155,16 @@ jobs:
           ARCH: ${{ matrix.arch }}
         run: |
           case "$ARCH" in
-            mipsel)  asset_arch="mipsel"; suffix="_mipsle_naive_upx" ;;
-            mips)    asset_arch="mips";   suffix="_mips_upx" ;;
-            aarch64) asset_arch="arm64";  suffix="_arm64_naive_upx" ;;
+            mipsel)  suffix="mipsle_upx" ;;
+            mips)    suffix="mips_upx" ;;
+            aarch64) suffix="arm64_upx" ;;
             *) echo "::error::Unsupported architecture: $ARCH"; exit 1 ;;
           esac
 
-          url=$(curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 5 "$SKEEN_BOX_RELEASE_API" |
-            jq -er --arg arch "$asset_arch" --arg suffix "$suffix" \
-              '[.assets[] | select(.name | test("^skeen-box_[0-9].*_linux" + $suffix + "$"))][0].browser_download_url')
+          url=$(curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 5 \
+            "$SKEEN_BOX_RELEASE_API" |
+            jq -er --arg suffix "_${suffix}" \
+              '[.assets[] | select(.name | endswith($suffix) and test("^skeen-box_[0-9].*_linux"))][0].browser_download_url')
 
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
