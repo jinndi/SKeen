@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.8.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.8.0...SKeen-v5.8.1) (2026-10-16)
+
+
+### 🐛 Fix
+
+* ensure jsonfilter exists and improve proxy config check ([2d3db7d](https://github.com/jinndi/SKeen/commit/2d3db7d27c5b320ad231c056721a7b602c5b74c1))
+
+
+### 🛠 Refactor
+
+* **runtime:** reorganize temporary files into a dedicated .skeen directory ([d72525e](https://github.com/jinndi/SKeen/commit/d72525e9a59927c69d01bf83cbde65701fd9ffae))
+
+
+### 🤖 CI/CD
+
+* **entware:** use temporary staging for rootfs archive rotation ([1f4604b](https://github.com/jinndi/SKeen/commit/1f4604bbd269c52ed1c1419f5874588e542352fd))
+
 ## [5.8.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.7.2...SKeen-v5.8.0) (2026-10-14)
 
 
