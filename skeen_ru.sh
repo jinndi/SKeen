@@ -431,15 +431,20 @@ get_singbox_config() {
 
 get_service_proxy_config() {
   local config_path
-  config_path="$(get_skeen_config_path)"
 
-  [ -n "$config_path" ] && eval "$(
-    jsonfilter -i "$config_path" \
-      -e SERVICE_PROXY_ENABLED='@.services.proxy.enabled' \
-      -e SERVICE_PROXY_PORT='@.services.proxy.port' \
-      -e SERVICE_PROXY_USER='@.services.proxy.user' \
-      -e SERVICE_PROXY_PASS='@.services.proxy.pass'
-  )"
+  if command -v jsonfilter >/dev/null 2>&1; then
+    config_path="$(get_skeen_config_path)"
+
+    [ -n "$config_path" ] && eval "$(
+      jsonfilter -i "$config_path" \
+        -e SERVICE_PROXY_ENABLED='@.services.proxy.enabled' \
+        -e SERVICE_PROXY_PORT='@.services.proxy.port' \
+        -e SERVICE_PROXY_USER='@.services.proxy.user' \
+        -e SERVICE_PROXY_PASS='@.services.proxy.pass' \
+        2>/dev/null
+    )"
+  fi
+
   : "${SERVICE_PROXY_ENABLED:=0}"
   : "${SERVICE_PROXY_PORT:=}"
   : "${SERVICE_PROXY_USER:=}"
@@ -500,7 +505,7 @@ run_curl() {
 
   get_service_proxy_config
 
-  if [ "$SERVICE_PROXY_ENABLED" = "1" ]; then
+  if [ -n "$SERVICE_PROXY_ENABLED" ] && [ "$SERVICE_PROXY_ENABLED" = "1" ]; then
     if [ -z "$SERVICE_PROXY_PORT" ]; then
       echoerr "$err_template 'service_proxy.port' не задан" && return 1
     elif ! is_running; then
