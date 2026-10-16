@@ -234,14 +234,29 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Удаляем из индекса (и с диска) старые архивы с тем же префиксом,
-          # чтобы в ветке static всегда были только актуальные rootfs.
+          # Сохраняем список только что скачанных архивов
+          mkdir -p /tmp/new-rootfs
+          mapfile -t NEW_FILES < <(find entware -maxdepth 1 -name "${PREFIX}-*.tar.gz" -print)
+          if [ ${#NEW_FILES[@]} -eq 0 ]; then
+            echo "No downloaded rootfs archives found in entware/"
+            ls -la entware/ || true
+            exit 1
+          fi
+          for f in "${NEW_FILES[@]}"; do
+            cp "$f" /tmp/new-rootfs/
+            rm "$f"
+          done
+
+          # Удаляем из индекса и с диска старые треканные файлы с тем же префиксом
           git ls-files -z "entware/${PREFIX}-*.tar.gz" |
             xargs -0 -r git rm -f --ignore-unmatch
 
-          # Добавляем только что скаченные архивы.
-          find entware -maxdepth 1 -name "${PREFIX}-*.tar.gz" -print0 |
-            xargs -0 -r git add
+          # Возвращаем скачанные архивы и добавляем их
+          for f in /tmp/new-rootfs/*.tar.gz; do
+            [ -f "$f" ] || continue
+            mv "$f" entware/
+          done
+          git add entware/${PREFIX}-*.tar.gz
 
           if [ -z "$(git status --porcelain)" ]; then
             echo "Rootfs archives not changed. Exiting."
