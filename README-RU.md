@@ -159,10 +159,11 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 │
 └── tmp/                        # Временные файлы загрузки
 
-/tmp/ (RAM-диск) - синхранизируется в память:
-├── skeen.sh                    # Копия скрипта - после старта/перезапуска
-├── skeen.json                  # Кэш конфига - при изменениях в источнике
-├── skeen_singbox_version       # Кэш версии sing-box - при смене бинарного файла
+/tmp/  (RAM-диск) - синхранизируется в память:
+├── .skeen/
+│   ├── skeen.sh                # Копия скрипта - после старта/перезапуска
+│   ├── skeen.json              # Кэш конфига - при изменениях в источнике
+│   └── version                 # Кэш версии sing-box - при смене бинарного файла
 └── run/
     └── skeen.pid               # PID-файл sing-box процесса
 ```

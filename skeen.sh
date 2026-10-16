@@ -24,6 +24,7 @@ readonly DEPENDENCIES="iptables ip-full ipset net-tools conntrack curl tar jsonf
 readonly ENTWARE_DIR="/opt"
 readonly WORK_DIR="${ENTWARE_DIR}/etc/skeen"
 readonly TMP_DIR="${ENTWARE_DIR}/tmp"
+readonly RUN_DIR="/tmp/.skeen"
 readonly NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
@@ -34,16 +35,16 @@ readonly SKEEN_NAME="SKeen"
 readonly SKEEN_VERSION="5.8.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
-readonly SKEEN_RUN_SCRIPT="/tmp/${SKEEN_PROC}.sh"
+readonly SKEEN_RUN_SCRIPT="${RUN_DIR}/${SKEEN_PROC}.sh"
 readonly SKEEN_API_URL="https://github.com/jinndi/SKeen/releases/latest"
 readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
-readonly SKEEN_RUN_CONFIG="/tmp/${SKEEN_PROC}.json"
+readonly SKEEN_RUN_CONFIG="${RUN_DIR}/${SKEEN_PROC}.json"
 readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 readonly SKEEN_SCRIPT_URL="${SKEEN_API_URL}/download/skeen"
 
 readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
-readonly SINGBOX_RUN_VERSION="/tmp/skeen_singbox_version"
+readonly SINGBOX_RUN_VERSION="${RUN_DIR}/version"
 readonly SINGBOX_BIN_PATH="${ENTWARE_DIR}/bin/skeen-box"
 readonly SINGBOX_DEFAULT_CONFIG_PATH="${WORK_DIR}/config.json"
 readonly SINGBOX_API_URL="https://github.com/SagerNet/sing-box/releases/latest"
@@ -148,6 +149,8 @@ if is_tty; then
   trap cleanup EXIT TERM
   trap 'printf "\n"; cleanup; exit 130' INT
 fi
+
+create_run_dir() { if [ ! -d "$RUN_DIR" ]; then mkdir -p "$RUN_DIR" && chmod 700 "$RUN_DIR"; fi }
 
 create_skeen_config() {
   if [ "$1" = "force" ]; then
@@ -281,8 +284,8 @@ check_and_create_or_sync_skeen_config() {
   [ ! -f "$SKEEN_CONFIG" ] && create_skeen_config
 
   if [ ! -f "$SKEEN_RUN_CONFIG" ] || files_differ "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"; then
-    if cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"; then
-      chmod 644 "$SKEEN_RUN_CONFIG"
+    if create_run_dir && cp -fp "$SKEEN_CONFIG" "$SKEEN_RUN_CONFIG"; then
+      chmod 700 "$SKEEN_RUN_CONFIG"
     else
       exiterr "Failed to synchronize $SKEEN_CONFIG to memory"
     fi
@@ -550,7 +553,7 @@ get_current_version() {
       binary_hash="${hash_output%% *}"
 
       if [ -n "$binary_hash" ] && [ "$cached_hash" = "$binary_hash" ]; then
-        if [ -n "$file_metadata" ]; then
+        if [ -n "$file_metadata" ] && create_run_dir; then
           echo "${SINGBOX_BIN}|${file_metadata}|${binary_hash}|${cached_ver}" > "$SINGBOX_RUN_VERSION"
         fi
         echo "$cached_ver"
@@ -562,7 +565,7 @@ get_current_version() {
       set -- $raw_output
       ver="${3:-unknown}"
 
-      if [ -n "$file_metadata" ] && [ -n "$binary_hash" ]; then
+      if [ -n "$file_metadata" ] && [ -n "$binary_hash" ] && create_run_dir; then
         echo "${SINGBOX_BIN}|${file_metadata}|${binary_hash}|${ver}" > "$SINGBOX_RUN_VERSION"
       fi
       echo "$ver"
@@ -1907,11 +1910,11 @@ set_tun_rules() {
 
 get_skeen_run_script_cmd() {
   if [ ! -f "$SKEEN_RUN_SCRIPT" ] || files_differ "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT"; then
-    if cp -fp "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT"; then
-      chmod 755 "$SKEEN_RUN_SCRIPT"
+    if create_run_dir && cp -fp "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT"; then
+      chmod 700 "$SKEEN_RUN_SCRIPT"
       echo "$SKEEN_RUN_SCRIPT apply_firewall netfilter \"\$table\""
     else
-      echo "$SKEEN_PROC apply_firewall netfilter \"\$table\""
+      echo "$SKEEN_SCRIPT apply_firewall netfilter \"\$table\""
     fi
   fi
 }

@@ -161,10 +161,11 @@ Manage SKeen using the `skeen` command.
 │
 └── tmp/                       # Temporary download files
 
-/tmp/ (RAM Disk) - synced into memory:
-├── skeen.sh                   # Script copy - updated after start/reboot
-├── skeen.json                 # Config cache - synced on source changes
-├── skeen_singbox_version      # sing-box version cache - updated on binary change
+/tmp/  (RAM Disk) - synced into memory:
+├── .skeen/
+│   ├── skeen.sh               # Script copy - updated after start/reboot
+│   ├── skeen.json             # Config cache - synced on source changes
+│   └── version                # sing-box version cache - updated on binary change
 └── run/
     └── skeen.pid              # PID file of the sing-box process
 ```
