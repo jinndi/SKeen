@@ -211,6 +211,32 @@
     "min_idle_session": 5                 // Поддерживать как минимум 5 активных соединений
   },
 
+  // 6.1. AnyTLS + Reality
+  {
+    "tag": "anytls-reality",
+    "type": "anytls",
+    "server": "<ваш.домен.com>",
+    "server_port": 5543,
+    "password": "<ваш_пароль>",
+    "tls": {
+      "enabled": true,
+      "server_name": "github.com", // Совпадает с конфигурацией сервера.
+      "insecure": false,
+      "reality": {
+        "enabled": true,
+        "public_key": "<ваш_публичный_ключ>", // Полученный при: skeen-box generate reality-keypair
+        "short_id": "<ваш_id>" // Совпадает с конфигурацией сервера
+      },
+      "utls": {
+        "enabled": true,
+        "fingerprint": "firefox" // "chrome" c постквантом не использовать (модицикации sing-box под Xray)
+      }
+    },
+    "idle_session_check_interval": "30s",
+    "idle_session_timeout": "30s",
+    "min_idle_session": 5
+  },
+
   // 7. VLESS-TLS-WS за Cloudflare с поддержкой Multiplex и Brutal BBR.
   {
     "type": "vless",
@@ -245,6 +271,34 @@
         "up_mbps": 50,
         "down_mbps": 100
       }
+    }
+  },
+
+  // 7.1. VLESS-Vision-Reality + multiplex
+  {
+    "tag": "vless-vision-reality",
+    "type": "vless",
+    "server": "<ваш.домен.com>",
+    "server_port": 5643,
+    "uuid": "<ваш_uuid>",  // Совпадает с конфигурацией сервера для пользователя.
+    "tls": {
+      "enabled": true,
+      "server_name": "github.com", // Совпадает с конфигурацией сервера.
+      "insecure": false,
+      "reality": {
+        "enabled": true,
+        "public_key": "<ваш_публичный_ключ>", // Полученный при: skeen-box generate reality-keypair
+        "short_id": "<ваш_id>" // Совпадает с конфигурацией сервера
+      },
+      "utls": {
+        "enabled": true,
+        "fingerprint": "firefox" // "chrome" c постквантом не использовать (модицикации sing-box под Xray)
+      }
+    },
+    "flow": "xtls-rprx-vision",
+    "multiplex": {
+      "enabled": true,
+      "padding": true
     }
   },
 

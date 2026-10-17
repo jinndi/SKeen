@@ -561,6 +561,47 @@ volumes:
       ]
     },
 
+    // 6.1 AnyTLS + Reality (Если возникли проблемы с получением сертификата)
+    {
+      "type": "anytls",
+      "tag": "anytls-reality-in",
+      "listen": "::",
+      "listen_port": 5543,
+      "users": [
+        {
+          "name": "<ваше_имя_пользователя>",
+          "password": "<ваш_пароль>"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "github.com", // Ваш домен с TLSv1.3, H2 и без редиректов - откуда крадём сертификат
+        "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": "github.com",  // Ваш домен с TLSv1.3, H2 и без редиректов - откуда крадём сертификат
+            "server_port": 443
+          },
+          "private_key": "<ваш_приватный_ключ>", // Полученный при: skeen-box generate reality-keypair
+          "short_id": [
+            "<ваш_id>" // Сгенерировать например в Linux bash: hexdump -n 4 -e ' "%08x"' /dev/urandom
+          ]
+        }
+      },
+      "padding_scheme": [
+        "stop=8",
+        "0=30-30",
+        "1=100-400",
+        "2=400-500,c,500-1000,c,500-1000,c,500-1000,c,500-1000",
+        "3=9-9,500-1000",
+        "4=500-1000",
+        "5=500-1000",
+        "6=500-1000",
+        "7=500-1000"
+      ]
+    },
+
+
     // 7. VLESS-TLS-WS за Cloudflare с поддержкой Multiplex и Brutal BBR.
     // Почти идентично TROJAN п.3., никаких дополнительных преимуществ,
     // т.к. протоколы VLESS и TROJAN работают одинаково через WebSocket,
@@ -594,6 +635,46 @@ volumes:
           "up_mbps": 1000,
           "down_mbps": 1000
         }
+      }
+    },
+
+    // 7.1 VLESS-Vision-Reality + multiplex
+    // - Все прексано знают этот протокол и надстройку TLS (многие и ничего другого)
+    // - Не тебует сертификата, крадет чужой, за счет этого и популярен.
+    // Не рекомендую использовать маскировку под домены за CDN.
+    // Да и в целом эту связку считаю переоценённой: она слишком распиарена, но не является панацеей.
+    // Подробнее: https://blog.skk.moe/post/to-kill-a-parrot-detecting-xtls-vless-reality-server/
+    // Ключи получаем через: skeen-box generate reality-keypair
+    {
+      "type": "vless",
+      "tag": "vless-vision-reality-in",
+      "listen": "::",
+      "listen_port": 5643,
+      "users": [
+        {
+          "name": "<ваше_имя_пользователя>", // Любое имя для пользователя.
+          "uuid": "<ваш_uuid>", // Сгенерировать например в Linux bash: cat /proc/sys/kernel/random/uuid
+          "flow": "xtls-rprx-vision"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "github.com", // Ваш домен с TLSv1.3, H2 и без редиректов - откуда крадём сертификат
+        "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": "github.com",  // Ваш домен с TLSv1.3, H2 и без редиректов - откуда крадём сертификат
+            "server_port": 443
+          },
+          "private_key": "<ваш_приватный_ключ>", // Полученный при: skeen-box generate reality-keypair
+          "short_id": [
+            "<ваш_id>" // Сгенерировать например в Linux bash: hexdump -n 4 -e ' "%08x"' /dev/urandom
+          ]
+        }
+      },
+      "multiplex": {
+        "enabled": true,
+        "padding": true
       }
     },
 
@@ -758,6 +839,7 @@ volumes:
     },
 
     // 10. TUIC | Основан на QUIC, встроенная поддержка UDP, ускорение BBR
+    // На роутерах предпочтительней чем Hy2 (меньше грузит)
     {
       "type": "tuic",
       "tag": "tuic-in",
