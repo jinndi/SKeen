@@ -112,9 +112,6 @@ services:
       SUB_STORE_BACKEND_API_HOST: 0.0.0.0
       SUB_STORE_BACKEND_API_PORT: 3001
       SUB_STORE_BACKEND_MERGE: true
-      # HTTP-META интерфейс, как правило, никаких изменений не требуется.
-      PORT: 9876
-      HOST: 127.0.0.1
     network_mode: host
     volumes:
       - sub_store:/opt/app/data

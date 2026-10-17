@@ -40,8 +40,6 @@ services:
       SUB_STORE_BACKEND_MERGE: true
       SUB_STORE_FRONTEND_BACKEND_PATH: /fKffdsfgMfdglmkf82LDfg0234fmD
       SUB_STORE_CORS_ALLOWED_ORIGINS: https://ваш.домем-sub-store.com
-      PORT: 9876
-      HOST: 127.0.0.1
     network_mode: host
     volumes:
       - sub_store:/opt/app/data
@@ -143,17 +141,7 @@ volumes:
       "tls": {
         "enabled": true,
         "server_name": "na.mydomain.com",
-        "certificate_provider": "ZeroSSL",
-        "ech": {
-          "enabled": true,
-          "key": [
-            "-----BEGIN ECH KEYS-----",
-            "ACCwd/ByvkkmBiO/rS8SCkB4qCYRHYpvmrj2up53ImldlwBE/g0AQAAAIAAgVZ7M",
-            "R4Lt44VaC9+h6tWu4UDFWZt3T/N2+UQg7ThBNjsADAABAAEAAQACAAEAAwAJeWFu",
-            "ZGV4LnJ1AAA=",
-            "-----END ECH KEYS-----"
-          ]
-        }
+        "certificate_provider": "ZeroSSL"
       }
     },
     {
@@ -269,16 +257,7 @@ volumes:
     },
     "tls": {
       "enabled": true,
-      "server_name": "na.mydomain.com",
-      "ech": {
-        "enabled": true,
-        "config": [
-          "-----BEGIN ECH CONFIGS-----",
-          "AET+DQBAAAAgACDVJeKtBLpyrY4QN/tFXSG9mjtP8jyf8WVGByBUHfysdwAMAAEA",
-          "AQABAAIAAQADAAl5YW5kZXgucnUAAA==",
-          "-----END ECH CONFIGS-----"
-        ]
-      }
+      "server_name": "na.mydomain.com"
     }
   },
   {
