@@ -144,3 +144,19 @@ The best approach to eliminate ads (use these together):
 
 This allows you to use global DNS providers like Google DNS and Cloudflare, which is the proper approach (and proxying them through a tunnel is best left unmentioned).
 </details>
+
+<details>
+  <summary>Compatibility with other “tools”?</summary>
+<br>
+
+If you've decided to install SKeen, then there's no point in using other similar solutions.
+
+Compatibility with other so-called “tools” has not been tested and will not be tested. If you need to, test them yourself, but don't ask SKeen to accommodate anything else.
+</details>
+
+<details>
+  <summary>Why can't I get my full internet connection speed?</summary>
+<br>
+
+If your speed exceeds 20 Mbps, you've already crossed the threshold and are free. But the price of this freedom and security is a loss of megabits. Appreciate it.
+</details>
