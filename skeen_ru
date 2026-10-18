@@ -15,7 +15,7 @@ readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.8.1"
+readonly SKEEN_VERSION="5.8.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="$RUN_DIR/$SKEEN_PROC.sh"
@@ -1356,8 +1356,6 @@ done
 add_rule "$iptables" "$table" "$chain" \
 -p "$protocols" $(get_connmark_match_opt "$protocols") -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
 ;;
-"proxy_router_owner")add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
-;;
 "proxy_router_dns")if
 [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]
 then
@@ -1400,8 +1398,7 @@ add_skeen_rules "$iptables" "$table" "$chain" "intercept_fakeip" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "redirect" "$protocols"
 fi
 ;;
-"$CHAIN_OUTPUT")add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_owner" "$protocols"
-add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
+"$CHAIN_OUTPUT")add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
 if [ "$table" = "mangle" ];then
 add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_dns" "$protocols"
 add_skeen_rules "$iptables" "$table" "$chain" "exclude_set" "$protocols"
@@ -1415,14 +1412,18 @@ esac
 goto_chain_rules(){
 local iptables="${1:-}" table="${2:-}" chain="${3:-}" target_chain="${4:-}"
 local base="-m conntrack ! --ctstate INVALID -g $target_chain"
-local r1="" r2=""
+local r1="$base" r2=""
 $iptables -w -t "$table" -S "$target_chain" >/dev/null 2>&1||return 0
-if [ "$chain" = "PREROUTING" ]&&[ -n "$SKEEN_MARK_POLICY" ];then
+case "$chain" in
+PREROUTING)if
+[ -n "$SKEEN_MARK_POLICY" ]
+then
 r1="-m connmark --mark $SKEEN_MARK_POLICY $base"
 [ "$table" != "$TABLE_REDIRECT" ]&&[ "$SKEEN_PROXY_ROUTER" = "1" ]&&r2="-m mark --mark $TABLE_MARK $base"
-else
-r1="$base"
 fi
+;;
+OUTPUT)r1="-m owner ! --gid-owner $SKEEN_PROC $base"
+esac
 for r in "$r1" "$r2";do
 [ -z "$r" ]&&continue
 $iptables -w -t "$table" -C "$chain" $r >/dev/null 2>&1||$iptables -w -t "$table" -A "$chain" $r
@@ -2556,12 +2557,6 @@ fw_test "$1" "$2" "$content" "skeen_keendns" "KeenDNS accept"
 return 0
 fi
 fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
-if [ "$2" = "$CHAIN_PREROUTING" ]&&[ -n "$SKEEN_MARK_POLICY" ];then
-fw_test "$1" "$2" "$content" "connmark match" "Connmark match"
-fi
-if [ "$2" = "$CHAIN_OUTPUT" ];then
-fw_test "$1" "$2" "$content" "owner" "Process owner"
-fi
 if [ "$2" = "$CHAIN_DNS" ];then
 fw_test "$1" "$2" "$content" "skeen_dns" "DNS redirect"
 return 0
