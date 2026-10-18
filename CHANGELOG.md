@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.8.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.8.1...SKeen-v5.8.2) (2026-10-18)
+
+
+### 🛠 Refactor
+
+* **core:** change anti-loop mechanism ([4da8873](https://github.com/jinndi/SKeen/commit/4da8873c9942dcea8059c03b0c5619ab7e86b37c))
+
 ## [5.8.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.8.0...SKeen-v5.8.1) (2026-10-16)
 
 
