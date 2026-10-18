@@ -1678,10 +1678,6 @@ add_skeen_rules() {
       -p "$protocols" $(get_connmark_match_opt "$protocols") -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
     ;;
 
-  "proxy_router_owner")
-    add_rule "$iptables" "$table" "$chain" -m owner --gid-owner "$SKEEN_PROC" -j ACCEPT
-    ;;
-
   "proxy_router_dns")
     if [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]; then
       create_or_flush_chain "$iptables" "$table" "$CHAIN_DNS_OUT" || return 0
@@ -1730,7 +1726,6 @@ set_chain_rules() {
     ;;
 
   "$CHAIN_OUTPUT")
-    add_skeen_rules "$iptables" "$table" "$chain" "proxy_router_owner" "$protocols"
     add_skeen_rules "$iptables" "$table" "$chain" "ctdir_reply" "$protocols"
 
     if [ "$table" = "mangle" ]; then
@@ -1748,17 +1743,20 @@ set_chain_rules() {
 goto_chain_rules() {
   local iptables="${1:-}" table="${2:-}" chain="${3:-}" target_chain="${4:-}"
   local base="-m conntrack ! --ctstate INVALID -g $target_chain"
-  local r1="" r2=""
+  local r1="$base" r2=""
 
   # shellcheck disable=SC2086
   $iptables -w -t "$table" -S "$target_chain" >/dev/null 2>&1 || return 0
 
-  if [ "$chain" = "PREROUTING" ] && [ -n "$SKEEN_MARK_POLICY" ]; then
-    r1="-m connmark --mark $SKEEN_MARK_POLICY $base"
-    [ "$table" != "$TABLE_REDIRECT" ] && [ "$SKEEN_PROXY_ROUTER" = "1" ] && r2="-m mark --mark $TABLE_MARK $base"
-  else
-    r1="$base"
-  fi
+  case "$chain" in
+    PREROUTING)
+      if [ -n "$SKEEN_MARK_POLICY" ]; then
+        r1="-m connmark --mark $SKEEN_MARK_POLICY $base"
+        [ "$table" != "$TABLE_REDIRECT" ] && [ "$SKEEN_PROXY_ROUTER" = "1" ] && r2="-m mark --mark $TABLE_MARK $base"
+      fi
+    ;;
+    OUTPUT) r1="-m owner ! --gid-owner $SKEEN_PROC $base" ;;
+  esac
 
   for r in "$r1" "$r2"; do
     [ -z "$r" ] && continue
@@ -3183,14 +3181,6 @@ fw_test_chain() {
   fi
 
   fw_test "$1" "$2" "$content" "[1-9][0-9]* references" "Reference"
-
-  if [ "$2" = "$CHAIN_PREROUTING" ] && [ -n "$SKEEN_MARK_POLICY" ]; then
-    fw_test "$1" "$2" "$content" "connmark match" "Connmark match"
-  fi
-
-  if [ "$2" = "$CHAIN_OUTPUT" ]; then
-    fw_test "$1" "$2" "$content" "owner" "Process owner"
-  fi
 
   if [ "$2" = "$CHAIN_DNS" ]; then
     fw_test "$1" "$2" "$content" "skeen_dns" "DNS redirect"
