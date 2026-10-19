@@ -1,7 +1,7 @@
 # FAQ
 
 <details>
-<summary>ADGuard Home & DNS?</summary>
+<summary>1. ADGuard Home & DNS?</summary>
 <br>
 
 The DNS module in Sing-box is a core part of how it operates. It is used for:
@@ -52,7 +52,7 @@ My recommendations are as follows: the main rule is to use 100% working servers 
 </details>
 
 <details>
-  <summary>FakeIP?</summary>
+  <summary>2. FakeIP?</summary>
 <br>
 
 The following are intentionally **excluded** from the bypass list (local network exceptions):
@@ -66,7 +66,7 @@ The following are intentionally **excluded** from the bypass list (local network
 </details>
 
 <details>
-  <summary>Installation to internal memory?</summary>
+  <summary>3. Installation to internal memory?</summary>
 <br>
 
 This is highly discouraged. From a manufacturer's perspective, this is a sure way to wear out your device's memory faster, forcing an early replacement. This option will never be added to SKeen; however, nothing stops you from skipping the **sing-box** installation and using your own binary.
@@ -74,7 +74,7 @@ This is highly discouraged. From a manufacturer's perspective, this is a sure wa
 </details>
 
 <details>
-  <summary>Multi-WAN Mode?</summary>
+  <summary>4. Multi-WAN Mode?</summary>
 <br>
 
 When Multi-WAN is enabled, sing-box's own outbound traffic may "hop" between different providers. Since most proxy protocols (VLESS, VMess, Shadowsocks) are highly sensitive to client IP changes within a single session, the connection becomes extremely unstable. For proper operation, you must strictly bind sing-box to a single internet channel.
@@ -89,7 +89,7 @@ An example of how to bind a connection to a specific interface can be found in t
 </details>
 
 <details>
-  <summary>KeenDNS in TProxy mode?</summary>
+  <summary>5. KeenDNS in TProxy mode?</summary>
 <br>
 
 If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from the local network in **TProxy** mode, you need to configure a `hosts` or `local` type DNS server in the sing-box configuration (see configuration examples in the `examples/basic/keendns-tproxy-local-access.json file`). If internet access is allowed, no additional.
@@ -101,7 +101,7 @@ If you have disabled internet access to your subdomain in the "Domain Name" sect
 </details>
 
 <details>
-  <summary>Routing by DSCP?</summary>
+  <summary>6. Routing by DSCP?</summary>
 <br>
 
 **This feature is not and will not be available in SKeen.**
@@ -115,11 +115,14 @@ Reasons why:
 
 **Q:** What should I do instead?
 
-**A:** Learn how to build routing using Sing-box rules, and use FakeIP to filter traffic.
+**A:**
+
+1. Learn how to build routing using Sing-box rules, and use FakeIP to filter traffic.
+2. Install a graphical sing-box client for Windows (SFW) or Linux (SFL) and configure full routing with process-based rules using the [base template for Sub-Store](../examples/sub-store/templates/desktop.json).
 </details>
 
 <details>
-  <summary>Memory Usage?</summary>
+  <summary>7. Memory Usage?</summary>
 <br>
 
 If using protocols like VLESS or Trojan in TPROXY mode with 60 active connections and standard routing templates (over 200,000 domains for DNS and routing), Zashboard shows the following metrics:
@@ -132,7 +135,7 @@ P.S. sing-box 1.15.0-alpha.6
 </details>
 
 <details>
-  <summary>I see ads - what should I do?</summary>
+  <summary>8. I see ads - what should I do?</summary>
 <br>
 
 There's no escaping ads entirely. DNS filtering alone won't get rid of them because it only blocks domain requests, leaving direct IP requests and embedded JS scripts in HTML pages untouched.
@@ -146,7 +149,7 @@ This allows you to use global DNS providers like Google DNS and Cloudflare, whic
 </details>
 
 <details>
-  <summary>Compatibility with other “tools”?</summary>
+  <summary>9. Compatibility with other “tools”?</summary>
 <br>
 
 If you've decided to install SKeen, then there's no point in using other similar solutions.
@@ -155,8 +158,21 @@ Compatibility with other so-called “tools” has not been tested and will not 
 </details>
 
 <details>
-  <summary>Why can't I get my full internet connection speed?</summary>
+  <summary>10. Why can't I get my full internet connection speed?</summary>
 <br>
 
 If your speed exceeds 20 Mbps, you've already crossed the threshold and are free. But the price of this freedom and security is a loss of megabits. Appreciate it.
+</details>
+
+<details>
+  <summary>11. Which self-hosted panel should I use?</summary>
+  <br>
+
+For personal use, if you don't need traffic usage monitoring, it's better to skip the panel and deploy the required protocols using Docker - [examples](../examples/server-client/Server-sing-box.md).
+
+If you need a web interface, consider [S-UI](https://github.com/alireza0/s-ui).
+
+For commercial use, consider [Nexora](https://docs.nexora-panel.org/use/).
+
+Xray-based panels are not the best choice, especially if you need a modern, flexible stack with broad client compatibility. Mihomo-based panels are even less suitable for server-side use: Mihomo is primarily designed for proxy clients, not for managing server infrastructure.
 </details>
