@@ -176,3 +176,17 @@ For commercial use, consider [Nexora](https://docs.nexora-panel.org/use/).
 
 Xray-based panels are not the best choice, especially if you need a modern, flexible stack with broad client compatibility. Mihomo-based panels are even less suitable for server-side use: Mihomo is primarily designed for proxy clients, not for managing server infrastructure.
 </details>
+
+<details>
+  <summary>12. Why doesn't the "🧲 Torrent" selector work?</summary>
+<br>
+
+Refer to the [sing-box configuration documentation](../examples/configs/stable/config-commented.jsonc).
+</details>
+
+<details>
+  <summary>13. Which storage device is best for Entware?</summary>
+<br>
+
+For this purpose, a good old HDD is the best choice over a USB flash drive, SSD, or NVMe drive. With proper use, it can easily last more than 15 years.
+</details>
