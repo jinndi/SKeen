@@ -190,3 +190,10 @@ Refer to the [sing-box configuration documentation](../examples/configs/stable/c
 
 For this purpose, a good old HDD is the best choice over a USB flash drive, SSD, or NVMe drive. With proper use, it can easily last more than 15 years.
 </details>
+
+<details>
+  <summary>14. Is Gemini not working?</summary>
+<br>
+
+Try changing your IP address or proxy provider, or use [edgetunnel](../examples/server-client/Example-5.md).
+</details>
