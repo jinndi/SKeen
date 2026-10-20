@@ -8,74 +8,9 @@
 
 [![Build](https://github.com/jinndi/SKeen/actions/workflows/release.yml/badge.svg)](https://github.com/jinndi/SKeen/actions/workflows/release.yml) [![SKeen](https://img.shields.io/github/v/release/jinndi/SKeen)](https://github.com/jinndi/SKeen/releases/latest) [![License](https://img.shields.io/github/license/jinndi/SKeen)](https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/LICENSE) [![sing-box-latest](https://img.shields.io/github/v/release/SagerNet/sing-box?label=sing-box-latest&display_name=tag)](https://github.com/SagerNet/sing-box/releases/latest) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jinndi/SKeen)
 
-🇺🇸 **English** | [🇷🇺 На русском](./README-RU.md)
+🇺🇸 **English** | [🇷🇺 На русском](./README-RU.md) | [🧩 FAQ](docs/FAQ.md)
 
 SKeen configures transparent proxying on Keenetic and Netcraze routers using sing-box. It manages firewall rules, service lifecycle and configuration synchronization.
-
-<details>
-  <summary>Why sing-box?</summary>
-<br>
-
-**sing-box** is an open-source universal proxy engine written in Go. It is focused on maximum performance, low resource consumption, and support for the most modern protocols
-
-**Comparison: Proxy Engines for Routers & Embedded**
-
-|Feature                 |sing-box         |Xray              |mihomo          |
-|------------------------|-----------------|------------------|----------------|
-|Resource Usage (RAM/CPU)|✅ Minimal        |⚠️ Moderate       |❌ High          |
-|Protocol Support        |✅ Advanced       |⚠️ Limited        |✅ Extensive     |
-|Multiplexing            |✅ Superior       |⚠️ Legacy         |✅ Good          |
-|DNS Logic               |🥇 Native (+Fake-IP)|🥉 Sniffing (+FakeDNS)|🥈 Fake-IP (+Real)|
-|TUN efficiency          |✅ High           |⚠️ Basic          |⚠️ Basic         |
-|L7 Sniffing (Protocols) |✅ Leader         |⚠️ Mid-tier       |❌ Domain-only   |
-|Routing                 |✅ Flexible       |⚠️ Basic          |✅ (but heavier) |
-|Rule Management         |✅ Rule-sets (bin)|⚠️ Geo-files (dat)|✅ Rule-providers|
-|Independent Project     |✅ Yes            |❌ (V2Ray fork)    |❌ (Clash fork)  |
-|Learning Curve          |🔴 High          |🟡 Moderate       |🟢 Low          |
-
-Notes:
-
-> sing-box excels due to its modularity and clean-slate architecture: its DNS stack enables complex configurations with minimal RAM overhead. In contrast, mihomo (Clash) prioritizes automation at the cost of high resource usage, while Xray is hindered by legacy networking code and heavy .dat geo-files.
-
-> Sniffing Differences: sing-box and Xray utilize full DPI (Deep Packet Inspection), which allows them to identify the protocol type (e.g., BitTorrent) based on packet content. In contrast, mihomo is limited to metadata extraction (domains) from TLS/HTTP headers, making protocol-based routing impossible.
-
-> The high learning curve of sing-box stems from its strict JSON schema and lack of "magic" defaults. This is a trade-off for granular control and peak performance on low-end hardware.
-</details>
-
-<details>
-  <summary>Web UI?</summary>
-<br>
-
-💡 For flexible manual configuration, automation, and synchronization, use [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) in a Docker container on a VPS or local host, or [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on your PC.
-
-A [synchronization plugin](https://github.com/jinndi/sync-profile-to-skeen) is also available, allowing you to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox), although **Sub-Store is the preferred option**.
-
-The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
-
-* **Resource Efficiency**: Not having a separate management panel saves RAM and reduces CPU overhead, leaving more resources for traffic routing.
-* **Integration**: Management and monitoring are available through the sing-box API and router tools, without duplicating their functions in a separate panel.
-* **Security and Stability**: Fewer continuously running services and components mean fewer potential points of failure and conflicts within the system.
-* **Full Control**: Directly editing the configuration provides access to sing-box features without the limitations of simplified graphical interfaces. Implementing all these features as buttons requires developers to continually update and promptly maintain the panel.
-- **Configuration Sync Priority**: Full sing-box configuration synchronization with support for advanced external tools such as Sub-Store.
-* **No Constant Need**: In general, a separate management panel is not required: a correctly configured setup is created for specific tasks and usually does not need regular changes.
-* **Focus on the Main Task**: SKeen is designed for transparent traffic forwarding and routing. For a network tool of this kind, a separate heavy management panel would generally be excessive.
-</details>
-
-<details>
-  <summary>Architecture?</summary>
-<br>
-
-The description is provided in the [Architecture](docs/ARCHITECTURE.md) document.
-
-</details>
-
-<details>
-  <summary>ADGuard Home & DNS?</summary>
-<br>
-
-The complete FAQ is available in [docs/FAQ.md](docs/FAQ.md).
-
-</details>
 
 ## Features
 
@@ -105,9 +40,10 @@ The complete FAQ is available in [docs/FAQ.md](docs/FAQ.md).
 
 Make sure that Entware is installed. Otherwise, find the instructions for your model in the [Support Center](https://support.keenetic.com/) → User Guide → Management → OPKG → Installing the Entware repository on a USB drive / Installing OPKG Entware on internal router memory.
 
-Nothing gets installed **at all**?
-
-[Try the offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
+> [!TIP]
+> Nothing gets installed **at all**?
+>
+> Try the [offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
 
 **Run the following command via SSH from the Entware environment:**
 
@@ -131,8 +67,8 @@ Russian-localized version: See [README-RU.md](README-RU.md)
 
 **Configure the following:**
 
-1. SKeen in `/opt/etc/skeen/skeen.json`.
-2. sing-box in `/opt/etc/skeen/config.json`.
+1. SKeen in [`/opt/etc/skeen/skeen.json`](./docs/CONFIGURATION.md).
+2. sing-box in [`/opt/etc/skeen/config.json`](./examples/configs/stable/config-commented.jsonc).
 3. The web dashboard at `http://192.168.1.1:9999`. By default, it is available at the router's IP address (typically `192.168.1.1`).
 
 **Important:**

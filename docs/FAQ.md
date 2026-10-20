@@ -1,7 +1,63 @@
 # FAQ
 
 <details>
-<summary>1. ADGuard Home & DNS?</summary>
+  <summary>1. Why sing-box?</summary>
+<br>
+
+**sing-box** is an open-source universal proxy engine written in Go. It is focused on maximum performance, low resource consumption, and support for the most modern protocols
+
+**Comparison: Proxy Engines for Routers & Embedded**
+
+|Feature                 |sing-box         |Xray              |mihomo          |
+|------------------------|-----------------|------------------|----------------|
+|Resource Usage (RAM/CPU)|✅ Minimal        |⚠️ Moderate       |❌ High          |
+|Protocol Support        |✅ Advanced       |⚠️ Limited        |✅ Extensive     |
+|Multiplexing            |✅ Superior       |⚠️ Legacy         |✅ Good          |
+|DNS Logic               |🥇 Native (+Fake-IP)|🥉 Sniffing (+FakeDNS)|🥈 Fake-IP (+Real)|
+|TUN efficiency          |✅ High           |⚠️ Basic          |⚠️ Basic         |
+|L7 Sniffing (Protocols) |✅ Leader         |⚠️ Mid-tier       |❌ Domain-only   |
+|Routing                 |✅ Flexible       |⚠️ Basic          |✅ (but heavier) |
+|Rule Management         |✅ Rule-sets (bin)|⚠️ Geo-files (dat)|✅ Rule-providers|
+|Independent Project     |✅ Yes            |❌ (V2Ray fork)    |❌ (Clash fork)  |
+|Learning Curve          |🔴 High          |🟡 Moderate       |🟢 Low          |
+
+Notes:
+
+> sing-box excels due to its modularity and clean-slate architecture: its DNS stack enables complex configurations with minimal RAM overhead. In contrast, mihomo (Clash) prioritizes automation at the cost of high resource usage, while Xray is hindered by legacy networking code and heavy .dat geo-files.
+
+> Sniffing Differences: sing-box and Xray utilize full DPI (Deep Packet Inspection), which allows them to identify the protocol type (e.g., BitTorrent) based on packet content. In contrast, mihomo is limited to metadata extraction (domains) from TLS/HTTP headers, making protocol-based routing impossible.
+
+> The high learning curve of sing-box stems from its strict JSON schema and lack of "magic" defaults. This is a trade-off for granular control and peak performance on low-end hardware.
+</details>
+
+<details>
+  <summary>2. Web UI?</summary>
+<br>
+
+💡 For flexible manual configuration, automation, and synchronization, use [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) in a Docker container on a VPS or local host, or [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on your PC.
+
+A [synchronization plugin](https://github.com/jinndi/sync-profile-to-skeen) is also available, allowing you to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox), although **Sub-Store is the preferred option**.
+
+The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
+
+* **Resource Efficiency**: Not having a separate management panel saves RAM and reduces CPU overhead, leaving more resources for traffic routing.
+* **Integration**: Management and monitoring are available through the sing-box API and router tools, without duplicating their functions in a separate panel.
+* **Security and Stability**: Fewer continuously running services and components mean fewer potential points of failure and conflicts within the system.
+* **Full Control**: Directly editing the configuration provides access to sing-box features without the limitations of simplified graphical interfaces. Implementing all these features as buttons requires developers to continually update and promptly maintain the panel.
+- **Configuration Sync Priority**: Full sing-box configuration synchronization with support for advanced external tools such as Sub-Store.
+* **No Constant Need**: In general, a separate management panel is not required: a correctly configured setup is created for specific tasks and usually does not need regular changes.
+* **Focus on the Main Task**: SKeen is designed for transparent traffic forwarding and routing. For a network tool of this kind, a separate heavy management panel would generally be excessive.
+</details>
+
+<details>
+  <summary>3. Architecture?</summary>
+<br>
+
+The description is provided in the [Architecture](docs/ARCHITECTURE.md) document.
+</details>
+
+<details>
+<summary>4. ADGuard Home & DNS?</summary>
 <br>
 
 The DNS module in Sing-box is a core part of how it operates. It is used for:
@@ -52,7 +108,7 @@ My recommendations are as follows: the main rule is to use 100% working servers 
 </details>
 
 <details>
-  <summary>2. FakeIP?</summary>
+  <summary>5. FakeIP?</summary>
 <br>
 
 The following are intentionally **excluded** from the bypass list (local network exceptions):
@@ -66,7 +122,7 @@ The following are intentionally **excluded** from the bypass list (local network
 </details>
 
 <details>
-  <summary>3. Installation to internal memory?</summary>
+  <summary>6. Installation to internal memory?</summary>
 <br>
 
 This is highly discouraged. From a manufacturer's perspective, this is a sure way to wear out your device's memory faster, forcing an early replacement. This option will never be added to SKeen; however, nothing stops you from skipping the **sing-box** installation and using your own binary.
@@ -74,7 +130,7 @@ This is highly discouraged. From a manufacturer's perspective, this is a sure wa
 </details>
 
 <details>
-  <summary>4. Multi-WAN Mode?</summary>
+  <summary>7. Multi-WAN Mode?</summary>
 <br>
 
 When Multi-WAN is enabled, sing-box's own outbound traffic may "hop" between different providers. Since most proxy protocols (VLESS, VMess, Shadowsocks) are highly sensitive to client IP changes within a single session, the connection becomes extremely unstable. For proper operation, you must strictly bind sing-box to a single internet channel.
@@ -89,7 +145,7 @@ An example of how to bind a connection to a specific interface can be found in t
 </details>
 
 <details>
-  <summary>5. KeenDNS in TProxy mode?</summary>
+  <summary>8. KeenDNS in TProxy mode?</summary>
 <br>
 
 If you have disabled internet access to your subdomain in the "Domain Name" section of the control panel, then to access **KeenDNS** from the local network in **TProxy** mode, you need to configure a `hosts` or `local` type DNS server in the sing-box configuration (see configuration examples in the `examples/basic/keendns-tproxy-local-access.json file`). If internet access is allowed, no additional.
@@ -101,7 +157,7 @@ If you have disabled internet access to your subdomain in the "Domain Name" sect
 </details>
 
 <details>
-  <summary>6. Routing by DSCP?</summary>
+  <summary>9. Routing by DSCP?</summary>
 <br>
 
 **This feature is not and will not be available in SKeen.**
@@ -122,7 +178,7 @@ Reasons why:
 </details>
 
 <details>
-  <summary>7. Memory Usage?</summary>
+  <summary>10. Memory Usage?</summary>
 <br>
 
 If using protocols like VLESS or Trojan in TPROXY mode with 60 active connections and standard routing templates (over 200,000 domains for DNS and routing), Zashboard shows the following metrics:
@@ -135,7 +191,7 @@ P.S. sing-box 1.15.0-alpha.6
 </details>
 
 <details>
-  <summary>8. I see ads - what should I do?</summary>
+  <summary>11. I see ads - what should I do?</summary>
 <br>
 
 There's no escaping ads entirely. DNS filtering alone won't get rid of them because it only blocks domain requests, leaving direct IP requests and embedded JS scripts in HTML pages untouched.
@@ -149,7 +205,7 @@ This allows you to use global DNS providers like Google DNS and Cloudflare, whic
 </details>
 
 <details>
-  <summary>9. Compatibility with other “tools”?</summary>
+  <summary>12. Compatibility with other “tools”?</summary>
 <br>
 
 If you've decided to install SKeen, then there's no point in using other similar solutions.
@@ -158,14 +214,14 @@ Compatibility with other so-called “tools” has not been tested and will not 
 </details>
 
 <details>
-  <summary>10. Why can't I get my full internet connection speed?</summary>
+  <summary>13. Why can't I get my full internet connection speed?</summary>
 <br>
 
 If your speed exceeds 20 Mbps, you've already crossed the threshold and are free. But the price of this freedom and security is a loss of megabits. Appreciate it.
 </details>
 
 <details>
-  <summary>11. Which self-hosted panel should I use?</summary>
+  <summary>14. Which self-hosted panel should I use?</summary>
   <br>
 
 For personal use, if you don't need traffic usage monitoring, it's better to skip the panel and deploy the required protocols using Docker - [examples](../examples/server-client/Server-sing-box.md).
@@ -178,22 +234,22 @@ Xray-based panels are not the best choice, especially if you need a modern, flex
 </details>
 
 <details>
-  <summary>12. Why doesn't the "🧲 Torrent" selector work?</summary>
+  <summary>15. Why doesn't the "🧲 Torrent" selector work?</summary>
 <br>
 
 Refer to the [sing-box configuration documentation](../examples/configs/stable/config-commented.jsonc).
 </details>
 
 <details>
-  <summary>13. Which storage device is best for Entware?</summary>
+  <summary>16. Which storage device is best for Entware?</summary>
 <br>
 
 For this purpose, a good old HDD is the best choice over a USB flash drive, SSD, or NVMe drive. With proper use, it can easily last more than 15 years.
 </details>
 
 <details>
-  <summary>14. Is Gemini not working?</summary>
+  <summary>17. Is Gemini not working?</summary>
 <br>
 
-Try changing your IP address or proxy provider, or use [edgetunnel](../examples/server-client/Example-5.md).
+Change your IP address or proxy provider, or use [edgetunnel](../examples/server-client/Example-5.md).
 </details>
