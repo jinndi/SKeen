@@ -119,9 +119,8 @@ ff00::/8           # Multicast (RFC 4291)
 readonly DELIMETER="------------------------------------------------"
 
 is_tty() {
-  [ -t 1 ] || [ -t 2 ]
+  [ "${FORCE_COLOR:-0}" = "1" ] || [ -t 1 ] || [ -t 2 ]
   ret=$?
-
   is_tty() { return "$ret"; }
   return "$ret"
 }
