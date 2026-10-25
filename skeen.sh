@@ -2791,6 +2791,26 @@ status() {
   fi
 }
 
+status_json() {
+  local running="false" mode="unknown" sb_version="unknown" pid
+
+  if [ -f "$SINGBOX_PID_FILE" ]; then
+    pid="$(cat "$SINGBOX_PID_FILE" 2>/dev/null)"
+    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && running="true"
+  fi
+
+  if [ -f "$FIREWALL_HOOK_FILE" ]; then
+    mode="$(grep -m1 '^export SKEEN_FIREWALL_MODE=' "$FIREWALL_HOOK_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")"
+    [ -z "$mode" ] && mode="unknown"
+  fi
+
+  get_singbox_config
+  sb_version="$(get_current_version "sing")"
+
+  printf '{"running":%s,"version":"%s","mode":"%s","sb_version":"%s"}\n' \
+    "$running" "${SKEEN_VERSION:-unknown}" "$mode" "${sb_version:-unknown}"
+}
+
 print_aligned_table() {
   LC_ALL=C awk -v max_width="${1:-28}" -F'|' '
     function trim(s) { sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
@@ -3833,7 +3853,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   restart) restart ;;
   reload) reload ;;
   kill) kill_proc ;;
-  status) status ;;
+  status) if [ "$2" = "--json" ]; then status_json; else status; fi ;;
   version) version ;;
   iface) show_iface ;;
   connstat) show_connstat ;;
