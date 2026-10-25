@@ -204,6 +204,13 @@ create_skeen_config() {
     }
   },
   "services": {
+    "api": {
+      "auto_start": 1,
+      "port": 5000,
+      "secret": "",
+      "cors_origin": ["*"],
+      "dashboard": 1
+    },
     "proxy": {
       "enabled": 0,
       "port": "",
@@ -429,6 +436,35 @@ get_singbox_config() {
 
   check_and_merge_singbox_config
   check_and_kill_old_singbox_proc
+}
+
+get_service_api_config() {
+  local mode="${1:-}" config_path
+
+  config_path="$(get_skeen_config_path)"
+
+  if [ -n "$config_path" ]; then
+    eval "$(
+      jsonfilter -i "$config_path" \
+        -e SERVICE_API_AUTO_START='@.services.api.auto_start' \
+        -e SERVICE_API_PORT='@.services.api.port' \
+        -e SERVICE_API_SECRET='@.services.api.secret' \
+        -e SERVICE_API_DASHBOARD='@.services.api.dashboard'
+    )"
+    [ "$mode" = "--json" ] &&
+      SERVICE_API_CORS_ORIGIN="$(jsonfilter -i "$config_path" -e '@.services.api.cors_origin' 2>/dev/null)"
+  fi
+
+  : "${SERVICE_API_AUTO_START:=1}"
+  : "${SERVICE_API_PORT:=5000}"
+  : "${SERVICE_API_SECRET:=}"
+  : "${SERVICE_API_CORS_ORIGIN:='["*"]'}"
+  : "${SERVICE_API_DASHBOARD:=1}"
+
+  if [ "$mode" = "--json" ]; then
+    printf '{"port":%s,"secret":"%s","cors_origin":%s,"dashboard":%s}\n' \
+      "$SERVICE_API_PORT" "$SERVICE_API_SECRET" "$SERVICE_API_CORS_ORIGIN" "$SERVICE_API_DASHBOARD"
+  fi
 }
 
 get_service_proxy_config() {
@@ -3883,6 +3919,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     *) show_help | awk '/OpkgTun / {flag=1} flag' ;;
     esac
     ;;
+  get_api_config) get_service_api_config --json ;;
   "") show_menu ;;
   help | *) show_help ;;
   esac
