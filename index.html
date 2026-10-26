@@ -1,0 +1,3668 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231e293b'/><text x='16' y='23' font-family='sans-serif' font-size='22' font-weight='bold' fill='%2394a3b8' text-anchor='middle'>S</text></svg>">
+  <title>SKeen dashboard</title>
+  <style>
+    /* ==========================================================================
+       1. Theme Variables (Catppuccin Mocha & High-Contrast Light Theme)
+       ========================================================================== */
+    :root {
+      --bg-color: #16161e;
+      --card-bg: #1e1e2e;
+      --card-hover: #2a2a3c;
+      --text-color: #cdd6f4;
+      --text-muted: #969ecd;
+      --accent-color: #5d8edc;
+      --accent-glow: rgba(137, 180, 250, 0.15);
+      --success-color: #a6e3a1;
+      --danger-color: #f38ba8;
+      --warning-color: #f9e2af;
+      --info-color: #89dceb;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(137, 180, 250, 0.4);
+      --code-bg: rgba(32, 32, 52, 0.6);
+      --line-num-bg: rgba(10, 10, 14, 0.4);
+      --modal-tab-bg: transparent;
+    }
+
+    [data-theme="light"] {
+      --bg-color: #e9ecef;
+      --card-bg: #ffffff;
+      --card-hover: #f1f3f5;
+      --text-color: #212529;
+      --text-muted: #5e627d;
+      --accent-color: #1971c2;
+      --accent-glow: rgba(25, 113, 194, 0.15);
+      --success-color: #2b8a3e;
+      --danger-color: #c92a2a;
+      --warning-color: #e67700;
+      --info-color: #0b7285;
+      --border-color: rgba(0, 0, 0, 0.15);
+      --border-focus: rgba(25, 113, 194, 0.5);
+      --code-bg: #ffffff;
+      --line-num-bg: #f1f3f5;
+      --modal-tab-bg: transparent;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* ==========================================================================
+       2. Base Resets & Layout
+       ========================================================================== */
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: clamp(6px, 2.5vh, 20px);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .container {
+      max-width: 900px;
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.5vh, 16px);
+      min-width: 0;
+    }
+
+    /* ==========================================================================
+       3. Navigation & Header
+       ========================================================================== */
+    .navbar {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: clamp(8px, 1.2vh, 12px) clamp(10px, 2vw, 16px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      min-width: 0;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+      min-width: 0;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 319px) {
+      .navbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .nav-controls {
+        justify-content: space-between;
+      }
+    }
+
+    /* ==========================================================================
+       4. Buttons, Inputs & Interactive Elements
+       ========================================================================== */
+    button {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.88rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    button svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke-width: 1.75;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background-color: var(--card-hover);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+    }
+
+    button.secondary:hover {
+      border-color: var(--border-focus);
+      opacity: 1;
+    }
+
+    button.danger {
+      background-color: rgba(243, 139, 168, 0.15);
+      color: var(--danger-color);
+      border: 1px solid rgba(243, 139, 168, 0.2);
+    }
+
+    button.danger:hover {
+      background-color: rgba(243, 139, 168, 0.25);
+    }
+
+    button.success-btn {
+      background-color: rgba(166, 227, 161, 0.15);
+      color: var(--success-color);
+      border: 1px solid rgba(166, 227, 161, 0.3);
+    }
+
+    button.success-btn:hover {
+      background-color: rgba(166, 227, 161, 0.25);
+    }
+
+    .icon-btn,
+    .icon-btn-sm,
+    .terminal-clear-btn,
+    .fullscreen-icon-btn {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn {
+      background-color: var(--card-hover);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      flex-shrink: 0;
+      border-radius: 6px;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--border-focus);
+    }
+
+    .icon-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-color);
+      stroke-width: 1.75;
+    }
+
+    .icon-btn-sm {
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .icon-btn-sm svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 1.75;
+    }
+
+    .icon-btn-sm.secondary {
+      background-color: var(--card-hover);
+      color: var(--text-color);
+    }
+
+    .icon-btn-sm.secondary:hover {
+      border-color: var(--border-focus);
+    }
+
+    .icon-btn-sm.danger {
+      background-color: rgba(243, 139, 168, 0.1);
+      color: var(--danger-color);
+    }
+
+    .icon-btn-sm.danger svg {
+      stroke: var(--danger-color);
+    }
+
+    .icon-btn-sm.danger:hover {
+      background-color: rgba(243, 139, 168, 0.2);
+    }
+
+    .fullscreen-icon-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 20;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      opacity: 0.7;
+      padding: 5px;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      backdrop-filter: blur(6px);
+    }
+
+    .fullscreen-icon-btn:hover {
+      opacity: 1;
+      border-color: var(--border-focus);
+    }
+
+    .fullscreen-icon-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      stroke-width: 1.75;
+    }
+
+    .terminal-clear-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 10;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      opacity: 0.7;
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      padding: 0;
+    }
+
+    .terminal-clear-btn:hover {
+      opacity: 1;
+      color: var(--text-color);
+      border-color: var(--border-focus);
+    }
+
+    .terminal-clear-btn svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      stroke-width: 1.75;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      font-size: 0.88rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-color);
+      background-color: var(--card-hover);
+    }
+
+    .tab-btn.active {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* Form Fields & Selects */
+    select.conn-select,
+    select,
+    input[type="text"],
+    input[type="number"] {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-color: var(--code-bg);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c7086' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 30px 8px 10px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      width: 100%;
+      transition: all 0.2s ease;
+      outline: none;
+      cursor: pointer;
+      min-width: 0;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      background-image: none;
+      padding-right: 10px;
+      cursor: text;
+    }
+
+    select.conn-select:hover,
+    select:hover,
+    input[type="text"]:hover,
+    input[type="number"]:hover {
+      border-color: var(--border-focus);
+    }
+
+    select.conn-select:focus,
+    select:focus,
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input.invalid-input,
+    select.invalid-input {
+      border-color: var(--danger-color) !important;
+      box-shadow: 0 0 0 2px rgba(243, 139, 168, 0.3) !important;
+      background-color: rgba(243, 139, 168, 0.05) !important;
+    }
+
+    select.conn-select {
+      height: 36px;
+      min-width: 70px;
+      max-width: 180px;
+      text-overflow: ellipsis;
+    }
+
+    /* Checkbox Customization */
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      position: relative;
+      outline: none;
+      margin: 0 10px 0 0;
+    }
+
+    input[type="checkbox"]:hover {
+      border-color: var(--border-focus);
+    }
+
+    input[type="checkbox"]:checked {
+      background-color: var(--accent-color);
+      border-color: var(--accent-color);
+    }
+
+    input[type="checkbox"]:checked::after {
+      content: '';
+      width: 5px;
+      height: 9px;
+      border: solid #ffffff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      position: absolute;
+      top: 2px;
+    }
+
+    input[type="checkbox"]:focus-visible {
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    button:disabled,
+    select:disabled,
+    input:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    button:disabled:hover,
+    select:disabled:hover {
+      opacity: 0.65;
+      transform: none !important;
+      border-color: var(--border-color) !important;
+    }
+
+    /* ==========================================================================
+       5. Cards & Status Panels
+       ========================================================================== */
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: clamp(10px, 2vh, 20px);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .editor-card {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.2vh, 12px);
+      min-width: 0;
+    }
+
+    .tab-content {
+      display: none;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    h2,
+    h3 {
+      margin-top: 0;
+      color: var(--text-color);
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 12px;
+      background-color: var(--accent-color);
+      border-radius: 2px;
+    }
+
+    .status-badge-panel {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--text-muted);
+    }
+
+    .status-dot.active {
+      background-color: var(--success-color);
+      box-shadow: 0 0 8px var(--success-color);
+    }
+
+    .status-dot.inactive {
+      background-color: var(--danger-color);
+    }
+
+    .action-buttons-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .action-buttons-group button {
+      flex: 1;
+      min-width: 110px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+      min-width: 0;
+    }
+
+    .form-group-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      margin: 0;
+      position: relative;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .form-row>button,
+    .form-row>.form-group {
+      flex: 1;
+      min-width: 110px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      min-width: 0;
+    }
+
+    .status {
+      font-size: 0.82rem;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: none;
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      z-index: 25;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      pointer-events: none;
+    }
+
+    .status.success {
+      background-color: var(--card-bg);
+      color: var(--success-color);
+      border-color: rgba(43, 138, 62, 0.3);
+      display: block;
+    }
+
+    .status.error {
+      background-color: var(--card-bg);
+      color: var(--danger-color);
+      border-color: rgba(201, 42, 42, 0.3);
+      display: block;
+    }
+
+    .terminal-container {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .output-wrapper {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      flex: 1;
+      overflow: auto;
+      padding: 12px;
+      padding-right: 36px;
+      margin: 0;
+      font-size: 0.82rem;
+      font-family: 'JetBrains Mono', monospace, ui-monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ==========================================================================
+       6. Form Editor & Accordions
+       ========================================================================== */
+    .editor-mode-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .mode-btn {
+      background-color: var(--card-hover);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mode-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      flex-shrink: 0;
+    }
+
+    .mode-btn:hover {
+      color: var(--text-color);
+      border-color: var(--border-focus);
+    }
+
+    .mode-btn.active {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      font-weight: 600;
+      border-color: var(--accent-color);
+    }
+
+    #formEditorContainer {
+      background-color: transparent;
+      border: none;
+      border-radius: 6px;
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .accordion-item {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      flex-shrink: 0;
+    }
+
+    .accordion-item:hover {
+      border-color: var(--border-focus);
+    }
+
+    .accordion-item.active {
+      border-color: var(--border-focus);
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .accordion-header {
+      padding: 12px 14px;
+      cursor: pointer;
+      user-select: none;
+      background-color: var(--card-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: background-color 0.2s ease;
+    }
+
+    .accordion-header:hover {
+      background-color: var(--card-hover);
+    }
+
+    .accordion-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .accordion-title svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--accent-color);
+      stroke-width: 1.75;
+      flex-shrink: 0;
+    }
+
+    .accordion-chevron {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-muted);
+      stroke-width: 2;
+      flex-shrink: 0;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .accordion-item.active .accordion-chevron {
+      transform: rotate(180deg);
+      stroke: var(--accent-color);
+    }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background-color: var(--code-bg);
+    }
+
+    .accordion-content {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-section {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      margin-left: 0;
+      min-width: 0;
+    }
+
+    .form-section:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .form-section h3 {
+      font-size: 0.84rem;
+      color: var(--accent-color);
+      margin-bottom: 14px;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .form-section h3::before {
+      display: none;
+    }
+
+    .form-setting-row {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      margin-bottom: 12px;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    @media (min-width: 480px) {
+      .form-setting-row {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+    }
+
+    .form-setting-row label {
+      flex: 1;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-weight: 500;
+      min-width: 0;
+    }
+
+    @media (min-width: 480px) {
+      .form-setting-row label {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .form-setting-row:has(input[type="checkbox"]) {
+        flex-direction: row !important;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .form-setting-row:has(input[type="checkbox"]) .form-setting-input {
+        flex: 0 0 auto;
+        width: auto;
+      }
+    }
+
+    .form-setting-input {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .form-setting-input input[type="text"],
+    .form-setting-input input[type="number"],
+    .form-setting-input select {
+      width: 100%;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s ease;
+      min-width: 0;
+    }
+
+    .form-setting-input input[type="text"]:focus,
+    .form-setting-input input[type="number"]:focus,
+    .form-setting-input select:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .help-btn {
+      background-color: var(--card-hover);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      max-width: 16px;
+      min-height: 16px;
+      max-height: 16px;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+      line-height: 1;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+      -webkit-appearance: none;
+      margin: 0 6px 0 0;
+      vertical-align: middle;
+    }
+
+    .help-btn:hover {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      border-color: var(--accent-color);
+    }
+
+    .tooltip-content {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      position: relative;
+    }
+
+    .tooltip-body {
+      font-size: 0.85rem;
+      color: var(--text-color);
+      line-height: 1.5;
+      white-space: pre-line;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .array-item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card-hover);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      min-width: 0;
+    }
+
+    .array-item-row span {
+      flex: 1;
+      word-break: break-all;
+      min-width: 0;
+    }
+
+    /* ==========================================================================
+       7. Modals
+       ========================================================================== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(10, 10, 15, 0.5);
+      backdrop-filter: blur(6px);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 10px;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 90vh;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-tabs {
+      display: flex;
+      gap: 6px;
+      background-color: var(--modal-tab-bg);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .modal-tab-btn:hover {
+      color: var(--text-color);
+      background-color: var(--card-hover);
+    }
+
+    .modal-tab-btn.active {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .modal-tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      max-height: calc(90vh - 120px);
+      padding-right: 2px;
+    }
+
+    .modal-tab-content.active {
+      display: flex;
+    }
+
+    .setting-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+      gap: 10px;
+    }
+
+    .setting-item-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-color);
+      min-width: 0;
+    }
+
+    .setting-label-group svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-muted);
+      stroke-width: 1.75;
+      flex-shrink: 0;
+    }
+
+    .theme-segmented-control {
+      display: flex;
+      background-color: var(--modal-tab-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .theme-segment-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      width: 32px;
+      height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+
+    .theme-segment-btn:hover {
+      color: var(--text-color);
+      background-color: var(--card-hover);
+      transform: none;
+    }
+
+    .theme-segment-btn.active {
+      background-color: var(--card-bg);
+      color: var(--accent-color);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border-color);
+    }
+
+    .theme-segment-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      stroke-width: 1.75;
+    }
+
+    #connList {
+      max-height: 160px;
+      overflow-y: auto;
+      padding-right: 2px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(128, 128, 128, 0.3);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(128, 128, 128, 0.5);
+    }
+
+    .conn-item {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      padding: 8px 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.2s ease;
+      min-width: 0;
+    }
+
+    .conn-item:hover {
+      border-color: var(--border-focus);
+    }
+
+    .conn-item div {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    /* ==========================================================================
+       8. Code Editor & Syntax Highlighting
+       ========================================================================== */
+    .code-editor-wrapper {
+      display: flex;
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      transition: all 0.3s ease;
+      min-width: 0;
+    }
+
+    .code-editor-wrapper.fullscreen-mode {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 9999 !important;
+      border-radius: 0 !important;
+      border: none !important;
+      margin: 0 !important;
+      background-color: var(--bg-color);
+    }
+
+    .line-numbers {
+      padding: 10px 6px;
+      background-color: var(--line-num-bg);
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace, ui-monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: right;
+      user-select: none;
+      border-right: 1px solid var(--border-color);
+      overflow: hidden;
+      flex-shrink: 0;
+      min-width: 36px;
+      white-space: pre;
+      box-sizing: border-box;
+    }
+
+    .editor-container {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      overflow: hidden;
+      display: grid;
+      grid-template: 1fr / 1fr;
+      min-width: 0;
+    }
+
+    .editor-container textarea,
+    .editor-container pre {
+      max-height: none !important;
+      height: 100% !important;
+      grid-area: 1 / 1;
+      margin: 0;
+      padding: 10px;
+      font-family: 'JetBrains Mono', monospace, ui-monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+      word-break: normal;
+      box-sizing: border-box;
+      border: none;
+      background: transparent;
+    }
+
+    .editor-container textarea {
+      color: transparent;
+      caret-color: var(--accent-color);
+      resize: none;
+      outline: none;
+      z-index: 2;
+      overflow: auto;
+    }
+
+    .editor-container pre {
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+      color: var(--text-color);
+    }
+
+    .editor-container pre code {
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      color: inherit;
+      display: block;
+    }
+
+    /* ANSI Colors for Terminal Logs */
+    .ansi-cyan {
+      color: var(--info-color);
+    }
+
+    .ansi-cyan-bold {
+      color: var(--accent-color);
+      font-weight: bold;
+    }
+
+    .ansi-red {
+      color: var(--danger-color);
+    }
+
+    .ansi-green {
+      color: var(--success-color);
+    }
+
+    .ansi-yellow {
+      color: var(--warning-color);
+    }
+
+    /* JSON Syntax Tokens */
+    .token-key {
+      color: var(--accent-color);
+    }
+
+    .token-string {
+      color: var(--success-color);
+    }
+
+    .token-number {
+      color: #d97706;
+    }
+
+    .token-boolean {
+      color: #7c3aed;
+    }
+
+    .token-null {
+      color: var(--danger-color);
+    }
+
+    @media (max-width: 360px) {
+      body {
+        padding: 4px;
+      }
+
+      .navbar {
+        padding: 8px;
+      }
+
+      select.conn-select {
+        max-width: 110px;
+        padding-right: 22px;
+      }
+
+      button {
+        padding: 7px 10px;
+        font-size: 0.82rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <!-- Navbar & Connections Select -->
+    <div class="navbar">
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('skeenTab', this)" data-i18n="tabSKeen">SKeen</button>
+        <button class="tab-btn" onclick="switchTab('jsonTab', this)" data-i18n="tabConfig">Конфиг</button>
+      </div>
+      <div class="nav-controls">
+        <select id="activeConnSelect" class="conn-select" onchange="changeActiveConnection(this.value)">
+          <!-- Dynamic Options -->
+        </select>
+        <button class="icon-btn" onclick="openConnModal()" title="Настройки" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab 1: SKeen Management -->
+    <div id="skeenTab" class="tab-content active">
+      <div class="card" style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <h2 data-i18n="skeenCardTitle" style="margin: 0;">Управление SKeen</h2>
+          <span id="headerApiVersion" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">API v1.0.0</span>
+        </div>
+        <!-- Current Status Panel -->
+        <div class="status-badge-panel">
+          <div class="status-badge">
+            <div id="serviceDot" class="status-dot"></div>
+            <span id="serviceStatusText">Проверка состояния...</span>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);" id="serviceDetails"></div>
+        </div>
+
+        <!-- Dynamic Action Buttons -->
+        <div id="dynamicActions" class="action-buttons-group"></div>
+
+        <!-- Extra Service Commands -->
+        <div class="form-group"
+          style="flex-shrink: 0; margin-bottom: 0; padding-top: 8px; border-top: 1px solid var(--border-color);">
+          <label for="extraParam" data-i18n="extraActionLabel">Дополнительные сервисные команды</label>
+          <div class="form-row" style="gap: 8px;">
+            <select id="extraParam" style="flex: 2;" onchange="handleExtraParamChange()"></select>
+            <button class="secondary" style="flex: 1;" onclick="executeExtraCommand()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span data-i18n="btnExecute">Выполнить</span>
+            </button>
+          </div>
+          <div id="extraParamsContainer" style="display: none; flex-direction: column; gap: 8px; margin-top: 8px;">
+          </div>
+        </div>
+
+        <!-- Terminal Output -->
+        <div class="form-group"
+          style="flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 0; margin-top: 4px;">
+          <label data-i18n="outputLabel" style="margin-bottom: 4px;">Вывод (stdout / stderr):</label>
+          <div class="terminal-container">
+            <button class="terminal-clear-btn" onclick="clearTerminalOutput()" title="Очистить"
+              data-i18n-title="btnClearOutput">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+            <pre id="cmdOutput" class="output-wrapper" data-i18n="waitingOutput">Ожидание выполнения команды...</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Configuration Editor -->
+    <div id="jsonTab" class="tab-content">
+      <div class="card editor-card">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
+          <h2 style="margin: 0; border: none; padding: 0;" data-i18n="jsonCardTitle">Конфигурация</h2>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <select id="configFileSelect" class="conn-select" style="flex: 1;" onchange="handleFileSelectChange()">
+              <option value="">Загрузка списка...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group-editor">
+          <!-- Editor Mode Bar -->
+          <div id="editorModeBar" class="editor-mode-bar" style="display: none;">
+            <button type="button" class="mode-btn active" id="btnModeForm" onclick="switchEditorMode('form')"
+              data-i18n="modeForm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                </path>
+              </svg>
+              <span>Форма</span>
+            </button>
+            <button type="button" class="mode-btn" id="btnModeText" onclick="switchEditorMode('text')"
+              data-i18n="modeText">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span>JSON</span>
+            </button>
+          </div>
+
+          <!-- Visual Form Container (Accordions) -->
+          <div id="formEditorContainer" style="display: none;"></div>
+
+          <!-- Text Editor Wrapper -->
+          <div id="editorWrapper" class="code-editor-wrapper">
+            <button id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран">
+              <svg id="fullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                </path>
+              </svg>
+            </button>
+            <div id="lineNumbers" class="line-numbers">1</div>
+            <div class="editor-container">
+              <pre id="highlighting" aria-hidden="true"><code id="highlightingContent"></code></pre>
+              <textarea id="jsonEditor" spellcheck="false" autocomplete="off"
+                placeholder='Выберите файл и нажмите "Загрузить"...' oninput="handleEditorInput()"
+                onscroll="syncScroll()" onkeydown="handleEditorKeydown(event)"></textarea>
+            </div>
+          </div>
+          <div id="jsonStatus" class="status"></div>
+        </div>
+
+        <div class="form-row" style="flex-shrink: 0;">
+          <button onclick="loadConfigFile()" data-i18n="btnLoadJson">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Загрузить</span>
+          </button>
+          <button id="saveBtn" onclick="saveConfigFile()" data-i18n="btnSaveJson">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span>Сохранить</span>
+          </button>
+          <button class="secondary" onclick="formatJsonEditor()" data-i18n="btnFormat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="21" y1="10" x2="3" y2="10"></line>
+              <line x1="21" y1="6" x2="3" y2="6"></line>
+              <line x1="21" y1="14" x2="3" y2="14"></line>
+              <line x1="21" y1="18" x2="3" y2="18"></line>
+            </svg>
+            <span>Формат</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Settings Modal -->
+  <div id="connModal" class="modal">
+    <div class="modal-content">
+      <h2 data-i18n="modalTitle" style="margin-bottom: 4px;">Настройки</h2>
+
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" onclick="switchModalTab('connectionsPane', this)"
+          data-i18n="modalTabConnections">Подключения</button>
+        <button class="modal-tab-btn" onclick="switchModalTab('miscPane', this)"
+          data-i18n="modalTabMisc">Прочее</button>
+      </div>
+
+      <!-- Connections Tab -->
+      <div id="connectionsPane" class="modal-tab-content active">
+        <div id="connList"></div>
+        <hr style="border-color: var(--border-color); border-style: solid; width: 100%; margin: 2px 0;">
+        <h3 id="formTitle" style="margin: 0; font-size: 0.9rem; color: var(--text-color); border: none; padding: 0;"
+          data-i18n="formTitleAdd">Добавить новое подключение</h3>
+        <input type="hidden" id="editIndex" value="-1">
+        <div class="form-group">
+          <label data-i18n="labelName">Имя роутера</label>
+          <input type="text" id="connName" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
+        </div>
+        <div class="form-group">
+          <label data-i18n="labelUrl">URL сервера</label>
+          <input type="text" id="connUrl" placeholder="http://192.168.1.1:3000">
+        </div>
+        <div class="form-group">
+          <label data-i18n="labelKey">Секрет</label>
+          <input type="text" id="connKey" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+        </div>
+        <div class="form-row">
+          <button onclick="saveConnection()" data-i18n="btnSaveConn">Сохранить</button>
+          <button class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
+        </div>
+      </div>
+
+      <!-- Misc Tab -->
+      <div id="miscPane" class="modal-tab-content">
+        <div class="setting-item-row">
+          <div class="setting-label-group">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <span data-i18n="labelThemeAppearance">Оформление</span>
+          </div>
+          <div class="theme-segmented-control">
+            <button class="theme-segment-btn" id="themeBtnAuto" onclick="setThemeMode('auto')" title="Как в системе">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 3v18"></path>
+              </svg>
+            </button>
+            <button class="theme-segment-btn" id="themeBtnLight" onclick="setThemeMode('light')" title="Светлая">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path
+                  d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.02-12.02l-1.41 1.41">
+                </path>
+              </svg>
+            </button>
+            <button class="theme-segment-btn" id="themeBtnDark" onclick="setThemeMode('dark')" title="Темная">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-item-row">
+          <div class="setting-label-group">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+              </path>
+            </svg>
+            <span data-i18n="labelLanguage">Язык</span>
+          </div>
+          <select id="langSelect" class="conn-select" style="max-width: 140px; height: 34px;"
+            onchange="changeLanguage(this.value)">
+            <option value="auto" data-i18n="langAuto">Как в системе</option>
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+
+        <div style="flex: 1; min-height: 10px;"></div>
+        <div class="form-row" style="margin-top: auto;">
+          <button class="secondary" onclick="closeConnModal()" data-i18n="btnClose"
+            style="width: 100%;">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Tooltip Modal -->
+  <div id="tooltipModal" class="modal">
+    <div class="tooltip-content">
+      <h2 style="margin: 0; font-size: 1rem; border: none; padding: 0;" data-i18n="tooltipTitle">Справка по параметру
+      </h2>
+      <div id="tooltipModalText" class="tooltip-body"></div>
+      <div class="form-row" style="margin-top: 4px;">
+        <button class="secondary" onclick="closeTooltipModal()" data-i18n="btnClose"
+          style="width: 100%;">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Array Editor Modal -->
+  <div id="arrayEditModal" class="modal">
+    <div class="modal-content" style="max-width: 380px;">
+      <h2 id="arrayModalTitle" style="margin: 0; font-size: 1rem; border: none; padding: 0;">Редактирование списка</h2>
+      <div id="arrayModalItemsList"
+        style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 6px 0;">
+      </div>
+      <div class="form-row" style="gap: 8px;">
+        <input type="text" id="arrayModalNewItemInput" placeholder="Новый элемент..." style="flex: 1;"
+          onkeydown="if(event.key==='Enter'){addArrayModalItem();event.preventDefault();}">
+        <button type="button" onclick="addArrayModalItem()" class="secondary" style="flex: 0 0 auto;">Добавить</button>
+      </div>
+      <div class="form-row" style="margin-top: 10px;">
+        <button type="button" onclick="saveArrayModal()" style="flex: 1;">ОК</button>
+        <button type="button" class="secondary" onclick="closeArrayModal()" style="flex: 1;">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal">
+    <div class="modal-content" style="max-width: 340px;">
+      <h2 style="margin: 0; font-size: 1rem; border: none; padding: 0;" data-i18n="confirmModalTitle">Подтверждение</h2>
+      <p id="confirmText" style="font-size: 0.85rem; color: var(--text-muted); margin: 0;"></p>
+      <div class="form-row">
+        <button id="confirmYesBtn" onclick="resolveConfirm(true)" data-i18n="btnYes">Да</button>
+        <button class="secondary" onclick="resolveConfirm(false)" data-i18n="btnNo">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Modal -->
+  <div id="alertModal" class="modal">
+    <div class="modal-content" style="max-width: 340px;">
+      <h2 style="margin: 0; font-size: 1rem; border: none; padding: 0;" data-i18n="alertModalTitle">Внимание</h2>
+      <p id="alertText" style="font-size: 0.85rem; color: var(--text-muted); margin: 0; word-break: break-word;"></p>
+      <div class="form-row">
+        <button id="alertOkBtn" onclick="closeAlertModal()" data-i18n="btnOk" style="flex: 1;">ОК</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       Localization & Dictionaries
+       ========================================================================== */
+    const translations = {
+      ru: {
+        tabSKeen: "SKeen",
+        tabConfig: "Конфиг",
+        skeenCardTitle: "Управление SKeen",
+        extraActionLabel: "Дополнительные сервисные команды",
+        btnExecute: "Выполнить",
+        outputLabel: "Вывод (stdout / stderr):",
+        waitingOutput: "Ожидание выполнения команды...",
+        jsonCardTitle: "Конфигурация",
+        jsonPlaceholder: 'Выберите файл и нажмите "Загрузить"...',
+        btnLoadJson: "Загрузить",
+        btnSaveJson: "Сохранить",
+        btnFormat: "Формат",
+        modalTitle: "Настройки",
+        modalTabConnections: "Подключения",
+        modalTabMisc: "Прочее",
+        labelThemeAppearance: "Оформление",
+        labelLanguage: "Язык",
+        langAuto: "Как в системе",
+        formTitleAdd: "Добавить новое",
+        formTitleEdit: "Редактировать",
+        labelName: "Имя роутера",
+        placeholderName: "Необязательно",
+        labelUrl: "URL сервера",
+        labelKey: "Секрет",
+        placeholderKey: "Ключ",
+        btnSaveConn: "Сохранить",
+        btnClose: "Закрыть",
+        noConnections: "-- Нет подключений --",
+        emptyList: "Список пуст. Добавьте роутер ниже.",
+        btnEdit: "Изменить",
+        btnDelete: "Удалить",
+        statusLoaded: "Файл успешно загружен",
+        statusSaved: "Файл успешно сохранен. Перезапустите SKeen для применения изменений",
+        statusFormatted: "JSON отформатирован",
+        noChangesNeeded: "Сохранение не требуется",
+        executing: "Выполнение...",
+        emptyOutput: "(Пустой вывод)",
+        alertNoUrl: "Укажите URL сервера!",
+        alertNoConn: "Необходимо добавить хотя бы одно подключение!",
+        alertNeedSetup: "Сначала настройте подключение к роутеру!",
+        confirmDelete: "Удалить это подключение?",
+        confirmUnsaved: "Есть несохраненные изменения. Вы уверены, что хотите продолжить без сохранения?",
+        pingError: "❌ Ошибка подключения: не удалось достучаться до эндпоинта.\n\nДетали: ",
+        alertDuplicateUrl: "Подключение с таким URL уже существует!",
+        confirmModalTitle: "Подтверждение",
+        btnYes: "Да",
+        alertModalTitle: "Внимание",
+        btnOk: "ОК",
+        statusActive: "Работает",
+        statusInactive: "Остановлен",
+        btnStart: "Запустить SKeen",
+        btnStop: "Остановить",
+        btnRestart: "Перезапустить",
+        lblBackupFile: "Имя бэкапа",
+        lblSyncUrl: "URL конфига (опционально)",
+        lblTunSubCommand: "Действие TUN",
+        lblIpAddress: "IP адрес",
+        lblIfaceName: "Имя интерфейса",
+        placeholderBackupFile: "skeen_backup_2026.tar.gz",
+        placeholderSyncUrl: "https://example.com/sub",
+        placeholderIpAddress: "172.16.250.1",
+        placeholderIfaceName: "MyTUN",
+        alertEmptyParam: "Заполните все необходимые параметры!",
+        btnClearOutput: "Очистить вывод",
+        modeForm: "Форма",
+        modeText: "JSON",
+        tooltipTitle: "Справка по параметру"
+      },
+      en: {
+        tabSKeen: "SKeen",
+        tabConfig: "Config",
+        skeenCardTitle: "SKeen Management",
+        extraActionLabel: "Extra Service Commands",
+        btnExecute: "Execute",
+        outputLabel: "Output (stdout / stderr):",
+        waitingOutput: "Waiting for command execution...",
+        jsonCardTitle: "Configuration",
+        jsonPlaceholder: 'Select a file and click "Load"...',
+        btnLoadJson: "Load",
+        btnSaveJson: "Save",
+        btnFormat: "Format",
+        modalTitle: "Settings",
+        modalTabConnections: "Connections",
+        modalTabMisc: "Misc",
+        labelThemeAppearance: "Appearance",
+        labelLanguage: "Language",
+        langAuto: "System default",
+        formTitleAdd: "Add New",
+        formTitleEdit: "Edit",
+        labelName: "Router Name",
+        placeholderName: "Optional",
+        labelUrl: "Server URL",
+        labelKey: "Secret",
+        placeholderKey: "Key",
+        btnSaveConn: "Save",
+        btnClose: "Close",
+        noConnections: "-- No connections --",
+        emptyList: "List is empty. Add a router below.",
+        btnEdit: "Edit",
+        btnDelete: "Delete",
+        statusLoaded: "File successfully loaded",
+        statusSaved: "File successfully saved. Restart SKeen to apply changes",
+        statusFormatted: "JSON formatted",
+        noChangesNeeded: "No changes to save",
+        executing: "Executing...",
+        emptyOutput: "(Empty output)",
+        alertNoUrl: "Specify the server URL!",
+        alertNoConn: "You must add at least one connection!",
+        alertNeedSetup: "Configure the router connection first!",
+        confirmDelete: "Delete this connection?",
+        confirmUnsaved: "You have unsaved changes. Are you sure you want to proceed without saving?",
+        pingError: "❌ Connection error: failed to reach endpoint.\n\nDetails: ",
+        alertDuplicateUrl: "Connection with this URL already exists!",
+        confirmModalTitle: "Confirmation",
+        btnYes: "Yes",
+        alertModalTitle: "Attention",
+        btnOk: "OK",
+        statusActive: "Running",
+        statusInactive: "Stopped",
+        btnStart: "Start SKeen",
+        btnStop: "Stop",
+        btnRestart: "Restart",
+        lblBackupFile: "Backup File Name",
+        lblSyncUrl: "Config URL (optional)",
+        lblTunSubCommand: "TUN Action",
+        lblIpAddress: "IP Address",
+        lblIfaceName: "Interface Name",
+        placeholderBackupFile: "skeen_backup_2026.tar.gz",
+        placeholderSyncUrl: "https://example.com/sub",
+        placeholderIpAddress: "172.16.250.1",
+        placeholderIfaceName: "MyTUN",
+        alertEmptyParam: "Please fill in all required parameters!",
+        btnClearOutput: "Clear output",
+        modeForm: "Form",
+        modeText: "JSON",
+        tooltipTitle: "Parameter Help"
+      }
+    };
+
+    /* ==========================================================================
+       Schemas & Help Texts
+       ========================================================================== */
+    const SKEEN_DEFAULT_SCHEMA = {
+      auto_start: { enabled: 1, delay: 0 },
+      policy: { enabled: 0, segment: "br1" },
+      network: { ipv6: 1, tuning: 0, check: ["vk.com", "77.88.8.8", "77.88.8.1"] },
+      singbox: {
+        config: { path: "", url: "", split: 1 },
+        api: { url: "", secret: "" },
+        external: {
+          enabled: 0,
+          path: "",
+          config: { path: "", url: "", split: 1 },
+          api: { url: "", secret: "" }
+        }
+      },
+      services: {
+        api: { port: 5000, secret: "", cors_origin: ["*"], dashboard: 1, auto_start: 1 },
+        proxy: { enabled: 0, port: "", user: "", pass: "" }
+      },
+      firewall: {
+        intercept: {
+          dns: 1,
+          fakeip: { enabled: 0, include: "", clients: [] }
+        },
+        exclude: {
+          port: ["137:139", 445, 1900],
+          ipv4_cidr: [],
+          ipv6_cidr: []
+        },
+        redirect_dns: { enabled: 0, to_port: "", use_policy: 1 },
+        proxy_router: 0
+      },
+      update: {
+        singbox: { enabled: 1, beta: 0 },
+        skeen: { enabled: 1 }
+      }
+    };
+
+    const helpTexts = {
+      ru: {
+        "auto_start.enabled": "Автозапуск SKeen при загрузке роутера.",
+        "auto_start.delay": "Задержка автозапуска в секундах (по умолчанию: 0).",
+        "policy.enabled": "Включить маршрутизацию на основе политики сетевого сегмента.",
+        "policy.segment": "Имя интерфейса сегмента (Bridge), политика которой будет использоваться; начинается с \"br\", далее цифра от 0 и больше (например, br1).",
+        "network.ipv6": "Включить поддержку IPv6.",
+        "network.tuning": "Включить оптимизацию сети через sysctl.",
+        "network.check": "Домены или IPv4 адреса для проверки доступности сети (макс. 3).",
+        "services.api.port": "Порт встроенного API-сервера SKeen (по умолчанию: 5000).",
+        "services.api.secret": "Секретный ключ для доступа к API SKeen.",
+        "services.api.cors_origin": "Разрешенные CORS-источники.",
+        "services.api.dashboard": "Включить веб-панель управления.",
+        "services.api.auto_start": "Автозапуск API-сервера.",
+        "services.proxy.enabled": "Использовать локальный прокси (127.0.0.1) для команд update и sync.",
+        "services.proxy.port": "Порт локального прокси.",
+        "services.proxy.user": "Имя пользователя для подключения к прокси.",
+        "services.proxy.pass": "Пароль пользователя для подключения к прокси.",
+        "singbox.config.path": "Путь к локальному файлу или папке конфигурации Sing-box.",
+        "singbox.config.url": "URL-адрес для синхронизации конфигурации.",
+        "singbox.config.split": "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей.",
+        "singbox.api.url": "URL к сервису sing-box API.",
+        "singbox.api.secret": "Секретный ключ API sing-box.",
+        "singbox.external.enabled": "Использовать сторонний бинарный файл Sing-box.",
+        "singbox.external.path": "Полный путь к стороннему файлу Sing-box.",
+        "singbox.external.config.path": "Файл конфигурации для стороннего Sing-box.",
+        "singbox.external.config.url": "URL конфигурации для стороннего Sing-box.",
+        "singbox.external.config.split": "Разбивать конфиг стороннего sing-box по ключам.",
+        "singbox.external.api.url": "URL API стороннего sing-box.",
+        "singbox.external.api.secret": "Секрет API стороннего sing-box.",
+        "firewall.intercept.dns": "Перехватывать DNS-запросы в режимах TProxy/Hybrid.",
+        "firewall.intercept.fakeip.enabled": "Включить FakeIP-пул адресов в перехват Redirect/TProxy.",
+        "firewall.intercept.fakeip.include": "Путь к файлу со списком IP/CIDR ресурсов для FakeIP.",
+        "firewall.intercept.fakeip.clients": "Клиенты (IP или CIDR) для FakeIP перехвата.",
+        "firewall.exclude.port": "Порты, исключенные из Redirect/TProxy.",
+        "firewall.exclude.ipv4_cidr": "Исключенные подсети IPv4.",
+        "firewall.exclude.ipv6_cidr": "Исключенные подсети IPv6.",
+        "firewall.redirect_dns.enabled": "Включает редирект DNS-запросов.",
+        "firewall.redirect_dns.to_port": "Порт перенаправления DNS-запросов.",
+        "firewall.redirect_dns.use_policy": "Использовать настроенную политику для редиректа DNS.",
+        "firewall.proxy_router": "Проксировать все сервисы роутера.",
+        "update.singbox.enabled": "Включить проверку обновлений Sing-box.",
+        "update.singbox.beta": "Включает проверку pre-release версий.",
+        "update.skeen.enabled": "Включить проверку обновлений SKeen."
+      },
+      en: {
+        "auto_start.enabled": "SKeen autostart on router reboot.",
+        "auto_start.delay": "Auto-start delay in seconds.",
+        "policy.enabled": "Enable routing based on segment policy.",
+        "policy.segment": "Name of the segment interface starting with 'br'.",
+        "network.ipv6": "Enable IPv6 support.",
+        "network.tuning": "Enable sysctl network optimization.",
+        "network.check": "Domains or IPv4 for connectivity tests.",
+        "services.api.port": "SKeen built-in API server port.",
+        "services.api.secret": "API secret key.",
+        "services.api.cors_origin": "Allowed CORS origins.",
+        "services.api.dashboard": "Enable web dashboard.",
+        "services.api.auto_start": "Auto-start API server.",
+        "services.proxy.enabled": "Use local proxy for update and sync.",
+        "services.proxy.port": "Local proxy port.",
+        "services.proxy.user": "Proxy username.",
+        "services.proxy.pass": "Proxy password.",
+        "singbox.config.path": "Path to local config file or directory.",
+        "singbox.config.url": "URL for syncing config.",
+        "singbox.config.split": "Split synced config into files.",
+        "singbox.api.url": "URL to sing-box API service.",
+        "singbox.api.secret": "Sing-box API secret key.",
+        "singbox.external.enabled": "Use external binary file for Sing-box.",
+        "singbox.external.path": "Full path to external binary.",
+        "singbox.external.config.path": "Config file for external Sing-box.",
+        "singbox.external.config.url": "Config URL for external Sing-box.",
+        "singbox.external.config.split": "Split external config by keys.",
+        "singbox.external.api.url": "External sing-box API URL.",
+        "singbox.external.api.secret": "External sing-box API secret.",
+        "firewall.intercept.dns": "Intercept DNS queries.",
+        "firewall.intercept.fakeip.enabled": "Include FakeIP address pool.",
+        "firewall.intercept.fakeip.include": "Path to IP/CIDR list file.",
+        "firewall.intercept.fakeip.clients": "Clients for FakeIP interception.",
+        "firewall.exclude.port": "Ports excluded from interception.",
+        "firewall.exclude.ipv4_cidr": "Excluded IPv4 subnets.",
+        "firewall.exclude.ipv6_cidr": "Excluded IPv6 subnets.",
+        "firewall.redirect_dns.enabled": "Enable DNS redirection.",
+        "firewall.redirect_dns.to_port": "DNS redirect port.",
+        "firewall.redirect_dns.use_policy": "Use configured policy for DNS.",
+        "firewall.proxy_router": "Proxy all router services.",
+        "update.singbox.enabled": "Enable Sing-box update check.",
+        "update.singbox.beta": "Enable checking pre-release versions.",
+        "update.skeen.enabled": "Enable SKeen update check."
+      }
+    };
+
+    /* ==========================================================================
+       State Management
+       ========================================================================== */
+    let originalFileContent = '';
+    let baselineParsedJson = null;
+    let currentSelectedFile = '';
+    let cachedLines = [];
+    let statusTimeout = null;
+    let currentAlertCallback = null;
+    let pollingTimer = null;
+    let isServiceRunning = false;
+    let currentEditorMode = localStorage.getItem('keen_editor_mode') || 'form';
+    let activeAccordionIndex = -1;
+
+    let currentEditingArrayRef = null;
+    let currentEditingDisplayId = null;
+    let networkCheckArray = [];
+    let apiCorsArray = [];
+    let fakeipClientsArray = [];
+    let excludePortsArray = [];
+    let excludeV4Array = [];
+    let excludeV6Array = [];
+    let currentItemValidationType = 'text';
+
+    let currentConfirmCallback = null;
+    let currentCancelCallback = null;
+    let currentLang = 'en';
+
+    /* ==========================================================================
+       Validators
+       ========================================================================== */
+    const VALIDATORS = {
+      ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+      ipv6: /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::1$|^([0-9a-fA-F]{1,4}:){1,7}:$/,
+      ipv4Cidr: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-2]?[0-9]|3[0-2])$/,
+      ipv6Cidr: /^([0-9a-fA-F]{1,4}:){1,7}:?\/(?:[0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/,
+      url: /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)(:[0-9]{1,5})?(\/.*)?$/i,
+      port: /^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/,
+      portRange: /^([1-9][0-9]{0,4}):([1-9][0-9]{0,4})$/,
+      segment: /^br\d+$/,
+      host: /^([a-zA-Z0-9][-a-zA-Z0-9]*\.)+[a-zA-Z]{2,}$|^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+    };
+
+    function validateField(inputElement, type) {
+      if (!inputElement) return true;
+      const val = inputElement.value.trim();
+      if (!val) {
+        inputElement.classList.remove('invalid-input');
+        return true;
+      }
+      let isValid = true;
+      if (type === 'port') isValid = VALIDATORS.port.test(val);
+      else if (type === 'url') isValid = VALIDATORS.url.test(val);
+      else if (type === 'segment') isValid = VALIDATORS.segment.test(val);
+      else if (type === 'host') isValid = VALIDATORS.host.test(val);
+      else if (type === 'ip') isValid = VALIDATORS.ipv4.test(val) || VALIDATORS.ipv6.test(val);
+
+      inputElement.classList.toggle('invalid-input', !isValid);
+      return isValid;
+    }
+
+    /* ==========================================================================
+       Modal Utility Helper (DRY)
+       ========================================================================== */
+    function setModalState(modalId, isOpen) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.toggle('open', isOpen);
+      }
+    }
+
+    /* ==========================================================================
+       Initialization & App Lifecycle
+       ========================================================================== */
+    let connections = JSON.parse(localStorage.getItem('keen_connections') || '[]');
+    let activeIndex = parseInt(localStorage.getItem('keen_active_index') || '0');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      applyTheme(localStorage.getItem('keen_theme_mode') || 'auto');
+      currentLang = resolveLanguage(localStorage.getItem('keen_lang_setting') || 'auto');
+      document.getElementById('langSelect').value = localStorage.getItem('keen_lang_setting') || 'auto';
+
+      applyLanguage();
+      initConnections();
+      renderExtraParamOptions();
+
+      const savedTab = localStorage.getItem('keen_active_tab') || 'skeenTab';
+      const tabBtn = document.querySelector(`.tab-btn[onclick*="${savedTab}"]`);
+      if (tabBtn) switchTab(savedTab, tabBtn, false);
+
+      fetchServiceStatus();
+      startPolling();
+    });
+
+    function startPolling() {
+      if (pollingTimer) clearInterval(pollingTimer);
+      pollingTimer = setInterval(() => {
+        if (document.getElementById('skeenTab').classList.contains('active')) {
+          fetchServiceStatus();
+        }
+      }, 5000);
+    }
+
+    /* ==========================================================================
+       Connections Management
+       ========================================================================== */
+    function initConnections() {
+      const select = document.getElementById('activeConnSelect');
+      select.innerHTML = '';
+      if (connections.length === 0) {
+        select.innerHTML = `<option value="">${t('noConnections')}</option>`;
+        openConnModal();
+        return;
+      }
+      if (activeIndex >= connections.length) activeIndex = 0;
+      connections.forEach((conn, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = conn.name || conn.url;
+        if (index === activeIndex) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function getActiveConnection() {
+      if (connections.length === 0) return null;
+      return connections[activeIndex] || connections[0];
+    }
+
+    function changeActiveConnection(indexStr) {
+      if (indexStr === "") return;
+      if (hasUnsavedChanges()) {
+        showConfirmModal(t('confirmUnsaved'), () => {
+          originalFileContent = '';
+          executeChangeConnection(indexStr);
+        }, () => {
+          document.getElementById('activeConnSelect').value = activeIndex;
+        });
+        return;
+      }
+      executeChangeConnection(indexStr);
+    }
+
+    function executeChangeConnection(indexStr) {
+      activeIndex = parseInt(indexStr);
+      localStorage.setItem('keen_active_index', activeIndex);
+      showStatus('jsonStatus', (currentLang === 'ru' ? 'Переключено на: ' : 'Switched to: ') + getActiveConnection().name);
+      fetchServiceStatus();
+      if (document.getElementById('jsonTab').classList.contains('active')) loadFileList();
+    }
+
+    function getHeaders() {
+      const conn = getActiveConnection();
+      const headers = { 'Content-Type': 'application/json' };
+      if (conn && conn.apiKey) headers['X-API-Key'] = conn.apiKey;
+      return headers;
+    }
+
+    function getBaseUrl() {
+      const conn = getActiveConnection();
+      return conn ? conn.url.replace(/\/$/, '') : '';
+    }
+
+    /* ==========================================================================
+       UI Navigation & Tabs
+       ========================================================================== */
+    function switchTab(tabId, btn, save = true) {
+      if (tabId !== 'jsonTab' && hasUnsavedChanges()) {
+        showConfirmModal(t('confirmUnsaved'), () => {
+          originalFileContent = '';
+          executeSwitchTab(tabId, btn, save);
+        });
+        return;
+      }
+      executeSwitchTab(tabId, btn, save);
+    }
+
+    function executeSwitchTab(tabId, btn, save) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+      if (save) localStorage.setItem('keen_active_tab', tabId);
+
+      if (tabId === 'skeenTab') fetchServiceStatus();
+      else if (tabId === 'jsonTab') loadFileList();
+    }
+
+    function switchModalTab(paneId, btn) {
+      document.querySelectorAll('.modal-tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.modal-tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(paneId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function openConnModal() {
+      renderConnList();
+      clearConnForm();
+      setModalState('connModal', true);
+    }
+
+    function closeConnModal() {
+      if (connections.length === 0) {
+        showAlertModal(t('alertNoConn'));
+        return;
+      }
+      setModalState('connModal', false);
+      initConnections();
+    }
+
+    function renderConnList() {
+      const listEl = document.getElementById('connList');
+      listEl.innerHTML = '';
+      if (connections.length === 0) {
+        listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem;">${t('emptyList')}</div>`;
+        return;
+      }
+      connections.forEach((conn, index) => {
+        const item = document.createElement('div');
+        item.className = 'conn-item';
+        item.innerHTML = `
+          <div style="overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;">
+              <strong style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.88rem;">${conn.name || 'Router'}</strong>
+              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${conn.url}</span>
+          </div>
+          <div style="display: flex; gap: 4px; flex-shrink: 0; align-items: center;">
+              <button class="icon-btn-sm secondary" onclick="editConnection(${index})" title="${t('btnEdit')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+              <button class="icon-btn-sm danger" onclick="deleteConnection(${index})" title="${t('btnDelete')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+          </div>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    async function saveConnection() {
+      const name = document.getElementById('connName').value.trim();
+      const url = document.getElementById('connUrl').value.trim().replace(/\/$/, '');
+      const apiKey = document.getElementById('connKey').value.trim();
+      const editIndex = parseInt(document.getElementById('editIndex').value);
+
+      if (!url) { showAlertModal(t('alertNoUrl')); return; }
+      if (connections.some((conn, idx) => idx !== editIndex && conn.url === url)) {
+        showAlertModal(t('alertDuplicateUrl'));
+        return;
+      }
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (apiKey) headers['X-API-Key'] = apiKey;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch(`${url}/api/ping`, { method: 'GET', headers, signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+      } catch (e) {
+        showAlertModal(t('pingError') + e.message);
+        return;
+      }
+
+      const newConn = { name: name || url, url, apiKey };
+      if (editIndex === -1) {
+        connections.push(newConn);
+        activeIndex = connections.length - 1;
+      } else {
+        connections[editIndex] = newConn;
+      }
+
+      localStorage.setItem('keen_connections', JSON.stringify(connections));
+      localStorage.setItem('keen_active_index', activeIndex);
+      renderConnList();
+      clearConnForm();
+      initConnections();
+      setModalState('connModal', false);
+      fetchServiceStatus();
+    }
+
+    function editConnection(index) {
+      const conn = connections[index];
+      document.getElementById('connName').value = conn.name;
+      document.getElementById('connUrl').value = conn.url;
+      document.getElementById('connKey').value = conn.apiKey || '';
+      document.getElementById('editIndex').value = index;
+      document.getElementById('formTitle').textContent = t('formTitleEdit');
+    }
+
+    function deleteConnection(index) {
+      showConfirmModal(t('confirmDelete'), () => {
+        connections.splice(index, 1);
+        if (activeIndex >= connections.length) activeIndex = Math.max(0, connections.length - 1);
+        localStorage.setItem('keen_connections', JSON.stringify(connections));
+        localStorage.setItem('keen_active_index', activeIndex);
+        renderConnList();
+        clearConnForm();
+        initConnections();
+      });
+    }
+
+    function clearConnForm() {
+      document.getElementById('connName').value = '';
+      document.getElementById('connUrl').value = window.location.origin;
+      document.getElementById('connKey').value = '';
+      document.getElementById('editIndex').value = '-1';
+      document.getElementById('formTitle').textContent = t('formTitleAdd');
+    }
+
+    /* ==========================================================================
+       Modals & Notifications Helper
+       ========================================================================== */
+    function showConfirmModal(message, onConfirm, onCancel) {
+      document.getElementById('confirmText').textContent = message;
+      setModalState('confirmModal', true);
+      currentConfirmCallback = onConfirm || null;
+      currentCancelCallback = onCancel || null;
+    }
+
+    function resolveConfirm(result) {
+      setModalState('confirmModal', false);
+      if (result && typeof currentConfirmCallback === 'function') currentConfirmCallback();
+      else if (!result && typeof currentCancelCallback === 'function') currentCancelCallback();
+      currentConfirmCallback = null;
+      currentCancelCallback = null;
+    }
+
+    function showAlertModal(message, callback) {
+      document.getElementById('alertText').textContent = message;
+      setModalState('alertModal', true);
+      currentAlertCallback = callback || null;
+    }
+
+    function closeAlertModal() {
+      setModalState('alertModal', false);
+      if (typeof currentAlertCallback === 'function') currentAlertCallback();
+      currentAlertCallback = null;
+    }
+
+    function showStatus(elementId, message, isError = false) {
+      const el = document.getElementById(elementId);
+      el.textContent = message;
+      el.className = 'status ' + (isError ? 'error' : 'success');
+      el.style.display = 'block';
+      if (statusTimeout) clearTimeout(statusTimeout);
+      statusTimeout = setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    /* ==========================================================================
+       Config & JSON Editor Operations
+       ========================================================================== */
+    function deepMerge(target, source) {
+      for (const key of Object.keys(target)) {
+        if (source[key] !== undefined) {
+          if (typeof target[key] === 'object' && target[key] !== null && !Array.isArray(target[key])) {
+            deepMerge(target[key], source[key]);
+          } else {
+            target[key] = source[key];
+          }
+        }
+      }
+      return target;
+    }
+
+    function toggleAccordion(index) {
+      const items = document.querySelectorAll('#formEditorContainer .accordion-item');
+      items.forEach((item, idx) => {
+        const body = item.querySelector('.accordion-body');
+        if (idx === index) {
+          const isOpen = item.classList.contains('active');
+          item.classList.toggle('active', !isOpen);
+          body.style.maxHeight = isOpen ? '0px' : (body.scrollHeight + 100) + 'px';
+          activeAccordionIndex = isOpen ? -1 : index;
+        } else {
+          item.classList.remove('active');
+          body.style.maxHeight = '0px';
+        }
+      });
+    }
+
+    function syncFormToText() {
+      if (currentEditorMode !== 'form') return;
+      const formData = collectFormData();
+      const textArea = document.getElementById('jsonEditor');
+      textArea.value = JSON.stringify(formData, null, 2);
+      cachedLines = textArea.value.split('\n');
+      updateLineNumbers();
+      updateEditorVisuals();
+
+      const activeItem = document.querySelector('#formEditorContainer .accordion-item.active');
+      if (activeItem) {
+        const body = activeItem.querySelector('.accordion-body');
+        body.style.maxHeight = (body.scrollHeight + 100) + 'px';
+      }
+    }
+
+    function switchEditorMode(mode) {
+      const fileSelect = document.getElementById('configFileSelect');
+      if (fileSelect.value !== 'skeen') return;
+
+      currentEditorMode = mode;
+      localStorage.setItem('keen_editor_mode', mode);
+
+      const formContainer = document.getElementById('formEditorContainer');
+      const editorWrapper = document.getElementById('editorWrapper');
+      const btnForm = document.getElementById('btnModeForm');
+      const btnText = document.getElementById('btnModeText');
+      const textArea = document.getElementById('jsonEditor');
+
+      if (mode === 'form') {
+        try {
+          let data = JSON.parse(textArea.value || '{}');
+          data = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), data);
+          renderFormFields(data);
+        } catch (e) {
+          showAlertModal(currentLang === 'ru' ? 'Ошибка в формате JSON. Исправьте синтаксис в текстовом режиме.' : 'JSON syntax error. Fix it in text mode.');
+          switchEditorMode('text');
+          return;
+        }
+        formContainer.style.display = 'flex';
+        editorWrapper.style.display = 'none';
+        btnForm.classList.add('active');
+        btnText.classList.remove('active');
+      } else {
+        const formData = collectFormData();
+        textArea.value = JSON.stringify(formData, null, 2);
+        cachedLines = textArea.value.split('\n');
+        updateLineNumbers();
+        updateEditorVisuals();
+        formContainer.style.display = 'none';
+        editorWrapper.style.display = 'flex';
+        btnText.classList.add('active');
+        btnForm.classList.remove('active');
+      }
+    }
+
+    function renderFormFields(data) {
+      const container = document.getElementById('formEditorContainer');
+      const l = currentLang || 'ru';
+
+      networkCheckArray = Array.isArray(data.network?.check) ? [...data.network.check] : [];
+      apiCorsArray = Array.isArray(data.services?.api?.cors_origin) ? [...data.services.api.cors_origin] : [];
+      fakeipClientsArray = Array.isArray(data.firewall?.intercept?.fakeip?.clients) ? [...data.firewall.intercept.fakeip.clients] : [];
+      excludePortsArray = Array.isArray(data.firewall?.exclude?.port) ? [...data.firewall.exclude.port] : [];
+      excludeV4Array = Array.isArray(data.firewall?.exclude?.ipv4_cidr) ? [...data.firewall.exclude.ipv4_cidr] : [];
+      excludeV6Array = Array.isArray(data.firewall?.exclude?.ipv6_cidr) ? [...data.firewall.exclude.ipv6_cidr] : [];
+
+      container.innerHTML = `
+        <!-- Accordion 0: General -->
+        <div class="accordion-item ${activeAccordionIndex === 0 ? 'active' : ''}">
+          <div class="accordion-header" onclick="toggleAccordion(0)">
+            <div class="accordion-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+              <span>${l === 'ru' ? 'Основные' : 'General'}</span>
+            </div>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Автозапуск' : 'Auto Start'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить автозапуск' : 'Enabled'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('auto_start.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Задержка (сек)' : 'Delay (sec)'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('auto_start.delay')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="number" id="f_auto_start_delay" value="${data.auto_start?.delay ?? 0}" oninput="validateField(this, 'port'); syncFormToText()"></div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Политика доступа' : 'Policy'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить политику' : 'Enabled'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('policy.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Интерфейс сегмента (Bridge)' : 'Segment'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('policy.segment')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_policy_segment" value="${data.policy?.segment ?? ''}" oninput="validateField(this, 'segment'); syncFormToText()"></div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Сеть' : 'Network'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Поддержка IPv6' : 'IPv6'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('network.ipv6')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Оптимизация sysctl (tuning)' : 'Tuning'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('network.tuning')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Проверка сети (check)' : 'Check IPs'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('network.check')">?</button>
+                  </div>
+                  <div class="form-setting-input">
+                    <input type="text" id="f_network_check_display" readonly value="${networkCheckArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_network_check_display', 'Проверка сети (check)', networkCheckArray, 'host')">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 1: Sing-box -->
+        <div class="accordion-item ${activeAccordionIndex === 1 ? 'active' : ''}">
+          <div class="accordion-header" onclick="toggleAccordion(1)">
+            <div class="accordion-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+              <span>${l === 'ru' ? 'Sing-box' : 'Sing-box'}</span>
+            </div>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Конфиг Sing-box' : 'Sing-box Config'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Путь к конфигу' : 'Path'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.config.path')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_config_path" value="${data.singbox?.config?.path ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'URL синхронизации' : 'URL'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.config.url')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_config_url" value="${data.singbox?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Разбивать (split)' : 'Split'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.config.split')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API URL' : 'API URL'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.api.url')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_api_url" value="${data.singbox?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API Секрет' : 'API Secret'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.api.secret')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_api_secret" value="${data.singbox?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Сторонний Sing-box' : 'External Sing-box'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить сторонний' : 'Enabled'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Путь к бинарнику' : 'Path'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.path')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_path" value="${data.singbox?.external?.path ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Путь к конфигу' : 'Config Path'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.path')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_cfg_path" value="${data.singbox?.external?.config?.path ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'URL конфига' : 'Config URL'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.url')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_cfg_url" value="${data.singbox?.external?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Разбивать (split)' : 'Config Split'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.split')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API URL' : 'API URL'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.api.url')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_api_url" value="${data.singbox?.external?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API Секрет' : 'API Secret'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.api.secret')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_api_secret" value="${data.singbox?.external?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 2: Services -->
+        <div class="accordion-item ${activeAccordionIndex === 2 ? 'active' : ''}">
+          <div class="accordion-header" onclick="toggleAccordion(2)">
+            <div class="accordion-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+              <span>${l === 'ru' ? 'Сервисы' : 'Services'}</span>
+            </div>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'SKeen API' : 'SKeen API'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API Порт' : 'API Port'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.api.port')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="number" id="f_services_api_port" value="${data.services?.api?.port ?? 5000}" oninput="validateField(this, 'port'); syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API Секрет' : 'API Secret'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.api.secret')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_services_api_secret" value="${data.services?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'CORS Origins' : 'CORS Origin'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.api.cors_origin')">?</button>
+                  </div>
+                  <div class="form-setting-input">
+                    <input type="text" id="f_services_api_cors_display" readonly value="${apiCorsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_services_api_cors_display', 'CORS Origins', apiCorsArray, 'text')">
+                  </div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить Dashboard' : 'Dashboard'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.api.dashboard')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Автозапуск API' : 'Auto Start API'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.api.auto_start')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Локальный прокси' : 'Local Proxy'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить прокси' : 'Proxy Enabled'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.proxy.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Порт прокси' : 'Proxy Port'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.proxy.port')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_services_proxy_port" value="${data.services?.proxy?.port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Пользователь прокси' : 'Proxy User'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.proxy.user')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_services_proxy_user" value="${data.services?.proxy?.user ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Пароль прокси' : 'Proxy Pass'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('services.proxy.pass')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_services_proxy_pass" value="${data.services?.proxy?.pass ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 3: Firewall -->
+        <div class="accordion-item ${activeAccordionIndex === 3 ? 'active' : ''}">
+          <div class="accordion-header" onclick="toggleAccordion(3)">
+            <div class="accordion-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <span>${l === 'ru' ? 'Фаервол' : 'Firewall'}</span>
+            </div>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Перехват' : 'Firewall Intercept'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Перехват DNS' : 'DNS Intercept'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.dns')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'FakeIP перехват' : 'FakeIP Enabled'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Файл FakeIP (include)' : 'FakeIP Include'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.include')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_firewall_fakeip_include" value="${data.firewall?.intercept?.fakeip?.include ?? ''}" oninput="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Клиенты FakeIP (clients)' : 'FakeIP Clients'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.clients')">?</button>
+                  </div>
+                  <div class="form-setting-input">
+                    <input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_fakeip_clients_display', 'Клиенты FakeIP (clients)', fakeipClientsArray, 'ip')">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Исключения фаервола' : 'Firewall Exclude'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Исключенные порты' : 'Excluded Ports'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.port')">?</button>
+                  </div>
+                  <div class="form-setting-input">
+                    <input type="text" id="f_firewall_exclude_port_display" readonly value="${excludePortsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_port_display', 'Исключенные порты', excludePortsArray, 'portRange')">
+                  </div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Исключенные IPv4 CIDR' : 'IPv4 CIDR Exclude'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.ipv4_cidr')">?</button>
+                  </div>
+                  <div class="form-setting-input">
+                    <input type="text" id="f_firewall_exclude_v4_display" readonly value="${excludeV4Array.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_v4_display', 'Исключенные IPv4 CIDR', excludeV4Array, 'v4cidr')">
+                  </div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Исключенные IPv6 CIDR' : 'IPv6 CIDR Exclude'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.ipv6_cidr')">?</button>
+                  </div>
+                  <div class="form-setting-input">
+                    <input type="text" id="f_firewall_exclude_v6_display" readonly value="${excludeV6Array.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_v6_display', 'Исключенные IPv6 CIDR', excludeV6Array, 'v6cidr')">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Редирект DNS и Проксирование роутера' : 'Redirect DNS & Proxy Router'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить редирект DNS' : 'Redirect DNS'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Порт редиректа DNS' : 'DNS To Port'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.to_port')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="text" id="f_firewall_redirect_dns_port" value="${data.firewall?.redirect_dns?.to_port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Использовать политику DNS' : 'Use Policy'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.use_policy')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Проксировать весь роутер' : 'Proxy Router'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('firewall.proxy_router')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 4: Updates -->
+        <div class="accordion-item ${activeAccordionIndex === 4 ? 'active' : ''}">
+          <div class="accordion-header" onclick="toggleAccordion(4)">
+            <div class="accordion-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+              <span>${l === 'ru' ? 'Обновления' : 'Updates'}</span>
+            </div>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Параметры обновлений (update)' : 'Updates Options'}</h3>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления SKeen' : 'Update SKeen'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('update.skeen.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления Sing-box' : 'Update Sing-box'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('update.singbox.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Бета-версии Sing-box' : 'Sing-box Beta'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('update.singbox.beta')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (activeAccordionIndex !== -1) {
+        setTimeout(() => {
+          const activeItem = container.querySelector('.accordion-item.active');
+          if (activeItem) {
+            const body = activeItem.querySelector('.accordion-body');
+            body.style.maxHeight = (body.scrollHeight + 100) + 'px';
+          }
+        }, 50);
+      }
+    }
+
+    /* ==========================================================================
+       Array Editor Modal Operations
+       ========================================================================== */
+    function openArrayModal(displayInputId, titleText, targetArrayRef, validationType = 'text') {
+      document.getElementById('arrayModalTitle').textContent = titleText;
+      currentEditingArrayRef = targetArrayRef;
+      currentEditingDisplayId = displayInputId;
+      currentItemValidationType = validationType;
+
+      renderArrayModalItems();
+      const input = document.getElementById('arrayModalNewItemInput');
+      input.value = '';
+      input.classList.remove('invalid-input');
+      setModalState('arrayEditModal', true);
+    }
+
+    function renderArrayModalItems() {
+      const listEl = document.getElementById('arrayModalItemsList');
+      listEl.innerHTML = '';
+      if (!currentEditingArrayRef || currentEditingArrayRef.length === 0) {
+        listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem; padding: 6px;">Список пуст</div>`;
+        return;
+      }
+      currentEditingArrayRef.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'array-item-row';
+        row.innerHTML = `
+          <span>${item}</span>
+          <button type="button" class="icon-btn-sm danger" onclick="removeArrayModalItem(${idx})" title="Удалить">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function validateArrayItemValue(val, type) {
+      if (!val) return false;
+      if (type === 'portRange') return VALIDATORS.port.test(val) || VALIDATORS.portRange.test(val);
+      if (type === 'v4cidr') return VALIDATORS.ipv4Cidr.test(val) || VALIDATORS.ipv4.test(val);
+      if (type === 'v6cidr') return VALIDATORS.ipv6Cidr.test(val) || VALIDATORS.ipv6.test(val);
+      if (type === 'ip') return VALIDATORS.ipv4.test(val) || VALIDATORS.ipv4Cidr.test(val) || VALIDATORS.ipv6.test(val) || VALIDATORS.ipv6Cidr.test(val);
+      if (type === 'host') return VALIDATORS.host.test(val);
+      return true;
+    }
+
+    function addArrayModalItem() {
+      const input = document.getElementById('arrayModalNewItemInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      if (!validateArrayItemValue(val, currentItemValidationType)) {
+        input.classList.add('invalid-input');
+        return;
+      }
+      input.classList.remove('invalid-input');
+
+      currentEditingArrayRef.push(val);
+      input.value = '';
+      renderArrayModalItems();
+    }
+
+    function removeArrayModalItem(idx) {
+      currentEditingArrayRef.splice(idx, 1);
+      renderArrayModalItems();
+    }
+
+    function saveArrayModal() {
+      if (currentEditingDisplayId) {
+        document.getElementById(currentEditingDisplayId).value = currentEditingArrayRef.join(', ');
+      }
+      setModalState('arrayEditModal', false);
+      currentEditingArrayRef = null;
+      currentEditingDisplayId = null;
+      syncFormToText();
+    }
+
+    function closeArrayModal() {
+      setModalState('arrayEditModal', false);
+      currentEditingArrayRef = null;
+      currentEditingDisplayId = null;
+    }
+
+    function collectFormData() {
+      if (currentEditorMode === 'text') {
+        try { return JSON.parse(document.getElementById('jsonEditor').value); }
+        catch (e) { return SKEEN_DEFAULT_SCHEMA; }
+      }
+
+      let result = JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA));
+
+      try {
+        result.auto_start.enabled = document.getElementById('f_auto_start_enabled')?.checked ? 1 : 0;
+        result.auto_start.delay = parseInt(document.getElementById('f_auto_start_delay')?.value) || 0;
+
+        result.policy.enabled = document.getElementById('f_policy_enabled')?.checked ? 1 : 0;
+        result.policy.segment = (document.getElementById('f_policy_segment')?.value || '').trim();
+
+        result.network.ipv6 = document.getElementById('f_network_ipv6')?.checked ? 1 : 0;
+        result.network.tuning = document.getElementById('f_network_tuning')?.checked ? 1 : 0;
+        result.network.check = [...networkCheckArray];
+
+        if (!result.services) result.services = {};
+        result.services.api = {
+          port: parseInt(document.getElementById('f_services_api_port')?.value) || 5000,
+          secret: (document.getElementById('f_services_api_secret')?.value || '').trim(),
+          cors_origin: [...apiCorsArray],
+          dashboard: document.getElementById('f_services_api_dashboard')?.checked ? 1 : 0,
+          auto_start: document.getElementById('f_services_api_autostart')?.checked ? 1 : 0
+        };
+        result.services.proxy = {
+          enabled: document.getElementById('f_services_proxy_enabled')?.checked ? 1 : 0,
+          port: (document.getElementById('f_services_proxy_port')?.value || '').trim(),
+          user: (document.getElementById('f_services_proxy_user')?.value || '').trim(),
+          pass: (document.getElementById('f_services_proxy_pass')?.value || '').trim()
+        };
+
+        result.singbox.config.path = (document.getElementById('f_singbox_config_path')?.value || '').trim();
+        result.singbox.config.url = (document.getElementById('f_singbox_config_url')?.value || '').trim();
+        result.singbox.config.split = document.getElementById('f_singbox_config_split')?.checked ? 1 : 0;
+        result.singbox.api.url = (document.getElementById('f_singbox_api_url')?.value || '').trim();
+        result.singbox.api.secret = (document.getElementById('f_singbox_api_secret')?.value || '').trim();
+
+        result.singbox.external.enabled = document.getElementById('f_singbox_ext_enabled')?.checked ? 1 : 0;
+        result.singbox.external.path = (document.getElementById('f_singbox_ext_path')?.value || '').trim();
+        result.singbox.external.config.path = (document.getElementById('f_singbox_ext_cfg_path')?.value || '').trim();
+        result.singbox.external.config.url = (document.getElementById('f_singbox_ext_cfg_url')?.value || '').trim();
+        result.singbox.external.config.split = document.getElementById('f_singbox_ext_cfg_split')?.checked ? 1 : 0;
+        result.singbox.external.api.url = (document.getElementById('f_singbox_ext_api_url')?.value || '').trim();
+        result.singbox.external.api.secret = (document.getElementById('f_singbox_ext_api_secret')?.value || '').trim();
+
+        result.firewall.intercept.dns = document.getElementById('f_firewall_intercept_dns')?.checked ? 1 : 0;
+        result.firewall.intercept.fakeip.enabled = document.getElementById('f_firewall_fakeip_enabled')?.checked ? 1 : 0;
+        result.firewall.intercept.fakeip.include = (document.getElementById('f_firewall_fakeip_include')?.value || '').trim();
+        result.firewall.intercept.fakeip.clients = [...fakeipClientsArray];
+
+        result.firewall.exclude.port = excludePortsArray.map(p => isNaN(p) ? p : Number(p));
+        result.firewall.exclude.ipv4_cidr = [...excludeV4Array];
+        result.firewall.exclude.ipv6_cidr = [...excludeV6Array];
+
+        result.firewall.redirect_dns.enabled = document.getElementById('f_firewall_redirect_dns_enabled')?.checked ? 1 : 0;
+        result.firewall.redirect_dns.to_port = (document.getElementById('f_firewall_redirect_dns_port')?.value || '').trim();
+        result.firewall.redirect_dns.use_policy = document.getElementById('f_firewall_redirect_dns_policy')?.checked ? 1 : 0;
+        result.firewall.proxy_router = document.getElementById('f_firewall_proxy_router')?.checked ? 1 : 0;
+
+        result.update.skeen.enabled = document.getElementById('f_update_skeen_enabled')?.checked ? 1 : 0;
+        result.update.singbox.enabled = document.getElementById('f_update_singbox_enabled')?.checked ? 1 : 0;
+        result.update.singbox.beta = document.getElementById('f_update_singbox_beta')?.checked ? 1 : 0;
+      } catch (err) {
+        console.error('Error collecting form data:', err);
+      }
+
+      return result;
+    }
+
+    function validateWholeForm() {
+      if (currentEditorMode !== 'form') return true;
+      const invalidFields = document.querySelectorAll('#formEditorContainer .invalid-input');
+      if (invalidFields.length > 0) {
+        showAlertModal(currentLang === 'ru' ? 'Исправьте подсвеченные ошибки в форме перед сохранением!' : 'Fix highlighted form errors before saving!');
+        return false;
+      }
+      return true;
+    }
+
+    function showHelp(key) {
+      const l = currentLang || 'ru';
+      const text = (helpTexts[l] && helpTexts[l][key]) || helpTexts['ru'][key] || 'Описание отсутствует.';
+      document.getElementById('tooltipModalText').textContent = text;
+      setModalState('tooltipModal', true);
+    }
+
+    function closeTooltipModal() {
+      setModalState('tooltipModal', false);
+    }
+
+    function hasUnsavedChanges() {
+      const editor = document.getElementById('jsonEditor');
+      if (!originalFileContent) return false;
+
+      const fileSelect = document.getElementById('configFileSelect');
+      const fileKey = fileSelect ? fileSelect.value : '';
+      const fileName = fileSelect && fileSelect.options[fileSelect.selectedIndex] ? fileSelect.options[fileSelect.selectedIndex].text : '';
+      const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
+
+      if (isTextFile) return editor && editor.value.trim() !== originalFileContent.trim();
+
+      if (fileKey === 'skeen' && baselineParsedJson) {
+        try {
+          const currentObj = currentEditorMode === 'form' ? collectFormData() : JSON.parse(editor.value);
+          return JSON.stringify(currentObj) !== JSON.stringify(baselineParsedJson);
+        } catch (e) {
+          return editor && editor.value.trim() !== originalFileContent.trim();
+        }
+      }
+
+      try {
+        return JSON.stringify(JSON.parse(editor.value)) !== JSON.stringify(JSON.parse(originalFileContent));
+      } catch (e) {
+        return editor && editor.value.trim() !== originalFileContent.trim();
+      }
+    }
+
+    window.addEventListener('beforeunload', (e) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    /* ==========================================================================
+       Fullscreen & Theme Handling
+       ========================================================================== */
+    function toggleFullscreen() {
+      const editorWrapper = document.getElementById('editorWrapper');
+      const svg = document.getElementById('fullscreenSvg');
+      const btn = document.getElementById('fullscreenBtn');
+
+      editorWrapper.classList.toggle('fullscreen-mode');
+      const isFull = editorWrapper.classList.contains('fullscreen-mode');
+
+      if (isFull) {
+        svg.innerHTML = '<path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4v6m0 0h6m0-6l-7 7M10 4v6m0 0H4m0-6l7 7"></path>';
+        btn.title = currentLang === 'ru' ? "Свернуть" : "Restore";
+      } else {
+        svg.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
+        btn.title = currentLang === 'ru' ? "На весь экран" : "Fullscreen";
+      }
+
+      setTimeout(() => updateEditorVisuals(), 100);
+    }
+
+    function getSystemTheme() {
+      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+
+    function applyTheme(mode) {
+      const activeTheme = mode === 'auto' ? getSystemTheme() : mode;
+      document.documentElement.toggleAttribute('data-theme', activeTheme === 'light');
+      if (activeTheme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      else document.documentElement.removeAttribute('data-theme');
+
+      ['auto', 'light', 'dark'].forEach(m => {
+        const btn = document.getElementById(`themeBtn${m.charAt(0).toUpperCase() + m.slice(1)}`);
+        if (btn) btn.classList.toggle('active', m === mode);
+      });
+    }
+
+    function setThemeMode(mode) {
+      localStorage.setItem('keen_theme_mode', mode);
+      applyTheme(mode);
+    }
+
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+      if ((localStorage.getItem('keen_theme_mode') || 'auto') === 'auto') applyTheme('auto');
+    });
+
+    /* ==========================================================================
+       Localization Execution
+       ========================================================================== */
+    function resolveLanguage(langSetting) {
+      return langSetting === 'auto' ? ((navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en') : langSetting;
+    }
+
+    function changeLanguage(langSetting) {
+      localStorage.setItem('keen_lang_setting', langSetting);
+      currentLang = resolveLanguage(langSetting);
+      document.getElementById('langSelect').value = langSetting;
+      applyLanguage();
+      initConnections();
+      renderConnList();
+      renderDynamicActions();
+      renderExtraParamOptions();
+      if (currentEditorMode === 'form') renderFormFields(collectFormData());
+    }
+
+    function t(key) {
+      return translations[currentLang][key] || key;
+    }
+
+    function applyLanguage() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[currentLang][key]) el.textContent = translations[currentLang][key];
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (translations[currentLang][key]) el.placeholder = translations[currentLang][key];
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (translations[currentLang][key]) el.title = translations[currentLang][key];
+      });
+    }
+
+    /* ==========================================================================
+       API & Service Operations
+       ========================================================================== */
+    async function loadFileList(reloadConfig = true) {
+      const baseUrl = getBaseUrl();
+      if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
+      const select = document.getElementById('configFileSelect');
+      const prevSelected = select.value;
+
+      try {
+        const res = await fetch(`${baseUrl}/api/files-list`, { method: 'GET', headers: getHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        let files = await res.json();
+
+        if (!Array.isArray(files) || files.length === 0) {
+          select.innerHTML = '<option value="">Нет доступных файлов</option>';
+          return;
+        }
+
+        files.sort((a, b) => (a.id === 'skeen' ? -1 : b.id === 'skeen' ? 1 : a.id.localeCompare(b.id)));
+        select.innerHTML = files.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+
+        select.value = Array.from(select.options).some(opt => opt.value === prevSelected) ? prevSelected : select.options[0].value;
+        currentSelectedFile = select.value;
+
+        if (reloadConfig) loadConfigFile();
+      } catch (e) {
+        select.innerHTML = '<option value="">Ошибка загрузки списка</option>';
+        showStatus('jsonStatus', `Error: ${e.message}`, true);
+      }
+    }
+
+    function handleFileSelectChange() {
+      const select = document.getElementById('configFileSelect');
+      const newFile = select.value;
+
+      if (hasUnsavedChanges()) {
+        showConfirmModal(t('confirmUnsaved'), () => {
+          originalFileContent = '';
+          currentSelectedFile = newFile;
+          loadConfigFile();
+        }, () => {
+          select.value = currentSelectedFile;
+        });
+        return;
+      }
+      currentSelectedFile = newFile;
+      loadConfigFile();
+    }
+
+    async function loadConfigFile() {
+      const baseUrl = getBaseUrl();
+      if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
+      const fileSelect = document.getElementById('configFileSelect');
+      const fileKey = fileSelect.value;
+      const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
+
+      if (!fileKey) return;
+
+      try {
+        const res = await fetch(`${baseUrl}/api/file?name=${fileKey}`, { method: 'GET', headers: getHeaders() });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || `Error ${res.status}`);
+        }
+        const data = await res.json();
+        const editor = document.getElementById('jsonEditor');
+
+        editor.value = typeof data.content === 'string' ? data.content : JSON.stringify(data.content, null, 2);
+        originalFileContent = editor.value;
+        cachedLines = editor.value.split('\n');
+        updateLineNumbers();
+        updateEditorVisuals();
+
+        if (fileKey === 'skeen') {
+          try {
+            baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), JSON.parse(editor.value || '{}'));
+          } catch (e) {
+            baselineParsedJson = null;
+          }
+          document.getElementById('editorModeBar').style.display = 'flex';
+          switchEditorMode(currentEditorMode);
+        } else {
+          baselineParsedJson = null;
+          document.getElementById('editorModeBar').style.display = 'none';
+          document.getElementById('formEditorContainer').style.display = 'none';
+          document.getElementById('editorWrapper').style.display = 'flex';
+          currentEditorMode = 'text';
+          document.getElementById('btnModeText').classList.add('active');
+          document.getElementById('btnModeForm').classList.remove('active');
+        }
+
+        showStatus('jsonStatus', t('statusLoaded'));
+      } catch (e) {
+        showStatus('jsonStatus', `Error: ${e.message}`, true);
+      }
+    }
+
+    async function saveConfigFile() {
+      if (currentEditorMode === 'form' && !validateWholeForm()) return;
+
+      const editor = document.getElementById('jsonEditor');
+      const fileSelect = document.getElementById('configFileSelect');
+      const fileKey = fileSelect.value;
+      const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
+      const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
+
+      let contentToSend;
+      if (fileKey === 'skeen' && currentEditorMode === 'form') {
+        contentToSend = collectFormData();
+      } else {
+        try {
+          contentToSend = isTextFile ? editor.value : JSON.parse(editor.value);
+        } catch (e) {
+          showStatus('jsonStatus', `JSON Error: ${e.message}`, true);
+          return;
+        }
+      }
+
+      const baseUrl = getBaseUrl();
+      if (!baseUrl) return;
+
+      try {
+        const res = await fetch(`${baseUrl}/api/file`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ name: fileKey, content: contentToSend })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || `Error ${res.status}`);
+        }
+
+        if (fileKey === 'skeen' && currentEditorMode === 'form') {
+          editor.value = JSON.stringify(contentToSend, null, 2);
+        }
+        originalFileContent = editor.value;
+
+        if (fileKey === 'skeen') {
+          try {
+            baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), JSON.parse(editor.value));
+          } catch (e) { }
+        }
+
+        showStatus('jsonStatus', t('statusSaved'));
+
+        if (fileKey === 'skeen') {
+          await loadFileList(false);
+          fileSelect.value = 'skeen';
+          currentSelectedFile = 'skeen';
+        }
+      } catch (e) {
+        showStatus('jsonStatus', `Error: ${e.message}`, true);
+      }
+    }
+
+    function formatJsonEditor() {
+      const fileSelect = document.getElementById('configFileSelect');
+      const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
+      if (fileName.endsWith('.list') || fileName.endsWith('.txt')) {
+        showStatus('jsonStatus', 'Format not applicable for text lists', true);
+        return;
+      }
+      try {
+        const editor = document.getElementById('jsonEditor');
+        if (!editor.value.trim()) return;
+        editor.value = JSON.stringify(JSON.parse(editor.value), null, 2);
+        cachedLines = editor.value.split('\n');
+        updateLineNumbers();
+        updateEditorVisuals();
+        showStatus('jsonStatus', t('statusFormatted'));
+      } catch (e) {
+        showStatus('jsonStatus', `Error: ${e.message}`, true);
+      }
+    }
+
+    /* ==========================================================================
+       Terminal & Command Execution
+       ========================================================================== */
+    function renderAnsiOutput(text) {
+      if (!text) return '';
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/\033\[1;38;5;30m(.*?)\033\[0m/g, '<span class="ansi-cyan-bold">$1</span>')
+        .replace(/\033\[36m(.*?)\033\[0m/g, '<span class="ansi-cyan">$1</span>')
+        .replace(/\033\[31m(.*?)\033\[0m/g, '<span class="ansi-red">$1</span>')
+        .replace(/\033\[32m(.*?)\033\[0m/g, '<span class="ansi-green">$1</span>')
+        .replace(/\033\[33m(.*?)\033\[0m/g, '<span class="ansi-yellow">$1</span>')
+        .replace(/\033\[[0-9;]*m/g, '');
+    }
+
+    function clearTerminalOutput() {
+      document.getElementById('cmdOutput').textContent = t('waitingOutput');
+    }
+
+    async function fetchServiceStatus() {
+      const baseUrl = getBaseUrl();
+      if (!baseUrl) return;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+        const res = await fetch(`${baseUrl}/api/status`, { method: 'GET', headers: getHeaders(), signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          isServiceRunning = data.running;
+          updateStatusBadge(data, false);
+          renderDynamicActions();
+        } else {
+          updateStatusBadge(null, true);
+        }
+      } catch (e) {
+        updateStatusBadge(null, true);
+      }
+    }
+
+    function updateStatusBadge(data, isOffline = false) {
+      const verEl = document.getElementById('headerApiVersion');
+      const dot = document.getElementById('serviceDot');
+      const text = document.getElementById('serviceStatusText');
+      const details = document.getElementById('serviceDetails');
+
+      if (isOffline) {
+        if (dot) dot.className = 'status-dot inactive';
+        if (text) text.textContent = 'Сервер недоступен';
+        if (details) details.textContent = 'API-сервер остановлен / Нет связи';
+        return;
+      }
+
+      verEl.textContent = `API v${data.api_version}`;
+
+      if (data.running) {
+        dot.className = 'status-dot active';
+        text.textContent = t('statusActive');
+        details.textContent = `Режим: ${data.mode} | SKeen: v${data.version} | Sing-box: v${data.sb_version}`;
+      } else {
+        dot.className = 'status-dot inactive';
+        text.textContent = t('statusInactive');
+        details.textContent = data.version ? `SKeen: v${data.version}` : '';
+      }
+    }
+
+    function renderDynamicActions() {
+      const container = document.getElementById('dynamicActions');
+      container.innerHTML = isServiceRunning ? `
+        <button class="danger" onclick="executeCommandParam('stop')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
+          <span>${t('btnStop')}</span>
+        </button>
+        <button class="secondary" onclick="executeCommandParam('restart')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span>${t('btnRestart')}</span>
+        </button>
+      ` : `
+        <button class="success-btn" style="width: 100%; font-size: 0.95rem; padding: 10px;" onclick="executeCommandParam('start')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>${t('btnStart')}</span>
+        </button>
+      `;
+    }
+
+    function renderExtraParamOptions() {
+      const select = document.getElementById('extraParam');
+      const currentValue = select.value || 'reload';
+
+      const options = (currentLang === 'ru' ? [
+        { val: "reload", label: "reload - Перезагрузка sing-box" },
+        { val: "sync", label: "sync - Синхронизировать конфигурацию" },
+        { val: "status", label: "status - Показать статус" },
+        { val: "kill", label: "kill - Принудительная остановка" },
+        { val: "version", label: "version - Показать версию" },
+        { val: "iface", label: "iface - Таблица сетевых интерфейсов" },
+        { val: "connstat", label: "connstat - Диагностика соединений" },
+        { val: "test", label: "test - Тестировать правила фаервола" },
+        { val: "deps", label: "deps - Проверить зависимости" },
+        { val: "check", label: "check - Проверить конфигурацию" },
+        { val: "format", label: "format - Отформатировать конфиг" },
+        { val: "backup", label: "backup - Создать архив /opt/etc/skeen" },
+        { val: "backups", label: "backups - Список архивов в /opt" },
+        { val: "restore", label: "restore - Восстановить из архива" },
+        { val: "clean", label: "clean - Очистить кэш" },
+        { val: "headers", label: "headers - Сгенерировать заголовки" },
+        { val: "tun", label: "OpkgTun (KeeneticOS v5+)" }
+      ] : [
+        { val: "reload", label: "reload - Reload sing-box" },
+        { val: "sync", label: "sync - Synchronize config" },
+        { val: "status", label: "status - Show status" },
+        { val: "kill", label: "kill - Force stop" },
+        { val: "version", label: "version - Show version" },
+        { val: "iface", label: "iface - Interface table" },
+        { val: "connstat", label: "connstat - Diagnostics" },
+        { val: "test", label: "test - Test firewall rules" },
+        { val: "deps", label: "deps - Check dependencies" },
+        { val: "check", label: "check - Check config" },
+        { val: "format", label: "format - Format configuration" },
+        { val: "backup", label: "backup - Create archive" },
+        { val: "backups", label: "backups - List archives" },
+        { val: "restore", label: "restore - Restore backup" },
+        { val: "clean", label: "clean - Clear cache" },
+        { val: "headers", label: "headers - Generate headers" },
+        { val: "tun", label: "OpkgTun (KeeneticOS v5+)" }
+      ]);
+
+      select.innerHTML = options.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
+      select.value = currentValue;
+      handleExtraParamChange();
+    }
+
+    function handleExtraParamChange() {
+      const val = document.getElementById('extraParam').value;
+      const container = document.getElementById('extraParamsContainer');
+      container.innerHTML = '';
+
+      if (val === 'restore') {
+        container.style.display = 'flex';
+        container.innerHTML = `
+          <div class="form-group" style="margin: 0;">
+            <label>${t('lblBackupFile')}</label>
+            <input type="text" id="paramBackupFile" placeholder="${t('placeholderBackupFile')}">
+          </div>`;
+      } else if (val === 'sync') {
+        container.style.display = 'flex';
+        container.innerHTML = `
+          <div class="form-group" style="margin: 0;">
+            <label>${t('lblSyncUrl')}</label>
+            <input type="text" id="paramSyncUrl" placeholder="${t('placeholderSyncUrl')}" oninput="validateField(this, 'url')">
+          </div>`;
+      } else if (val === 'tun') {
+        container.style.display = 'flex';
+        container.innerHTML = `
+          <div class="form-group" style="margin: 0;">
+            <label>${t('lblTunSubCommand')}</label>
+            <select id="paramTunSub" onchange="handleTunSubChange()">
+              <option value="list">tun list</option>
+              <option value="create">tun create</option>
+              <option value="delete">tun delete</option>
+            </select>
+          </div>
+          <div id="tunSubInputsContainer" style="display: none; flex-direction: column; gap: 8px;"></div>`;
+        handleTunSubChange();
+      } else {
+        container.style.display = 'none';
+      }
+    }
+
+    function handleTunSubChange() {
+      const subVal = document.getElementById('paramTunSub').value;
+      const subContainer = document.getElementById('tunSubInputsContainer');
+      subContainer.innerHTML = '';
+
+      if (subVal === 'create') {
+        subContainer.style.display = 'flex';
+        subContainer.innerHTML = `
+          <div class="form-row" style="gap: 8px;">
+            <div class="form-group" style="flex: 1; margin: 0;">
+              <label>${t('lblIpAddress')}</label>
+              <input type="text" id="paramTunIp" placeholder="${t('placeholderIpAddress')}" oninput="validateField(this, 'ip')">
+            </div>
+            <div class="form-group" style="flex: 1; margin: 0;">
+              <label>${t('lblIfaceName')}</label>
+              <input type="text" id="paramTunIface" placeholder="${t('placeholderIfaceName')}">
+            </div>
+          </div>`;
+      } else if (subVal === 'delete') {
+        subContainer.style.display = 'flex';
+        subContainer.innerHTML = `
+          <div class="form-group" style="margin: 0;">
+            <label>${t('lblIfaceName')}</label>
+            <input type="text" id="paramTunIface" placeholder="${t('placeholderIfaceName')}">
+          </div>`;
+      } else {
+        subContainer.style.display = 'none';
+      }
+    }
+
+    async function executeCommandParam(param) {
+      const baseUrl = getBaseUrl();
+      if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
+
+      if (pollingTimer) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
+      }
+
+      const outputEl = document.getElementById('cmdOutput');
+      outputEl.textContent = t('executing');
+
+      const disabledElements = document.querySelectorAll('button, select, input');
+      disabledElements.forEach(el => el.disabled = true);
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        const res = await fetch(`${baseUrl}/api/exec`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ param }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || `Error ${res.status}`);
+        }
+
+        const data = await res.json();
+        outputEl.innerHTML = renderAnsiOutput(data.stdout || t('emptyOutput'));
+      } catch (e) {
+        outputEl.innerHTML = `<span class="ansi-red">Error: ${e.name === 'AbortError' ? 'Превышено время ожидания (таймаут 30с)' : e.message}</span>`;
+      } finally {
+        disabledElements.forEach(el => el.disabled = false);
+        await fetchServiceStatus();
+        startPolling();
+      }
+    }
+
+    async function executeExtraCommand() {
+      const selectedCmd = document.getElementById('extraParam').value;
+      let finalParam = selectedCmd;
+
+      if (selectedCmd === 'restore') {
+        const fileName = (document.getElementById('paramBackupFile')?.value || '').trim();
+        if (!fileName) { showAlertModal(t('alertEmptyParam')); return; }
+        finalParam = `restore ${fileName}`;
+      } else if (selectedCmd === 'sync') {
+        const urlInput = document.getElementById('paramSyncUrl');
+        const url = (urlInput?.value || '').trim();
+        if (url && urlInput.classList.contains('invalid-input')) { showAlertModal(t('alertEmptyParam')); return; }
+        finalParam = url ? `sync ${url}` : 'sync';
+      } else if (selectedCmd === 'tun') {
+        const subCmd = document.getElementById('paramTunSub').value;
+        if (subCmd === 'list') {
+          finalParam = 'tun list';
+        } else if (subCmd === 'create') {
+          const ipInput = document.getElementById('paramTunIp');
+          const ip = (ipInput?.value || '').trim();
+          const iface = (document.getElementById('paramTunIface')?.value || '').trim();
+          if (!ip || !iface || ipInput.classList.contains('invalid-input')) { showAlertModal(t('alertEmptyParam')); return; }
+          finalParam = `tun create ${ip} ${iface}`;
+        } else if (subCmd === 'delete') {
+          const iface = (document.getElementById('paramTunIface')?.value || '').trim();
+          if (!iface) { showAlertModal(t('alertEmptyParam')); return; }
+          finalParam = `tun delete ${iface}`;
+        }
+      }
+
+      await executeCommandParam(finalParam);
+    }
+
+    /* ==========================================================================
+       Editor Highlighting & Utilities
+       ========================================================================== */
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function highlightJson(text) {
+      if (!text) return '';
+      return escapeHtml(text).replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'token-number';
+        if (/^"/.test(match)) cls = /:$/.test(match) ? 'token-key' : 'token-string';
+        else if (/true|false/.test(match)) cls = 'token-boolean';
+        else if (/null/.test(match)) cls = 'token-null';
+        return '<span class="' + cls + '">' + match + '</span>';
+      });
+    }
+
+    function updateLineNumbers() {
+      const lineNumbers = document.getElementById('lineNumbers');
+      const totalLines = cachedLines.length;
+      const linesArr = new Array(totalLines);
+      for (let i = 0; i < totalLines; i++) linesArr[i] = i + 1;
+      lineNumbers.textContent = linesArr.join('\n');
+    }
+
+    let highlightTimeout = null;
+    function handleEditorInput() {
+      const textarea = document.getElementById('jsonEditor');
+      cachedLines = textarea.value.split('\n');
+      updateLineNumbers();
+      if (highlightTimeout) clearTimeout(highlightTimeout);
+      highlightTimeout = setTimeout(() => updateEditorVisuals(), 20);
+    }
+
+    function updateEditorVisuals() {
+      const textarea = document.getElementById('jsonEditor');
+      const content = document.getElementById('highlightingContent');
+      const fileSelect = document.getElementById('configFileSelect');
+      const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
+      const text = textarea.value;
+
+      content.innerHTML = (fileName.endsWith('.list') || fileName.endsWith('.txt')) ? escapeHtml(text) : highlightJson(text);
+      content.style.paddingTop = '0px';
+      content.style.paddingBottom = '0px';
+    }
+
+    let isScrolling = false;
+    function syncScroll() {
+      if (isScrolling) return;
+      isScrolling = true;
+      requestAnimationFrame(() => {
+        const textarea = document.getElementById('jsonEditor');
+        const highlighting = document.getElementById('highlighting');
+        const lineNumbers = document.getElementById('lineNumbers');
+        highlighting.scrollTop = textarea.scrollTop;
+        highlighting.scrollLeft = textarea.scrollLeft;
+        lineNumbers.scrollTop = textarea.scrollTop;
+        isScrolling = false;
+      });
+    }
+
+    function handleEditorKeydown(e) {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const textarea = e.target;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + 2;
+        handleEditorInput();
+      }
+    }
+  </script>
+</body>
+
+</html>
