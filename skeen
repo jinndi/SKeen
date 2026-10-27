@@ -92,7 +92,7 @@ ff00::/8           # Multicast (RFC 4291)
 "
 readonly DELIMETER="------------------------------------------------"
 is_tty(){
-[ -t 1 ]||[ -t 2 ]
+[ "${FORCE_COLOR:-0}" = "1" ]||[ -t 1 ]||[ -t 2 ]
 ret=$?
 is_tty(){ return "$ret";}
 return "$ret"
@@ -173,6 +173,13 @@ cat <<EOF >"$SKEEN_CONFIG"
     }
   },
   "services": {
+    "api": {
+      "auto_start": 1,
+      "port": 5000,
+      "secret": "",
+      "cors_origin": ["*"],
+      "dashboard": 1
+    },
     "proxy": {
       "enabled": 0,
       "port": "",
@@ -227,13 +234,16 @@ json_get_array(){
 local path="${1:-}"
 local arr config_path
 config_path="$(get_skeen_config_path)"
-[ -z "$config_path" ]&&return 1
 arr="$(jsonfilter -i "$config_path" -e "$path[*]")"
 if [ -n "$arr" ];then
-echo "$arr"
-return
+printf '%s\n' "$arr"
+return 0
 fi
-jsonfilter -i "$config_path" -e "$path"|tr -d '[],"'
+arr="$(jsonfilter -i "$config_path" -e "$path")"||return 0
+case "$arr" in
+'[ ]'|'[]'|'')return 0;;
+*)printf '%s\n' "$arr"
+esac
 }
 files_differ(){ [ "$(sha256sum "$1"|cut -d ' ' -f 1)" != "$(sha256sum "$2"|cut -d ' ' -f 1)" ];}
 check_and_create_or_sync_skeen_config(){
@@ -361,6 +371,27 @@ export BOX_API_SECRET="$sing_api_secret"
 fi
 check_and_merge_singbox_config
 check_and_kill_old_singbox_proc
+}
+get_service_api_config(){
+local mode="${1:-}" config_path
+config_path="$(get_skeen_config_path)"
+if [ -n "$config_path" ];then
+eval "$(jsonfilter -i "$config_path" \
+-e SERVICE_API_AUTO_START='@.services.api.auto_start' \
+-e SERVICE_API_PORT='@.services.api.port' \
+-e SERVICE_API_SECRET='@.services.api.secret' \
+-e SERVICE_API_DASHBOARD='@.services.api.dashboard')"
+[ "$mode" = "--json" ]&&SERVICE_API_CORS_ORIGIN="$(jsonfilter -i "$config_path" -e '@.services.api.cors_origin' 2>/dev/null)"
+fi
+: "${SERVICE_API_AUTO_START:=1}"
+: "${SERVICE_API_PORT:=5000}"
+: "${SERVICE_API_SECRET:=}"
+: "${SERVICE_API_CORS_ORIGIN:='["*"]'}"
+: "${SERVICE_API_DASHBOARD:=1}"
+if [ "$mode" = "--json" ];then
+printf '{"port":%s,"secret":"%s","cors_origin":%s,"dashboard":%s}\n' \
+"$SERVICE_API_PORT" "$SERVICE_API_SECRET" "$SERVICE_API_CORS_ORIGIN" "$SERVICE_API_DASHBOARD"
+fi
 }
 get_service_proxy_config(){
 local config_path
@@ -2226,6 +2257,21 @@ else
 echo "Status: $(red "stopped")"
 fi
 }
+status_json(){
+local running="false" mode="unknown" sb_version="unknown" pid
+if [ -f "$SINGBOX_PID_FILE" ];then
+pid="$(cat "$SINGBOX_PID_FILE" 2>/dev/null)"
+[ -n "$pid" ]&&kill -0 "$pid" 2>/dev/null&&running="true"
+fi
+if [ -f "$FIREWALL_HOOK_FILE" ];then
+mode="$(grep -m1 '^export SKEEN_FIREWALL_MODE=' "$FIREWALL_HOOK_FILE"|cut -d'=' -f2-|tr -d '"'|tr -d "'")"
+[ -z "$mode" ]&&mode="unknown"
+fi
+get_singbox_config
+sb_version="$(get_current_version "sing")"
+printf '{"running":%s,"version":"%s","mode":"%s","sb_version":"%s"}\n' \
+"$running" "${SKEEN_VERSION:-unknown}" "$mode" "${sb_version:-unknown}"
+}
 print_aligned_table(){
 LC_ALL=C awk -v max_width="${1:-28}" -F'|' '
     function trim(s) { sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
@@ -3112,7 +3158,7 @@ stop)stop;;
 restart)restart;;
 reload)reload;;
 kill)kill_proc;;
-status)status;;
+status)if [ "$2" = "--json" ];then status_json;else status;fi;;
 version)version;;
 iface)show_iface;;
 connstat)show_connstat;;
@@ -3140,6 +3186,7 @@ list)tun_list;;
 *)show_help|awk '/OpkgTun / {flag=1} flag'
 esac
 ;;
+get_api_config)get_service_api_config --json;;
 "")show_menu;;
 help|*)show_help
 esac
