@@ -281,7 +281,7 @@ json_get_array() {
     return
   fi
 
-  jsonfilter -i "$config_path" -e "$path" | tr -d '[],"'
+  jsonfilter -i "$config_path" -e "$path" | tr -d '[],"' | grep -v '^[[:space:]]*$'
 }
 
 files_differ() { [ "$(sha256sum "$1" | cut -d ' ' -f 1)" != "$(sha256sum "$2" | cut -d ' ' -f 1)" ]; }
