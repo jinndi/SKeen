@@ -272,16 +272,16 @@ json_get_array() {
 
   config_path="$(get_skeen_config_path)"
 
-  [ -z "$config_path" ] && return 1
-
   arr="$(jsonfilter -i "$config_path" -e "${path}[*]")"
 
-  if [ -n "$arr" ]; then
-    echo "$arr"
-    return
-  fi
+  if [ -n "$arr" ]; then printf '%s\n' "$arr"; return 0; fi
 
-  jsonfilter -i "$config_path" -e "$path" | tr -d '[],"'
+  arr="$(jsonfilter -i "$config_path" -e "$path")" || return 0
+
+  case "$arr" in
+    '[ ]'|'[]'|'') return 0 ;;
+    *) printf '%s\n' "$arr" ;;
+  esac
 }
 
 files_differ() { [ "$(sha256sum "$1" | cut -d ' ' -f 1)" != "$(sha256sum "$2" | cut -d ' ' -f 1)" ]; }
