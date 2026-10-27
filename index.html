@@ -1743,6 +1743,9 @@
         btnOk: "ОК",
         statusActive: "Работает",
         statusInactive: "Остановлен",
+        statusServerUnavailable: 'Сервер недоступен',
+        statusNoConnection: 'API-сервер остановлен / Нет связи',
+        statusMode: 'Режим',
         btnStart: "Запустить SKeen",
         btnStop: "Остановить",
         btnRestart: "Перезапустить",
@@ -1812,6 +1815,9 @@
         btnOk: "OK",
         statusActive: "Running",
         statusInactive: "Stopped",
+        statusServerUnavailable: 'Server unavailable',
+        statusNoConnection: 'API server stopped / No connection',
+        statusMode: 'Mode',
         btnStart: "Start SKeen",
         btnStop: "Stop",
         btnRestart: "Restart",
@@ -3359,21 +3365,25 @@
 
       if (isOffline) {
         if (dot) dot.className = 'status-dot inactive';
-        if (text) text.textContent = 'Сервер недоступен';
-        if (details) details.textContent = 'API-сервер остановлен / Нет связи';
+        if (text) text.textContent = t('statusServerUnavailable');
+        if (details) details.textContent = t('statusNoConnection');
         return;
       }
 
-      verEl.textContent = `API v${data.api_version}`;
+      if (verEl) verEl.textContent = `API v${data.api_version}`;
 
       if (data.running) {
-        dot.className = 'status-dot active';
-        text.textContent = t('statusActive');
-        details.textContent = `Режим: ${data.mode} | SKeen: v${data.version} | Sing-box: v${data.sb_version}`;
+        if (dot) dot.className = 'status-dot active';
+        if (text) text.textContent = t('statusActive');
+        if (details) {
+          details.textContent = `${t('statusMode')}: ${data.mode} | SKeen: v${data.version} | Sing-box: v${data.sb_version}`;
+        }
       } else {
-        dot.className = 'status-dot inactive';
-        text.textContent = t('statusInactive');
-        details.textContent = data.version ? `SKeen: v${data.version}` : '';
+        if (dot) dot.className = 'status-dot inactive';
+        if (text) text.textContent = t('statusInactive');
+        if (details) {
+          details.textContent = data.version ? `SKeen: v${data.version}` : '';
+        }
       }
     }
 
