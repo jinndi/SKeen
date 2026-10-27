@@ -18,8 +18,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -50,6 +48,8 @@ jobs:
           if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
             git -C "$DEPLOY_DIR" fetch origin gh-pages
             git -C "$DEPLOY_DIR" reset --soft FETCH_HEAD
+            # Save CNAME
+            git -C "$DEPLOY_DIR" show FETCH_HEAD:CNAME > "$DEPLOY_DIR/CNAME" 2>/dev/null || true
           fi
 
           git -C "$DEPLOY_DIR" add -A
