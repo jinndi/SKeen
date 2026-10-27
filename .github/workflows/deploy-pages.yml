@@ -45,11 +45,16 @@ jobs:
           git -C "$DEPLOY_DIR" config user.name "github-actions[bot]"
           git -C "$DEPLOY_DIR" config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+          git -C "$DEPLOY_DIR" remote add origin \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          if git -C "$DEPLOY_DIR" ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
             git -C "$DEPLOY_DIR" fetch origin gh-pages
-            git -C "$DEPLOY_DIR" reset --soft FETCH_HEAD
-            # Save CNAME
-            git -C "$DEPLOY_DIR" show FETCH_HEAD:CNAME > "$DEPLOY_DIR/CNAME" 2>/dev/null || true
+
+            # Preserve CNAME if it exists in the published branch.
+            if git -C "$DEPLOY_DIR" show FETCH_HEAD:CNAME > "$DEPLOY_DIR/CNAME" 2>/dev/null; then
+              echo "Preserved existing CNAME"
+            fi
           fi
 
           git -C "$DEPLOY_DIR" add -A
@@ -60,5 +65,4 @@ jobs:
           fi
 
           git -C "$DEPLOY_DIR" commit -m "deploy: update GitHub Pages"
-          git -C "$DEPLOY_DIR" remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git -C "$DEPLOY_DIR" push --force origin gh-pages
+          git -C "$DEPLOY_DIR" push --force origin HEAD:gh-pages
