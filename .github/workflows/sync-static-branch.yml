@@ -21,6 +21,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build skeen-api
+        run: |
+          npm install html-minifier-terser esbuild-minify-templates luamin
+          node .github/build-api.js
+          cp skeen-api skeen-api_tmp
+          cp api-version api-version_tmp
+
       - name: Prepare and Push to Static Branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,14 +58,18 @@ jobs:
           mv skeen_ru_min skeen_ru
           mv config.json_tmp config.json
           mv config_beta.json_tmp config_beta.json
+          mv skeen-api_tmp skeen-api
+          mv api-version_tmp api-version
 
-          if [ -n "$(git status --porcelain skeen skeen_ru config.json config_beta.json)" ]; then
-            git add skeen skeen_ru config.json config_beta.json
+          FILES="skeen skeen_ru config.json config_beta.json skeen-api api-version"
+
+          if [ -n "$(git status --porcelain $FILES)" ]; then
+            git add $FILES
             git commit -m "dist: update optimized scripts and config $(date +'%Y-%m-%d %H:%M')"
             git push origin static
 
-            for file in skeen skeen_ru config.json config_beta.json; do
-              curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/$file"
+            for file in $FILES; do
+              curl -sfL "https://purge.jsdelivr.net/gh/jinndi/SKeen@static/$file" || true
             done
           else
             echo "No changes to commit"

@@ -1,0 +1,64 @@
+name: Deploy Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "index.html"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install html-minifier-terser esbuild-minify-templates
+
+      - name: Minify HTML
+        run: node .github/minify-html.js index.html index.min.html
+
+      - name: Deploy index.html to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+
+          DEPLOY_DIR=$(mktemp -d)
+          trap 'rm -rf "$DEPLOY_DIR"' EXIT
+
+          cp index.min.html "$DEPLOY_DIR/index.html"
+
+          git -C "$DEPLOY_DIR" init -b gh-pages
+          git -C "$DEPLOY_DIR" config user.name "github-actions[bot]"
+          git -C "$DEPLOY_DIR" config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git -C "$DEPLOY_DIR" fetch origin gh-pages
+            git -C "$DEPLOY_DIR" reset --soft FETCH_HEAD
+          fi
+
+          git -C "$DEPLOY_DIR" add -A
+
+          if git -C "$DEPLOY_DIR" diff --cached --quiet; then
+            echo "No changes to deploy"
+            exit 0
+          fi
+
+          git -C "$DEPLOY_DIR" commit -m "deploy: update GitHub Pages"
+          git -C "$DEPLOY_DIR" remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -C "$DEPLOY_DIR" push --force origin gh-pages
