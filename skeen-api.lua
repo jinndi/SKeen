@@ -9,6 +9,9 @@ local VERSION = "1.0.0"
 local SCRIPT = "/opt/bin/skeen-api"
 local LUA_BIN = "/opt/bin/lua"
 local PID_FILE = "/tmp/run/skeen-api.pid"
+local REPO_BASE_URL = "https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/static/"
+local VERSION_URL = REPO_BASE_URL .. "api-version"
+local SCRIPT_URL = REPO_BASE_URL .. "skeen-api"
 
 local function shell_quote(value)
   return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
@@ -78,16 +81,185 @@ local function daemon_restart()
   print("OK. Restarted")
 end
 
-local function daemon_status()
-  local command = "start-stop-daemon -K -t -p " ..
-      shell_quote(PID_FILE) .. " >/dev/null 2>&1"
+local function read_file(path)
+  local file = io.open(path, "r")
+  if not file then
+    return nil
+  end
 
-  if run_command(command) then
-    print("running")
-  else
-    print("stopped")
+  local content = file:read("*a")
+  file:close()
+  return content
+end
+
+local function get_memory(pid)
+  local content = read_file("/proc/" .. pid .. "/status")
+  if not content then
+    return nil, nil
+  end
+
+  local rss = tonumber(content:match("\nVmRSS:%s+(%d+)"))
+  local peak = tonumber(content:match("\nVmHWM:%s+(%d+)"))
+
+  return rss, peak
+end
+
+local function get_uptime(pid)
+  local stat = read_file("/proc/" .. pid .. "/stat")
+  local system_uptime = read_file("/proc/uptime")
+
+  if not stat or not system_uptime then
+    return nil
+  end
+
+  -- Fields after the process name begin with field 3 (state).
+  local fields = stat:match("^%d+ %b() (.*)$")
+  if not fields then
+    return nil
+  end
+
+  local start_ticks
+  local index = 0
+
+  for value in fields:gmatch("%S+") do
+    index = index + 1
+
+    -- starttime is field 22 in /proc/[pid]/stat.
+    if index == 20 then
+      start_ticks = tonumber(value)
+      break
+    end
+  end
+
+  local uptime = tonumber(system_uptime:match("^(%d+%.?%d*)"))
+  if not start_ticks or not uptime then
+    return nil
+  end
+
+  local ticks_file = io.popen("getconf CLK_TCK 2>/dev/null")
+  local ticks = ticks_file and tonumber(ticks_file:read("*l"))
+
+  if ticks_file then
+    ticks_file:close()
+  end
+
+  ticks = ticks or 100
+
+  return math.max(0, math.floor(uptime - start_ticks / ticks))
+end
+
+local function format_uptime(seconds)
+  local days = math.floor(seconds / 86400)
+  local hours = math.floor(seconds % 86400 / 3600)
+  local minutes = math.floor(seconds % 3600 / 60)
+
+  return string.format("%dd %dh %dm", days, hours, minutes)
+end
+
+local function format_memory(kb)
+  if not kb then
+    return "N/A"
+  end
+
+  return math.floor(kb / 1024 + 0.5) .. " MB"
+end
+
+local function daemon_status()
+  local pid = tonumber(
+    (read_file(PID_FILE) or ""):match("^%s*(%d+)")
+  )
+
+  if not pid or not read_file("/proc/" .. pid .. "/stat") then
+    print("Status: stopped")
     os.exit(1)
   end
+
+  local uptime = get_uptime(pid)
+  local rss, peak = get_memory(pid)
+
+  print("Status: running")
+  print("PID: " .. pid)
+  print("Uptime: " .. (uptime and format_uptime(uptime) or "N/A"))
+  print("Memory: " .. format_memory(rss) ..
+    " (peak: " .. format_memory(peak) .. ")")
+end
+
+local function update_script()
+  local version_tmp = SCRIPT .. ".version.tmp"
+  local script_tmp = SCRIPT .. ".update.tmp"
+
+  local function cleanup()
+    os.remove(version_tmp)
+    os.remove(script_tmp)
+  end
+
+  local function download(url, path)
+    return run_command(
+      "curl -fsSL --connect-timeout 5 --max-time 30 -o " ..
+      shell_quote(path) .. " " .. shell_quote(url) ..
+      " >/dev/null 2>&1"
+    )
+  end
+
+  if not download(VERSION_URL, version_tmp) then
+    cleanup()
+    io.stderr:write("Failed to check for API updates; using current version\n")
+    return false
+  end
+
+  local file = io.open(version_tmp, "r")
+  if not file then
+    cleanup()
+    io.stderr:write("Failed to read the remote API version\n")
+    return false
+  end
+
+  local remote_version = file:read("*a")
+  file:close()
+
+  remote_version = remote_version:match("^%s*(.-)%s*$")
+  remote_version = remote_version:gsub("^v", "")
+
+  if not remote_version:match("^%d+%.%d+%.%d+[%w%.%-]*$") then
+    cleanup()
+    io.stderr:write("Invalid remote API version\n")
+    return false
+  end
+
+  if remote_version == VERSION then
+    cleanup()
+    print("OK. API script is already up to date (v" .. VERSION .. ")")
+    return true
+  end
+
+  print("Updating API script: v" .. VERSION .. " -> v" .. remote_version)
+
+  if not download(SCRIPT_URL, script_tmp) then
+    cleanup()
+    io.stderr:write("Failed to download the API script; using current version\n")
+    return false
+  end
+
+  if not run_command(
+        "chmod 755 " .. shell_quote(script_tmp) .. " >/dev/null 2>&1"
+      ) then
+    cleanup()
+    io.stderr:write("Failed to set API script permissions\n")
+    return false
+  end
+
+  if not run_command(
+        "mv -f " .. shell_quote(script_tmp) .. " " .. shell_quote(SCRIPT) ..
+        " >/dev/null 2>&1"
+      ) then
+    cleanup()
+    io.stderr:write("Failed to install the API script update\n")
+    return false
+  end
+
+  cleanup()
+  print("OK. API script updated to v" .. remote_version)
+  return true
 end
 
 local command = arg and arg[1]
@@ -107,9 +279,14 @@ elseif command == "restart" then
 elseif command == "status" then
   daemon_status()
   os.exit(0)
+elseif command == "update" then
+  if not update_script() then
+    os.exit(1)
+  end
+  os.exit(0)
 elseif command ~= "run" then
   io.stderr:write(
-    "Usage: skeen-api {start|stop|restart|run|status|version}\n"
+    "Usage: skeen-api {start|stop|restart|run|status|update|version}\n"
   )
   os.exit(1)
 end
