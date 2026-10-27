@@ -6,13 +6,112 @@ local socket = require("socket")
 -- 0. VERSION & CLI ARGUMENTS HANDLING
 -------------------------------------------------------------------------------
 local VERSION = "1.0.0"
+local SCRIPT = "/opt/bin/skeen-api"
+local LUA_BIN = "/opt/bin/lua"
+local PID_FILE = "/tmp/run/skeen-api.pid"
 
--- Check for version flag passed via console (e.g., skeen-api version or -v)
-for _, v in ipairs(arg or {}) do
-  if v == "version" or v == "-v" then
-    print("v" .. VERSION)
-    os.exit(0)
+local function shell_quote(value)
+  return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+end
+
+local function run_command(command)
+  local ok, _, code = os.execute(command)
+
+  if ok == true or ok == 0 then
+    return true
   end
+
+  return false, code or ok
+end
+
+local function daemon_start()
+  local command = table.concat({
+    "start-stop-daemon -S -b -m",
+    "-p", shell_quote(PID_FILE),
+    "-x", shell_quote(LUA_BIN),
+    "--", shell_quote(SCRIPT), "run",
+    ">/dev/null 2>&1"
+  }, " ")
+
+  if not run_command(command) then
+    io.stderr:write("Failed to start the service\n")
+    os.exit(1)
+  end
+
+  print("OK. Started")
+end
+
+local function daemon_stop()
+  local command = "start-stop-daemon -K -p " ..
+      shell_quote(PID_FILE) .. " >/dev/null 2>&1"
+
+  if not run_command(command) then
+    io.stderr:write("Failed to stop the service\n")
+    os.exit(1)
+  end
+
+  print("OK. Stopped")
+end
+
+local function daemon_restart()
+  local command = "start-stop-daemon -K -p " ..
+      shell_quote(PID_FILE) .. " >/dev/null 2>&1"
+
+  if not run_command(command) then
+    io.stderr:write("Failed to stop the service; restart aborted\n")
+    os.exit(1)
+  end
+
+  local start_command = table.concat({
+    "start-stop-daemon -S -b -m",
+    "-p", shell_quote(PID_FILE),
+    "-x", shell_quote(LUA_BIN),
+    "--", shell_quote(SCRIPT), "run",
+    ">/dev/null 2>&1"
+  }, " ")
+
+  if not run_command(start_command) then
+    io.stderr:write("Failed to start the service\n")
+    os.exit(1)
+  end
+
+  print("OK. Restarted")
+end
+
+local function daemon_status()
+  local command = "start-stop-daemon -K -t -p " ..
+      shell_quote(PID_FILE) .. " >/dev/null 2>&1"
+
+  if run_command(command) then
+    print("running")
+  else
+    print("stopped")
+    os.exit(1)
+  end
+end
+
+local command = arg and arg[1]
+
+if command == "version" or command == "-v" then
+  print("v" .. VERSION)
+  os.exit(0)
+elseif command == "start" then
+  daemon_start()
+  os.exit(0)
+elseif command == "stop" then
+  daemon_stop()
+  os.exit(0)
+elseif command == "restart" then
+  daemon_restart()
+  os.exit(0)
+elseif command == "status" then
+  daemon_status()
+  os.exit(0)
+elseif command ~= "run" then
+  io.stderr:write(
+    "Usage: skeen-api {start|stop|restart|run|status|version}\n"
+  )
+  os.exit(1)
 end
 
 -------------------------------------------------------------------------------
@@ -174,7 +273,8 @@ local json = (function()
       end
       stack[val] = nil
       if #res == 0 then return "[]" end
-      return "[" .. newline .. table.concat(res, comma_sep) .. newline .. (pretty and indent or "") .. "]"
+      return "[" ..
+          newline .. table.concat(res, comma_sep) .. newline .. (pretty and indent or "") .. "]"
     else
       local keys = rawget(val, "__order")
       if not keys then
@@ -193,12 +293,14 @@ local json = (function()
         if v ~= nil then
           local encoded_key = encode(k, stack, next_indent, pretty)
           local encoded_val = encode(v, stack, next_indent, pretty)
-          table.insert(res, (pretty and next_indent or "") .. encoded_key .. ":" .. space .. encoded_val)
+          table.insert(res,
+            (pretty and next_indent or "") .. encoded_key .. ":" .. space .. encoded_val)
         end
       end
       stack[val] = nil
       if #res == 0 then return "{}" end
-      return "{" .. newline .. table.concat(res, comma_sep) .. newline .. (pretty and indent or "") .. "}"
+      return "{" ..
+          newline .. table.concat(res, comma_sep) .. newline .. (pretty and indent or "") .. "}"
     end
   end
 
@@ -268,7 +370,8 @@ local json = (function()
     elseif n <= 0xffff then
       return string.char(f(n / 4096) + 224, f(n % 4096 / 64) + 128, n % 64 + 128)
     elseif n <= 0x10ffff then
-      return string.char(f(n / 262144) + 240, f(n % 262144 / 4096) + 128, f(n % 4096 / 64) + 128, n % 64 + 128)
+      return string.char(f(n / 262144) + 240, f(n % 262144 / 4096) + 128, f(n % 4096 / 64) + 128,
+        n % 64 + 128)
     end
     error(string.format("invalid unicode codepoint '%x'", n))
   end
@@ -499,7 +602,8 @@ local function get_allowed_files_map()
   map["pure_cidr"] = { path = pure_cidr_path, type = "text" }
 
   if is_directory(sb_cfg_path) then
-    local p_find = io.popen(string.format("find '%s' -maxdepth 2 -name '*.json' | sort", sb_cfg_path:gsub("'", "'\\''")))
+    local p_find = io.popen(string.format("find '%s' -maxdepth 2 -name '*.json' | sort",
+      sb_cfg_path:gsub("'", "'\\''")))
     if p_find then
       local idx = 0
       for file_full_path in p_find:lines() do
