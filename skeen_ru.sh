@@ -49,7 +49,12 @@ readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
 readonly SINGBOX_RUN_VERSION="${RUN_DIR}/version"
 readonly SINGBOX_BIN_PATH="${ENTWARE_DIR}/bin/skeen-box"
-readonly SINGBOX_DEFAULT_CONFIG_PATH="${WORK_DIR}/config.json"
+readonly SINGBOX_CONFIG_PATH="${WORK_DIR}/config.json"
+readonly SINGBOX_CONFIG_DIR_PATH="${WORK_DIR}/config"
+readonly SINGBOX_CONFIG_MERGED_PATH="${WORK_DIR}/.config_merged.json"
+readonly SINGBOX_CONFIG_EXT_PATH="${WORK_DIR}/config_ext.json"
+readonly SINGBOX_CONFIG_EXT_DIR_PATH="${WORK_DIR}/config_ext"
+readonly SINGBOX_CONFIG_EXT_MERGED_PATH="${WORK_DIR}/.config_merged_ext.json"
 readonly SINGBOX_API_URL="https://github.com/SagerNet/sing-box/releases/latest"
 readonly SINGBOX_API_URL_BETA="https://github.com/SagerNet/sing-box/releases.atom"
 readonly SINGBOX_SPACE_MB=128
@@ -184,7 +189,7 @@ create_skeen_config() {
   },
   "singbox": {
     "config": {
-      "path": "${SINGBOX_DEFAULT_CONFIG_PATH}",
+      "use_dir": 0,
       "url": "",
       "split": 1
     },
@@ -196,7 +201,7 @@ create_skeen_config() {
       "enabled": ${EXTERNAL_ENABLED:-0},
       "path": "",
       "config": {
-        "path": "",
+        "use_dir": 0,
         "url": "",
         "split": 1
       },
@@ -302,39 +307,6 @@ check_and_create_or_sync_skeen_config() {
   fi
 }
 
-check_and_merge_singbox_config() {
-  case "$SINGBOX_CONFIG" in
-    /*) ;;
-    *) SINGBOX_CONFIG="${WORK_DIR}/${SINGBOX_CONFIG}" ;;
-  esac
-
-  SINGBOX_CONFIG="${SINGBOX_CONFIG%/}"
-
-  local merged_path="$WORK_DIR/.merged.json"
-  [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ] && merged_path="$WORK_DIR/.merged_external.json"
-  SINGBOX_CONFIG_DIR=""
-
-  if [ -d "$SINGBOX_CONFIG" ]; then
-    SINGBOX_CONFIG_DIR="$SINGBOX_CONFIG"
-    if [ ! -f "$merged_path" ] ||
-      [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -newer "$merged_path" -print -quit)" ];
-    then
-      if [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -print -quit)" ]; then
-        if ! "$SINGBOX_BIN" merge "$merged_path" -C "$SINGBOX_CONFIG_DIR" >/dev/null 2>&1; then
-          exiterr "Ошибка слияния конфига $SINGBOX_NAME из $SINGBOX_CONFIG_DIR"
-        fi
-      else
-        echowarn "Папка $SINGBOX_CONFIG_DIR пуста (нет конфигов $SINGBOX_NAME)"; sleep 2
-      fi
-    fi
-    SINGBOX_CONFIG="$merged_path"
-  elif [ "$SINGBOX_CONFIG" = "$merged_path" ]; then
-    exiterr "Путь $SINGBOX_CONFIG для $SINGBOX_NAME зарезервирован"
-  elif [ ! -f "$SINGBOX_CONFIG" ]; then
-    echowarn "$SINGBOX_NAME конфиг отсутствует по пути $SINGBOX_CONFIG"; sleep 2
-  fi
-}
-
 check_and_kill_old_singbox_proc() {
   local sing_pid sing_path kill_old=0
 
@@ -394,51 +366,92 @@ get_singbox_config() {
 
   [ -n "$config_path" ] && eval "$(
     jsonfilter -i "$config_path" \
-      -e sing_config_path='@.singbox.config.path' \
+      -e sing_config_use_dir='@.singbox.config.use_dir' \
       -e sing_config_url='@.singbox.config.url' \
       -e sing_config_split='@.singbox.config.split' \
       -e sing_api_url='@.singbox.api.url' \
       -e sing_api_secret='@.singbox.api.secret' \
       -e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
       -e sing_external_path='@.singbox.external.path' \
-      -e sing_external_config_path='@.singbox.external.config.path' \
+      -e sing_external_config_use_dir='@.singbox.external.config.use_dir' \
       -e sing_external_config_url='@.singbox.external.config.url' \
       -e sing_external_config_split='@.singbox.external.config.split' \
       -e sing_external_api_url='@.singbox.external.api.url' \
       -e sing_external_api_secret='@.singbox.external.api.secret'
   )"
 
-  : "${sing_config_path:=$SINGBOX_DEFAULT_CONFIG_PATH}"
+  : "${sing_config_use_dir:=0}"
   : "${sing_config_url:=}"
   : "${sing_config_split:=1}"
   : "${sing_api_url:=http://127.0.0.1:9999}"
   : "${sing_api_secret:=}"
   : "${SINGBOX_EXTERNAL_ENABLED:=0}"
   : "${sing_external_path:=/opt/bin/sing-box}"
-  : "${sing_external_config_path:=$sing_config_path}"
+  : "${sing_external_config_use_dir:=$sing_config_use_dir}"
   : "${sing_external_config_url:=$sing_config_url}"
   : "${sing_external_config_split:=$sing_config_split}"
   : "${sing_external_api_url:=$sing_api_url}"
   : "${sing_external_api_secret:=$sing_api_secret}"
 
+  _init_box_target() {
+    local use_dir="${1:-0}" dir_path="${2:-}" file_path="${3:-}"
+    if [ "$use_dir" = "1" ]; then
+      mkdir -p "$dir_path"
+      if [ -z "$(ls -A "$dir_path")" ]; then
+        if [ -f "$file_path" ] && [ "$SINGBOX_CONFIG_SPLIT" = "1" ]; then
+          split_singbox_config "$file_path" "$dir_path" || echo '{}' > "$dir_path/config.json"
+        else
+          echo '{}' > "$dir_path/config.json"
+        fi
+      fi
+
+      if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ]; then
+        SINGBOX_CONFIG="$SINGBOX_CONFIG_EXT_MERGED_PATH"
+      else
+        SINGBOX_CONFIG="$SINGBOX_CONFIG_MERGED_PATH"
+      fi
+      SINGBOX_CONFIG_DIR="$dir_path"
+    else
+      if [ ! -f "$file_path" ]; then
+       if [ -d "$dir_path" ] && [ -n "$(ls -A "$dir_path")" ]; then
+          "$SINGBOX_BIN" merge "$file_path" -C "$dir_path" >/dev/null 2>&1 || echo '{}' > "$file_path"
+        else
+          echo '{}' > "$file_path"
+        fi
+      fi
+      SINGBOX_CONFIG="$file_path"
+    fi
+  }
+
+  SINGBOX_CONFIG_DIR=""
+
   if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ]; then
     [ -f "$sing_external_path" ] || sing_external_path="$(command -v "$sing_external_path")"
     SINGBOX_BIN="$sing_external_path"
-    SINGBOX_CONFIG="$sing_external_config_path"
     SINGBOX_CONFIG_URL="$sing_external_config_url"
     SINGBOX_CONFIG_SPLIT="$sing_external_config_split"
+    _init_box_target "$sing_external_config_use_dir" "$SINGBOX_CONFIG_EXT_DIR_PATH" "$SINGBOX_CONFIG_EXT_PATH"
     export BOX_API_URL="$sing_external_api_url"
     export BOX_API_SECRET="$sing_external_api_secret"
   else
     SINGBOX_BIN="$SINGBOX_BIN_PATH"
-    SINGBOX_CONFIG="$sing_config_path"
     SINGBOX_CONFIG_URL="$sing_config_url"
     SINGBOX_CONFIG_SPLIT="$sing_config_split"
+    _init_box_target "$sing_config_use_dir" "$SINGBOX_CONFIG_DIR_PATH" "$SINGBOX_CONFIG_PATH"
     export BOX_API_URL="$sing_api_url"
     export BOX_API_SECRET="$sing_api_secret"
   fi
 
-  check_and_merge_singbox_config
+  if [ -n "$SINGBOX_CONFIG_DIR" ]; then
+    if [ ! -f "$SINGBOX_CONFIG" ] ||
+      [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -newer "$SINGBOX_CONFIG" -print -quit)" ];
+    then
+      if ! "$SINGBOX_BIN" merge "$SINGBOX_CONFIG" -C "$SINGBOX_CONFIG_DIR" >/dev/null 2>&1; then
+        echoerr "Ошибка слияния конфига $SINGBOX_NAME из $SINGBOX_CONFIG_DIR"
+      fi
+    fi
+  fi
+
   check_and_kill_old_singbox_proc
 }
 
@@ -842,44 +855,48 @@ download_singbox() {
   echomsg "Загрузка ${PKG_NAME}..."
 
   mkdir -p "$TMP_DIR"
-  cd "$TMP_DIR" || exit 1
 
   # shellcheck disable=SC2086
-  if run_curl -o "$PKG_NAME" $pkg_url; then
-    echook "$PKG_NAME загружен успешно"
+  if run_curl -o "${TMP_DIR}/${PKG_NAME}" $pkg_url; then
+    echook "$PKG_NAME загружен успешно"; return 0
   else
     echoerr "Не удалось загрузить $PKG_NAME"
+    rm -f "${TMP_DIR}/${PKG_NAME}"
     [ -n "$latest_version" ] && return 1 || exit 1
   fi
 }
 
 install_singbox() {
-  local tmp_unpack_dir="${TMP_DIR}/sing-box-unpack"
-
-  [ -d "$tmp_unpack_dir" ] && rm -rf "$tmp_unpack_dir"
+  local tmp_unpack_dir
+  tmp_unpack_dir="$(mktemp -d "${TMP_DIR}/sing-box-unpack.XXXXXX")" || {
+    echoerr "Не удалось создать временную директорию для распаковки"; return 1
+  }
 
   echomsg "Распаковка $PKG_NAME"
-  mkdir -p "$tmp_unpack_dir"
-  cd "$tmp_unpack_dir" || exit 1
 
-  if tar -xzf "../${PKG_NAME}" && tar -xzf data.tar.gz; then
+  if tar -xzf "${TMP_DIR}/${PKG_NAME}" -C "$tmp_unpack_dir" && tar -xzf "$tmp_unpack_dir/data.tar.gz" -C "$tmp_unpack_dir"; then
     echook "Распаковка завершена"
   else
+    rm -rf "$tmp_unpack_dir"; rm -f "${TMP_DIR}/${PKG_NAME}"
+    echoerr "Ошибка распаковки $PKG_NAME"; return 1
+  fi
+
+  if [ ! -f "$tmp_unpack_dir/usr/bin/sing-box" ]; then
     rm -rf "$tmp_unpack_dir"
     rm -f "${TMP_DIR}/${PKG_NAME}"
-    exiterr "Ошибка распаковки $PKG_NAME"
+    echoerr "Бинарный файл sing-box не найден внутри пакета!"; return 1
   fi
 
   echomsg "Установка $SINGBOX_NAME в $SINGBOX_BIN_PATH"
   [ -f "$SINGBOX_BIN_PATH" ] && rm -f "$SINGBOX_BIN_PATH"
-  mv ./usr/bin/sing-box "$SINGBOX_BIN_PATH"
+  mv -f "$tmp_unpack_dir/usr/bin/sing-box" "$SINGBOX_BIN_PATH"
   chmod 755 "$SINGBOX_BIN_PATH"
   rm -f "$SINGBOX_RUN_VERSION"
-
   rm -rf "$tmp_unpack_dir"
   rm -f "${TMP_DIR}/${PKG_NAME}"
 
   echook "$SINGBOX_NAME успешно установлен"
+  return 0
 }
 
 download_singbox_config() {
@@ -3654,8 +3671,7 @@ split_singbox_config() {
 }
 
 sync_config() {
-  local address="${1:-}"
-  local config_tmp="/tmp/skeen_sync_config.tmp"
+  local address="${1:-}" config_tmp
 
   get_singbox_config
 
@@ -3665,46 +3681,55 @@ sync_config() {
   fi
 
   if ! echo "$address" | grep -qE '^https?://'; then
-    echoerr "URL должен начинаться с http:// или https://" && return 1
+    echoerr "URL должен начинаться с http:// или https://"; return 1
   fi
 
+  config_tmp="$(mktemp /tmp/skeen_sync.XXXXXX)" || {
+    echoerr "Не удалось создать временный файл"; return 1
+  }
+
   if ! run_curl -s "$address" -o "$config_tmp"; then
-    echoerr "Не удалось загрузить конфигурацию с $address" && return 1
+    rm -f "$config_tmp"
+    echoerr "Не удалось загрузить конфигурацию с $address"; return 1
   fi
 
   if ! $SINGBOX_BIN check -c "$config_tmp"; then
-    echoerr "$SINGBOX_NAME конфигурация недействительна, синхронизация отменена!"
     rm -f "$config_tmp"
-    return 1
+    echoerr "$SINGBOX_NAME конфигурация c ошибками, синхронизация отменена!"; return 1
   fi
 
   if [ -n "$SINGBOX_CONFIG_DIR" ]; then
-    if [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -print -quit)" ]; then
-      local parent_dir folder_name archive_path
-      parent_dir=$(dirname "$SINGBOX_CONFIG_DIR")
-      folder_name=$(basename "$SINGBOX_CONFIG_DIR")
-      archive_path="${parent_dir}/${folder_name}_backup.tar"
-      if tar -cf "$archive_path" -C "$parent_dir" "$folder_name"; then
-        rm -rf "${SINGBOX_CONFIG_DIR:?}"/*
-      else
-        echoerr "Ошибка при создании архива $archive_path" && return 1
-      fi
-    fi
+    local tmp_target_dir
+    tmp_target_dir="$(mktemp -d /tmp/skeen_dir.XXXXXX)" || {
+      rm -f "$config_tmp"; echoerr "Не удалось создать временную директорию"; return 1
+    }
+
     if [ "$SINGBOX_CONFIG_SPLIT" = "1" ]; then
-      split_singbox_config "$config_tmp" "$SINGBOX_CONFIG_DIR" && rm -f "$config_tmp"
+      if ! split_singbox_config "$config_tmp" "$tmp_target_dir"; then
+        rm -rf "$tmp_target_dir"; rm -f "$config_tmp"
+        echoerr "Ошибка при разделении конфигурации, синхронизация отменена!"; return 1
+      fi
     else
-      mv -f "$config_tmp" "${SINGBOX_CONFIG_DIR}/config.json"
+      mv -f "$config_tmp" "${tmp_target_dir}/config.json"
     fi
-  elif [ -f "$SINGBOX_CONFIG" ] && cp -f "$SINGBOX_CONFIG" "${SINGBOX_CONFIG}.bak"; then
+
+    local backup_dir="${SINGBOX_CONFIG_DIR}_backup"
+    rm -rf "$backup_dir"; cp -a "$SINGBOX_CONFIG_DIR" "$backup_dir" 2>/dev/null
+
+    rm -rf "${SINGBOX_CONFIG_DIR:?}"; mv -f "$tmp_target_dir" "$SINGBOX_CONFIG_DIR"
+  elif [ -f "$SINGBOX_CONFIG" ]; then
+    cp -f "$SINGBOX_CONFIG" "${SINGBOX_CONFIG}.bak"
+    if ! mv -f "$config_tmp" "$SINGBOX_CONFIG"; then
+      mv -f "${SINGBOX_CONFIG}.bak" "$SINGBOX_CONFIG"
+      echoerr "Не удалось сохранить файл конфигурации, выполнен откат!"; return 1
+    fi
+  else
     mv -f "$config_tmp" "$SINGBOX_CONFIG"
   fi
 
-  if [ ! -f "$config_tmp" ] && [ -f "$SINGBOX_CONFIG" ]; then
-    echook "Конфигурация синхронизирована, перезапустите $SKEEN_NAME для применения изменений"
-  else
-    rm -f "$config_tmp"
-    echoerr "Не удалось сохранить новую конфигурацию, синхранизация отменена!"
-  fi
+  rm -f "$config_tmp"
+  echook "Конфигурация синхронизирована, перезапустите $SKEEN_NAME для применения изменений"
+  return 0
 }
 
 gen_headers() {
