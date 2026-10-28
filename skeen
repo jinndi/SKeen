@@ -2019,7 +2019,7 @@ else
 ct_max=65536
 fi
 if [ -n "$is_tuning" ]&&[ "$is_tuning" != "0" ];then
-ct_max=$(((ct_max*15)/10))
+ct_max=$(((ct_max * 15)/10))
 fi
 echo "$ct_max"
 }
@@ -2265,8 +2265,8 @@ set -- $stat
 runtime=$((${up%.*}-${20:-0}/100))
 printf "%dd %dh %dm\n" \
 $((runtime/86400)) \
-$(((runtime%86400)/3600)) \
-$(((runtime%3600)/60))
+$(((runtime % 86400)/3600)) \
+$(((runtime % 3600)/60))
 }
 status(){
 local pid mem_used mem_peak threads
