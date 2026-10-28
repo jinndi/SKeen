@@ -17,6 +17,17 @@ local function shell_quote(value)
   return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
 end
 
+local function read_file(path)
+  local file = io.open(path, "r")
+  if not file then
+    return nil
+  end
+
+  local content = file:read("*a")
+  file:close()
+  return content
+end
+
 local function run_command(command)
   local ok, _, code = os.execute(command)
 
@@ -45,6 +56,13 @@ local function daemon_start()
 end
 
 local function daemon_stop()
+  local pid = tonumber((read_file(PID_FILE) or ""):match("^%s*(%d+)"))
+  if not pid or not read_file("/proc/" .. pid .. "/stat") then
+    os.remove(PID_FILE)
+    print("[OK] Already stopped")
+    return
+  end
+
   local command = "start-stop-daemon -K -p " ..
       shell_quote(PID_FILE) .. " >/dev/null 2>&1"
 
@@ -53,17 +71,23 @@ local function daemon_stop()
     os.exit(1)
   end
 
+  os.remove(PID_FILE)
   print("[OK] Stopped")
 end
 
 local function daemon_restart()
-  local command = "start-stop-daemon -K -p " ..
-      shell_quote(PID_FILE) .. " >/dev/null 2>&1"
+  local pid = tonumber((read_file(PID_FILE) or ""):match("^%s*(%d+)"))
+  if pid and read_file("/proc/" .. pid .. "/stat") then
+    local command = "start-stop-daemon -K -p " ..
+        shell_quote(PID_FILE) .. " >/dev/null 2>&1"
 
-  if not run_command(command) then
-    io.stderr:write("[ERROR] Failed to stop the service; restart aborted\n")
-    os.exit(1)
+    if not run_command(command) then
+      io.stderr:write("[ERROR] Failed to stop the service; restart aborted\n")
+      os.exit(1)
+    end
   end
+
+  os.remove(PID_FILE)
 
   local start_command = table.concat({
     "start-stop-daemon -S -b -m",
@@ -79,17 +103,6 @@ local function daemon_restart()
   end
 
   print("[OK] Restarted")
-end
-
-local function read_file(path)
-  local file = io.open(path, "r")
-  if not file then
-    return nil
-  end
-
-  local content = file:read("*a")
-  file:close()
-  return content
 end
 
 local function get_memory(pid)
@@ -1058,8 +1071,11 @@ while true do
                 -- Run restart in background with a 2-second delay
                 -- so the current process can return HTTP 200 OK to the browser first
                 os.execute("(sleep 2 && skeen areload) >/dev/null 2>&1 &")
-                response_data = { success = true, stdout =
-                "API reload initiated, restarting in 2 seconds..." }
+                response_data = {
+                  success = true,
+                  stdout =
+                  "API reload initiated, restarting in 2 seconds..."
+                }
               else
                 local command = "FORCE_COLOR=1 skeen " .. param
                 local handle = io.popen(command .. " 2>&1")
