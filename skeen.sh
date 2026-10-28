@@ -64,6 +64,7 @@ readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
 readonly NET_EXCLUDE_SET="skeen_exclude_net"
 readonly PORT_EXCLUDE_SET="skeen_exclude_port"
 readonly FAKEIP_INTERCEPT_SET="skeen_fakeip_net"
+readonly FAKEIP_INTERCEPT_FILE="${WORK_DIR}/pure_cidr.list"
 readonly FAKEIP_CLIENTS_SRC_SET="skeen_fakeip_src"
 readonly CHAIN_PREROUTING="skeen"
 readonly CHAIN_OUTPUT="skeen_mask"
@@ -185,7 +186,7 @@ create_skeen_config() {
   "network": {
     "ipv6": 1,
     "tuning": 0,
-    "check": ["1.1.1.1", "ya.ru", "223.5.5.5"]
+    "check": ["1.1.1.1", "ya.ru", "77.88.8.8"]
   },
   "singbox": {
     "config": {
@@ -231,7 +232,6 @@ create_skeen_config() {
       "dns": 1,
       "fakeip": {
         "enabled": 0,
-        "include": "${WORK_DIR}/pure_cidr.list",
         "clients": []
       }
     },
@@ -518,7 +518,6 @@ get_firewall_config() {
       -e NETWORK_TUNING='@.network.tuning' \
       -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
       -e FIREWALL_INTERCEPT_FAKEIP='@.firewall.intercept.fakeip.enabled' \
-      -e FIREWALL_INTERCEPT_FAKEIP_INCLUDE='@.firewall.intercept.fakeip.include' \
       -e FIREWALL_REDIRECT_DNS_ENABLED='@.firewall.redirect_dns.enabled' \
       -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
       -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
@@ -531,7 +530,6 @@ get_firewall_config() {
   : "${NETWORK_TUNING:=0}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
   : "${FIREWALL_INTERCEPT_FAKEIP:=0}"
-  : "${FIREWALL_INTERCEPT_FAKEIP_INCLUDE:=/opt/etc/skeen/pure_cidr.list}"
   : "${FIREWALL_REDIRECT_DNS_ENABLED:=0}"
   : "${FIREWALL_REDIRECT_DNS_PORT:=}"
   : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
@@ -2203,18 +2201,16 @@ prepare_firewall() {
   fi
 
   setup_fakeip_ipset() {
-    if [ ! -f "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" ]; then
-      touch "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" || {
-        echoerr "Error creating file $FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
-        return 1
+    if [ ! -f "$FAKEIP_INTERCEPT_FILE" ]; then
+      touch "$FAKEIP_INTERCEPT_FILE" || {
+        echoerr "Error creating file $FAKEIP_INTERCEPT_FILE"; return 1
       }
     fi
 
     local temp_file
 
     temp_file=$(mktemp) || {
-      echoerr "Error creating temporary file for ipset $FAKEIP_INTERCEPT_SET"
-      return 1
+      echoerr "Error creating temporary file for ipset $FAKEIP_INTERCEPT_SET"; return 1
     }
 
     {
@@ -2225,13 +2221,13 @@ prepare_firewall() {
         echo "add ${FAKEIP_INTERCEPT_SET}6 fd00::/8 -exist"
       fi
 
-      if [ -s "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" ]; then
+      if [ -s "$FAKEIP_INTERCEPT_FILE" ]; then
         awk -v S="$FAKEIP_INTERCEPT_SET" -v V6="$NETWORK_IPV6" '
           { sub(/#.*/, ""); gsub(/^[ \t]+|[ \t]+$/, "") }
           $0 == "" { next }
           /:/  { if (V6 == "1") print "add " S "6 " $0 " -exist"; next }
                { print "add " S "4 " $0 " -exist" }
-        ' "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
+        ' "$FAKEIP_INTERCEPT_FILE"
       fi
     } > "$temp_file" || {
       rm -f "$temp_file"
