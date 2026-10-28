@@ -69,7 +69,8 @@ Russian-localized version: See [README-RU.md](README-RU.md)
 
 1. SKeen in [`/opt/etc/skeen/skeen.json`](./docs/CONFIGURATION.md).
 2. sing-box in [`/opt/etc/skeen/config.json`](./examples/configs/stable/config-commented.jsonc).
-3. The web dashboard at `http://192.168.1.1:9999`. By default, it is available at the router's IP address (typically `192.168.1.1`).
+3. The Sing-box web dashboard is accessible at `http://192.168.1.1:9999`. By default, it uses the router's IP address (typically `192.168.1.1`).
+4. SKeen API with its dashboard runs by default on port `3000` without authentication; for launch and configuration instructions, [see here](./docs/SKEEN-API.md) or below in the **Web Panels** section.
 
 **Important:**
 
@@ -83,6 +84,7 @@ Manage SKeen using the `skeen` command.
 /opt/
 ├── bin/
 │   ├── skeen                  # Main SKeen management script
+│   ├── skeen-api              # SKeen API (starting from version 5.9.0)
 │   └── skeen-box              # sing-box binary (if installation selected)
 │
 ├── etc/
@@ -103,10 +105,18 @@ Manage SKeen using the `skeen` command.
 │   ├── skeen.json             # Config cache - synced on source changes
 │   └── version                # sing-box version cache - updated on binary change
 └── run/
-    └── skeen.pid              # PID file of the sing-box process
+    ├── skeen.pid              # PID file of the sing-box process
+    └── skeen-api.pid          # PID file of the skeen-api process
 ```
 
-### Web Panels for Local Network
+### Web Panels
+
+**To manage SKeen** locally or remotely starting with version 5.9.0, you can use the web dashboard at https://skeen.indevs.in or the built-in one; for detailed configuration instructions, read [SKEEN-API-EN.md](./docs/SKEEN-API.md).
+
+> [!NOTE]
+> To access a local API (for example, at `http://192.168.1.1:3000`), all browsers except Chrome require using the HTTP version of the website - http://skeen.indevs.in (due to browser restrictions on connecting from HTTPS pages to local HTTP endpoints).
+
+By default, access is allowed from any domain. If you need to restrict it, specify the allowed origins in the `skeen.json` file (`services.api`), and be sure to set a strong key in the `secret` field if you plan to connect remotely via KeenDNS.
 
 The following domains are pre-configured in the base `config.json` template for accessing the panels from the router's local network:
 
@@ -117,6 +127,7 @@ The following domains are pre-configured in the base `config.json` template for 
 | **[board.zash.run.place](https://board.zash.run.place)** *(in Chrome)*<br>[HTTP version](http://board.zash.run.place) *(others)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Remote **Zashboard** frontend for managing proxy connections. |
 | **[d.metacubex.one](https://d.metacubex.one)** / **[metacubexd.pages.dev](https://metacubexd.pages.dev)** *(Chrome only)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Alternative **MetacubexD** (Yacd-meta) web interface for Clash API. |
 
+Instead of a local connection, you can specify your KeenDNS domain address (just don't forget to set an access key in the `secret` field as well).
 
 ## Commands
 
@@ -128,31 +139,31 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 `skeen` without parameters launches the management menu from SSH, use `skeen help` for help
 
-| Command | Description | Web CLI |
-| :--- | :--- | :---: |
-| `start` | Start service | ✓ |
-| `stop` | Stop service | ✓ |
-| `restart` | Full restart | ✓ |
-| `reload` | Reload sing-box only | ✓ |
-| `kill` | Force stop | ✓ |
-| `status` | Show status | ✓ |
-| `version` | Show version | ✓ |
-| `help` | Help about any command | - |
-| `iface` | Show network interface table | - |
-| `connstat` | Connection diagnostics | - |
-| `update` | Check and install updates | - |
-| `test` | Test firewall rules | ✓ |
-| `deps` | Check dependencies | ✓ |
-| `check` | Check configuration | ✓ |
-| `format` | Format sing-box configuration | ✓ |
-| `api` | sing-box API management commands | - |
-| `backup` | Create archive of `/opt/etc/skeen` | ✓ |
-| `backups` | List created archives in `/opt` | ✓ |
-| `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ |
-| `reset` | Reset `/opt/etc/skeen` to default | - |
-| `clean`² | Clear sing-box cache file | ✓ |
-| `sync`³ | Synchronize sing-box configuration | ✓ |
-| `headers` | Generate fake client headers for subscriptions | - |
+| Command | Description | Web CLI | API |
+| :--- | :--- | :---: | :---: |
+| `start` | Start service | ✓ | ✓ |
+| `stop` | Stop service | ✓ | ✓ |
+| `restart` | Full restart | ✓ | ✓ |
+| `reload` | Reload sing-box only | ✓ | ✓ |
+| `kill` | Force stop | ✓ | ✓ |
+| `status` | Show status | ✓ | ✓ |
+| `version` | Show version | ✓ | ✓ |
+| `help` | Help about any command | - | ✓ |
+| `iface` | Show network interface table | - | ✓ |
+| `connstat` | Connection diagnostics | - | ✓ |
+| `update` | Check and install updates | - | - |
+| `test` | Test firewall rules | ✓ | ✓ |
+| `deps` | Check dependencies | ✓ | ✓ |
+| `check` | Check configuration | ✓ | ✓ |
+| `format` | Format sing-box configuration | ✓ | ✓ |
+| `api` | sing-box API management commands | - | - |
+| `backup` | Create archive of `/opt/etc/skeen` | ✓ | ✓ |
+| `backups` | List created archives in `/opt` | ✓ | ✓ |
+| `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ | ✓ |
+| `reset` | Reset `/opt/etc/skeen` to default | - | - |
+| `clean`² | Clear sing-box cache file | ✓ | ✓ |
+| `sync`³ | Synchronize sing-box configuration | ✓ | ✓ |
+| `headers` | Generate fake client headers for subscriptions | - | ✓ |
 
 1 - archive name can be passed as the second parameter with a `.tar` extension to immediately start the backup restore process
 
@@ -160,7 +171,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 
 3 - accepts the sing-box JSON configuration URL as the second parameter (HTTP or HTTPS); optional if the address is set in `singbox.config.url`
 
-**OpkgTun manager (KeeneticOS v5+, only from SSH)**
+**OpkgTun manager (KeeneticOS v5+, from SSH & API)**
 
 | Command | Description |
 | :--- | :--- |

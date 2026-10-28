@@ -34,19 +34,17 @@ Notes:
   <summary>2. Web UI?</summary>
 <br>
 
-💡 For flexible manual configuration, automation, and synchronization, use [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) in a Docker container on a VPS or local host, or [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on your PC.
+Unlike bloated control panels built with Python, Go, or even Rust (which consume anywhere from 12 to 45+ MB of RAM), our solution is written in pure Lua and uses just **2 MB of RAM** (peaking at ~8 MB). The entire backend with the frontend is delivered as a single compact file under **150 KB**, alongside the essential Lua (~20 KB) and LuaSocket (~250 KB) packages.
 
-A [synchronization plugin](https://github.com/jinndi/sync-profile-to-skeen) is also available, allowing you to import profiles via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox), although **Sub-Store is the preferred option**.
+For flexible automation and sing-box configuration synchronization, you can—and should—continue using external tools: [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) in a Docker container on a VPS or local host, [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on Desktop, or the [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox).
 
-The project intentionally does not include a dedicated management panel. This approach offers several advantages for your router:
+**Why this is the optimal router solution:**
 
-* **Resource Efficiency**: Not having a separate management panel saves RAM and reduces CPU overhead, leaving more resources for traffic routing.
-* **Integration**: Management and monitoring are available through the sing-box API and router tools, without duplicating their functions in a separate panel.
-* **Security and Stability**: Fewer continuously running services and components mean fewer potential points of failure and conflicts within the system.
-* **Full Control**: Directly editing the configuration provides access to sing-box features without the limitations of simplified graphical interfaces. Implementing all these features as buttons requires developers to continually update and promptly maintain the panel.
-- **Configuration Sync Priority**: Full sing-box configuration synchronization with support for advanced external tools such as Sub-Store.
-* **No Constant Need**: In general, a separate management panel is not required: a correctly configured setup is created for specific tasks and usually does not need regular changes.
-* **Focus on the Main Task**: SKeen is designed for transparent traffic forwarding and routing. For a network tool of this kind, a separate heavy management panel would generally be excessive.
+- **Ultra Resource Efficiency (2–3 MB RAM)**: Powered by Lua with zero heavy frameworks, leaving RAM and CPU entirely free for their primary job—routing traffic.
+- **Zero External Dependencies**: A single [vanilla HTML interface](../index.html) with no third-party JS/CSS libraries guarantees instant load times and complete self-reliance.
+- **Seamless Management & [REST API](./SKEEN-API-EN.md)**: Quickly edit configurations, monitor service status, and execute CLI commands directly from your browser or via external scripts.
+- **Security & Stability**: Stripped of software bloat, there are no extra failure points or conflicts with KeeneticOS / Entware components.
+- **Balance of Simplicity and Control**: The built-in web dashboard handles everyday router management tasks without turning a lightweight networking tool into an over-engineered utility.
 </details>
 
 <details>
@@ -188,6 +186,15 @@ If using protocols like VLESS or Trojan in TPROXY mode with 60 active connection
 Meaning around 30–40 MB.
 
 P.S. sing-box 1.15.0-alpha.6
+
+**SKeen API?**
+
+Thanks to its lightweight Lua backend, SKeen API delivers minimal system resource consumption on router hardware (under MIPS/ARM embedded environments):
+
+- **Lua (SKeen API)**: **2–3 MB RAM** — peak efficiency with a minimal script footprint and zero bloat.
+- **Rust** *(framework-dependent)*: **3–15 MB RAM** — performance close to Lua when using low-level synchronous libraries (`tiny_http`), but comes with complex cross-compilation and a bloated binary size.
+- **Go** *(net/http)*: **12–25 MB RAM** — persistent memory overhead caused by the embedded runtime, garbage collector, and goroutine scheduler.
+- **Python** *(FastAPI / Flask)*: **25–45+ MB RAM** — excessively heavy for a router environment due to the CPython interpreter and external dependencies.
 </details>
 
 <details>

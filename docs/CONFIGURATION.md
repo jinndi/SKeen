@@ -63,6 +63,18 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     }
   },
   "services": {        //// Additional services configuration
+    "api": {           // + API Service (standalone script starting from version 5.9.0)
+      "auto_start": 1, // If set to 1, the API service starts automatically on router reboot.
+      "port": 3000,    // Port on which the server listens, default is 3000
+      "secret": "",    // Secret authentication key (Header `X-API-Key`).
+                       // If empty, authentication is disabled.
+      "cors_origin": [ // List of allowed origins for browser-based API requests
+        "*"            // * — allows access from any domain (default)
+      ],               // ["http://skeen.indevs.in", "https://skeen.indevs.in"] —
+                       //  restricts access strictly to specified origins.
+      "dashboard": 1   // Enables serving the HTML Dashboard page at route `/`,
+                       // if set to 0, returns 404 Not Found.
+    },
     "proxy": {         // + Local proxy service for update and sync commands
       "enabled": 0,    // If set to 1, a local proxy (127.0.0.1) is used
       "port": "",      // Local proxy port (SOCKS5 or mixed)
@@ -81,8 +93,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled,
                        //   along with sing-box DNS configuration.
                        // - The exclude.port/cidr exceptions will function as normal.
-        "include": "", // Full path to the file containing a list of IP/CIDR resources (both v4 and v6):
-                       // - Allows comments after #, empty lines, and leading/trailing whitespaces.
+        "include": "", // Full or relative path to a file including a list of IP/CIDR resources.
+                       // - Both v4 and v6 are allowed, comments after #, empty lines, and side whitespaces are trimmed.
                        // - Intended for resources that initially didn't have a domain and therefore
                        //   didn't receive a FakeIP, but still need to be proxied.
                        // - Default value, if not specified, is /opt/etc/skeen/pure_cidr.list
@@ -118,7 +130,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "beta": 0        // If set to 1, enables checking for pre-release versions (alpha, beta, rc)
     },
     "skeen": {
-      "enabled": 1     // Enable SKeen update check (0 = disabled)
+      "enabled": 1,    // Enable SKeen update check (0 = disabled)
+      "api": 1         // Enable SKeen API update checks (0 = disabled)
     }
   }
 }

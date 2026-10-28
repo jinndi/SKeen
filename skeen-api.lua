@@ -905,7 +905,7 @@ print("API server started on port " .. PORT)
 
 while true do
   local client = server:accept()
-  client:settimeout(10)
+  client:settimeout(30)
 
   local request = client:receive("*l")
   if request then
