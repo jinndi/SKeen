@@ -37,11 +37,11 @@ local function daemon_start()
   }, " ")
 
   if not run_command(command) then
-    io.stderr:write("Failed to start the service\n")
+    io.stderr:write("[ERROR] Failed to start the service\n")
     os.exit(1)
   end
 
-  print("OK. Started")
+  print("[OK] Started")
 end
 
 local function daemon_stop()
@@ -49,11 +49,11 @@ local function daemon_stop()
       shell_quote(PID_FILE) .. " >/dev/null 2>&1"
 
   if not run_command(command) then
-    io.stderr:write("Failed to stop the service\n")
+    io.stderr:write("[ERROR] Failed to stop the service\n")
     os.exit(1)
   end
 
-  print("OK. Stopped")
+  print("[OK] Stopped")
 end
 
 local function daemon_restart()
@@ -61,7 +61,7 @@ local function daemon_restart()
       shell_quote(PID_FILE) .. " >/dev/null 2>&1"
 
   if not run_command(command) then
-    io.stderr:write("Failed to stop the service; restart aborted\n")
+    io.stderr:write("[ERROR] Failed to stop the service; restart aborted\n")
     os.exit(1)
   end
 
@@ -74,11 +74,11 @@ local function daemon_restart()
   }, " ")
 
   if not run_command(start_command) then
-    io.stderr:write("Failed to start the service\n")
+    io.stderr:write("[ERROR] Failed to start the service\n")
     os.exit(1)
   end
 
-  print("OK. Restarted")
+  print("[OK] Restarted")
 end
 
 local function read_file(path)
@@ -203,14 +203,14 @@ local function update_script()
 
   if not download(VERSION_URL, version_tmp) then
     cleanup()
-    io.stderr:write("Failed to check for API updates; using current version\n")
+    io.stderr:write("[ERROR] Failed to check for API updates; using current version\n")
     return false
   end
 
   local file = io.open(version_tmp, "r")
   if not file then
     cleanup()
-    io.stderr:write("Failed to read the remote API version\n")
+    io.stderr:write("[ERROR] Failed to read the remote API version\n")
     return false
   end
 
@@ -222,13 +222,13 @@ local function update_script()
 
   if not remote_version:match("^%d+%.%d+%.%d+[%w%.%-]*$") then
     cleanup()
-    io.stderr:write("Invalid remote API version\n")
+    io.stderr:write("[ERROR] Invalid remote API version\n")
     return false
   end
 
   if remote_version == VERSION then
     cleanup()
-    print("OK. API script is already up to date (v" .. VERSION .. ")")
+    print("[OK] API script is already up to date (v" .. VERSION .. ")")
     return true
   end
 
@@ -236,7 +236,7 @@ local function update_script()
 
   if not download(SCRIPT_URL, script_tmp) then
     cleanup()
-    io.stderr:write("Failed to download the API script; using current version\n")
+    io.stderr:write("[ERROR] Failed to download the API script; using current version\n")
     return false
   end
 
@@ -253,12 +253,12 @@ local function update_script()
         " >/dev/null 2>&1"
       ) then
     cleanup()
-    io.stderr:write("Failed to install the API script update\n")
+    io.stderr:write("[ERROR] Failed to install the API script update\n")
     return false
   end
 
   cleanup()
-  print("OK. API script updated to v" .. remote_version)
+  print("[OK] API script updated to v" .. remote_version)
   return true
 end
 
@@ -309,8 +309,11 @@ local DEFAULT_FILES = {
 local EMBEDDED_HTML = [==[__HTML_PLACEHOLDER__]==]
 
 -- Determines dashboard HTML source (Development mode reads from disk, Production uses embedded payload)
+local SCRIPT_PATH = arg[0]
+local SCRIPT_DIR = SCRIPT_PATH:match("^(.*)/[^/]+$") or "."
+
 local function get_dashboard_html()
-  local f = io.open("index.html", "r")
+  local f = io.open(SCRIPT_DIR .. "/index.html", "r")
   if f then
     local content = f:read("*all")
     f:close()
@@ -344,7 +347,8 @@ local function is_allowed_param(param)
     ["reset"]    = false,
     ["clean"]    = true,
     ["sync"]     = true,
-    ["headers"]  = true
+    ["headers"]  = true,
+    ["areload"]  = true
   }
   if exact_allowed[param] then return true end
 
@@ -879,7 +883,7 @@ local DASHBOARD = (api_config.dashboard == 1)
 
 local check_cmd = string.format("netstat -tuln 2>/dev/null | grep -q ':%d'", PORT)
 if os.execute(check_cmd) == 0 then
-  io.stderr:write(string.format("Error: Port %d is already in use by another process!\n", PORT))
+  io.stderr:write(string.format("[ERROR] Port %d is already in use by another process!\n", PORT))
   os.exit(1)
 end
 
@@ -1050,16 +1054,24 @@ while true do
 
             local response_data
             if success and type(req_json) == "table" and is_allowed_param(param) then
-              local command = "FORCE_COLOR=1 skeen " .. param
-              local handle = io.popen(command .. " 2>&1")
-              local stdout = ""
-              if handle then
-                stdout = handle:read("*a")
-                handle:close()
+              if param == "areload" then
+                -- Run restart in background with a 2-second delay
+                -- so the current process can return HTTP 200 OK to the browser first
+                os.execute("(sleep 2 && skeen areload) >/dev/null 2>&1 &")
+                response_data = { success = true, stdout =
+                "API reload initiated, restarting in 2 seconds..." }
               else
-                stdout = "Error: failed to open process"
+                local command = "FORCE_COLOR=1 skeen " .. param
+                local handle = io.popen(command .. " 2>&1")
+                local stdout = ""
+                if handle then
+                  stdout = handle:read("*a")
+                  handle:close()
+                else
+                  stdout = "Error: failed to open process"
+                end
+                response_data = { success = true, stdout = stdout }
               end
-              response_data = { success = true, stdout = stdout }
               status = "200 OK"
             else
               response_data = { error = "Invalid or unauthorized parameter" }

@@ -68,7 +68,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
       background-color: var(--bg-color);
       color: var(--text-color);
-      padding: clamp(6px, 2.5vh, 20px);
+      padding: clamp(4px, min(2.5vh, 2vw), 40px);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
@@ -659,14 +659,52 @@
       border: 1px solid var(--border-color);
       border-radius: 6px;
       flex: 1;
-      overflow: auto;
+      overflow-x: auto;
+      overflow-y: auto;
       padding: 12px;
       padding-right: 36px;
       margin: 0;
       font-size: 0.82rem;
       font-family: 'JetBrains Mono', monospace, ui-monospace;
-      white-space: pre-wrap;
-      word-break: break-all;
+      white-space: pre;
+      word-break: normal;
+    }
+
+    /* Scrollbar styling */
+    .output-wrapper,
+    .code-editor-wrapper {
+      scrollbar-width: auto;
+      scrollbar-color: var(--border-color) var(--code-bg);
+    }
+
+    /* Chrome, Edge, Safari */
+    .output-wrapper::-webkit-scrollbar,
+    .code-editor-wrapper::-webkit-scrollbar {
+      width: 14px;
+      height: 14px;
+    }
+
+    .output-wrapper::-webkit-scrollbar-track,
+    .code-editor-wrapper::-webkit-scrollbar-track {
+      background: var(--code-bg);
+      border-radius: 7px;
+    }
+
+    .output-wrapper::-webkit-scrollbar-thumb,
+    .code-editor-wrapper::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 7px;
+      border: 3px solid var(--code-bg);
+    }
+
+    .output-wrapper::-webkit-scrollbar-thumb:hover,
+    .code-editor-wrapper::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary, #888);
+    }
+
+    .output-wrapper::-webkit-scrollbar-corner,
+    .code-editor-wrapper::-webkit-scrollbar-corner {
+      background: var(--code-bg);
     }
 
     /* ==========================================================================
@@ -1846,23 +1884,23 @@
       policy: { enabled: 0, segment: "br1" },
       network: { ipv6: 1, tuning: 0, check: ["vk.com", "77.88.8.8", "77.88.8.1"] },
       singbox: {
-        config: { path: "", url: "", split: 1 },
-        api: { url: "", secret: "" },
+        config: { path: "config.json", url: "", split: 1 },
+        api: { url: "http://127.0.0.1:9999", secret: "" },
         external: {
           enabled: 0,
-          path: "",
+          path: "sing-box",
           config: { path: "", url: "", split: 1 },
           api: { url: "", secret: "" }
         }
       },
       services: {
-        api: { port: 5000, secret: "", cors_origin: ["*"], dashboard: 1, auto_start: 1 },
+        api: { port: 3000, secret: "", cors_origin: ["*"], dashboard: 1, auto_start: 1 },
         proxy: { enabled: 0, port: "", user: "", pass: "" }
       },
       firewall: {
         intercept: {
           dns: 1,
-          fakeip: { enabled: 0, include: "", clients: [] }
+          fakeip: { enabled: 0, include: "pure_cidr.list", clients: [] }
         },
         exclude: {
           port: ["137:139", 445, 1900],
@@ -1874,7 +1912,7 @@
       },
       update: {
         singbox: { enabled: 1, beta: 0 },
-        skeen: { enabled: 1 }
+        skeen: { enabled: 1, api: 0 }
       }
     };
 
@@ -1921,7 +1959,8 @@
         "firewall.proxy_router": "Проксировать все сервисы роутера.",
         "update.singbox.enabled": "Включить проверку обновлений Sing-box.",
         "update.singbox.beta": "Включает проверку pre-release версий.",
-        "update.skeen.enabled": "Включить проверку обновлений SKeen."
+        "update.skeen.enabled": "Включить проверку обновлений SKeen.",
+        "update.skeen.api": "Включить проверку обновлений SKeen API."
       },
       en: {
         "auto_start.enabled": "SKeen autostart on router reboot.",
@@ -1965,7 +2004,8 @@
         "firewall.proxy_router": "Proxy all router services.",
         "update.singbox.enabled": "Enable Sing-box update check.",
         "update.singbox.beta": "Enable checking pre-release versions.",
-        "update.skeen.enabled": "Enable SKeen update check."
+        "update.skeen.enabled": "Enable SKeen update check.",
+        "update.skeen.api": "Enable SKeen API update check."
       }
     };
 
@@ -2809,13 +2849,6 @@
                 <h3>${l === 'ru' ? 'Параметры обновлений (update)' : 'Updates Options'}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления SKeen' : 'Update SKeen'}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('update.skeen.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
                     <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления Sing-box' : 'Update Sing-box'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('update.singbox.enabled')">?</button>
                   </div>
@@ -2827,6 +2860,20 @@
                     <button type="button" class="help-btn" onclick="showHelp('update.singbox.beta')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления SKeen' : 'Update SKeen'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('update.skeen.enabled')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
+                </div>
+                <div class="form-setting-row">
+                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления SKeen API' : 'Update SKeen API'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('update.skeen.api')">?</button>
+                  </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
               </div>
             </div>
@@ -2990,9 +3037,10 @@
         result.firewall.redirect_dns.use_policy = document.getElementById('f_firewall_redirect_dns_policy')?.checked ? 1 : 0;
         result.firewall.proxy_router = document.getElementById('f_firewall_proxy_router')?.checked ? 1 : 0;
 
-        result.update.skeen.enabled = document.getElementById('f_update_skeen_enabled')?.checked ? 1 : 0;
         result.update.singbox.enabled = document.getElementById('f_update_singbox_enabled')?.checked ? 1 : 0;
         result.update.singbox.beta = document.getElementById('f_update_singbox_beta')?.checked ? 1 : 0;
+        result.update.skeen.enabled = document.getElementById('f_update_skeen_enabled')?.checked ? 1 : 0;
+        result.update.skeen.api = document.getElementById('f_update_skeen_api')?.checked ? 1 : 0;
       } catch (err) {
         console.error('Error collecting form data:', err);
       }
@@ -3415,7 +3463,8 @@
 
       const options = (currentLang === 'ru' ? [
         { val: "reload", label: "reload - Перезагрузка sing-box" },
-        { val: "sync", label: "sync - Синхронизировать конфигурацию" },
+        { val: "areload", label: "areload - Перезагрузка API" },
+        { val: "sync", label: "sync - Синхронизировать конфиг" },
         { val: "status", label: "status - Показать статус" },
         { val: "kill", label: "kill - Принудительная остановка" },
         { val: "version", label: "version - Показать версию" },
@@ -3428,11 +3477,12 @@
         { val: "backup", label: "backup - Создать архив /opt/etc/skeen" },
         { val: "backups", label: "backups - Список архивов в /opt" },
         { val: "restore", label: "restore - Восстановить из архива" },
-        { val: "clean", label: "clean - Очистить кэш" },
+        { val: "clean", label: "clean - Очистить кэш sing-box" },
         { val: "headers", label: "headers - Сгенерировать заголовки" },
         { val: "tun", label: "OpkgTun (KeeneticOS v5+)" }
       ] : [
         { val: "reload", label: "reload - Reload sing-box" },
+        { val: "areload", label: "areload - Reload API" },
         { val: "sync", label: "sync - Synchronize config" },
         { val: "status", label: "status - Show status" },
         { val: "kill", label: "kill - Force stop" },
@@ -3446,7 +3496,7 @@
         { val: "backup", label: "backup - Create archive" },
         { val: "backups", label: "backups - List archives" },
         { val: "restore", label: "restore - Restore backup" },
-        { val: "clean", label: "clean - Clear cache" },
+        { val: "clean", label: "clean - Clear sing-box cache" },
         { val: "headers", label: "headers - Generate headers" },
         { val: "tun", label: "OpkgTun (KeeneticOS v5+)" }
       ]);
@@ -3557,12 +3607,20 @@
 
         const data = await res.json();
         outputEl.innerHTML = renderAnsiOutput(data.stdout || t('emptyOutput'));
+
+        if (param === 'areload') {
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        }
       } catch (e) {
-        outputEl.innerHTML = `<span class="ansi-red">Error: ${e.name === 'AbortError' ? 'Превышено время ожидания (таймаут 30с)' : e.message}</span>`;
+        outputEl.innerHTML = `<span class="ansi-red">Error: ${e.name === 'AbortError' ? 'Request timeout (30s limit exceeded)' : e.message}</span>`;
       } finally {
-        disabledElements.forEach(el => el.disabled = false);
-        await fetchServiceStatus();
-        startPolling();
+        if (param !== 'areload') {
+          disabledElements.forEach(el => el.disabled = false);
+          await fetchServiceStatus();
+          startPolling();
+        }
       }
     }
 

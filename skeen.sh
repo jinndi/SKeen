@@ -19,7 +19,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-readonly DEPENDENCIES="iptables ip-full ipset net-tools conntrack curl tar jsonfilter logger"
+readonly DEPENDENCIES="lua luasocket skeen-api iptables ip-full ipset net-tools conntrack curl tar jsonfilter logger"
 
 readonly ENTWARE_DIR="/opt"
 readonly WORK_DIR="${ENTWARE_DIR}/etc/skeen"
@@ -29,7 +29,7 @@ readonly NETFILTER_DIR="${ENTWARE_DIR}/etc/ndm/netfilter.d"
 readonly MODULES_OS_DIR="/lib/modules"
 readonly MODULES_ENTWARE_DIR="${ENTWARE_DIR}/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
-readonly REPO_MAIN_BRANCH="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/main/"
+readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 
 readonly SKEEN_NAME="SKeen"
 readonly SKEEN_VERSION="5.8.2"
@@ -41,6 +41,9 @@ readonly SKEEN_CONFIG="${WORK_DIR}/${SKEEN_PROC}.json"
 readonly SKEEN_RUN_CONFIG="${RUN_DIR}/${SKEEN_PROC}.json"
 readonly SKEEN_AUTOSTART_SCRIPT="${ENTWARE_DIR}/etc/init.d/S99SKeen"
 readonly SKEEN_SCRIPT_URL="${SKEEN_API_URL}/download/skeen"
+
+readonly SERVICE_API_PROC="skeen-api"
+readonly SERVICE_API_SCRIPT="${ENTWARE_DIR}/bin/${SERVICE_API_PROC}"
 
 readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
@@ -131,11 +134,11 @@ red() { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 yellow() { is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 
-echomsg() { cyan "[INFO]: $1"; }
-echook() { green "[OK]: $1"; }
-echowarn() { yellow "[WARN]: $1"; }
-echoerr() { red "[ERROR]: $1"; }
-exiterr() { red "[FATAL]: $1"; exit 1; }
+echomsg() { cyan "[INFO] $1"; }
+echook() { green "[OK] $1"; }
+echowarn() { yellow "[WARN] $1"; }
+echoerr() { red "[ERROR] $1"; }
+exiterr() { red "[FATAL] $1"; exit 1; }
 
 check_tty() { is_tty || { echoerr "Command supports only tty"; exit 1; }; }
 
@@ -144,9 +147,9 @@ logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
 logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
 
 if is_tty; then
-  cleanup() { stty sane </dev/tty 2>/dev/null || true; }
-  trap cleanup EXIT TERM
-  trap 'printf "\n"; cleanup; exit 130' INT
+  cleanup() { { stty sane </dev/tty; } 2>/dev/null || true; }
+  trap cleanup EXIT; trap 'exit 143' TERM
+  trap 'printf "\n"; exit 130' INT
 fi
 
 create_run_dir() { if [ ! -d "$RUN_DIR" ]; then mkdir -p "$RUN_DIR" && chmod 700 "$RUN_DIR"; fi }
@@ -206,7 +209,7 @@ create_skeen_config() {
   "services": {
     "api": {
       "auto_start": 1,
-      "port": 5000,
+      "port": 3000,
       "secret": "",
       "cors_origin": ["*"],
       "dashboard": 1
@@ -245,7 +248,8 @@ create_skeen_config() {
       "beta": ${BETA_ENABLED:-0}
     },
     "skeen": {
-      "enabled": 1
+      "enabled": 1,
+      "api": 1
     }
   }
 }
@@ -456,7 +460,7 @@ get_service_api_config() {
   fi
 
   : "${SERVICE_API_AUTO_START:=1}"
-  : "${SERVICE_API_PORT:=5000}"
+  : "${SERVICE_API_PORT:=3000}"
   : "${SERVICE_API_SECRET:=}"
   : "${SERVICE_API_CORS_ORIGIN:='["*"]'}"
   : "${SERVICE_API_DASHBOARD:=1}"
@@ -529,12 +533,14 @@ get_update_config() {
     jsonfilter -i "$config_path" \
       -e UPDATE_SINGBOX_ENABLED='@.update.singbox.enabled' \
       -e UPDATE_SINGBOX_BETA='@.update.singbox.beta' \
-      -e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled'
+      -e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled' \
+      -e UPDATE_SKEEN_API='@.update.skeen.api'
   )"
 
   : "${UPDATE_SINGBOX_ENABLED:=1}"
   : "${UPDATE_SINGBOX_BETA:=0}"
   : "${UPDATE_SKEEN_ENABLED:=1}"
+  : "${UPDATE_SKEEN_API:=0}"
 }
 
 run_curl() {
@@ -607,6 +613,7 @@ get_current_version() {
     fi
     ;;
   "skeen") echo "$SKEEN_VERSION" ;;
+  "skeen-api") [ -f "$SERVICE_API_SCRIPT" ] && "$SERVICE_API_SCRIPT" -v ;;
   esac
 }
 
@@ -776,6 +783,26 @@ wait_input() {
   echo >/dev/tty
 }
 
+install_dependency() {
+  pkg_name="${1:-lua}"
+
+  if {
+    if [ "$pkg_name" = "$SERVICE_API_PROC" ]; then
+      if [ ! -f "$SERVICE_API_SCRIPT" ]; then
+        local url="${REPO_REFS_BASE_URL}/static/${SERVICE_API_PROC}"
+        [ -n "$MIRROR" ] && url="${MIRROR}${SERVICE_API_PROC}"
+        run_curl -s -o "$SERVICE_API_SCRIPT" "$url" && chmod +x "$SERVICE_API_SCRIPT"
+      fi
+    else
+      opkg install "$pkg_name" >/dev/null 2>&1
+    fi
+  }; then
+    echook "Installed"
+  else
+    echoerr "Installation failed"
+  fi
+}
+
 install_dependencies() {
   echomsg "Checking dependencies"
 
@@ -783,12 +810,7 @@ install_dependencies() {
 
   for pkg_name in $DEPENDENCIES; do
     printf "[%s] " "$pkg_name"
-
-    if opkg install "$pkg_name" >/dev/null 2>&1; then
-      echook "Installed"
-    else
-      echoerr "Installation failed"
-    fi
+    install_dependency "$pkg_name"
   done
 
   echook "Dependency check completed"
@@ -883,7 +905,7 @@ download_singbox_config() {
   if [ -n "$MIRROR" ]; then
     config_url="${MIRROR}${config_name}"
   else
-    config_url="${REPO_MAIN_BRANCH}${config_name}"
+    config_url="${REPO_REFS_BASE_URL}/main/${config_name}"
   fi
 
   if ! run_curl -o "$SINGBOX_CONFIG" "$config_url"; then
@@ -1104,11 +1126,15 @@ uninstall() {
     done
   fi
 
+  if [ -f "$SERVICE_API_SCRIPT" ] && "$SERVICE_API_SCRIPT" stop; then
+    echomsg "Removing $SKEEN_NAME API script..."; rm -f "$SERVICE_API_SCRIPT"
+  fi
+
   if [ -d "$WORK_DIR" ]; then
     echowarn "Configuration directory $WORK_DIR is retained"
     echowarn "If you want to remove it manually, run: rm -rf $WORK_DIR"
   fi
-  echook "${SKEEN_NAME} has been uninstalled successfully"
+  echook "$SKEEN_NAME has been uninstalled successfully"
   echo "$DELIMETER"
   cyan "For reinstallation, use:"
   green "curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen $CURL_RESOLVE_FIX | sh"
@@ -2640,6 +2666,10 @@ start_singbox() {
 start() {
   get_singbox_config
 
+  if [ "$CALLER" = "init" ] && get_service_api_config; then
+    [ "$SERVICE_API_AUTO_START" = "1" ] && [ -f "$SERVICE_API_SCRIPT" ] && "$SERVICE_API_SCRIPT" start || true
+  fi
+
   if [ ! -f "$SINGBOX_BIN" ]; then
     echoerr "$SINGBOX_NAME binary not found, please install it first"
     press_any_key_to_menu "" 1
@@ -2744,19 +2774,18 @@ kill_proc() {
 }
 
 version() {
-  local sk_version sb_version
+  local sk_version sk_api_version sb_version
   get_singbox_config
   sk_version="$(get_current_version "skeen")"
+  sk_api_version="$(get_current_version "skeen-api")"
   sb_version="$(get_current_version "sing")"
-  { [ -z "$sb_version" ] && sb_version="$(red "не найден")"; } || sb_version="$(cyan "v${sb_version}")"
+  { [ -z "$sk_api_version" ] && sk_api_version="$(red "not found")"; } || sk_api_version="$(cyan "$sk_api_version")"
+  { [ -z "$sb_version" ] && sb_version="$(red "not found")"; } || sb_version="$(cyan "v${sb_version}")"
   if [ "$CALLER" = "cli" ]; then
-    echo "$DELIMETER"
     printf "${SKEEN_NAME}: %s\n" "$(cyan "v${sk_version}")"
-    echo "$DELIMETER"
-
+    printf "${SKEEN_NAME} API: %s\n" "$(cyan "$sk_api_version")"
     printf "${SINGBOX_NAME}: %s\n" "$sb_version" && [ -f "$SINGBOX_BIN" ] &&
-      $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p' &&
-      echo "$DELIMETER"
+      $SINGBOX_BIN version | sed -nE '/^(Environment|Tags|Revision|CGO):/p'
   fi
 }
 
@@ -2809,6 +2838,7 @@ status() {
 
   [ -f "$SINGBOX_PID_FILE" ] && pid="$(cat "$SINGBOX_PID_FILE")"
 
+  printf '\033[1m%s\033[0m\n' "$SINGBOX_NAME"
   if [ -n "$pid" ]; then
     # shellcheck disable=SC2046
     set -- $(awk '$1=="VmRSS:"{r=$2} $1=="VmHWM:"{h=$2} $1=="Threads:"{t=$2} END{print r,h,t}' "/proc/$pid/status")
@@ -2816,14 +2846,19 @@ status() {
     mem_peak="${2:-0}"
     threads="${3:-0}"
 
-    echo "Status: $(green "running")"
-    echo "PID: $pid"
-    echo "Uptime: $(proc_uptime "$pid")"
-    echo "Memory: $((mem_used / 1024)) MB (peak: $((mem_peak / 1024)) MB)"
-    echo "Threads: $threads"
-    echo "File Descriptors: $(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l) (limit: $(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null))"
+    printf 'Status: %s\n' "running"
+    printf 'PID: %s\n' "$pid"
+    printf 'Uptime: %s\n' "$(proc_uptime "$pid")"
+    printf 'Memory: %s MB (peak: %s MB)\n' "$((mem_used / 1024))" "$((mem_peak / 1024))"
+    printf 'Threads: %s\n' "$threads"
+    printf 'Descriptors: %s (limit: %s)\n' "$(find "/proc/${pid}/fd" -type l 2>/dev/null | wc -l)" "$(awk '/Max open files/ {print $5}' "/proc/${pid}/limits" 2>/dev/null)"
   else
-    echo "Status: $(red "stopped")"
+    printf 'Status: %s\n' "stopped"
+  fi
+
+  if [ -f "$SERVICE_API_SCRIPT" ]; then
+    printf '\n\033[1m%s\033[0m\n' "$SKEEN_NAME API"
+    "$SERVICE_API_SCRIPT" status
   fi
 }
 
@@ -3180,6 +3215,11 @@ check_updates() {
   if [ "$UPDATE_SKEEN_ENABLED" = "1" ]; then
     ask_and_update "$SKEEN_NAME" "skeen" "$SKEEN_API_URL" \
       update_skeen "https://github.com/jinndi/SKeen/releases"
+  fi
+
+  # skeen-api
+  if [ "$UPDATE_SKEEN_API" = "1" ] && [ -f "$SERVICE_API_SCRIPT" ]; then
+    "$SERVICE_API_SCRIPT" update
   fi
 
   if [ "$is_update_skeen" -eq 1 ]; then
@@ -3920,6 +3960,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     esac
     ;;
   get_api_config) get_service_api_config --json ;;
+  areload) "$SERVICE_API_SCRIPT" restart ;;
   "") show_menu ;;
   help | *) show_help ;;
   esac
