@@ -26,7 +26,9 @@ jobs:
       - name: Upload SKeen
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: |
-          sudo apt install shfmt
+          SHFMT_VERSION="v3.14.1"
+          sudo curl -sL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
+          sudo chmod +x /usr/local/bin/shfmt
           shfmt -s -mn skeen.sh > skeen
           shfmt -s -mn skeen_ru.sh > skeen_ru
           gh release upload ${{ steps.release.outputs.tag_name }} skeen skeen_ru
