@@ -180,7 +180,7 @@ create_skeen_config() {
   "network": {
     "ipv6": 1,
     "tuning": 0,
-    "check": ["vk.com", "ya.ru", "223.5.5.5"]
+    "check": ["vk.com", "77.88.8.8", "223.5.5.5"]
   },
   "singbox": {
     "config": {
