@@ -61,9 +61,11 @@ skeen deps
 
 * **Архитектура**: Синхронная обработка HTTP/1.1 запросов с таймаутом на клиентское соединение (`30 сек`).
 
-* **Формат данных**: JSON (кастомный кастом-парсер с поддержкой удаления комментариев `//`, `/* */`, `#` и сохранением порядка ключей через поле `__order`).
+* **Формат данных**: JSON (кастомный парсер с поддержкой удаления комментариев `//`, `/* */`, `#` и сохранением порядка ключей через поле `__order`).
 
-* **Интеграция**: Выполнение системных команд `skeen` через `io.popen` и безопасное управление файловой системой (атомарная запись через временные `.tmp` файлы).
+* **Интеграция с CLI SKeen**: Выполнение системных команд `skeen` через `io.popen`, динамическое получение конфигураций Sing-box с помощью команды `skeen get_singbox_config --json` и параметров API через `skeen get_api_config`.
+
+* **Безопасное управление файловой системой**: Атомарная запись через временные `.tmp` файлы.
 
 ## 3. Управление демоном и CLI
 
@@ -71,9 +73,8 @@ skeen deps
 
 ### Команды CLI:
 
-```
+```bash
 skeen-api {start|stop|restart|run|status|update|version}
-
 ```
 
 * `start` — запуск API-сервера в фоновом режиме (PID сохраняется в `/tmp/run/skeen-api.pid`).
@@ -90,20 +91,19 @@ skeen-api {start|stop|restart|run|status|update|version}
 
 * `version` (или `-v`) — вывод текущей версии скрипта (например, `v1.0.0`).
 
-## 5. Конфигурация API
+## 4. Конфигурация API
 
 Настройки сервера динамически запрашиваются у основной CLI-системы через выполнение команды `skeen get_api_config`.
 
 ### Дефолтные настройки:
 
-```
+```json
 {
   "port": 3000,
   "secret": "",
   "cors_origin": ["*"],
   "dashboard": 1
 }
-
 ```
 
 * **port** (*number*): Порт на котором завязывается сокет `0.0.0.0` (по умолчанию `3000`).
@@ -116,15 +116,14 @@ skeen-api {start|stop|restart|run|status|update|version}
 
 * **dashboard** (*number*): `1` — разрешает отдачу HTML-страницы Dashboard по маршруту `/`, `0` — возвращает `404 Not Found`.
 
-## 6. Аутентификация и Безопасность
+## 5. Аутентификация и Безопасность
 
 ### API Key (X-API-Key)
 
 Если в конфигурации задан ключ `secret` (не пустая строка), все эндпоинты, начинающиеся с пути `/api/`, требуют передачу заголовка:
 
-```
+```http
 X-API-Key: ваш_секретный_ключ
-
 ```
 
 В случае отсутствия или неверного ключа сервер вернет ответ `401 Unauthorized`.
@@ -141,7 +140,7 @@ X-API-Key: ваш_секретный_ключ
 
 * `Access-Control-Allow-Headers: X-API-Key, Content-Type`
 
-## 5. Эндпоинты REST API
+## 6. Эндпоинты REST API
 
 ### 1. GET /
 
@@ -155,9 +154,8 @@ X-API-Key: ваш_секретный_ключ
 
 #### Пример запроса:
 
-```
+```bash
 curl -X GET http://192.168.1.1:3000/
-
 ```
 
 * **Ответ**: HTML-код интерфейса (`text/html; charset=utf-8`).
@@ -172,20 +170,18 @@ curl -X GET http://192.168.1.1:3000/
 
 #### Пример запроса:
 
-```
+```bash
 curl -X GET http://192.168.1.1:3000/api/ping \
      -H "X-API-Key: your_secret_key"
-
 ```
 
 #### Успешный ответ (`200 OK`):
 
-```
+```json
 {
   "status": "ok",
   "message": "pong"
 }
-
 ```
 
 ### 3. GET /api/status
@@ -198,15 +194,14 @@ curl -X GET http://192.168.1.1:3000/api/ping \
 
 #### Пример запроса:
 
-```
+```bash
 curl -X GET http://192.168.1.1:3000/api/status \
      -H "X-API-Key: your_secret_key"
-
 ```
 
 #### Успешный ответ (`200 OK`):
 
-```
+```json
 {
   "success": true,
   "running": true,
@@ -215,7 +210,6 @@ curl -X GET http://192.168.1.1:3000/api/status \
   "sb_version": "1.8.0",
   "api_version": "1.0.0"
 }
-
 ```
 
 ### 4. GET /api/files-list
@@ -226,25 +220,24 @@ curl -X GET http://192.168.1.1:3000/api/status \
 
 * **Авторизация**: Требуется.
 
-Динамически вычисляет пути из `/opt/etc/skeen/skeen.json`:
+Динамически запрашивает пути и структуру файлов у SKeen:
 
 * `skeen`: Основной файл настроек `skeen.json`.
 
-* `pure_cidr`: Список CIDR (по умолчанию `pure_cidr.list` или из поля `firewall.intercept.fakeip.include`).
+* `pure_cidr`: Список CIDR (`pure_cidr.list`).
 
-* `singbox` / `sb_file_*`: Конфиг Sing-box (`config.json` или найденные `.json` файлы в директории).
+* `singbox` / `sb_file_*`: Конфигурации Sing-box (`config.json` или массив карт файлов при работе с директорией), запрашиваемые через CLI-команду `skeen get_singbox_config --json`.
 
 #### Пример запроса:
 
-```
+```bash
 curl -X GET http://192.168.1.1:3000/api/files-list \
      -H "X-API-Key: your_secret_key"
-
 ```
 
 #### Успешный ответ (`200 OK`):
 
-```
+```json
 [
   {
     "id": "pure_cidr",
@@ -259,7 +252,6 @@ curl -X GET http://192.168.1.1:3000/api/files-list \
     "name": "config.json"
   }
 ]
-
 ```
 
 ### 5. GET /api/file
@@ -274,17 +266,16 @@ curl -X GET http://192.168.1.1:3000/api/files-list \
 
 #### Пример запроса:
 
-```
+```bash
 curl -X GET "http://192.168.1.1:3000/api/file?name=skeen" \
      -H "X-API-Key: your_secret_key"
-
 ```
 
-#### Успешный ответ для JSON-файла (`200 OK`):
+#### Успешный ответ для `skeen.json` (`200 OK`):
 
-*Комментарии автоматически удаляются перед отдачей в формате объекта JSON.*
+*Комментарии `//`, `/* */`, `#` автоматически вырезаются перед отдачей.*
 
-```
+```json
 {
   "success": true,
   "content": {
@@ -294,17 +285,26 @@ curl -X GET "http://192.168.1.1:3000/api/file?name=skeen" \
     }
   }
 }
+```
 
+#### Успешный ответ для остальных JSON-файлов (`200 OK`):
+
+```json
+{
+  "success": true,
+  "content": {
+    "inbounds": []
+  }
+}
 ```
 
 #### Успешный ответ для текстового файла (`200 OK`):
 
-```
+```json
 {
   "success": true,
   "content": "192.168.1.0/24\n10.0.0.0/8\n"
 }
-
 ```
 
 ### 6. POST /api/file
@@ -325,7 +325,7 @@ curl -X GET "http://192.168.1.1:3000/api/file?name=skeen" \
 
 #### Пример запроса (обновление текстового файла `pure_cidr`):
 
-```
+```bash
 curl -X POST http://192.168.1.1:3000/api/file \
      -H "X-API-Key: your_secret_key" \
      -H "Content-Type: application/json" \
@@ -333,12 +333,11 @@ curl -X POST http://192.168.1.1:3000/api/file \
        "name": "pure_cidr",
        "content": "192.168.1.0/24\n172.16.0.0/12\n"
      }'
-
 ```
 
 #### Пример запроса (обновление JSON-файла `skeen`):
 
-```
+```bash
 curl -X POST http://192.168.1.1:3000/api/file \
      -H "X-API-Key: your_secret_key" \
      -H "Content-Type: application/json" \
@@ -348,17 +347,15 @@ curl -X POST http://192.168.1.1:3000/api/file \
          "mode": "rule"
        }
      }'
-
 ```
 
 #### Успешный ответ (`200 OK`):
 
-```
+```json
 {
   "success": true,
   "message": "File updated"
 }
-
 ```
 
 ### 7. POST /api/exec
@@ -375,35 +372,32 @@ curl -X POST http://192.168.1.1:3000/api/file \
 
 `start`, `stop`, `restart`, `reload`, `kill`, `status`, `version`, `help`, `iface`, `connstat`, `test`, `deps`, `check`, `format`, `backup`, `backups`, `clean`, `sync`, `headers`, `areload`, `restore <file>`, `sync <url>`, `tun list`, `tun create <ip> <dev>`, `tun delete <dev>`.
 
-*(Примечание: `areload` выполняются асинхронно с задержкой в 2 секунды, чтобы успел вернуться ответ HTTP).*
+*(Примечание: `areload` выполняются асинхронно с задержкой в 2 секунды, чтобы текущий процесс успел вернуть HTTP-ответ `200 OK` в браузер).*
 
 #### Тело запроса (JSON):
 
-```
+```json
 {
   "param": "restart"
 }
-
 ```
 
 #### Пример запроса:
 
-```
+```bash
 curl -X POST http://192.168.1.1:3000/api/exec \
      -H "X-API-Key: your_secret_key" \
      -H "Content-Type: application/json" \
      -d '{"param": "status"}'
-
 ```
 
 #### Успешный ответ (`200 OK`):
 
-```
+```json
 {
   "success": true,
   "stdout": "SKeen status: running\nService is active."
 }
-
 ```
 
 ## 7. Коды ответов HTTP

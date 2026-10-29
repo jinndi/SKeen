@@ -32,15 +32,14 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     ]                  // Domains or IPs V4 for connectivity tests (max 3)
   },
   "singbox": {         //// Sing-box configuration
-    "config": {        // + Configuration file
-      "path": "",      // Absolute path or relative to the working directory /opt/etc/skeen
-                       // to a local file or Sing-box configuration directory.
-                       // By default, the file at /opt/etc/skeen/config.json is used.
+    "config": {        // + Configuration file path: /opt/etc/skeen/config.json
+      "use_dir": 0,    // If 1, a configuration folder is used instead of a file.
+                       // - Folder path: /opt/etc/skeen/config/
       "url": "",       // URL (http:// or https://) for syncing configuration
                        // via `skeen sync` by default (optional)
       "split": 1       // If 1, the synced config via link (skeen sync) will be split
                        // into files named after the top-level Sing-box configuration keys.
-                       // Available only if path points to a directory.
+                       // Available only when use_dir = 1.
     },
     "api": {           // + sing-box API settings for commands via the intermediary layer (skeen api)
                        // sing-box version 1.14.beta.15 or higher is required
@@ -50,15 +49,16 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
     "external": {      // + External Sing-box usage
       "enabled": 0,    // If set to 1, an external Sing-box binary is used;
                        // its installation, updates, and removal are managed manually.
-      "path": "",      // Full path to binary (default: /opt/bin/sing-box).
+      "path": "",      // Full path or file name (default: /opt/bin/sing-box),
+                       // setting just the name is allowed if it is in PATH.
       "config": {      // Configuration file for external Sing-box (optional)
-        "path": "",    // Similar to the singbox.config object above;
-        "url": "",     // its data will be used if left blank here.
+        "use_dir": 0,  // Similar to the singbox.config object above,
+        "url": "",     // its values will be used if keys are not specified.
         "split": 1
       },
       "api": {         // Parameters for accessing the sing-box API (optional)
-        "url": "",     // Similar to the singbox.api object above,
-        "secret": ""   // its data will be used if not specified here.
+        "url": "",     // Similar to the singbox.config object above,
+        "secret": ""   // its values will be used if keys are not specified.
       }
     }
   },
@@ -93,13 +93,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
                        // - Requires firewall.intercept.dns or firewall.redirect_dns to be enabled,
                        //   along with sing-box DNS configuration.
                        // - The exclude.port/cidr exceptions will function as normal.
-        "include": "", // Full or relative path to a file including a list of IP/CIDR resources.
-                       // - Both v4 and v6 are allowed, comments after #, empty lines, and side whitespaces are trimmed.
-                       // - Intended for resources that initially didn't have a domain and therefore
-                       //   didn't receive a FakeIP, but still need to be proxied.
-                       // - Default value, if not specified, is /opt/etc/skeen/pure_cidr.list
         "clients": []  // Clients (IP addresses or CIDRs) that need FakeIP interception applied
-                       // Example: [ "192.168.2.10", "192.168.2.11" ], if [] - all are used.
+                       // Example: [ "192.168.2.10", "192.168.2.11" ]; if [] or "", all are used.
                        // For stable operation, a static IP address must be assigned to these clients;
                        // this is done in the Keenetic/Netcraze WebUI under the "Client Lists" tab
       }
@@ -193,7 +188,10 @@ This is an excellent solution, but use it with the understanding that you will n
 * **Game launchers and online games** - the traffic of the game sessions themselves often goes to direct addresses, though there are exceptions;
 * **IP pools of certain mobile apps** - addresses that are hardcoded into the application's source code.
 
-The addresses of such connections can be analyzed beforehand (there is no point for P2P, etc.) in the web panel, under the “Connections” or “Sessions” tab (the “Host” column, target address) - the raw IP will be shown instead of a domain name. Next, find up-to-date lists of the required IP/CIDR ranges online and add them to the file at the path specified in the `firewall.intercept.fakeip.include` parameter (changes will take effect after restarting SKeen using the `skeen restart` command).
+Addresses for such connections can be pre-analyzed in the web panel under the "Connections" tab (the "Host" column shows the target address) - it will display the IP address itself instead of a domain name (making P2P, etc., pointless to add). Next, find up-to-date lists of required IP/CIDR subnets online and add them to `/opt/etc/skeen/pure_cidr.list` (changes will take effect after restarting SKeen via the `skeen restart` command).
+
+> [!NOTE]
+> The `pure_cidr.list` file supports both IPv4 and IPv6, inline comments after `#`, empty lines, and leading/trailing whitespace. See the [example](../examples/basic/pure_cidr.list).
 
 Is this solution right for you? Everyone decides for themselves based on current constraints and personal requirements for network performance and security.
 
