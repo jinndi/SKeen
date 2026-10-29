@@ -59,7 +59,13 @@ skeen deps
 
 - **Stack**: Lua (verified for compatibility with `/opt/bin/lua`), `luasocket`.
 
-- **Architecture**: Synchronous HTTP/1.1 request handling with a client connection timeout (`30 sec`).
+- **Architecture & Resilience**:
+  - Synchronous HTTP/1.1 request handling.
+  - Strict socket timeout on client operations (`30 sec`).
+  - Safe request execution wrapped in `pcall` to ensure socket cleanup and prevent file descriptor leaks during connection drops.
+
+- **Performance Optimization**:
+  - Built-in TTL cache for SKeen system status calls (refreshed every 3 seconds), significantly reducing router CPU load caused by frequent web dashboard status polling.
 
 - **Data Format**: JSON (custom parser with support for stripping `//`, `/* */`, and `#` comments while preserving key ordering via the `__order` field).
 
@@ -117,6 +123,14 @@ Server settings are dynamically requested from the main CLI system by executing 
 - **dashboard** (*number*): `1` — Enables serving the HTML Dashboard page at route `/`, `0` — returns `404 Not Found`.
 
 ## 5. Authentication & Security
+
+### Rate Protection & DoS Defense
+
+The server incorporates strict system-level limits to protect router memory and execution resources:
+
+1. **Maximum Request Body Size (`Content-Length`)**: **1 MB** (`1024 * 1024` bytes). Any attempt to transmit a payload exceeding this size causes the server to immediately reject the request with HTTP status `413 Payload Too Large`.
+
+2. **Header Slowloris Protection**: A limit of **50 header lines** per connection is enforced. Exceeding this limit immediately closes the request with status `431 Request Header Fields Too Large`.
 
 ### API Key (X-API-Key)
 
@@ -191,6 +205,8 @@ Retrieves SKeen system status and API version.
 - **Method**: `GET`
 
 - **Authentication**: Required.
+
+- **Feature**: Data is served from a local TTL cache (3-second lifetime), eliminating redundant system process spawns during high-frequency UI polling.
 
 #### Request Example:
 
@@ -409,4 +425,6 @@ curl -X POST http://192.168.1.1:3000/api/exec \
 | `400` | **Bad Request** | Malformed HTTP request, invalid JSON, or unregistered command in `/api/exec`. |
 | `401` | **Unauthorized** | Missing or invalid `X-API-Key` header. |
 | `404` | **Not Found** | Route does not exist or Dashboard is disabled. |
+| `413` | **Payload Too Large** | Request body size exceeds the **1 MB** limit. |
+| `431` | **Request Header Fields Too Large** | Number of header lines exceeds the **50 line** limit (Slowloris mitigation). |
 | `500` | **Internal Server Error** | Disk write error. |

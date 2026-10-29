@@ -3,9 +3,9 @@
 local socket = require("socket")
 
 -------------------------------------------------------------------------------
--- 0. VERSION & CLI ARGUMENTS HANDLING
+-- 0. VERSION AND COMMAND LINE ARGUMENT (CLI) HANDLING
 -------------------------------------------------------------------------------
-local VERSION = "1.0.0"
+local VERSION = "1.0.1"
 local SCRIPT = "/opt/bin/skeen-api"
 local LUA_BIN = "/opt/bin/lua"
 local PID_FILE = "/tmp/run/skeen-api.pid"
@@ -13,10 +13,12 @@ local REPO_BASE_URL = "https://raw.githubusercontent.com/jinndi/SKeen/refs/heads
 local VERSION_URL = REPO_BASE_URL .. "api-version"
 local SCRIPT_URL = REPO_BASE_URL .. "skeen-api"
 
+-- Function for safely escaping arguments to pass them into the command line
 local function shell_quote(value)
   return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
 end
 
+-- Function to read a text file from a given path
 local function read_file(path)
   local file = io.open(path, "r")
   if not file then
@@ -28,6 +30,7 @@ local function read_file(path)
   return content
 end
 
+-- Function to execute a system command with completion status checking
 local function run_command(command)
   local ok, _, code = os.execute(command)
 
@@ -38,6 +41,7 @@ local function run_command(command)
   return false, code or ok
 end
 
+-- Start the daemon (background process of the API server)
 local function daemon_start()
   local command = table.concat({
     "start-stop-daemon -S -b -m",
@@ -55,6 +59,7 @@ local function daemon_start()
   print("[OK] Started")
 end
 
+-- Stop the daemon
 local function daemon_stop()
   local pid = tonumber((read_file(PID_FILE) or ""):match("^%s*(%d+)"))
   if not pid or not read_file("/proc/" .. pid .. "/stat") then
@@ -75,6 +80,7 @@ local function daemon_stop()
   print("[OK] Stopped")
 end
 
+-- Restart the daemon (stop + start)
 local function daemon_restart()
   local pid = tonumber((read_file(PID_FILE) or ""):match("^%s*(%d+)"))
   if pid and read_file("/proc/" .. pid .. "/stat") then
@@ -105,6 +111,7 @@ local function daemon_restart()
   print("[OK] Restarted")
 end
 
+-- Get process memory usage information by its PID
 local function get_memory(pid)
   local content = read_file("/proc/" .. pid .. "/status")
   if not content then
@@ -117,6 +124,7 @@ local function get_memory(pid)
   return rss, peak
 end
 
+-- Calculate process uptime in seconds
 local function get_uptime(pid)
   local stat = read_file("/proc/" .. pid .. "/stat")
   local system_uptime = read_file("/proc/uptime")
@@ -125,7 +133,7 @@ local function get_uptime(pid)
     return nil
   end
 
-  -- Fields after the process name begin with field 3 (state).
+  -- Fields after the process name start from the 3rd field (state).
   local fields = stat:match("^%d+ %b() (.*)$")
   if not fields then
     return nil
@@ -137,7 +145,7 @@ local function get_uptime(pid)
   for value in fields:gmatch("%S+") do
     index = index + 1
 
-    -- starttime is field 22 in /proc/[pid]/stat.
+    -- starttime (process start time) is located at the 20th position (22nd field in /proc/[pid]/stat).
     if index == 20 then
       start_ticks = tonumber(value)
       break
@@ -161,6 +169,7 @@ local function get_uptime(pid)
   return math.max(0, math.floor(uptime - start_ticks / ticks))
 end
 
+-- Pretty format seconds into days, hours, and minutes
 local function format_uptime(seconds)
   local days = math.floor(seconds / 86400)
   local hours = math.floor(seconds % 86400 / 3600)
@@ -169,6 +178,7 @@ local function format_uptime(seconds)
   return string.format("%dd %dh %dm", days, hours, minutes)
 end
 
+-- Format memory size from kilobytes to megabytes
 local function format_memory(kb)
   if not kb then
     return "N/A"
@@ -177,6 +187,7 @@ local function format_memory(kb)
   return math.floor(kb / 1024 + 0.5) .. " MB"
 end
 
+-- Print current service status to the console
 local function daemon_status()
   local pid = tonumber(
     (read_file(PID_FILE) or ""):match("^%s*(%d+)")
@@ -197,6 +208,7 @@ local function daemon_status()
     " (peak: " .. format_memory(peak) .. ")")
 end
 
+-- Function to check and automatically update the API script from a remote repository
 local function update_script()
   local version_tmp = SCRIPT .. ".version.tmp"
   local script_tmp = SCRIPT .. ".update.tmp"
@@ -275,6 +287,7 @@ local function update_script()
   return true
 end
 
+-- Process command line arguments upon script invocation
 local command = arg and arg[1]
 
 if command == "version" or command == "-v" then
@@ -305,10 +318,10 @@ elseif command ~= "run" then
 end
 
 -------------------------------------------------------------------------------
--- 1. CONSTANTS & CONFIGURATION DEFAULTS
+-- 1. CONSTANTS AND DEFAULT SETTINGS
 -------------------------------------------------------------------------------
 
--- Base path to configuration directory
+-- Base path for the SKeen configuration directory
 local SKEEN_DIR = "/opt/etc/skeen/"
 
 -- Default configuration file names
@@ -318,10 +331,10 @@ local DEFAULT_FILES = {
   pure_cidr = "pure_cidr.list"
 }
 
--- Embedded HTML placeholder substituted during build/packaging
+-- Embedded control panel HTML template (replaced during package build/packing)
 local EMBEDDED_HTML = [==[__HTML_PLACEHOLDER__]==]
 
--- Determines dashboard HTML source (Development mode reads from disk, Production uses embedded payload)
+-- Determine the source of the panel HTML (in development mode, read from disk; in production, use the embedded template)
 local SCRIPT_PATH = arg[0]
 local SCRIPT_DIR = SCRIPT_PATH:match("^(.*)/[^/]+$") or "."
 
@@ -335,7 +348,7 @@ local function get_dashboard_html()
   return EMBEDDED_HTML
 end
 
--- Validates allowed SKeen CLI command parameters securely
+-- Strict security check: validation of allowed SKeen CLI command line parameters
 local function is_allowed_param(param)
   if not param or type(param) ~= "string" then return false end
   local exact_allowed = {
@@ -375,8 +388,10 @@ local function is_allowed_param(param)
 end
 
 -------------------------------------------------------------------------------
--- 2. JSON MODULE (KEY ORDERING, COMMENT STRIPPING, & FORMATTING)
+-- 2. JSON MODULE (KEY ORDERING, COMMENT REMOVAL, AND FORMATTING)
 -------------------------------------------------------------------------------
+
+-- Function to remove comments (C++, JS, and # styles) from JSON configurations
 local function strip_json_comments(str)
   local result = {}
   local i = 1
@@ -420,6 +435,7 @@ local function strip_json_comments(str)
   return table.concat(result)
 end
 
+-- Self-contained JSON parser and encoder with support for preserving key order
 local json = (function()
   local json = { _version = "0.1.3" }
   local encode
@@ -715,9 +731,10 @@ local json = (function()
 end)()
 
 -------------------------------------------------------------------------------
--- 3. UTILITY HELPERS (FILES, STATUS, & API CONFIGURATION)
+-- 3. HELPER FUNCTIONS (FILES, STATUS, AND API CONFIGURATION)
 -------------------------------------------------------------------------------
 
+-- Function for safe atomic file writing (via a temporary file with subsequent replacement)
 local function write_raw_file(filepath, content)
   local tmp_path = filepath .. ".tmp"
   local f = io.open(tmp_path, "w")
@@ -731,11 +748,12 @@ local function write_raw_file(filepath, content)
   return ok ~= nil
 end
 
+-- Build a map of configuration files available for reading/editing via the API
 local function get_allowed_files_map()
-  local default_path = SKEEN_DIR .. "/config.json"
+  local default_path = SKEEN_DIR .. DEFAULT_FILES.singbox
   local map = {
-    ["skeen"]     = { path = SKEEN_DIR .. "/skeen.json", type = "json", name = "skeen.json" },
-    ["pure_cidr"] = { path = SKEEN_DIR .. "/pure_cidr.list", type = "text", name = "pure_cidr.list" }
+    ["skeen"]     = { path = SKEEN_DIR .. DEFAULT_FILES.skeen, type = "json", name = DEFAULT_FILES.skeen },
+    ["pure_cidr"] = { path = SKEEN_DIR .. DEFAULT_FILES.pure_cidr, type = "text", name = DEFAULT_FILES.pure_cidr }
   }
 
   local handle = io.popen("skeen get_singbox_config --json 2>/dev/null")
@@ -756,7 +774,8 @@ local function get_allowed_files_map()
       for file_full_path in p_find:lines() do
         if file_full_path ~= "" then
           local parent, filename = file_full_path:match("([^/]+)/([^/]+)$")
-          local display_name = (parent and filename) and (parent .. "/" .. filename) or (file_full_path:match("^.+/(.+)$") or file_full_path)
+          local display_name = (parent and filename) and (parent .. "/" .. filename) or
+              (file_full_path:match("^.+/(.+)$") or file_full_path)
 
           map["sb_file_" .. idx] = { path = file_full_path, type = "json", name = display_name }
           idx = idx + 1
@@ -772,6 +791,7 @@ local function get_allowed_files_map()
   return map
 end
 
+-- Get the real working status of SKeen by invoking the CLI utility
 local function get_skeen_status()
   local handle = io.popen("skeen status --json 2>&1")
   local out = ""
@@ -788,7 +808,7 @@ local function get_skeen_status()
     return data
   end
 
-  -- Safe fallback option on failure
+  -- Safe default value in case status retrieval fails
   return {
     success = false,
     running = false,
@@ -799,6 +819,22 @@ local function get_skeen_status()
   }
 end
 
+-- Cache for SKeen status to reduce router CPU load during frequent requests
+local status_cache = { data = nil, expire = 0 }
+
+local function get_cached_skeen_status()
+  local now = os.time()
+  if status_cache.data and now < status_cache.expire then
+    return status_cache.data
+  end
+
+  local st = get_skeen_status()
+  status_cache.data = st
+  status_cache.expire = now + 3 -- Cache the result for 3 seconds
+  return st
+end
+
+-- Load the configuration of the API server itself (port, secret key, CORS)
 local function load_api_config()
   local handle = io.popen("skeen get_api_config 2>&1")
   local out = ""
@@ -820,6 +856,7 @@ local function load_api_config()
   }
 end
 
+-- Match incoming Origin header against allowed CORS policies
 local function get_matched_cors(request_origin, allowed_config)
   if not allowed_config then return "" end
 
@@ -852,223 +889,264 @@ local PORT = tonumber(api_config.port) or 3000
 local SECRET = api_config.secret or ""
 local DASHBOARD = (api_config.dashboard == 1)
 
+local MAX_BODY_SIZE = 1024 * 1024 -- Hard limit for incoming HTTP request body size: 1 MB
+local MAX_HEADERS_COUNT = 50      -- Maximum allowed number of header lines
+
+-- Preliminary check: whether the port is already occupied by another process
 local check_cmd = string.format("netstat -tuln 2>/dev/null | grep -q ':%d'", PORT)
 if os.execute(check_cmd) == 0 then
   io.stderr:write(string.format("[ERROR] Port %d is already in use by another process!\n", PORT))
   os.exit(1)
 end
 
+-- Bind the socket to the interface and port
 local server = assert(socket.bind("0.0.0.0", PORT))
 print("API server started on port " .. PORT)
 
-while true do
-  local client = server:accept()
-  client:settimeout(30)
+-- Function for safely processing an individual client connection
+local function handle_client(client)
+  client:settimeout(30) -- Set a 30-second timeout on socket operations
 
+  -- Read the first line of the HTTP request (request line: method and path)
   local request = client:receive("*l")
-  if request then
-    local method, path = request:match("^(%a+)%s+(%S+)")
+  if not request then return end
 
-    if not method or not path then
+  local method, path = request:match("^(%a+)%s+(%S+)")
+  if not method or not path then
+    client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
+    return
+  end
+
+  local headers = {}
+  local headers_count = 0
+
+  -- Read headers line by line with protection against Slowloris attacks (line count limit)
+  while true do
+    local line = client:receive("*l")
+    if not line or line == "" then break end
+
+    headers_count = headers_count + 1
+    if headers_count > MAX_HEADERS_COUNT then
+      client:send("HTTP/1.1 431 Request Header Fields Too Large\r\nConnection: close\r\n\r\n")
+      return
+    end
+
+    local key, value = line:match("^([^:]+):%s*(.*)$")
+    if key then headers[key:lower()] = value end
+  end
+
+  -- Read the request body (if present) with a preliminary hard size limit check
+  local body = ""
+  local content_length = tonumber(headers["content-length"] or 0)
+  if content_length > 0 then
+    if content_length > MAX_BODY_SIZE then
+      client:send("HTTP/1.1 413 Payload Too Large\r\nConnection: close\r\n\r\n")
+      return
+    end
+
+    body = client:receive(content_length)
+    if not body or #body < content_length then
       client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
-    else
-      local headers = {}
-      while true do
-        local line = client:receive("*l")
-        if not line or line == "" then break end
-        local key, value = line:match("^([^:]+):%s*(.*)$")
-        if key then headers[key:lower()] = value end
-      end
-
-      local body = ""
-      local content_length = tonumber(headers["content-length"] or 0)
-      if content_length > 0 then
-        body = client:receive(content_length)
-      end
-
-      local req_origin = headers["origin"]
-      local current_cors = get_matched_cors(req_origin, api_config.cors_origin)
-
-      if method == "OPTIONS" then
-        client:send("HTTP/1.1 204 No Content\r\n")
-        if current_cors ~= "" then
-          client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
-          client:send("Vary: Origin\r\n")
-        end
-        client:send("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
-        client:send("Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n")
-        client:send("X-Content-Type-Options: nosniff\r\n")
-        client:send("X-Frame-Options: SAMEORIGIN\r\n")
-        client:send("Connection: close\r\n\r\n")
-      else
-        local response_body, status, content_type
-        local authorized = true
-
-        if SECRET ~= "" and path:find("^/api/") then
-          local client_key = headers["x-api-key"]
-          if client_key ~= SECRET then authorized = false end
-        end
-
-        if not authorized then
-          response_body = json.encode({ error = "Unauthorized: Invalid or missing API key" })
-          status = "401 Unauthorized"
-          content_type = "application/json"
-        else
-          if path == "/" then
-            if DASHBOARD then
-              response_body = get_dashboard_html()
-              status = "200 OK"
-              content_type = "text/html; charset=utf-8"
-            else
-              response_body = json.encode({ error = "Not found" })
-              status = "404 Not Found"
-              content_type = "application/json"
-            end
-          elseif path == "/api/ping" and method == "GET" then
-            response_body = json.encode({ status = "ok", message = "pong" })
-            status = "200 OK"
-            content_type = "application/json"
-          elseif path:find("^/api/status") and method == "GET" then
-            local st = get_skeen_status()
-            st.success = true
-            response_body = json.encode(st)
-            status = "200 OK"
-            content_type = "application/json"
-          elseif path == "/api/files-list" and method == "GET" then
-            local map = get_allowed_files_map()
-            local files_list = {}
-
-            for id, target in pairs(map) do
-              table.insert(files_list, { id = id, name = target.name })
-            end
-
-            table.sort(files_list, function(a, b) return a.id < b.id end)
-            response_body = json.encode(files_list)
-            status = "200 OK"
-            content_type = "application/json"
-          elseif path:find("^/api/file") and method == "GET" then
-            local file_key = path:match("[?&]name=([^&]+)") or "skeen"
-            local ALLOWED_FILES = get_allowed_files_map()
-            local target = ALLOWED_FILES[file_key]
-
-            if not target then
-              response_body = json.encode({ error = "Invalid file target" })
-              status = "400 Bad Request"
-              content_type = "application/json"
-            else
-              local f = io.open(target.path, "r")
-              local content = ""
-              if f then
-                content = f:read("*a")
-                f:close()
-              end
-
-              if target.type == "json" then
-                if file_key == "skeen" then
-                  content = strip_json_comments(content)
-                  local success, data = pcall(json.decode, content)
-                  response_body = json.encode({ success = true, content = success and data or {} })
-                else
-                  response_body = '{"success":true,"content":' .. content .. '}'
-                end
-              else
-                local escaped_content = content:gsub('\\', '\\\\'):gsub('"', '\\"'):gsub('\n', '\\n'):gsub('\r', '\\r')
-                response_body = '{"success":true,"content":"' .. escaped_content .. '"}'
-              end
-              status = "200 OK"
-              content_type = "application/json"
-            end
-          elseif path == "/api/file" and method == "POST" then
-            local success, req_json = pcall(json.decode, body)
-            local file_key = req_json and req_json.name
-            local ALLOWED_FILES = get_allowed_files_map()
-            local target = ALLOWED_FILES[file_key]
-
-            if not success or not target then
-              response_body = json.encode({ error = "Invalid request or file target" })
-              status = "400 Bad Request"
-              content_type = "application/json"
-            else
-              local raw_content = req_json.content
-              local write_success = false
-
-              if target.type == "json" then
-                local ok_enc, encoded_json = pcall(json.encode, raw_content, true)
-                if ok_enc then
-                  write_success = write_raw_file(target.path, encoded_json)
-                end
-              else
-                write_success = write_raw_file(target.path, tostring(raw_content))
-              end
-
-              if write_success then
-                response_body = json.encode({ success = true, message = "File updated" })
-                status = "200 OK"
-              else
-                response_body = json.encode({ error = "Failed to write file" })
-                status = "500 Internal Server Error"
-              end
-              content_type = "application/json"
-            end
-          elseif path == "/api/exec" and method == "POST" then
-            local success, req_json = pcall(json.decode, body)
-            local param = ""
-            if success and type(req_json) == "table" and req_json.param then
-              param = tostring(req_json.param)
-            end
-
-            local response_data
-            if success and type(req_json) == "table" and is_allowed_param(param) then
-              if param == "areload" then
-                -- Run restart in background with a 2-second delay
-                -- so the current process can return HTTP 200 OK to the browser first
-                os.execute("(sleep 2 && skeen areload) >/dev/null 2>&1 &")
-                response_data = {
-                  success = true,
-                  stdout =
-                  "API reload initiated, restarting in 2 seconds..."
-                }
-              else
-                local command = "FORCE_COLOR=1 skeen " .. param
-                local handle = io.popen(command .. " 2>&1")
-                local stdout = ""
-                if handle then
-                  stdout = handle:read("*a")
-                  handle:close()
-                else
-                  stdout = "Error: failed to open process"
-                end
-                response_data = { success = true, stdout = stdout }
-              end
-              status = "200 OK"
-            else
-              response_data = { error = "Invalid or unauthorized parameter" }
-              status = "400 Bad Request"
-            end
-            response_body = json.encode(response_data)
-            content_type = "application/json"
-          else
-            response_body = json.encode({ error = "Not found" })
-            status = "404 Not Found"
-            content_type = "application/json"
-          end
-        end
-
-        client:send("HTTP/1.1 " .. status .. "\r\n")
-        if current_cors ~= "" then
-          client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
-          client:send("Vary: Origin\r\n")
-        end
-        client:send("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
-        client:send("Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n")
-        client:send("X-Content-Type-Options: nosniff\r\n")
-        client:send("X-Frame-Options: SAMEORIGIN\r\n")
-        client:send("Content-Type: " .. content_type .. "\r\n")
-        client:send("Content-Length: " .. string.len(response_body) .. "\r\n")
-        client:send("Connection: close\r\n\r\n")
-        client:send(response_body)
-      end
+      return
     end
   end
-  client:close()
+
+  -- Handle CORS policies based on the Origin header
+  local req_origin = headers["origin"]
+  local current_cors = get_matched_cors(req_origin, api_config.cors_origin)
+
+  -- Preflight OPTIONS request
+  if method == "OPTIONS" then
+    client:send("HTTP/1.1 204 No Content\r\n")
+    if current_cors ~= "" then
+      client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
+      client:send("Vary: Origin\r\n")
+    end
+    client:send("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
+    client:send("Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n")
+    client:send("X-Content-Type-Options: nosniff\r\n")
+    client:send("X-Frame-Options: SAMEORIGIN\r\n")
+    client:send("Connection: close\r\n\r\n")
+    return
+  end
+
+  local response_body, status, content_type
+  local authorized = true
+
+  -- Check for the presence and validity of the secret API key for paths starting with /api/
+  if SECRET ~= "" and path:find("^/api/") then
+    local client_key = headers["x-api-key"]
+    if client_key ~= SECRET then authorized = false end
+  end
+
+  if not authorized then
+    response_body = json.encode({ error = "Unauthorized: Invalid or missing API key" })
+    status = "401 Unauthorized"
+    content_type = "application/json"
+  else
+    -- API request routing
+    if path == "/" then
+      if DASHBOARD then
+        response_body = get_dashboard_html()
+        status = "200 OK"
+        content_type = "text/html; charset=utf-8"
+      else
+        response_body = json.encode({ error = "Not found" })
+        status = "404 Not Found"
+        content_type = "application/json"
+      end
+    elseif path == "/api/ping" and method == "GET" then
+      response_body = json.encode({ status = "ok", message = "pong" })
+      status = "200 OK"
+      content_type = "application/json"
+    elseif path:find("^/api/status") and method == "GET" then
+      local st = get_cached_skeen_status()
+      st.success = true
+      response_body = json.encode(st)
+      status = "200 OK"
+      content_type = "application/json"
+    elseif path == "/api/files-list" and method == "GET" then
+      local map = get_allowed_files_map()
+      local files_list = {}
+
+      for id, target in pairs(map) do
+        table.insert(files_list, { id = id, name = target.name })
+      end
+
+      table.sort(files_list, function(a, b) return a.id < b.id end)
+      response_body = json.encode(files_list)
+      status = "200 OK"
+      content_type = "application/json"
+    elseif path:find("^/api/file") and method == "GET" then
+      local file_key = path:match("[?&]name=([^&]+)") or "skeen"
+      local ALLOWED_FILES = get_allowed_files_map()
+      local target = ALLOWED_FILES[file_key]
+
+      if not target then
+        response_body = json.encode({ error = "Invalid file target" })
+        status = "400 Bad Request"
+        content_type = "application/json"
+      else
+        local f = io.open(target.path, "r")
+        local content = ""
+        if f then
+          content = f:read("*a")
+          f:close()
+        end
+
+        if target.type == "json" then
+          if file_key == "skeen" then
+            content = strip_json_comments(content)
+            local success, data = pcall(json.decode, content)
+            response_body = json.encode({ success = true, content = success and data or {} })
+          else
+            response_body = '{"success":true,"content":' .. content .. '}'
+          end
+        else
+          local escaped_content = content:gsub('\\', '\\\\'):gsub('"', '\\"'):gsub('\n', '\\n'):gsub(
+            '\r', '\\r')
+          response_body = '{"success":true,"content":"' .. escaped_content .. '"}'
+        end
+        status = "200 OK"
+        content_type = "application/json"
+      end
+    elseif path == "/api/file" and method == "POST" then
+      local success, req_json = pcall(json.decode, body)
+      local file_key = req_json and req_json.name
+      local ALLOWED_FILES = get_allowed_files_map()
+      local target = ALLOWED_FILES[file_key]
+
+      if not success or not target then
+        response_body = json.encode({ error = "Invalid request or file target" })
+        status = "400 Bad Request"
+        content_type = "application/json"
+      else
+        local raw_content = req_json.content
+        local write_success = false
+
+        if target.type == "json" then
+          local ok_enc, encoded_json = pcall(json.encode, raw_content, true)
+          if ok_enc then
+            write_success = write_raw_file(target.path, encoded_json)
+          end
+        else
+          write_success = write_raw_file(target.path, tostring(raw_content))
+        end
+
+        if write_success then
+          response_body = json.encode({ success = true, message = "File updated" })
+          status = "200 OK"
+        else
+          response_body = json.encode({ error = "Failed to write file" })
+          status = "500 Internal Server Error"
+        end
+        content_type = "application/json"
+      end
+    elseif path == "/api/exec" and method == "POST" then
+      local success, req_json = pcall(json.decode, body)
+      local param = ""
+      if success and type(req_json) == "table" and req_json.param then
+        param = tostring(req_json.param)
+      end
+
+      local response_data
+      if success and type(req_json) == "table" and is_allowed_param(param) then
+        if param == "areload" then
+          -- Restart is executed in the background with a 2-second delay
+          -- so that the current HTTP request has time to return a 200 OK status to the browser
+          os.execute("(sleep 2 && skeen areload) >/dev/null 2>&1 &")
+          response_data = {
+            success = true,
+            stdout = "API reload initiated, restarting in 2 seconds..."
+          }
+        else
+          local command = "FORCE_COLOR=1 skeen " .. param
+          local handle = io.popen(command .. " 2>&1")
+          local stdout = ""
+          if handle then
+            stdout = handle:read("*a")
+            handle:close()
+          else
+            stdout = "Error: failed to open process"
+          end
+          response_data = { success = true, stdout = stdout }
+        end
+        status = "200 OK"
+      else
+        response_data = { error = "Invalid or unauthorized parameter" }
+        status = "400 Bad Request"
+      end
+      response_body = json.encode(response_data)
+      content_type = "application/json"
+    else
+      response_body = json.encode({ error = "Not found" })
+      status = "404 Not Found"
+      content_type = "application/json"
+    end
+  end
+
+  -- Form and send the HTTP response to the client
+  client:send("HTTP/1.1 " .. status .. "\r\n")
+  if current_cors ~= "" then
+    client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
+    client:send("Vary: Origin\r\n")
+  end
+  client:send("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
+  client:send("Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n")
+  client:send("X-Content-Type-Options: nosniff\r\n")
+  client:send("X-Frame-Options: SAMEORIGIN\r\n")
+  client:send("Content-Type: " .. content_type .. "\r\n")
+  client:send("Content-Length: " .. string.len(response_body) .. "\r\n")
+  client:send("Connection: close\r\n\r\n")
+  client:send(response_body)
+end
+
+-- Infinite main server loop to accept incoming connections
+while true do
+  local client = server:accept()
+  if client then
+    -- Protected client processing execution via pcall with guaranteed socket closure
+    pcall(handle_client, client)
+    client:close()
+  end
 end
