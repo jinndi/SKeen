@@ -111,7 +111,7 @@ Manage SKeen using the `skeen` command.
 
 ### Web Panels
 
-**To manage SKeen** locally or remotely starting with version 5.9.0, you can use the web dashboard at https://skeen.indevs.in or the built-in one; for detailed configuration instructions, read [SKEEN-API-EN.md](./docs/SKEEN-API.md).
+**To manage SKeen** locally or remotely starting with version 5.9.0, you can use the web dashboard at https://skeen.indevs.in or the built-in one; for detailed configuration instructions, read [docs/SKEEN-API.md](./docs/SKEEN-API.md).
 
 > [!NOTE]
 > To access a local API (for example, at `http://192.168.1.1:3000`), all browsers except Chrome require using the HTTP version of the website - http://skeen.indevs.in (due to browser restrictions on connecting from HTTPS pages to local HTTP endpoints).
