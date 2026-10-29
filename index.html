@@ -1330,6 +1330,24 @@
       display: block;
     }
 
+    .code-editor-wrapper::selection,
+    .code-editor-wrapper *::selection,
+    .output-wrapper::selection,
+    .output-wrapper *::selection {
+      background-color: var(--border-focus);
+      color: var(--text-color);
+      -webkit-text-fill-color: var(--text-color);
+    }
+
+    /* Firefox */
+    .code-editor-wrapper::-moz-selection,
+    .code-editor-wrapper *::-moz-selection,
+    .output-wrapper::-moz-selection,
+    .output-wrapper *::-moz-selection {
+      background-color: var(--border-focus);
+      color: var(--text-color);
+    }
+
     /* ANSI Colors for Terminal Logs */
     .ansi-cyan {
       color: var(--info-color);
@@ -1422,9 +1440,13 @@
     <!-- Tab 1: SKeen Management -->
     <div id="skeenTab" class="tab-content active">
       <div class="card" style="display: flex; flex-direction: column; gap: 10px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <h2 data-i18n="skeenCardTitle" style="margin: 0;">Управление SKeen</h2>
-          <span id="headerApiVersion" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">API v1.0.0</span>
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
+          <h2 style="margin: 0; border: none; padding: 0;" data-i18n="skeenCardTitle">Управление SKeen</h2>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span id="headerApiVersion" style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">API
+              v0.0.0</span>
+          </div>
         </div>
         <!-- Current Status Panel -->
         <div class="status-badge-panel">
@@ -1477,7 +1499,7 @@
     <div id="jsonTab" class="tab-content">
       <div class="card editor-card">
         <div
-          style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
+          style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
           <h2 style="margin: 0; border: none; padding: 0;" data-i18n="jsonCardTitle">Конфигурация</h2>
           <div style="display: flex; align-items: center; gap: 6px;">
             <select id="configFileSelect" class="conn-select" style="flex: 1;" onchange="handleFileSelectChange()">
@@ -1536,30 +1558,30 @@
         </div>
 
         <div class="form-row" style="flex-shrink: 0;">
-          <button onclick="loadConfigFile()" data-i18n="btnLoadJson">
+          <button onclick="loadConfigFile()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
-            <span>Загрузить</span>
+            <span data-i18n="btnLoadJson">Загрузить</span>
           </button>
-          <button id="saveBtn" onclick="saveConfigFile()" data-i18n="btnSaveJson">
+          <button id="saveBtn" class="success-btn" onclick="saveConfigFile()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
               <polyline points="17 21 17 13 7 13 7 21"></polyline>
               <polyline points="7 3 7 8 15 8"></polyline>
             </svg>
-            <span>Сохранить</span>
+            <span data-i18n="btnSaveJson">Сохранить</span>
           </button>
-          <button class="secondary" onclick="formatJsonEditor()" data-i18n="btnFormat">
+          <button id="formatBtn"class="secondary" onclick="formatJsonEditor()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <line x1="21" y1="10" x2="3" y2="10"></line>
               <line x1="21" y1="6" x2="3" y2="6"></line>
               <line x1="21" y1="14" x2="3" y2="14"></line>
               <line x1="21" y1="18" x2="3" y2="18"></line>
             </svg>
-            <span>Формат</span>
+            <span data-i18n="btnFormat">Формат</span>
           </button>
         </div>
       </div>
@@ -2411,6 +2433,7 @@
       const btnForm = document.getElementById('btnModeForm');
       const btnText = document.getElementById('btnModeText');
       const textArea = document.getElementById('jsonEditor');
+      const formatBtn = document.getElementById('formatBtn');
 
       if (mode === 'form') {
         try {
@@ -2426,6 +2449,7 @@
         editorWrapper.style.display = 'none';
         btnForm.classList.add('active');
         btnText.classList.remove('active');
+        formatBtn.style.display = 'none';
       } else {
         const formData = collectFormData();
         textArea.value = JSON.stringify(formData, null, 2);
@@ -2436,6 +2460,7 @@
         editorWrapper.style.display = 'flex';
         btnText.classList.add('active');
         btnForm.classList.remove('active');
+        formatBtn.style.display = '';
       }
     }
 
@@ -3272,6 +3297,11 @@
           currentEditorMode = 'text';
           document.getElementById('btnModeText').classList.add('active');
           document.getElementById('btnModeForm').classList.remove('active');
+          if (fileKey == 'pure_cidr'){
+            document.getElementById('formatBtn').style.display = 'none';
+          }else{
+            document.getElementById('formatBtn').style.display = '';
+          }
         }
 
         showStatus('jsonStatus', t('statusLoaded'));
@@ -3719,8 +3749,30 @@
         const textarea = e.target;
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + 2;
+        const value = textarea.value;
+
+        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        let lineEnd = value.indexOf('\n', end);
+        if (lineEnd === -1) lineEnd = value.length;
+
+        const selectedText = value.substring(lineStart, lineEnd);
+        const lines = selectedText.split('\n');
+
+        let newSelectedText;
+        if (e.shiftKey) {
+          newSelectedText = lines.map(line => {
+            if (line.startsWith('  ')) return line.substring(2);
+            if (line.startsWith(' ')) return line.substring(1);
+            return line;
+          }).join('\n');
+        } else {
+          newSelectedText = lines.map(line => '  ' + line).join('\n');
+        }
+
+        textarea.value = value.substring(0, lineStart) + newSelectedText + value.substring(lineEnd);
+        textarea.selectionStart = lineStart;
+        textarea.selectionEnd = lineStart + newSelectedText.length;
+
         handleEditorInput();
       }
     }
