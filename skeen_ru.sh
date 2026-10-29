@@ -361,7 +361,7 @@ get_network_config() {
 }
 
 get_singbox_config() {
-  local config_path
+  local mode="${1:-}" config_path
   config_path="$(get_skeen_config_path)"
 
   [ -n "$config_path" ] && eval "$(
@@ -442,7 +442,15 @@ get_singbox_config() {
     export BOX_API_SECRET="$sing_api_secret"
   fi
 
+  if [ "$mode" = "--json" ] && [ -z "$SINGBOX_CONFIG_DIR" ]; then
+    printf '{"path":"%s","is_dir":%s}\n' "$SINGBOX_CONFIG" "false"; return 0
+  fi
+
   if [ -n "$SINGBOX_CONFIG_DIR" ]; then
+    if [ "$mode" = "--json" ]; then
+      printf '{"path":"%s","is_dir":%s}\n' "$SINGBOX_CONFIG_DIR" "true"; return 0
+    fi
+
     if [ ! -f "$SINGBOX_CONFIG" ] ||
       [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -newer "$SINGBOX_CONFIG" -print -quit)" ];
     then
@@ -2822,7 +2830,7 @@ restart() {
 reload() {
   check_config && echo "$DELIMETER"
   get_singbox_config
-  stop_singbox && start_singbox || exit 1
+  stop_singbox && start_singbox || return 1
 }
 
 proc_uptime() {
@@ -3980,6 +3988,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     *) show_help | awk '/OpkgTun / {flag=1} flag' ;;
     esac
     ;;
+  get_singbox_config) get_singbox_config --json ;;
   get_api_config) get_service_api_config --json ;;
   areload) "$SERVICE_API_SCRIPT" restart ;;
   "") show_menu ;;

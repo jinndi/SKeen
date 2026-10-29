@@ -731,84 +731,42 @@ local function write_raw_file(filepath, content)
   return ok ~= nil
 end
 
-local function is_directory(path)
-  if not path then return false end
-  local p = io.popen(string.format("[ -d '%s' ] && echo 'yes' || echo 'no'", path:gsub("'", "'\\''")))
-  if not p then return false end
-  local res = p:read("*l")
-  p:close()
-  return res == "yes"
-end
-
-local function resolve_path(path)
-  if not path then return "" end
-  if path:match("^/") then
-    return path
-  else
-    return SKEEN_DIR .. path
-  end
-end
-
 local function get_allowed_files_map()
-  local skeen_path = resolve_path(DEFAULT_FILES.skeen)
+  local default_path = SKEEN_DIR .. "/config.json"
   local map = {
-    ["skeen"] = { path = skeen_path, type = "json" }
+    ["skeen"]     = { path = SKEEN_DIR .. "/skeen.json", type = "json", name = "skeen.json" },
+    ["pure_cidr"] = { path = SKEEN_DIR .. "/pure_cidr.list", type = "text", name = "pure_cidr.list" }
   }
 
-  local pure_cidr_path = resolve_path(DEFAULT_FILES.pure_cidr)
-  local sb_cfg_path = resolve_path(DEFAULT_FILES.singbox)
+  local handle = io.popen("skeen get_singbox_config --json 2>/dev/null")
+  local result_str = handle and handle:read("*a") or ""
+  if handle then handle:close() end
 
-  local f = io.open(skeen_path, "r")
-  if f then
-    local content = f:read("*a")
-    f:close()
-    content = strip_json_comments(content)
-    local ok, skeen_config = pcall(json.decode, content)
-    if ok and skeen_config then
-      if skeen_config.firewall and skeen_config.firewall.intercept and
-          skeen_config.firewall.intercept.fakeip and
-          skeen_config.firewall.intercept.fakeip.include then
-        local inc = skeen_config.firewall.intercept.fakeip.include
-        if inc ~= "" and not inc:match("%${") then
-          pure_cidr_path = resolve_path(inc)
-        end
-      end
+  local ok, cfg_info = pcall(json.decode, result_str)
+  local path = (ok and cfg_info and cfg_info.path) or default_path
+  local is_dir = (ok and cfg_info and cfg_info.is_dir) or false
 
-      if skeen_config.singbox then
-        local sb = skeen_config.singbox
-        local cfg_path = DEFAULT_FILES.singbox
+  if is_dir then
+    local safe_path = path:gsub("'", "'\\''")
+    local cmd = string.format("find '%s' -maxdepth 1 -name '*.json' | sort", safe_path)
 
-        if sb.config and sb.config.path and sb.config.path ~= "" then
-          cfg_path = sb.config.path
-        end
-
-        if sb.external and sb.external.enabled == 1 and sb.external.config and sb.external.config.path and sb.external.config.path ~= "" then
-          cfg_path = sb.external.config.path
-        end
-
-        if not cfg_path:match("%${") then
-          sb_cfg_path = resolve_path(cfg_path)
-        end
-      end
-    end
-  end
-
-  map["pure_cidr"] = { path = pure_cidr_path, type = "text" }
-
-  if is_directory(sb_cfg_path) then
-    local p_find = io.popen(string.format("find '%s' -maxdepth 2 -name '*.json' | sort",
-      sb_cfg_path:gsub("'", "'\\''")))
+    local p_find = io.popen(cmd)
     if p_find then
       local idx = 0
       for file_full_path in p_find:lines() do
-        local key = "sb_file_" .. idx
-        map[key] = { path = file_full_path, type = "json" }
-        idx = idx + 1
+        if file_full_path ~= "" then
+          local parent, filename = file_full_path:match("([^/]+)/([^/]+)$")
+          local display_name = (parent and filename) and (parent .. "/" .. filename) or (file_full_path:match("^.+/(.+)$") or file_full_path)
+
+          map["sb_file_" .. idx] = { path = file_full_path, type = "json", name = display_name }
+          idx = idx + 1
+        end
       end
       p_find:close()
     end
   else
-    map["singbox"] = { path = sb_cfg_path, type = "json" }
+    local filename = path:match("^.+/(.+)$") or "config.json"
+    map["singbox"] = { path = path, type = "json", name = filename }
   end
 
   return map
@@ -981,18 +939,7 @@ while true do
             local files_list = {}
 
             for id, target in pairs(map) do
-              local name = target.path:match("^.+/(.+)$") or target.path
-              if id == "skeen" then
-                name = "skeen.json"
-              elseif id == "pure_cidr" then
-                name = target.path:match("^.+/(.+)$") or "pure_cidr.list"
-              elseif id == "singbox" then
-                name = target.path:match("^.+/(.+)$") or "config.json"
-              elseif id:match("^sb_file_") then
-                local parent = target.path:match("([^/]+/[^/]+)$")
-                name = parent or name
-              end
-              table.insert(files_list, { id = id, name = name })
+              table.insert(files_list, { id = id, name = target.name })
             end
 
             table.sort(files_list, function(a, b) return a.id < b.id end)
@@ -1017,11 +964,16 @@ while true do
               end
 
               if target.type == "json" then
-                content = strip_json_comments(content)
-                local success, data = pcall(json.decode, content)
-                response_body = json.encode({ success = true, content = success and data or {} })
+                if file_key == "skeen" then
+                  content = strip_json_comments(content)
+                  local success, data = pcall(json.decode, content)
+                  response_body = json.encode({ success = true, content = success and data or {} })
+                else
+                  response_body = '{"success":true,"content":' .. content .. '}'
+                end
               else
-                response_body = json.encode({ success = true, content = content })
+                local escaped_content = content:gsub('\\', '\\\\'):gsub('"', '\\"'):gsub('\n', '\\n'):gsub('\r', '\\r')
+                response_body = '{"success":true,"content":"' .. escaped_content .. '"}'
               end
               status = "200 OK"
               content_type = "application/json"

@@ -1884,12 +1884,12 @@
       policy: { enabled: 0, segment: "br1" },
       network: { ipv6: 1, tuning: 0, check: ["vk.com", "77.88.8.8", "77.88.8.1"] },
       singbox: {
-        config: { path: "config.json", url: "", split: 1 },
+        config: { use_dir: 0, url: "", split: 1 },
         api: { url: "http://127.0.0.1:9999", secret: "" },
         external: {
           enabled: 0,
-          path: "sing-box",
-          config: { path: "", url: "", split: 1 },
+          path: "/opt/bin/sing-box",
+          config: { use_dir: 0, url: "", split: 1 },
           api: { url: "", secret: "" }
         }
       },
@@ -1900,7 +1900,7 @@
       firewall: {
         intercept: {
           dns: 1,
-          fakeip: { enabled: 0, include: "pure_cidr.list", clients: [] }
+          fakeip: { enabled: 0, clients: [] }
         },
         exclude: {
           port: ["137:139", 445, 1900],
@@ -1925,7 +1925,7 @@
         "network.ipv6": "Включить поддержку IPv6.",
         "network.tuning": "Включить оптимизацию сети через sysctl.",
         "network.check": "Домены или IPv4 адреса для проверки доступности сети (макс. 3).",
-        "services.api.port": "Порт встроенного API-сервера SKeen (по умолчанию: 5000).",
+        "services.api.port": "Порт встроенного API-сервера SKeen (по умолчанию: 3000).",
         "services.api.secret": "Секретный ключ для доступа к API SKeen.",
         "services.api.cors_origin": "Разрешенные CORS-источники.",
         "services.api.dashboard": "Включить веб-панель управления.",
@@ -1934,33 +1934,32 @@
         "services.proxy.port": "Порт локального прокси.",
         "services.proxy.user": "Имя пользователя для подключения к прокси.",
         "services.proxy.pass": "Пароль пользователя для подключения к прокси.",
-        "singbox.config.path": "Путь к локальному файлу или папке конфигурации Sing-box.",
+        "singbox.config.use_dir": "Использовать папку в /opt/etc/skeen/config с конфигурациями sing-box вместо файла.",
         "singbox.config.url": "URL-адрес для синхронизации конфигурации.",
-        "singbox.config.split": "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей.",
-        "singbox.api.url": "URL к сервису sing-box API.",
+        "singbox.config.split": "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
+        "singbox.api.url": "URL к сервису sing-box API, необходимый для консольных команд skeen api",
         "singbox.api.secret": "Секретный ключ API sing-box.",
         "singbox.external.enabled": "Использовать сторонний бинарный файл Sing-box.",
-        "singbox.external.path": "Полный путь к стороннему файлу Sing-box.",
-        "singbox.external.config.path": "Файл конфигурации для стороннего Sing-box.",
+        "singbox.external.path": "Полный путь к стороннему файлу sing-box или его имя (если он доступен в PATH).",
+        "singbox.external.config.use_dir": "Использовать папку в /opt/etc/skeen/config_ext с конфигурациями sing-box вместо файла.",
         "singbox.external.config.url": "URL конфигурации для стороннего Sing-box.",
-        "singbox.external.config.split": "Разбивать конфиг стороннего sing-box по ключам.",
-        "singbox.external.api.url": "URL API стороннего sing-box.",
+        "singbox.external.config.split": "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
+        "singbox.external.api.url": "URL к сервису sing-box API, необходимый для консольных команд skeen api",
         "singbox.external.api.secret": "Секрет API стороннего sing-box.",
         "firewall.intercept.dns": "Перехватывать DNS-запросы в режимах TProxy/Hybrid.",
-        "firewall.intercept.fakeip.enabled": "Включить FakeIP-пул адресов в перехват Redirect/TProxy.",
-        "firewall.intercept.fakeip.include": "Путь к файлу со списком IP/CIDR ресурсов для FakeIP.",
+        "firewall.intercept.fakeip.enabled": "Включить FakeIP-пул адресов в перехват Redirect/TProxy. Для чистых IP-адресов, не имеющих доменов, настраивается в файле pure_cidr.list",
         "firewall.intercept.fakeip.clients": "Клиенты (IP или CIDR) для FakeIP перехвата.",
         "firewall.exclude.port": "Порты, исключенные из Redirect/TProxy.",
-        "firewall.exclude.ipv4_cidr": "Исключенные подсети IPv4.",
-        "firewall.exclude.ipv6_cidr": "Исключенные подсети IPv6.",
+        "firewall.exclude.ipv4_cidr": "Исключенные подсети IPv4 или IP адреса.",
+        "firewall.exclude.ipv6_cidr": "Исключенные подсети IPv6 или IP адреса.",
         "firewall.redirect_dns.enabled": "Включает редирект DNS-запросов.",
         "firewall.redirect_dns.to_port": "Порт перенаправления DNS-запросов.",
         "firewall.redirect_dns.use_policy": "Использовать настроенную политику для редиректа DNS.",
-        "firewall.proxy_router": "Проксировать все сервисы роутера.",
-        "update.singbox.enabled": "Включить проверку обновлений Sing-box.",
-        "update.singbox.beta": "Включает проверку pre-release версий.",
-        "update.skeen.enabled": "Включить проверку обновлений SKeen.",
-        "update.skeen.api": "Включить проверку обновлений SKeen API."
+        "firewall.proxy_router": "Проксировать все сервисы роутера. Доступно в режимах redirect, tproxy и hybrid, исключения подсетей и порты исключения учитываются.",
+        "update.singbox.enabled": "Включить проверку обновлений Sing-box (CLI).",
+        "update.singbox.beta": "Включает проверку pre-release версий (CLI).",
+        "update.skeen.enabled": "Включить проверку обновлений SKeen (CLI).",
+        "update.skeen.api": "Включить проверку обновлений SKeen API (CLI)."
       },
       en: {
         "auto_start.enabled": "SKeen autostart on router reboot.",
@@ -1970,7 +1969,7 @@
         "network.ipv6": "Enable IPv6 support.",
         "network.tuning": "Enable sysctl network optimization.",
         "network.check": "Domains or IPv4 for connectivity tests.",
-        "services.api.port": "SKeen built-in API server port.",
+        "services.api.port": "SKeen built-in API server port (dafault: 3000).",
         "services.api.secret": "API secret key.",
         "services.api.cors_origin": "Allowed CORS origins.",
         "services.api.dashboard": "Enable web dashboard.",
@@ -1979,33 +1978,32 @@
         "services.proxy.port": "Local proxy port.",
         "services.proxy.user": "Proxy username.",
         "services.proxy.pass": "Proxy password.",
-        "singbox.config.path": "Path to local config file or directory.",
+        "singbox.config.use_dir": "Use a folder in /opt/etc/skeen/config with sing-box configurations instead of a file.",
         "singbox.config.url": "URL for syncing config.",
-        "singbox.config.split": "Split synced config into files.",
-        "singbox.api.url": "URL to sing-box API service.",
+        "singbox.config.split": "The synced config will be split into separate files by key names if folder mode is enabled.",
+        "singbox.api.url": "URL for the sing-box API service, required for skeen-api CLI commands.",
         "singbox.api.secret": "Sing-box API secret key.",
         "singbox.external.enabled": "Use external binary file for Sing-box.",
-        "singbox.external.path": "Full path to external binary.",
-        "singbox.external.config.path": "Config file for external Sing-box.",
+        "singbox.external.path": "Full path to the external sing-box executable or its command name (if in PATH).",
+        "singbox.external.config.use_dir": "Use a folder in /opt/etc/skeen/config_ext with sing-box configurations instead of a file.",
         "singbox.external.config.url": "Config URL for external Sing-box.",
-        "singbox.external.config.split": "Split external config by keys.",
-        "singbox.external.api.url": "External sing-box API URL.",
+        "singbox.external.config.split": "The synced config will be split into separate files by key names if folder mode is enabled.",
+        "singbox.external.api.url": "URL for sing-box API service, required for skeen-api CLI commands.",
         "singbox.external.api.secret": "External sing-box API secret.",
         "firewall.intercept.dns": "Intercept DNS queries.",
-        "firewall.intercept.fakeip.enabled": "Include FakeIP address pool.",
-        "firewall.intercept.fakeip.include": "Path to IP/CIDR list file.",
-        "firewall.intercept.fakeip.clients": "Clients for FakeIP interception.",
+        "firewall.intercept.fakeip.enabled": "Include FakeIP pool in Redirect/TProxy interception. Direct IPs without domains are configured in pure_cidr.list",
+        "firewall.intercept.fakeip.clients": "Clients (IP or CIDR) for FakeIP interception.",
         "firewall.exclude.port": "Ports excluded from interception.",
-        "firewall.exclude.ipv4_cidr": "Excluded IPv4 subnets.",
-        "firewall.exclude.ipv6_cidr": "Excluded IPv6 subnets.",
+        "firewall.exclude.ipv4_cidr": "Excluded IPv4 subnets or IP addresses.",
+        "firewall.exclude.ipv6_cidr": "Excluded IPv6 subnets or IP addresses.",
         "firewall.redirect_dns.enabled": "Enable DNS redirection.",
         "firewall.redirect_dns.to_port": "DNS redirect port.",
         "firewall.redirect_dns.use_policy": "Use configured policy for DNS.",
-        "firewall.proxy_router": "Proxy all router services.",
-        "update.singbox.enabled": "Enable Sing-box update check.",
-        "update.singbox.beta": "Enable checking pre-release versions.",
-        "update.skeen.enabled": "Enable SKeen update check.",
-        "update.skeen.api": "Enable SKeen API update check."
+        "firewall.proxy_router": "Proxy all router services. Available in redirect, tproxy, and hybrid modes; subnet and port exclusions are taken into account.",
+        "update.singbox.enabled": "Enable Sing-box update check (CLI).",
+        "update.singbox.beta": "Enable checking pre-release versions (CLI).",
+        "update.skeen.enabled": "Enable SKeen update check (CLI).",
+        "update.skeen.api": "Enable SKeen API update check (CLI)."
       }
     };
 
@@ -2468,14 +2466,14 @@
                 <h3>${l === 'ru' ? 'Автозапуск' : 'Auto Start'}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить автозапуск' : 'Enabled'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить' : 'Enabled'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('auto_start.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Задержка (сек)' : 'Delay (sec)'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Задержка' : 'Delay'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('auto_start.delay')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="number" id="f_auto_start_delay" value="${data.auto_start?.delay ?? 0}" oninput="validateField(this, 'port'); syncFormToText()"></div>
@@ -2486,14 +2484,14 @@
                 <h3>${l === 'ru' ? 'Политика доступа' : 'Policy'}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить политику' : 'Enabled'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить' : 'Enabled'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('policy.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Интерфейс сегмента (Bridge)' : 'Segment'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Сегмент' : 'Segment'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('policy.segment')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_policy_segment" value="${data.policy?.segment ?? ''}" oninput="validateField(this, 'segment'); syncFormToText()"></div>
@@ -2504,21 +2502,21 @@
                 <h3>${l === 'ru' ? 'Сеть' : 'Network'}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Поддержка IPv6' : 'IPv6'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить IPv6' : 'IPv6 Enable'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('network.ipv6')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Оптимизация sysctl (tuning)' : 'Tuning'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Оптимизация' : 'Tuning'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('network.tuning')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Проверка сети (check)' : 'Check IPs'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Ping Check' : 'Ping Check'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('network.check')">?</button>
                   </div>
                   <div class="form-setting-input">
@@ -2545,21 +2543,21 @@
                 <h3>${l === 'ru' ? 'Конфиг Sing-box' : 'Sing-box Config'}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Путь к конфигу' : 'Path'}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.config.path')">?</button>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Использовать папку' : 'Use folder'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.config.use_dir')">?</button>
                   </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_config_path" value="${data.singbox?.config?.path ?? ''}" oninput="syncFormToText()"></div>
-                </div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()"></div>
+                  </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'URL синхронизации' : 'URL'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'URL конфига' : 'Config URL'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.config.url')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_singbox_config_url" value="${data.singbox?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Разбивать (split)' : 'Split'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Разбивать (split)' : 'Config Split'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.config.split')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()"></div>
@@ -2598,10 +2596,10 @@
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Путь к конфигу' : 'Config Path'}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.path')">?</button>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Использовать папку' : 'Use folder'}</span>
+                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.use_dir')">?</button>
                   </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_cfg_path" value="${data.singbox?.external?.config?.path ?? ''}" oninput="syncFormToText()"></div>
+                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
@@ -2674,14 +2672,14 @@
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить Dashboard' : 'Dashboard'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Dashboard' : 'Dashboard'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.api.dashboard')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Автозапуск API' : 'Auto Start API'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Автозапуск' : 'Auto Start'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.api.auto_start')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()"></div>
@@ -2692,7 +2690,7 @@
                 <h3>${l === 'ru' ? 'Локальный прокси' : 'Local Proxy'}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить прокси' : 'Proxy Enabled'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить' : 'Enabled'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.proxy.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
@@ -2706,7 +2704,7 @@
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Пользователь прокси' : 'Proxy User'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Пользователь' : 'User'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.proxy.user')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_services_proxy_user" value="${data.services?.proxy?.user ?? ''}" oninput="syncFormToText()"></div>
@@ -2752,18 +2750,11 @@
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Файл FakeIP (include)' : 'FakeIP Include'}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.include')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_firewall_fakeip_include" value="${data.firewall?.intercept?.fakeip?.include ?? ''}" oninput="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Клиенты FakeIP (clients)' : 'FakeIP Clients'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Клиенты FakeIP' : 'FakeIP Clients'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.clients')">?</button>
                   </div>
                   <div class="form-setting-input">
-                    <input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_fakeip_clients_display', 'Клиенты FakeIP (clients)', fakeipClientsArray, 'ip')">
+                    <input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_fakeip_clients_display', 'Клиенты FakeIP', fakeipClientsArray, 'ip')">
                   </div>
                 </div>
               </div>
@@ -2800,7 +2791,7 @@
               </div>
 
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Редирект DNS и Проксирование роутера' : 'Redirect DNS & Proxy Router'}</h3>
+                <h3>${l === 'ru' ? 'Редирект DNS' : 'Redirect DNS'}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
                     <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить редирект DNS' : 'Redirect DNS'}</span>
@@ -2822,9 +2813,13 @@
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
+              </div>
+
+              <div class="form-section">
+                <h3>${l === 'ru' ? 'Проксирование роутера' : 'Proxy Router'}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Проксировать весь роутер' : 'Proxy Router'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Проксировать роутер' : 'Proxy Router'}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.proxy_router')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()"></div>
@@ -3009,7 +3004,7 @@
           pass: (document.getElementById('f_services_proxy_pass')?.value || '').trim()
         };
 
-        result.singbox.config.path = (document.getElementById('f_singbox_config_path')?.value || '').trim();
+        result.singbox.config.use_dir = document.getElementById('f_singbox_config_use_dir')?.checked ? 1 : 0;
         result.singbox.config.url = (document.getElementById('f_singbox_config_url')?.value || '').trim();
         result.singbox.config.split = document.getElementById('f_singbox_config_split')?.checked ? 1 : 0;
         result.singbox.api.url = (document.getElementById('f_singbox_api_url')?.value || '').trim();
@@ -3017,7 +3012,7 @@
 
         result.singbox.external.enabled = document.getElementById('f_singbox_ext_enabled')?.checked ? 1 : 0;
         result.singbox.external.path = (document.getElementById('f_singbox_ext_path')?.value || '').trim();
-        result.singbox.external.config.path = (document.getElementById('f_singbox_ext_cfg_path')?.value || '').trim();
+        result.singbox.external.config.use_dir = document.getElementById('f_singbox_ext_cfg_use_dir')?.checked ? 1 : 0;
         result.singbox.external.config.url = (document.getElementById('f_singbox_ext_cfg_url')?.value || '').trim();
         result.singbox.external.config.split = document.getElementById('f_singbox_ext_cfg_split')?.checked ? 1 : 0;
         result.singbox.external.api.url = (document.getElementById('f_singbox_ext_api_url')?.value || '').trim();
@@ -3025,7 +3020,6 @@
 
         result.firewall.intercept.dns = document.getElementById('f_firewall_intercept_dns')?.checked ? 1 : 0;
         result.firewall.intercept.fakeip.enabled = document.getElementById('f_firewall_fakeip_enabled')?.checked ? 1 : 0;
-        result.firewall.intercept.fakeip.include = (document.getElementById('f_firewall_fakeip_include')?.value || '').trim();
         result.firewall.intercept.fakeip.clients = [...fakeipClientsArray];
 
         result.firewall.exclude.port = excludePortsArray.map(p => isNaN(p) ? p : Number(p));
