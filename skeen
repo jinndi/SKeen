@@ -30,7 +30,12 @@ readonly SINGBOX_NAME="Sing-box"
 readonly SINGBOX_PID_FILE="/tmp/run/skeen.pid"
 readonly SINGBOX_RUN_VERSION="$RUN_DIR/version"
 readonly SINGBOX_BIN_PATH="$ENTWARE_DIR/bin/skeen-box"
-readonly SINGBOX_DEFAULT_CONFIG_PATH="$WORK_DIR/config.json"
+readonly SINGBOX_CONFIG_PATH="$WORK_DIR/config.json"
+readonly SINGBOX_CONFIG_DIR_PATH="$WORK_DIR/config"
+readonly SINGBOX_CONFIG_MERGED_PATH="$WORK_DIR/.config_merged.json"
+readonly SINGBOX_CONFIG_EXT_PATH="$WORK_DIR/config_ext.json"
+readonly SINGBOX_CONFIG_EXT_DIR_PATH="$WORK_DIR/config_ext"
+readonly SINGBOX_CONFIG_EXT_MERGED_PATH="$WORK_DIR/.config_merged_ext.json"
 readonly SINGBOX_API_URL="https://github.com/SagerNet/sing-box/releases/latest"
 readonly SINGBOX_API_URL_BETA="https://github.com/SagerNet/sing-box/releases.atom"
 readonly SINGBOX_SPACE_MB=128
@@ -39,6 +44,7 @@ readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
 readonly NET_EXCLUDE_SET="skeen_exclude_net"
 readonly PORT_EXCLUDE_SET="skeen_exclude_port"
 readonly FAKEIP_INTERCEPT_SET="skeen_fakeip_net"
+readonly FAKEIP_INTERCEPT_FILE="$WORK_DIR/pure_cidr.list"
 readonly FAKEIP_CLIENTS_SRC_SET="skeen_fakeip_src"
 readonly CHAIN_PREROUTING="skeen"
 readonly CHAIN_OUTPUT="skeen_mask"
@@ -149,11 +155,11 @@ cat <<EOF >"$SKEEN_CONFIG"
   "network": {
     "ipv6": 1,
     "tuning": 0,
-    "check": ["1.1.1.1", "ya.ru", "223.5.5.5"]
+    "check": ["1.1.1.1", "ya.ru", "77.88.8.8"]
   },
   "singbox": {
     "config": {
-      "path": "$SINGBOX_DEFAULT_CONFIG_PATH",
+      "use_dir": 0,
       "url": "",
       "split": 1
     },
@@ -165,7 +171,7 @@ cat <<EOF >"$SKEEN_CONFIG"
       "enabled": ${EXTERNAL_ENABLED:-0},
       "path": "",
       "config": {
-        "path": "",
+        "use_dir": 0,
         "url": "",
         "split": 1
       },
@@ -195,7 +201,6 @@ cat <<EOF >"$SKEEN_CONFIG"
       "dns": 1,
       "fakeip": {
         "enabled": 0,
-        "include": "$WORK_DIR/pure_cidr.list",
         "clients": []
       }
     },
@@ -260,35 +265,6 @@ exiterr "Failed to synchronize $SKEEN_CONFIG to memory"
 fi
 fi
 }
-check_and_merge_singbox_config(){
-case "$SINGBOX_CONFIG" in
-/*);;
-*)SINGBOX_CONFIG="$WORK_DIR/$SINGBOX_CONFIG"
-esac
-SINGBOX_CONFIG="${SINGBOX_CONFIG%/}"
-local merged_path="$WORK_DIR/.merged.json"
-[ "$SINGBOX_EXTERNAL_ENABLED" = "1" ]&&merged_path="$WORK_DIR/.merged_external.json"
-SINGBOX_CONFIG_DIR=""
-if [ -d "$SINGBOX_CONFIG" ];then
-SINGBOX_CONFIG_DIR="$SINGBOX_CONFIG"
-if [ ! -f "$merged_path" ]||[ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -newer "$merged_path" -print -quit)" ];then
-if [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -print -quit)" ];then
-if ! "$SINGBOX_BIN" merge "$merged_path" -C "$SINGBOX_CONFIG_DIR" >/dev/null 2>&1;then
-exiterr "Failed to merge $SINGBOX_NAME config from $SINGBOX_CONFIG_DIR"
-fi
-else
-echowarn "Directory $SINGBOX_CONFIG_DIR is empty (no $SINGBOX_NAME configs found)"
-sleep 2
-fi
-fi
-SINGBOX_CONFIG="$merged_path"
-elif [ "$SINGBOX_CONFIG" = "$merged_path" ];then
-exiterr "Path $SINGBOX_CONFIG for $SINGBOX_NAME is reserved"
-elif [ ! -f "$SINGBOX_CONFIG" ];then
-echowarn "$SINGBOX_NAME config missing at $SINGBOX_CONFIG"
-sleep 2
-fi
-}
 check_and_kill_old_singbox_proc(){
 local sing_pid sing_path kill_old=0
 if [ -f "$SINGBOX_PID_FILE" ];then
@@ -330,50 +306,93 @@ config_path="$(get_skeen_config_path)"
 : "${NETWORK_TUNING:=0}"
 }
 get_singbox_config(){
-local config_path
+local mode="${1:-}" config_path
 config_path="$(get_skeen_config_path)"
 [ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
--e sing_config_path='@.singbox.config.path' \
+-e sing_config_use_dir='@.singbox.config.use_dir' \
 -e sing_config_url='@.singbox.config.url' \
 -e sing_config_split='@.singbox.config.split' \
 -e sing_api_url='@.singbox.api.url' \
 -e sing_api_secret='@.singbox.api.secret' \
 -e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
 -e sing_external_path='@.singbox.external.path' \
--e sing_external_config_path='@.singbox.external.config.path' \
+-e sing_external_config_use_dir='@.singbox.external.config.use_dir' \
 -e sing_external_config_url='@.singbox.external.config.url' \
 -e sing_external_config_split='@.singbox.external.config.split' \
 -e sing_external_api_url='@.singbox.external.api.url' \
 -e sing_external_api_secret='@.singbox.external.api.secret')"
-: "${sing_config_path:=$SINGBOX_DEFAULT_CONFIG_PATH}"
+: "${sing_config_use_dir:=0}"
 : "${sing_config_url:=}"
 : "${sing_config_split:=1}"
 : "${sing_api_url:=http://127.0.0.1:9999}"
 : "${sing_api_secret:=}"
 : "${SINGBOX_EXTERNAL_ENABLED:=0}"
 : "${sing_external_path:=/opt/bin/sing-box}"
-: "${sing_external_config_path:=$sing_config_path}"
+: "${sing_external_config_use_dir:=$sing_config_use_dir}"
 : "${sing_external_config_url:=$sing_config_url}"
 : "${sing_external_config_split:=$sing_config_split}"
 : "${sing_external_api_url:=$sing_api_url}"
 : "${sing_external_api_secret:=$sing_api_secret}"
+_init_box_target(){
+local use_dir="${1:-0}" dir_path="${2:-}" file_path="${3:-}"
+if [ "$use_dir" = "1" ];then
+mkdir -p "$dir_path"
+if [ -z "$(ls -A "$dir_path")" ];then
+if [ -f "$file_path" ]&&[ "$SINGBOX_CONFIG_SPLIT" = "1" ];then
+split_singbox_config "$file_path" "$dir_path"||echo '{}' >"$dir_path/config.json"
+else
+echo '{}' >"$dir_path/config.json"
+fi
+fi
+if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ];then
+SINGBOX_CONFIG="$SINGBOX_CONFIG_EXT_MERGED_PATH"
+else
+SINGBOX_CONFIG="$SINGBOX_CONFIG_MERGED_PATH"
+fi
+SINGBOX_CONFIG_DIR="$dir_path"
+else
+if [ ! -f "$file_path" ];then
+if [ -d "$dir_path" ]&&[ -n "$(ls -A "$dir_path")" ];then
+"$SINGBOX_BIN" merge "$file_path" -C "$dir_path" >/dev/null 2>&1||echo '{}' >"$file_path"
+else
+echo '{}' >"$file_path"
+fi
+fi
+SINGBOX_CONFIG="$file_path"
+fi
+}
+SINGBOX_CONFIG_DIR=""
 if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ];then
 [ -f "$sing_external_path" ]||sing_external_path="$(command -v "$sing_external_path")"
 SINGBOX_BIN="$sing_external_path"
-SINGBOX_CONFIG="$sing_external_config_path"
 SINGBOX_CONFIG_URL="$sing_external_config_url"
 SINGBOX_CONFIG_SPLIT="$sing_external_config_split"
+_init_box_target "$sing_external_config_use_dir" "$SINGBOX_CONFIG_EXT_DIR_PATH" "$SINGBOX_CONFIG_EXT_PATH"
 export BOX_API_URL="$sing_external_api_url"
 export BOX_API_SECRET="$sing_external_api_secret"
 else
 SINGBOX_BIN="$SINGBOX_BIN_PATH"
-SINGBOX_CONFIG="$sing_config_path"
 SINGBOX_CONFIG_URL="$sing_config_url"
 SINGBOX_CONFIG_SPLIT="$sing_config_split"
+_init_box_target "$sing_config_use_dir" "$SINGBOX_CONFIG_DIR_PATH" "$SINGBOX_CONFIG_PATH"
 export BOX_API_URL="$sing_api_url"
 export BOX_API_SECRET="$sing_api_secret"
 fi
-check_and_merge_singbox_config
+if [ "$mode" = "--json" ]&&[ -z "$SINGBOX_CONFIG_DIR" ];then
+printf '{"path":"%s","is_dir":%s}\n' "$SINGBOX_CONFIG" "false"
+return 0
+fi
+if [ -n "$SINGBOX_CONFIG_DIR" ];then
+if [ "$mode" = "--json" ];then
+printf '{"path":"%s","is_dir":%s}\n' "$SINGBOX_CONFIG_DIR" "true"
+return 0
+fi
+if [ ! -f "$SINGBOX_CONFIG" ]||[ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -newer "$SINGBOX_CONFIG" -print -quit)" ];then
+if ! "$SINGBOX_BIN" merge "$SINGBOX_CONFIG" -C "$SINGBOX_CONFIG_DIR" >/dev/null 2>&1;then
+echoerr "Failed to merge $SINGBOX_NAME configuration from $SINGBOX_CONFIG_DIR"
+fi
+fi
+fi
 check_and_kill_old_singbox_proc
 }
 get_service_api_config(){
@@ -423,7 +442,6 @@ config_path="$(get_skeen_config_path)"
 -e NETWORK_TUNING='@.network.tuning' \
 -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
 -e FIREWALL_INTERCEPT_FAKEIP='@.firewall.intercept.fakeip.enabled' \
--e FIREWALL_INTERCEPT_FAKEIP_INCLUDE='@.firewall.intercept.fakeip.include' \
 -e FIREWALL_REDIRECT_DNS_ENABLED='@.firewall.redirect_dns.enabled' \
 -e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
 -e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
@@ -434,7 +452,6 @@ config_path="$(get_skeen_config_path)"
 : "${NETWORK_TUNING:=0}"
 : "${FIREWALL_INTERCEPT_DNS:=1}"
 : "${FIREWALL_INTERCEPT_FAKEIP:=0}"
-: "${FIREWALL_INTERCEPT_FAKEIP_INCLUDE:=/opt/etc/skeen/pure_cidr.list}"
 : "${FIREWALL_REDIRECT_DNS_ENABLED:=0}"
 : "${FIREWALL_REDIRECT_DNS_PORT:=}"
 : "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
@@ -698,35 +715,45 @@ pkg_url="$MIRROR$sing_folder/$PKG_NAME"
 fi
 echomsg "Downloading $PKG_NAME..."
 mkdir -p "$TMP_DIR"
-cd "$TMP_DIR"||exit 1
-if run_curl -o "$PKG_NAME" $pkg_url;then
+if run_curl -o "$TMP_DIR/$PKG_NAME" $pkg_url;then
 echook "Downloaded $PKG_NAME successfully"
+return 0
 else
 echoerr "Failed to download $PKG_NAME"
+rm -f "$TMP_DIR/$PKG_NAME"
 [ -n "$latest_version" ]&&return 1||exit 1
 fi
 }
 install_singbox(){
-local tmp_unpack_dir="$TMP_DIR/sing-box-unpack"
-[ -d "$tmp_unpack_dir" ]&&rm -rf "$tmp_unpack_dir"
+local tmp_unpack_dir
+tmp_unpack_dir="$(mktemp -d "$TMP_DIR/sing-box-unpack.XXXXXX")"||{
+echoerr "Failed to create temporary directory for extraction"
+return 1
+}
 echomsg "Extracting $PKG_NAME"
-mkdir -p "$tmp_unpack_dir"
-cd "$tmp_unpack_dir"||exit 1
-if tar -xzf "../$PKG_NAME"&&tar -xzf data.tar.gz;then
+if tar -xzf "$TMP_DIR/$PKG_NAME" -C "$tmp_unpack_dir"&&tar -xzf "$tmp_unpack_dir/data.tar.gz" -C "$tmp_unpack_dir";then
 echook "Extraction completed"
 else
 rm -rf "$tmp_unpack_dir"
 rm -f "$TMP_DIR/$PKG_NAME"
-exiterr "Error extracting $PKG_NAME"
+echoerr "Extraction error for $PKG_NAME"
+return 1
 fi
-echomsg "Installing $SINGBOX_NAME binary to $SINGBOX_BIN_PATH"
+if [ ! -f "$tmp_unpack_dir/usr/bin/sing-box" ];then
+rm -rf "$tmp_unpack_dir"
+rm -f "$TMP_DIR/$PKG_NAME"
+echoerr "Binary file sing-box not found inside the package!"
+return 1
+fi
+echomsg "Installing $SINGBOX_NAME to $SINGBOX_BIN_PATH"
 [ -f "$SINGBOX_BIN_PATH" ]&&rm -f "$SINGBOX_BIN_PATH"
-mv ./usr/bin/sing-box "$SINGBOX_BIN_PATH"
+mv -f "$tmp_unpack_dir/usr/bin/sing-box" "$SINGBOX_BIN_PATH"
 chmod 755 "$SINGBOX_BIN_PATH"
 rm -f "$SINGBOX_RUN_VERSION"
 rm -rf "$tmp_unpack_dir"
 rm -f "$TMP_DIR/$PKG_NAME"
-echook "$SINGBOX_NAME binary installed successfully"
+echook "$SINGBOX_NAME successfully installed"
+return 0
 }
 download_singbox_config(){
 local beta="${1:-}" action="${2:-}"
@@ -1768,9 +1795,9 @@ if [ "$NETWORK_IPV6" = "1" ]&&printf '%s\n' "$SKEEN_IPTABLES_LIST"|grep -q "ip6t
 setup_net_ipset 6 inet6
 fi
 setup_fakeip_ipset(){
-if [ ! -f "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" ];then
-touch "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"||{
-echoerr "Error creating file $FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
+if [ ! -f "$FAKEIP_INTERCEPT_FILE" ];then
+touch "$FAKEIP_INTERCEPT_FILE"||{
+echoerr "Error creating file $FAKEIP_INTERCEPT_FILE"
 return 1
 }
 fi
@@ -1786,13 +1813,13 @@ if [ "$NETWORK_IPV6" = "1" ];then
 echo "create ${FAKEIP_INTERCEPT_SET}6 hash:net family inet6 maxelem 65536 -exist"
 echo "add ${FAKEIP_INTERCEPT_SET}6 fd00::/8 -exist"
 fi
-if [ -s "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE" ];then
+if [ -s "$FAKEIP_INTERCEPT_FILE" ];then
 awk -v S="$FAKEIP_INTERCEPT_SET" -v V6="$NETWORK_IPV6" '
           { sub(/#.*/, ""); gsub(/^[ \t]+|[ \t]+$/, "") }
           $0 == "" { next }
           /:/  { if (V6 == "1") print "add " S "6 " $0 " -exist"; next }
                { print "add " S "4 " $0 " -exist" }
-        ' "$FIREWALL_INTERCEPT_FAKEIP_INCLUDE"
+        ' "$FAKEIP_INTERCEPT_FILE"
 fi
 } >"$temp_file"||{
 rm -f "$temp_file"
@@ -2252,7 +2279,7 @@ press_any_key_to_menu
 reload(){
 check_config&&echo "$DELIMETER"
 get_singbox_config
-stop_singbox&&start_singbox||exit 1
+stop_singbox&&start_singbox||return 1
 }
 proc_uptime(){
 local pid="${1:-}"
@@ -2948,50 +2975,65 @@ fi
 done
 }
 sync_config(){
-local address="${1:-}"
-local config_tmp="/tmp/skeen_sync_config.tmp"
+local address="${1:-}" config_tmp
 get_singbox_config
 if [ -z "$address" ];then
-[ -z "$SINGBOX_CONFIG_URL" ]&&echoerr "Sync URL not specified"&&return 1
+[ -z "$SINGBOX_CONFIG_URL" ]&&echoerr "Sync URL address is not specified"&&return 1
 address="$SINGBOX_CONFIG_URL"
 fi
 if ! echo "$address"|grep -qE '^https?://';then
-echoerr "URL must start with http:// or https://"&&return 1
+echoerr "URL must start with http:// or https://"
+return 1
 fi
+config_tmp="$(mktemp /tmp/skeen_sync.XXXXXX)"||{
+echoerr "Failed to create temporary file"
+return 1
+}
 if ! run_curl -s "$address" -o "$config_tmp";then
-echoerr "Failed to download configuration from $address"&&return 1
+rm -f "$config_tmp"
+echoerr "Failed to download configuration from $address"
+return 1
 fi
 if ! $SINGBOX_BIN check -c "$config_tmp";then
-echoerr "$SINGBOX_NAME configuration is invalid, sync canceled!"
 rm -f "$config_tmp"
+echoerr "$SINGBOX_NAME configuration is invalid, sync canceled!"
 return 1
 fi
 if [ -n "$SINGBOX_CONFIG_DIR" ];then
-if [ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -print -quit)" ];then
-local parent_dir folder_name archive_path
-parent_dir=$(dirname "$SINGBOX_CONFIG_DIR")
-folder_name=$(basename "$SINGBOX_CONFIG_DIR")
-archive_path="$parent_dir/${folder_name}_backup.tar"
-if tar -cf "$archive_path" -C "$parent_dir" "$folder_name";then
-rm -rf "${SINGBOX_CONFIG_DIR:?}"/*
-else
-echoerr "Failed to create archive at $archive_path"&&return 1
-fi
-fi
+local tmp_target_dir
+tmp_target_dir="$(mktemp -d /tmp/skeen_dir.XXXXXX)"||{
+rm -f "$config_tmp"
+echoerr "Failed to create tmp directory"
+return 1
+}
 if [ "$SINGBOX_CONFIG_SPLIT" = "1" ];then
-split_singbox_config "$config_tmp" "$SINGBOX_CONFIG_DIR"&&rm -f "$config_tmp"
-else
-mv -f "$config_tmp" "$SINGBOX_CONFIG_DIR/config.json"
+if ! split_singbox_config "$config_tmp" "$tmp_target_dir";then
+rm -rf "$tmp_target_dir"
+rm -f "$config_tmp"
+echoerr "Error splitting configuration, sync canceled!"
+return 1
 fi
-elif [ -f "$SINGBOX_CONFIG" ]&&cp -f "$SINGBOX_CONFIG" "$SINGBOX_CONFIG.bak";then
+else
+mv -f "$config_tmp" "$tmp_target_dir/config.json"
+fi
+local backup_dir="${SINGBOX_CONFIG_DIR}_backup"
+rm -rf "$backup_dir"
+cp -a "$SINGBOX_CONFIG_DIR" "$backup_dir" 2>/dev/null
+rm -rf "${SINGBOX_CONFIG_DIR:?}"
+mv -f "$tmp_target_dir" "$SINGBOX_CONFIG_DIR"
+elif [ -f "$SINGBOX_CONFIG" ];then
+cp -f "$SINGBOX_CONFIG" "$SINGBOX_CONFIG.bak"
+if ! mv -f "$config_tmp" "$SINGBOX_CONFIG";then
+mv -f "$SINGBOX_CONFIG.bak" "$SINGBOX_CONFIG"
+echoerr "Failed to save new config, rollback executed!"
+return 1
+fi
+else
 mv -f "$config_tmp" "$SINGBOX_CONFIG"
 fi
-if [ ! -f "$config_tmp" ]&&[ -f "$SINGBOX_CONFIG" ];then
-echook "Configuration synced, then restart $SKEEN_NAME to apply the changes"
-else
 rm -f "$config_tmp"
-echoerr "Failed to save new config, sync canceled!"
-fi
+echook "Configuration synced, restart $SKEEN_NAME to apply changes"
+return 0
 }
 gen_headers(){
 local hwid line pair os ver mod json
@@ -3223,6 +3265,7 @@ list)tun_list;;
 *)show_help|awk '/OpkgTun / {flag=1} flag'
 esac
 ;;
+get_singbox_config)get_singbox_config --json;;
 get_api_config)get_service_api_config --json;;
 areload)"$SERVICE_API_SCRIPT" restart;;
 "")show_menu;;
