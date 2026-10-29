@@ -1,5 +1,42 @@
 # Changelog
 
+## [5.9.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.8.2...SKeen-v5.9.0) (2026-10-29)
+
+
+### 🚀 Feat
+
+* add SKeen dashboard ([2adf1d5](https://github.com/jinndi/SKeen/commit/2adf1d5ce99f6ebd5f8afbaae3777172aecbd943))
+* **api:** add service API configuration support ([714771f](https://github.com/jinndi/SKeen/commit/714771f2fe7094fc5c93ecdbc1f9b2d504a5f4be))
+* **api:** add update mechanism and enhance daemon status reporting ([8e0bffb](https://github.com/jinndi/SKeen/commit/8e0bffbff8347bf1dd66996335e02faf31743744))
+* **api:** implement core API module ([3122fab](https://github.com/jinndi/SKeen/commit/3122fab55f857028163ea1afce264ffee28e2abb))
+* **api:** implement daemon management and CLI interface ([2802f54](https://github.com/jinndi/SKeen/commit/2802f546e7bc254489526ea82b76d99276548037))
+* **cli:** add json output option for status command ([d13c5e5](https://github.com/jinndi/SKeen/commit/d13c5e53fbbeea38b9be8311c877e78ebba3d2df))
+* **core:** integrate skeen-api as dependency and add API reload from dashboard ([7e231cd](https://github.com/jinndi/SKeen/commit/7e231cdc189a6dfe2d5bfa380045dba4cd8ee03d))
+
+
+### 🐛 Fix
+
+* treat empty "clients": [] as all clients in FakeIP intercept ([7a466a0](https://github.com/jinndi/SKeen/commit/7a466a098b47e9c0111b181fea77827e3006f6de))
+
+
+### 🛠 Refactor
+
+* allow forcing color output in is_tty check ([30c2dd6](https://github.com/jinndi/SKeen/commit/30c2dd6bc9cf28bbf72ead072d821e3b7eb73b6e))
+* **config:** hardcode fakeip intercept path (include) ([983e4da](https://github.com/jinndi/SKeen/commit/983e4da55f625f4b46070fcd20566b4b48b8902e))
+* **config:** migrate sing-box config to directory-based mode ([fe8f915](https://github.com/jinndi/SKeen/commit/fe8f9159fb02cf017a8d700d33f8d391ded22692))
+* **config:** update sing-box configuration management ([58904ba](https://github.com/jinndi/SKeen/commit/58904ba4cc7f0d08016fd6c72e0af318c03ac243))
+
+
+### 📦 Build
+
+* **ci:** automate api generation and asset optimization ([3c30e5e](https://github.com/jinndi/SKeen/commit/3c30e5e1c524aae565ee88efece116b63ec272c5))
+
+
+### 🧰 Chore
+
+* **config:** update network check ([614f7c4](https://github.com/jinndi/SKeen/commit/614f7c41a09ac6b01c495791abb3f6bbb36bcef3))
+* **docs:** update documentation for SKeen API and configuration ([5673cef](https://github.com/jinndi/SKeen/commit/5673cef68d0faddc1e4edf1e84ac90a37a002278))
+
 ## [5.8.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.8.1...SKeen-v5.8.2) (2026-10-18)
 
 
