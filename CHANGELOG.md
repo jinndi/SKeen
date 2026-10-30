@@ -1,5 +1,37 @@
 # Changelog
 
+## [5.9.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.0...SKeen-v5.9.1) (2026-10-30)
+
+
+### 🔌 API
+
+* add aupdate command and improve reload logic ([e3c6fa1](https://github.com/jinndi/SKeen/commit/e3c6fa1b6f17b6894f8d832b93f3dc40a3100120))
+* **dashboard:** improve layout and text selection styling in index.html ([1dce16c](https://github.com/jinndi/SKeen/commit/1dce16c42cf3383fe755af347d31687819a0e6be))
+
+
+### 📊 Dashboard
+
+* add mime type to favicon link ([ab984e9](https://github.com/jinndi/SKeen/commit/ab984e94296fd0873656eb228a30e44deebd8aba))
+* cleanup localization and normalize input dimensions ([447c94c](https://github.com/jinndi/SKeen/commit/447c94c2831bc8670908bec5357f00410329c15a))
+* encode favicon as base64 string ([cc0657e](https://github.com/jinndi/SKeen/commit/cc0657e0bc4dc9e6efb678f1584b10e1ddcc5cca))
+* extract utility classes to CSS ([ea5df1f](https://github.com/jinndi/SKeen/commit/ea5df1f1e1baca8ee5ebfb06c732760c9e26213b))
+* hide scrollbars for form editor container ([d27a0c6](https://github.com/jinndi/SKeen/commit/d27a0c62755cf5bf6c34f669c17bc294d413e0c3))
+* implement unified page preloader ([d9e124c](https://github.com/jinndi/SKeen/commit/d9e124c0bc54c0f8ce5a0e73936e0145f9383578))
+* implement unsaved changes guard for config file loading ([93ca8e8](https://github.com/jinndi/SKeen/commit/93ca8e8c2106875e374d253209b962a06d032736))
+* improve layout spacing and add i18n attributes ([dd7eb89](https://github.com/jinndi/SKeen/commit/dd7eb89ca8bd9cae7fcee22e274ecdc86dc3e668))
+* optimize service status polling logic ([2cad452](https://github.com/jinndi/SKeen/commit/2cad452fa3a0916bec9f1a3e20cc8f578efbd89f))
+* reduce API execution timeout from 30s to 25s ([9c69e52](https://github.com/jinndi/SKeen/commit/9c69e52237a197e468a591f148aabbb01488cc26))
+* refactor utility classes and update component styles ([9917b2a](https://github.com/jinndi/SKeen/commit/9917b2adfb69443bd64da0dff9b818dd9500aa31))
+* refine connection item styles and layout ([ff6773a](https://github.com/jinndi/SKeen/commit/ff6773abcd2d5ea32dc556c41c8be3ac3fcef14c))
+* refine ui styles ([d4d73cf](https://github.com/jinndi/SKeen/commit/d4d73cf776851af37efd7e98d039e97af98d8194))
+* rename jsonTab to configTab for consistency ([e66cb14](https://github.com/jinndi/SKeen/commit/e66cb148b298c2c1b3ddcdc5900d640eecdfc9ac))
+* rewrite indentation logic for better precision ([71cb770](https://github.com/jinndi/SKeen/commit/71cb770fdffab3409d0ee2ab2cd34558cbe41b67))
+
+
+### 🧰 Chore
+
+* **docs:** update API documentation for areload and aupdate commands ([7bc4cd1](https://github.com/jinndi/SKeen/commit/7bc4cd124875f87d8d05dc967ff17ff840c6f96d))
+
 ## [5.9.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.8.2...SKeen-v5.9.0) (2026-10-29)
 
 
