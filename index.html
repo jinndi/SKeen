@@ -971,7 +971,6 @@
       line-height: 1;
       transition: all 0.2s ease;
       box-sizing: border-box;
-      -webkit-appearance: none;
       margin: 0 6px 0 0;
       vertical-align: middle;
     }
@@ -1423,10 +1422,9 @@
         <button class="tab-btn" onclick="switchTab('jsonTab', this)" data-i18n="tabConfig">Конфиг</button>
       </div>
       <div class="nav-controls">
-        <select id="activeConnSelect" class="conn-select" onchange="changeActiveConnection(this.value)">
-          <!-- Dynamic Options -->
-        </select>
-        <button class="icon-btn" onclick="openConnModal()" title="Настройки" aria-label="Settings">
+        <select id="activeConnSelect" class="conn-select" onchange="changeActiveConnection(this.value)"></select>
+        <button class="icon-btn" onclick="openConnModal()" title="Настройки" data-i18n-title="modalTitle"
+          aria-label="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path
@@ -1441,7 +1439,7 @@
     <div id="skeenTab" class="tab-content active">
       <div class="card" style="display: flex; flex-direction: column; gap: 10px;">
         <div
-          style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
+          style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
           <h2 style="margin: 0; border: none; padding: 0;" data-i18n="skeenCardTitle">Управление SKeen</h2>
           <div style="display: flex; align-items: center; gap: 6px;">
             <span id="headerApiVersion" style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">API
@@ -1452,7 +1450,7 @@
         <div class="status-badge-panel">
           <div class="status-badge">
             <div id="serviceDot" class="status-dot"></div>
-            <span id="serviceStatusText">Проверка состояния...</span>
+            <span id="serviceStatusText" data-i18n="statusChecking">Проверка состояния...</span>
           </div>
           <div style="font-size: 0.8rem; color: var(--text-muted);" id="serviceDetails"></div>
         </div>
@@ -1499,11 +1497,11 @@
     <div id="jsonTab" class="tab-content">
       <div class="card editor-card">
         <div
-          style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
+          style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
           <h2 style="margin: 0; border: none; padding: 0;" data-i18n="jsonCardTitle">Конфигурация</h2>
           <div style="display: flex; align-items: center; gap: 6px;">
             <select id="configFileSelect" class="conn-select" style="flex: 1;" onchange="handleFileSelectChange()">
-              <option value="">Загрузка списка...</option>
+              <option value="" data-i18n="loadingList">Загрузка списка...</option>
             </select>
           </div>
         </div>
@@ -1519,7 +1517,7 @@
                   d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
                 </path>
               </svg>
-              <span>Форма</span>
+              <span data-i18n="modeFormText">Форма</span>
             </button>
             <button type="button" class="mode-btn" id="btnModeText" onclick="switchEditorMode('text')"
               data-i18n="modeText">
@@ -1539,7 +1537,8 @@
 
           <!-- Text Editor Wrapper -->
           <div id="editorWrapper" class="code-editor-wrapper">
-            <button id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран">
+            <button id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран"
+              data-i18n-title="fullscreenTitle">
               <svg id="fullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
                 stroke-linejoin="round">
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
@@ -1550,8 +1549,8 @@
             <div class="editor-container">
               <pre id="highlighting" aria-hidden="true"><code id="highlightingContent"></code></pre>
               <textarea id="jsonEditor" spellcheck="false" autocomplete="off"
-                placeholder='Выберите файл и нажмите "Загрузить"...' oninput="handleEditorInput()"
-                onscroll="syncScroll()" onkeydown="handleEditorKeydown(event)"></textarea>
+                placeholder='Выберите файл и нажмите "Загрузить"...' data-i18n-placeholder="jsonPlaceholder"
+                oninput="handleEditorInput()" onscroll="syncScroll()" onkeydown="handleEditorKeydown(event)"></textarea>
             </div>
           </div>
           <div id="jsonStatus" class="status"></div>
@@ -1574,7 +1573,7 @@
             </svg>
             <span data-i18n="btnSaveJson">Сохранить</span>
           </button>
-          <button id="formatBtn"class="secondary" onclick="formatJsonEditor()">
+          <button id="formatBtn" class="secondary" onclick="formatJsonEditor()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <line x1="21" y1="10" x2="3" y2="10"></line>
               <line x1="21" y1="6" x2="3" y2="6"></line>
@@ -1643,13 +1642,15 @@
             <span data-i18n="labelThemeAppearance">Оформление</span>
           </div>
           <div class="theme-segmented-control">
-            <button class="theme-segment-btn" id="themeBtnAuto" onclick="setThemeMode('auto')" title="Как в системе">
+            <button class="theme-segment-btn" id="themeBtnAuto" onclick="setThemeMode('auto')" title="Как в системе"
+              data-i18n-title="themeAutoTitle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="9"></circle>
                 <path d="M12 3v18"></path>
               </svg>
             </button>
-            <button class="theme-segment-btn" id="themeBtnLight" onclick="setThemeMode('light')" title="Светлая">
+            <button class="theme-segment-btn" id="themeBtnLight" onclick="setThemeMode('light')" title="Светлая"
+              data-i18n-title="themeLightTitle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="4"></circle>
                 <path
@@ -1657,7 +1658,8 @@
                 </path>
               </svg>
             </button>
-            <button class="theme-segment-btn" id="themeBtnDark" onclick="setThemeMode('dark')" title="Темная">
+            <button class="theme-segment-btn" id="themeBtnDark" onclick="setThemeMode('dark')" title="Темная"
+              data-i18n-title="themeDarkTitle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
@@ -1708,18 +1710,22 @@
   <!-- Array Editor Modal -->
   <div id="arrayEditModal" class="modal">
     <div class="modal-content" style="max-width: 380px;">
-      <h2 id="arrayModalTitle" style="margin: 0; font-size: 1rem; border: none; padding: 0;">Редактирование списка</h2>
+      <h2 id="arrayModalTitle" style="margin: 0; font-size: 1rem; border: none; padding: 0;"
+        data-i18n="arrayModalTitle">Редактирование списка</h2>
       <div id="arrayModalItemsList"
         style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 6px 0;">
       </div>
       <div class="form-row" style="gap: 8px;">
-        <input type="text" id="arrayModalNewItemInput" placeholder="Новый элемент..." style="flex: 1;"
+        <input type="text" id="arrayModalNewItemInput" data-i18n-placeholder="arrayPlaceholder"
+          placeholder="Новый элемент..." style="flex: 1;"
           onkeydown="if(event.key==='Enter'){addArrayModalItem();event.preventDefault();}">
-        <button type="button" onclick="addArrayModalItem()" class="secondary" style="flex: 0 0 auto;">Добавить</button>
+        <button type="button" onclick="addArrayModalItem()" class="secondary" style="flex: 0 0 auto;"
+          data-i18n="btnAdd">Добавить</button>
       </div>
       <div class="form-row" style="margin-top: 10px;">
-        <button type="button" onclick="saveArrayModal()" style="flex: 1;">ОК</button>
-        <button type="button" class="secondary" onclick="closeArrayModal()" style="flex: 1;">Отмена</button>
+        <button type="button" onclick="saveArrayModal()" style="flex: 1;" data-i18n="btnOk">ОК</button>
+        <button type="button" class="secondary" onclick="closeArrayModal()" style="flex: 1;"
+          data-i18n="btnCancel">Отмена</button>
       </div>
     </div>
   </div>
@@ -1771,8 +1777,8 @@
         labelThemeAppearance: "Оформление",
         labelLanguage: "Язык",
         langAuto: "Как в системе",
-        formTitleAdd: "Добавить новое",
-        formTitleEdit: "Редактировать",
+        formTitleAdd: "Добавить новое подключение",
+        formTitleEdit: "Редактировать подключение",
         labelName: "Имя роутера",
         placeholderName: "Необязательно",
         labelUrl: "URL сервера",
@@ -1781,7 +1787,7 @@
         btnSaveConn: "Сохранить",
         btnClose: "Закрыть",
         noConnections: "-- Нет подключений --",
-        emptyList: "Список пуст. Добавьте роутер ниже.",
+        emptyList: "Список пуст.",
         btnEdit: "Изменить",
         btnDelete: "Удалить",
         statusLoaded: "Файл успешно загружен",
@@ -1799,12 +1805,14 @@
         alertDuplicateUrl: "Подключение с таким URL уже существует!",
         confirmModalTitle: "Подтверждение",
         btnYes: "Да",
+        btnNo: "Отмена",
         alertModalTitle: "Внимание",
         btnOk: "ОК",
         statusActive: "Работает",
         statusInactive: "Остановлен",
         statusServerUnavailable: 'Сервер недоступен',
         statusNoConnection: 'API-сервер остановлен / Нет связи',
+        statusChecking: 'Проверка состояния...',
         statusMode: 'Режим',
         btnStart: "Запустить SKeen",
         btnStop: "Остановить",
@@ -1821,8 +1829,65 @@
         alertEmptyParam: "Заполните все необходимые параметры!",
         btnClearOutput: "Очистить вывод",
         modeForm: "Форма",
+        modeFormText: "Форма",
         modeText: "JSON",
-        tooltipTitle: "Справка по параметру"
+        tooltipTitle: "Справка по параметру",
+        arrayModalTitle: "Редактирование списка",
+        arrayPlaceholder: "Новый элемент...",
+        btnAdd: "Добавить",
+        btnCancel: "Отмена",
+        loadingList: "Загрузка списка...",
+        noFilesAvailable: "Нет доступных файлов",
+        errorLoadList: "Ошибка загрузки списка",
+        fullscreenTitle: "На весь экран",
+        themeAutoTitle: "Как в системе",
+        themeLightTitle: "Светлая",
+        themeDarkTitle: "Темная",
+        // Form sections & labels
+        secGeneral: "Основные",
+        secAutoStart: "Автозапуск",
+        secDelay: "Задержка",
+        secPolicy: "Политика доступа",
+        secSegment: "Сегмент",
+        secNetwork: "Сеть",
+        secIpv6: "Включить IPv6",
+        secTuning: "Оптимизация",
+        secPingCheck: "Ping Check",
+        secSingbox: "Sing-box",
+        secUseDir: "Использовать папку",
+        secConfigUrl: "URL конфига",
+        secSplit: "Разбивать (split)",
+        secApiUrl: "API URL",
+        secApiSecret: "API Секрет",
+        secExtSingbox: "Сторонний Sing-box",
+        secExtEnabled: "Включить сторонний",
+        secExtPath: "Путь к бинарнику",
+        secServices: "Сервисы",
+        secApiPort: "API Порт",
+        secCorsOrigins: "CORS Origins",
+        secDashboard: "Dashboard",
+        secLocalProxy: "Локальный прокси",
+        secProxyPort: "Порт прокси",
+        secProxyUser: "Пользователь",
+        secProxyPass: "Пароль прокси",
+        secFirewall: "Фаервол",
+        secIntercept: "Перехват",
+        secFakeip: "FakeIP перехват",
+        secFakeipClients: "Клиенты FakeIP",
+        secExclude: "Исключения фаервола",
+        secExcludePorts: "Исключенные порты",
+        secExcludeV4: "Исключенные IPv4 CIDR",
+        secExcludeV6: "Исключенные IPv6 CIDR",
+        secRedirectDns: "Редирект DNS",
+        secDnsPort: "Порт редиректа DNS",
+        secUsePolicyDns: "Использовать политику DNS",
+        secProxyRouter: "Проксирование роутера",
+        secUpdates: "Обновления",
+        secUpdateSingbox: "Обновления Sing-box",
+        secBetaSingbox: "Бета-версии Sing-box",
+        secUpdateSkeen: "Обновления SKeen",
+        secUpdateSkeenApi: "Обновления SKeen API",
+        enabledLbl: "Включить"
       },
       en: {
         tabSKeen: "SKeen",
@@ -1843,8 +1908,8 @@
         labelThemeAppearance: "Appearance",
         labelLanguage: "Language",
         langAuto: "System default",
-        formTitleAdd: "Add New",
-        formTitleEdit: "Edit",
+        formTitleAdd: "Add New Connection",
+        formTitleEdit: "Edit Connection",
         labelName: "Router Name",
         placeholderName: "Optional",
         labelUrl: "Server URL",
@@ -1853,7 +1918,7 @@
         btnSaveConn: "Save",
         btnClose: "Close",
         noConnections: "-- No connections --",
-        emptyList: "List is empty. Add a router below.",
+        emptyList: "List is empty.",
         btnEdit: "Edit",
         btnDelete: "Delete",
         statusLoaded: "File successfully loaded",
@@ -1871,12 +1936,14 @@
         alertDuplicateUrl: "Connection with this URL already exists!",
         confirmModalTitle: "Confirmation",
         btnYes: "Yes",
+        btnNo: "Cancel",
         alertModalTitle: "Attention",
         btnOk: "OK",
         statusActive: "Running",
         statusInactive: "Stopped",
         statusServerUnavailable: 'Server unavailable',
         statusNoConnection: 'API server stopped / No connection',
+        statusChecking: 'Checking status...',
         statusMode: 'Mode',
         btnStart: "Start SKeen",
         btnStop: "Stop",
@@ -1893,8 +1960,65 @@
         alertEmptyParam: "Please fill in all required parameters!",
         btnClearOutput: "Clear output",
         modeForm: "Form",
+        modeFormText: "Form",
         modeText: "JSON",
-        tooltipTitle: "Parameter Help"
+        tooltipTitle: "Parameter Help",
+        arrayModalTitle: "Edit List",
+        arrayPlaceholder: "New item...",
+        btnAdd: "Add",
+        btnCancel: "Cancel",
+        loadingList: "Loading list...",
+        noFilesAvailable: "No available files",
+        errorLoadList: "Error loading list",
+        fullscreenTitle: "Fullscreen",
+        themeAutoTitle: "System default",
+        themeLightTitle: "Light",
+        themeDarkTitle: "Dark",
+        // Form sections & labels
+        secGeneral: "General",
+        secAutoStart: "Auto Start",
+        secDelay: "Delay",
+        secPolicy: "Policy",
+        secSegment: "Segment",
+        secNetwork: "Network",
+        secIpv6: "IPv6 Enable",
+        secTuning: "Tuning",
+        secPingCheck: "Ping Check",
+        secSingbox: "Sing-box",
+        secUseDir: "Use folder",
+        secConfigUrl: "Config URL",
+        secSplit: "Config Split",
+        secApiUrl: "API URL",
+        secApiSecret: "API Secret",
+        secExtSingbox: "External Sing-box",
+        secExtEnabled: "Enabled",
+        secExtPath: "Path",
+        secServices: "Services",
+        secApiPort: "API Port",
+        secCorsOrigins: "CORS Origin",
+        secDashboard: "Dashboard",
+        secLocalProxy: "Local Proxy",
+        secProxyPort: "Proxy Port",
+        secProxyUser: "User",
+        secProxyPass: "Proxy Pass",
+        secFirewall: "Firewall",
+        secIntercept: "Firewall Intercept",
+        secFakeip: "FakeIP Enabled",
+        secFakeipClients: "FakeIP Clients",
+        secExclude: "Firewall Exclude",
+        secExcludePorts: "Excluded Ports",
+        secExcludeV4: "IPv4 CIDR Exclude",
+        secExcludeV6: "IPv6 CIDR Exclude",
+        secRedirectDns: "Redirect DNS",
+        secDnsPort: "DNS To Port",
+        secUsePolicyDns: "Use Policy",
+        secProxyRouter: "Proxy Router",
+        secUpdates: "Updates",
+        secUpdateSingbox: "Update Sing-box",
+        secBetaSingbox: "Sing-box Beta",
+        secUpdateSkeen: "Update SKeen",
+        secUpdateSkeenApi: "Update SKeen API",
+        enabledLbl: "Enabled"
       }
     };
 
@@ -2466,7 +2590,6 @@
 
     function renderFormFields(data) {
       const container = document.getElementById('formEditorContainer');
-      const l = currentLang || 'ru';
 
       networkCheckArray = Array.isArray(data.network?.check) ? [...data.network.check] : [];
       apiCorsArray = Array.isArray(data.services?.api?.cors_origin) ? [...data.services.api.cors_origin] : [];
@@ -2481,24 +2604,24 @@
           <div class="accordion-header" onclick="toggleAccordion(0)">
             <div class="accordion-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-              <span>${l === 'ru' ? 'Основные' : 'General'}</span>
+              <span>${t('secGeneral')}</span>
             </div>
             <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div class="accordion-body">
             <div class="accordion-content">
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Автозапуск' : 'Auto Start'}</h3>
+                <h3>${t('secAutoStart')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить' : 'Enabled'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('enabledLbl')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('auto_start.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Задержка' : 'Delay'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secDelay')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('auto_start.delay')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="number" id="f_auto_start_delay" value="${data.auto_start?.delay ?? 0}" oninput="validateField(this, 'port'); syncFormToText()"></div>
@@ -2506,17 +2629,17 @@
               </div>
 
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Политика доступа' : 'Policy'}</h3>
+                <h3>${t('secPolicy')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить' : 'Enabled'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('enabledLbl')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('policy.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Сегмент' : 'Segment'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secSegment')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('policy.segment')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_policy_segment" value="${data.policy?.segment ?? ''}" oninput="validateField(this, 'segment'); syncFormToText()"></div>
@@ -2524,28 +2647,28 @@
               </div>
 
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Сеть' : 'Network'}</h3>
+                <h3>${t('secNetwork')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить IPv6' : 'IPv6 Enable'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secIpv6')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('network.ipv6')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Оптимизация' : 'Tuning'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secTuning')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('network.tuning')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Ping Check' : 'Ping Check'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secPingCheck')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('network.check')">?</button>
                   </div>
                   <div class="form-setting-input">
-                    <input type="text" id="f_network_check_display" readonly value="${networkCheckArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_network_check_display', 'Проверка сети (check)', networkCheckArray, 'host')">
+                    <input type="text" id="f_network_check_display" readonly value="${networkCheckArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_network_check_display', '${t('secPingCheck')}', networkCheckArray, 'host')">
                   </div>
                 </div>
               </div>
@@ -2558,45 +2681,45 @@
           <div class="accordion-header" onclick="toggleAccordion(1)">
             <div class="accordion-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-              <span>${l === 'ru' ? 'Sing-box' : 'Sing-box'}</span>
+              <span>${t('secSingbox')}</span>
             </div>
             <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div class="accordion-body">
             <div class="accordion-content">
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Конфиг Sing-box' : 'Sing-box Config'}</h3>
+                <h3>${t('secSingbox')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Использовать папку' : 'Use folder'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUseDir')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.config.use_dir')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()"></div>
-                  </div>
+                </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'URL конфига' : 'Config URL'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secConfigUrl')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.config.url')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_singbox_config_url" value="${data.singbox?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Разбивать (split)' : 'Config Split'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secSplit')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.config.split')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API URL' : 'API URL'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiUrl')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.api.url')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_singbox_api_url" value="${data.singbox?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API Секрет' : 'API Secret'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiSecret')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.api.secret')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_singbox_api_secret" value="${data.singbox?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
@@ -2604,52 +2727,52 @@
               </div>
 
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Сторонний Sing-box' : 'External Sing-box'}</h3>
+                <h3>${t('secExtSingbox')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить сторонний' : 'Enabled'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExtEnabled')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.external.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Путь к бинарнику' : 'Path'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExtPath')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.external.path')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_singbox_ext_path" value="${data.singbox?.external?.path ?? ''}" oninput="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Использовать папку' : 'Use folder'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUseDir')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.use_dir')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'URL конфига' : 'Config URL'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secConfigUrl')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.url')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_singbox_ext_cfg_url" value="${data.singbox?.external?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Разбивать (split)' : 'Config Split'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secSplit')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.split')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API URL' : 'API URL'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiUrl')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.external.api.url')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_singbox_ext_api_url" value="${data.singbox?.external?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API Секрет' : 'API Secret'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiSecret')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('singbox.external.api.secret')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_singbox_ext_api_secret" value="${data.singbox?.external?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
@@ -2664,47 +2787,47 @@
           <div class="accordion-header" onclick="toggleAccordion(2)">
             <div class="accordion-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-              <span>${l === 'ru' ? 'Сервисы' : 'Services'}</span>
+              <span>${t('secServices')}</span>
             </div>
             <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div class="accordion-body">
             <div class="accordion-content">
               <div class="form-section">
-                <h3>${l === 'ru' ? 'SKeen API' : 'SKeen API'}</h3>
+                <h3>SKeen API</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API Порт' : 'API Port'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiPort')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.api.port')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="number" id="f_services_api_port" value="${data.services?.api?.port ?? 5000}" oninput="validateField(this, 'port'); syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'API Секрет' : 'API Secret'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiSecret')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.api.secret')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_services_api_secret" value="${data.services?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'CORS Origins' : 'CORS Origin'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secCorsOrigins')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.api.cors_origin')">?</button>
                   </div>
                   <div class="form-setting-input">
-                    <input type="text" id="f_services_api_cors_display" readonly value="${apiCorsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_services_api_cors_display', 'CORS Origins', apiCorsArray, 'text')">
+                    <input type="text" id="f_services_api_cors_display" readonly value="${apiCorsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', apiCorsArray, 'text')">
                   </div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Dashboard' : 'Dashboard'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secDashboard')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.api.dashboard')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Автозапуск' : 'Auto Start'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secAutoStart')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.api.auto_start')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()"></div>
@@ -2712,31 +2835,31 @@
               </div>
 
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Локальный прокси' : 'Local Proxy'}</h3>
+                <h3>${t('secLocalProxy')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить' : 'Enabled'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('enabledLbl')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.proxy.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Порт прокси' : 'Proxy Port'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secProxyPort')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.proxy.port')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_services_proxy_port" value="${data.services?.proxy?.port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Пользователь' : 'User'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secProxyUser')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.proxy.user')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_services_proxy_user" value="${data.services?.proxy?.user ?? ''}" oninput="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Пароль прокси' : 'Proxy Pass'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secProxyPass')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('services.proxy.pass')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_services_proxy_pass" value="${data.services?.proxy?.pass ?? ''}" oninput="syncFormToText()"></div>
@@ -2751,89 +2874,89 @@
           <div class="accordion-header" onclick="toggleAccordion(3)">
             <div class="accordion-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-              <span>${l === 'ru' ? 'Фаервол' : 'Firewall'}</span>
+              <span>${t('secFirewall')}</span>
             </div>
             <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div class="accordion-body">
             <div class="accordion-content">
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Перехват' : 'Firewall Intercept'}</h3>
+                <h3>${t('secIntercept')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Перехват DNS' : 'DNS Intercept'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">DNS Intercept</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.dns')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'FakeIP перехват' : 'FakeIP Enabled'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secFakeip')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Клиенты FakeIP' : 'FakeIP Clients'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secFakeipClients')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.clients')">?</button>
                   </div>
                   <div class="form-setting-input">
-                    <input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_fakeip_clients_display', 'Клиенты FakeIP', fakeipClientsArray, 'ip')">
+                    <input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', fakeipClientsArray, 'ip')">
                   </div>
                 </div>
               </div>
 
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Исключения фаервола' : 'Firewall Exclude'}</h3>
+                <h3>${t('secExclude')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Исключенные порты' : 'Excluded Ports'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExcludePorts')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.port')">?</button>
                   </div>
                   <div class="form-setting-input">
-                    <input type="text" id="f_firewall_exclude_port_display" readonly value="${excludePortsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_port_display', 'Исключенные порты', excludePortsArray, 'portRange')">
+                    <input type="text" id="f_firewall_exclude_port_display" readonly value="${excludePortsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', excludePortsArray, 'portRange')">
                   </div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Исключенные IPv4 CIDR' : 'IPv4 CIDR Exclude'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExcludeV4')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.ipv4_cidr')">?</button>
                   </div>
                   <div class="form-setting-input">
-                    <input type="text" id="f_firewall_exclude_v4_display" readonly value="${excludeV4Array.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_v4_display', 'Исключенные IPv4 CIDR', excludeV4Array, 'v4cidr')">
+                    <input type="text" id="f_firewall_exclude_v4_display" readonly value="${excludeV4Array.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', excludeV4Array, 'v4cidr')">
                   </div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Исключенные IPv6 CIDR' : 'IPv6 CIDR Exclude'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExcludeV6')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.ipv6_cidr')">?</button>
                   </div>
                   <div class="form-setting-input">
-                    <input type="text" id="f_firewall_exclude_v6_display" readonly value="${excludeV6Array.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_v6_display', 'Исключенные IPv6 CIDR', excludeV6Array, 'v6cidr')">
+                    <input type="text" id="f_firewall_exclude_v6_display" readonly value="${excludeV6Array.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', excludeV6Array, 'v6cidr')">
                   </div>
                 </div>
               </div>
 
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Редирект DNS' : 'Redirect DNS'}</h3>
+                <h3>${t('secRedirectDns')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Включить редирект DNS' : 'Redirect DNS'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secRedirectDns')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Порт редиректа DNS' : 'DNS To Port'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secDnsPort')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.to_port')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="text" id="f_firewall_redirect_dns_port" value="${data.firewall?.redirect_dns?.to_port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Использовать политику DNS' : 'Use Policy'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUsePolicyDns')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.use_policy')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()"></div>
@@ -2841,10 +2964,10 @@
               </div>
 
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Проксирование роутера' : 'Proxy Router'}</h3>
+                <h3>${t('secProxyRouter')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Проксировать роутер' : 'Proxy Router'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secProxyRouter')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('firewall.proxy_router')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()"></div>
@@ -2859,38 +2982,38 @@
           <div class="accordion-header" onclick="toggleAccordion(4)">
             <div class="accordion-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-              <span>${l === 'ru' ? 'Обновления' : 'Updates'}</span>
+              <span>${t('secUpdates')}</span>
             </div>
             <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div class="accordion-body">
             <div class="accordion-content">
               <div class="form-section">
-                <h3>${l === 'ru' ? 'Параметры обновлений (update)' : 'Updates Options'}</h3>
+                <h3>${t('secUpdates')}</h3>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления Sing-box' : 'Update Sing-box'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUpdateSingbox')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('update.singbox.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Бета-версии Sing-box' : 'Sing-box Beta'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secBetaSingbox')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('update.singbox.beta')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления SKeen' : 'Update SKeen'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUpdateSkeen')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('update.skeen.enabled')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
                 </div>
                 <div class="form-setting-row">
                   <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${l === 'ru' ? 'Обновления SKeen API' : 'Update SKeen API'}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUpdateSkeenApi')}</span>
                     <button type="button" class="help-btn" onclick="showHelp('update.skeen.api')">?</button>
                   </div>
                   <div class="form-setting-input"><input type="checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()"></div>
@@ -2932,7 +3055,7 @@
       const listEl = document.getElementById('arrayModalItemsList');
       listEl.innerHTML = '';
       if (!currentEditingArrayRef || currentEditingArrayRef.length === 0) {
-        listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem; padding: 6px;">Список пуст</div>`;
+        listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem; padding: 6px;">${t('emptyList')}</div>`;
         return;
       }
       currentEditingArrayRef.forEach((item, idx) => {
@@ -2940,7 +3063,7 @@
         row.className = 'array-item-row';
         row.innerHTML = `
           <span>${item}</span>
-          <button type="button" class="icon-btn-sm danger" onclick="removeArrayModalItem(${idx})" title="Удалить">
+          <button type="button" class="icon-btn-sm danger" onclick="removeArrayModalItem(${idx})" title="${t('btnDelete')}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           </button>
         `;
@@ -3189,7 +3312,7 @@
     }
 
     function t(key) {
-      return translations[currentLang][key] || key;
+      return translations[currentLang][key] || translations['en'][key] || key;
     }
 
     function applyLanguage() {
@@ -3222,7 +3345,7 @@
         let files = await res.json();
 
         if (!Array.isArray(files) || files.length === 0) {
-          select.innerHTML = '<option value="">Нет доступных файлов</option>';
+          select.innerHTML = `<option value="">${t('noFilesAvailable')}</option>`;
           return;
         }
 
@@ -3234,7 +3357,7 @@
 
         if (reloadConfig) loadConfigFile();
       } catch (e) {
-        select.innerHTML = '<option value="">Ошибка загрузки списка</option>';
+        select.innerHTML = `<option value="">${t('errorLoadList')}</option>`;
         showStatus('jsonStatus', `Error: ${e.message}`, true);
       }
     }
@@ -3297,11 +3420,7 @@
           currentEditorMode = 'text';
           document.getElementById('btnModeText').classList.add('active');
           document.getElementById('btnModeForm').classList.remove('active');
-          if (fileKey == 'pure_cidr'){
-            document.getElementById('formatBtn').style.display = 'none';
-          }else{
-            document.getElementById('formatBtn').style.display = '';
-          }
+          document.getElementById('formatBtn').style.display = fileKey === 'pure_cidr' ? 'none' : '';
         }
 
         showStatus('jsonStatus', t('statusLoaded'));
@@ -3485,45 +3604,26 @@
       const select = document.getElementById('extraParam');
       const currentValue = select.value || 'reload';
 
-      const options = (currentLang === 'ru' ? [
-        { val: "reload", label: "reload - Перезагрузка sing-box" },
-        { val: "areload", label: "areload - Перезагрузка API" },
-        { val: "sync", label: "sync - Синхронизировать конфиг" },
-        { val: "status", label: "status - Показать статус" },
-        { val: "kill", label: "kill - Принудительная остановка" },
-        { val: "version", label: "version - Показать версию" },
-        { val: "iface", label: "iface - Таблица сетевых интерфейсов" },
-        { val: "connstat", label: "connstat - Диагностика соединений" },
-        { val: "test", label: "test - Тестировать правила фаервола" },
-        { val: "deps", label: "deps - Проверить зависимости" },
-        { val: "check", label: "check - Проверить конфигурацию" },
-        { val: "format", label: "format - Отформатировать конфиг" },
-        { val: "backup", label: "backup - Создать архив /opt/etc/skeen" },
-        { val: "backups", label: "backups - Список архивов в /opt" },
-        { val: "restore", label: "restore - Восстановить из архива" },
-        { val: "clean", label: "clean - Очистить кэш sing-box" },
-        { val: "headers", label: "headers - Сгенерировать заголовки" },
+      const options = [
+        { val: "reload", label: (currentLang === 'ru' ? "reload - Перезагрузка sing-box" : "reload - Reload sing-box") },
+        { val: "areload", label: (currentLang === 'ru' ? "areload - Перезагрузка API" : "areload - Reload API") },
+        { val: "sync", label: (currentLang === 'ru' ? "sync - Синхронизировать конфиг" : "sync - Synchronize config") },
+        { val: "status", label: (currentLang === 'ru' ? "status - Показать статус" : "status - Show status") },
+        { val: "kill", label: (currentLang === 'ru' ? "kill - Принудительная остановка" : "kill - Force stop") },
+        { val: "version", label: (currentLang === 'ru' ? "version - Показать версию" : "version - Show version") },
+        { val: "iface", label: (currentLang === 'ru' ? "iface - Таблица сетевых интерфейсов" : "iface - Interface table") },
+        { val: "connstat", label: (currentLang === 'ru' ? "connstat - Диагностика соединений" : "connstat - Diagnostics") },
+        { val: "test", label: (currentLang === 'ru' ? "test - Тестировать правила фаервола" : "test - Test firewall rules") },
+        { val: "deps", label: (currentLang === 'ru' ? "deps - Проверить зависимости" : "deps - Check dependencies") },
+        { val: "check", label: (currentLang === 'ru' ? "check - Проверить конфигурацию" : "check - Check config") },
+        { val: "format", label: (currentLang === 'ru' ? "format - Отформатировать конфиг" : "format - Format configuration") },
+        { val: "backup", label: (currentLang === 'ru' ? "backup - Создать архив /opt/etc/skeen" : "backup - Create archive") },
+        { val: "backups", label: (currentLang === 'ru' ? "backups - Список архивов в /opt" : "backups - List archives") },
+        { val: "restore", label: (currentLang === 'ru' ? "restore - Восстановить из архива" : "restore - Restore backup") },
+        { val: "clean", label: (currentLang === 'ru' ? "clean - Очистить кэш sing-box" : "clean - Clear sing-box cache") },
+        { val: "headers", label: (currentLang === 'ru' ? "headers - Сгенерировать заголовки" : "headers - Generate headers") },
         { val: "tun", label: "OpkgTun (KeeneticOS v5+)" }
-      ] : [
-        { val: "reload", label: "reload - Reload sing-box" },
-        { val: "areload", label: "areload - Reload API" },
-        { val: "sync", label: "sync - Synchronize config" },
-        { val: "status", label: "status - Show status" },
-        { val: "kill", label: "kill - Force stop" },
-        { val: "version", label: "version - Show version" },
-        { val: "iface", label: "iface - Interface table" },
-        { val: "connstat", label: "connstat - Diagnostics" },
-        { val: "test", label: "test - Test firewall rules" },
-        { val: "deps", label: "deps - Check dependencies" },
-        { val: "check", label: "check - Check config" },
-        { val: "format", label: "format - Format configuration" },
-        { val: "backup", label: "backup - Create archive" },
-        { val: "backups", label: "backups - List archives" },
-        { val: "restore", label: "restore - Restore backup" },
-        { val: "clean", label: "clean - Clear sing-box cache" },
-        { val: "headers", label: "headers - Generate headers" },
-        { val: "tun", label: "OpkgTun (KeeneticOS v5+)" }
-      ]);
+      ];
 
       select.innerHTML = options.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
       select.value = currentValue;
