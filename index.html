@@ -2245,14 +2245,21 @@
 
       fetchServiceStatus();
       startPolling();
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && document.getElementById('skeenTab').classList.contains('active')) {
+          fetchServiceStatus();
+        }
+      });
     });
 
     function startPolling() {
       if (pollingTimer) clearInterval(pollingTimer);
       pollingTimer = setInterval(() => {
-        if (document.getElementById('skeenTab').classList.contains('active')) {
-          fetchServiceStatus();
+        if (document.hidden || !document.getElementById('skeenTab').classList.contains('active')) {
+          return;
         }
+        fetchServiceStatus();
       }, 5000);
     }
 
