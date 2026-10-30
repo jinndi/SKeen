@@ -5,7 +5,7 @@ local socket = require("socket")
 -------------------------------------------------------------------------------
 -- 0. VERSION AND COMMAND LINE ARGUMENT (CLI) HANDLING
 -------------------------------------------------------------------------------
-local VERSION = "1.0.2"
+local VERSION = "1.0.3"
 local SCRIPT = "/opt/bin/skeen-api"
 local LUA_BIN = "/opt/bin/lua"
 local PID_FILE = "/tmp/run/skeen-api.pid"
