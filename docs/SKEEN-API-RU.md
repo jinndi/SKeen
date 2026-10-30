@@ -410,7 +410,7 @@ curl -X POST http://192.168.1.1:3000/api/file \
 
 `start`, `stop`, `restart`, `reload`, `kill`, `status`, `version`, `help`, `iface`, `connstat`, `test`, `deps`, `check`, `format`, `backup`, `backups`, `clean`, `sync`, `headers`, `restore <file>`, `sync <url>`, `tun list`, `tun create <ip> <dev>`, `tun delete <dev>`, `areload`, `aupdate`
 
-*(Примечание: `areload` выполняются асинхронно с задержкой в 2 секунды, чтобы текущий процесс успел вернуть HTTP-ответ `200 OK` в браузер).*
+> **Примечание:** Команды `areload` и `aupdate` выполняются напрямую через внутренние функции API-сервера (без вызова внешней CLI-утилиты `skeen`). Проверка и скачивание обновлений (`aupdate`) происходят синхронно для сбора и возврата полного лога в `stdout`, а последующий перезапуск сервиса (`areload` / `restart`) в случае успешного обновления запускается в фоне с задержкой в 2 секунды, чтобы текущий HTTP-запрос успел корректно вернуть статус `200 OK` в браузер.
 
 #### Тело запроса (JSON):
 
