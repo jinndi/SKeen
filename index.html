@@ -1390,6 +1390,168 @@
       color: var(--danger-color);
     }
 
+    /* ==========================================================================
+       9. Reusable Utility Classes (Extracted from inline styles)
+       ========================================================================== */
+    .flex-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .flex-col-gap-10 {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .flex-col-gap-8 {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .flex-row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .flex-row-center-6 {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .flex-row-gap-8 {
+      display: flex;
+      gap: 8px;
+    }
+
+    .flex-1 {
+      flex: 1;
+    }
+
+    .flex-2 {
+      flex: 2;
+    }
+
+    .flex-shrink-0 {
+      flex-shrink: 0;
+    }
+
+    .margin-0 {
+      margin: 0;
+    }
+
+    .padding-0 {
+      padding: 0;
+    }
+
+    .border-none {
+      border: none;
+    }
+
+    .text-version {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: normal;
+    }
+
+    .form-group-extra {
+      flex-shrink: 0;
+      margin-bottom: 0;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .terminal-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      margin-bottom: 0;
+      margin-top: 4px;
+    }
+
+    .label-margin-4 {
+      margin-bottom: 4px;
+    }
+
+    .modal-title-margin-4 {
+      margin-bottom: 4px;
+    }
+
+    .hr-custom {
+      border-color: var(--border-color);
+      border-style: solid;
+      width: 100%;
+      margin: 2px 0;
+    }
+
+    .modal-h3-title {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--text-color);
+      border: none;
+      padding: 0;
+    }
+
+    .spacer-v-10 {
+      flex: 1;
+      min-height: 10px;
+    }
+
+    .modal-footer-row {
+      margin-top: auto;
+    }
+
+    .width-100 {
+      width: 100%;
+    }
+
+    .modal-max-380 {
+      max-width: 380px;
+    }
+
+    .modal-max-340 {
+      max-width: 340px;
+    }
+
+    .array-items-list {
+      max-height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 6px 0;
+    }
+
+    .confirm-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .alert-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0;
+      word-break: break-word;
+    }
+
+    .cursor-pointer {
+      cursor: pointer;
+    }
+
+    .setting-label-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
     @media (max-width: 360px) {
       body {
         padding: 4px;
@@ -1437,13 +1599,11 @@
 
     <!-- Tab 1: SKeen Management -->
     <div id="skeenTab" class="tab-content active">
-      <div class="card" style="display: flex; flex-direction: column; gap: 10px;">
-        <div
-          style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
-          <h2 style="margin: 0; border: none; padding: 0;" data-i18n="skeenCardTitle">Управление SKeen</h2>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <span id="headerApiVersion" style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">API
-              v0.0.0</span>
+      <div class="card flex-col-gap-10">
+        <div class="flex-row-between">
+          <h2 class="margin-0 border-none padding-0" data-i18n="skeenCardTitle">Управление SKeen</h2>
+          <div class="flex-row-center-6">
+            <span id="headerApiVersion" class="text-version">API v0.0.0</span>
           </div>
         </div>
         <!-- Current Status Panel -->
@@ -1452,33 +1612,31 @@
             <div id="serviceDot" class="status-dot"></div>
             <span id="serviceStatusText" data-i18n="statusChecking">Проверка состояния...</span>
           </div>
-          <div style="font-size: 0.8rem; color: var(--text-muted);" id="serviceDetails"></div>
+          <div class="text-version" id="serviceDetails"></div>
         </div>
 
         <!-- Dynamic Action Buttons -->
         <div id="dynamicActions" class="action-buttons-group"></div>
 
         <!-- Extra Service Commands -->
-        <div class="form-group"
-          style="flex-shrink: 0; margin-bottom: 0; padding-top: 8px; border-top: 1px solid var(--border-color);">
+        <div class="form-group form-group-extra">
           <label for="extraParam" data-i18n="extraActionLabel">Дополнительные сервисные команды</label>
-          <div class="form-row" style="gap: 8px;">
-            <select id="extraParam" style="flex: 2;" onchange="handleExtraParamChange()"></select>
-            <button class="secondary" style="flex: 1;" onclick="executeExtraCommand()">
+          <div class="form-row flex-row-gap-8">
+            <select id="extraParam" class="flex-2" onchange="handleExtraParamChange()"></select>
+            <button class="secondary flex-1" onclick="executeExtraCommand()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
               </svg>
               <span data-i18n="btnExecute">Выполнить</span>
             </button>
           </div>
-          <div id="extraParamsContainer" style="display: none; flex-direction: column; gap: 8px; margin-top: 8px;">
+          <div id="extraParamsContainer" class="flex-col-gap-8" style="display: none; margin-top: 8px;">
           </div>
         </div>
 
         <!-- Terminal Output -->
-        <div class="form-group"
-          style="flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 0; margin-top: 4px;">
-          <label data-i18n="outputLabel" style="margin-bottom: 4px;">Вывод (stdout / stderr):</label>
+        <div class="form-group terminal-group">
+          <label data-i18n="outputLabel" class="label-margin-4">Вывод (stdout / stderr):</label>
           <div class="terminal-container">
             <button class="terminal-clear-btn" onclick="clearTerminalOutput()" title="Очистить"
               data-i18n-title="btnClearOutput">
@@ -1496,11 +1654,10 @@
     <!-- Tab 2: Configuration Editor -->
     <div id="jsonTab" class="tab-content">
       <div class="card editor-card">
-        <div
-          style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
-          <h2 style="margin: 0; border: none; padding: 0;" data-i18n="jsonCardTitle">Конфигурация</h2>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <select id="configFileSelect" class="conn-select" style="flex: 1;" onchange="handleFileSelectChange()">
+        <div class="flex-row-between">
+          <h2 class="margin-0 border-none padding-0" data-i18n="jsonCardTitle">Конфигурация</h2>
+          <div class="flex-row-center-6">
+            <select id="configFileSelect" class="conn-select flex-1" onchange="handleFileSelectChange()">
               <option value="" data-i18n="loadingList">Загрузка списка...</option>
             </select>
           </div>
@@ -1556,7 +1713,7 @@
           <div id="jsonStatus" class="status"></div>
         </div>
 
-        <div class="form-row" style="flex-shrink: 0;">
+        <div class="form-row flex-shrink-0">
           <button onclick="loadConfigFile()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1590,7 +1747,7 @@
   <!-- Connection Settings Modal -->
   <div id="connModal" class="modal">
     <div class="modal-content">
-      <h2 data-i18n="modalTitle" style="margin-bottom: 4px;">Настройки</h2>
+      <h2 data-i18n="modalTitle" class="modal-title-margin-4">Настройки</h2>
 
       <div class="modal-tabs">
         <button class="modal-tab-btn active" onclick="switchModalTab('connectionsPane', this)"
@@ -1602,9 +1759,8 @@
       <!-- Connections Tab -->
       <div id="connectionsPane" class="modal-tab-content active">
         <div id="connList"></div>
-        <hr style="border-color: var(--border-color); border-style: solid; width: 100%; margin: 2px 0;">
-        <h3 id="formTitle" style="margin: 0; font-size: 0.9rem; color: var(--text-color); border: none; padding: 0;"
-          data-i18n="formTitleAdd">Добавить новое подключение</h3>
+        <hr class="hr-custom">
+        <h3 id="formTitle" class="modal-h3-title" data-i18n="formTitleAdd">Добавить новое подключение</h3>
         <input type="hidden" id="editIndex" value="-1">
         <div class="form-group">
           <label data-i18n="labelName">Имя роутера</label>
@@ -1685,10 +1841,9 @@
           </select>
         </div>
 
-        <div style="flex: 1; min-height: 10px;"></div>
-        <div class="form-row" style="margin-top: auto;">
-          <button class="secondary" onclick="closeConnModal()" data-i18n="btnClose"
-            style="width: 100%;">Закрыть</button>
+        <div class="spacer-v-10"></div>
+        <div class="form-row modal-footer-row">
+          <button class="secondary width-100" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
         </div>
       </div>
     </div>
@@ -1697,44 +1852,42 @@
   <!-- Help Tooltip Modal -->
   <div id="tooltipModal" class="modal">
     <div class="tooltip-content">
-      <h2 style="margin: 0; font-size: 1rem; border: none; padding: 0;" data-i18n="tooltipTitle">Справка по параметру
+      <h2 class="margin-0 border-none padding-0" style="font-size: 1rem;" data-i18n="tooltipTitle">Справка по параметру
       </h2>
       <div id="tooltipModalText" class="tooltip-body"></div>
       <div class="form-row" style="margin-top: 4px;">
-        <button class="secondary" onclick="closeTooltipModal()" data-i18n="btnClose"
-          style="width: 100%;">Закрыть</button>
+        <button class="secondary width-100" onclick="closeTooltipModal()" data-i18n="btnClose">Закрыть</button>
       </div>
     </div>
   </div>
 
   <!-- Array Editor Modal -->
   <div id="arrayEditModal" class="modal">
-    <div class="modal-content" style="max-width: 380px;">
-      <h2 id="arrayModalTitle" style="margin: 0; font-size: 1rem; border: none; padding: 0;"
+    <div class="modal-content modal-max-380">
+      <h2 id="arrayModalTitle" class="margin-0 border-none padding-0" style="font-size: 1rem;"
         data-i18n="arrayModalTitle">Редактирование списка</h2>
-      <div id="arrayModalItemsList"
-        style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 6px 0;">
+      <div id="arrayModalItemsList" class="array-items-list">
       </div>
-      <div class="form-row" style="gap: 8px;">
+      <div class="form-row flex-row-gap-8">
         <input type="text" id="arrayModalNewItemInput" data-i18n-placeholder="arrayPlaceholder"
-          placeholder="Новый элемент..." style="flex: 1;"
+          placeholder="Новый элемент..." class="flex-1"
           onkeydown="if(event.key==='Enter'){addArrayModalItem();event.preventDefault();}">
-        <button type="button" onclick="addArrayModalItem()" class="secondary" style="flex: 0 0 auto;"
+        <button type="button" onclick="addArrayModalItem()" class="secondary flex-shrink-0"
           data-i18n="btnAdd">Добавить</button>
       </div>
       <div class="form-row" style="margin-top: 10px;">
-        <button type="button" onclick="saveArrayModal()" style="flex: 1;" data-i18n="btnOk">ОК</button>
-        <button type="button" class="secondary" onclick="closeArrayModal()" style="flex: 1;"
-          data-i18n="btnCancel">Отмена</button>
+        <button type="button" onclick="saveArrayModal()" class="flex-1" data-i18n="btnOk">ОК</button>
+        <button type="button" class="secondary flex-1" onclick="closeArrayModal()" data-i18n="btnCancel">Отмена</button>
       </div>
     </div>
   </div>
 
   <!-- Confirmation Modal -->
   <div id="confirmModal" class="modal">
-    <div class="modal-content" style="max-width: 340px;">
-      <h2 style="margin: 0; font-size: 1rem; border: none; padding: 0;" data-i18n="confirmModalTitle">Подтверждение</h2>
-      <p id="confirmText" style="font-size: 0.85rem; color: var(--text-muted); margin: 0;"></p>
+    <div class="modal-content modal-max-340">
+      <h2 class="margin-0 border-none padding-0" style="font-size: 1rem;" data-i18n="confirmModalTitle">Подтверждение
+      </h2>
+      <p id="confirmText" class="confirm-text"></p>
       <div class="form-row">
         <button id="confirmYesBtn" onclick="resolveConfirm(true)" data-i18n="btnYes">Да</button>
         <button class="secondary" onclick="resolveConfirm(false)" data-i18n="btnNo">Отмена</button>
@@ -1744,11 +1897,11 @@
 
   <!-- Alert Modal -->
   <div id="alertModal" class="modal">
-    <div class="modal-content" style="max-width: 340px;">
-      <h2 style="margin: 0; font-size: 1rem; border: none; padding: 0;" data-i18n="alertModalTitle">Внимание</h2>
-      <p id="alertText" style="font-size: 0.85rem; color: var(--text-muted); margin: 0; word-break: break-word;"></p>
+    <div class="modal-content modal-max-340">
+      <h2 class="margin-0 border-none padding-0" style="font-size: 1rem;" data-i18n="alertModalTitle">Внимание</h2>
+      <p id="alertText" class="alert-text"></p>
       <div class="form-row">
-        <button id="alertOkBtn" onclick="closeAlertModal()" data-i18n="btnOk" style="flex: 1;">ОК</button>
+        <button id="alertOkBtn" onclick="closeAlertModal()" data-i18n="btnOk" class="flex-1">ОК</button>
       </div>
     </div>
   </div>
@@ -2595,6 +2748,48 @@
       }
     }
 
+    // --- Template-based Reusable UI Builders ---
+    function renderSettingRow(labelText, helpKey, inputHtml) {
+      return `
+        <div class="form-setting-row">
+          <div class="flex-row-center-6 flex-1 min-width-0">
+            <span class="setting-label-text">${labelText}</span>
+            <button type="button" class="help-btn" onclick="showHelp('${helpKey}')">?</button>
+          </div>
+          <div class="form-setting-input">${inputHtml}</div>
+        </div>
+      `;
+    }
+
+    function renderSection(title, rowsHtml) {
+      return `
+        <div class="form-section">
+          ${title ? `<h3>${title}</h3>` : ''}
+          ${rowsHtml}
+        </div>
+      `;
+    }
+
+    function renderAccordion(index, titleText, iconSvg, contentHtml) {
+      const isActive = activeAccordionIndex === index ? 'active' : '';
+      return `
+        <div class="accordion-item ${isActive}">
+          <div class="accordion-header" onclick="toggleAccordion(${index})">
+            <div class="accordion-title">
+              ${iconSvg}
+              <span>${titleText}</span>
+            </div>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="accordion-body">
+            <div class="accordion-content">
+              ${contentHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderFormFields(data) {
       const container = document.getElementById('formEditorContainer');
 
@@ -2605,431 +2800,100 @@
       excludeV4Array = Array.isArray(data.firewall?.exclude?.ipv4_cidr) ? [...data.firewall.exclude.ipv4_cidr] : [];
       excludeV6Array = Array.isArray(data.firewall?.exclude?.ipv6_cidr) ? [...data.firewall.exclude.ipv6_cidr] : [];
 
-      container.innerHTML = `
-        <!-- Accordion 0: General -->
-        <div class="accordion-item ${activeAccordionIndex === 0 ? 'active' : ''}">
-          <div class="accordion-header" onclick="toggleAccordion(0)">
-            <div class="accordion-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-              <span>${t('secGeneral')}</span>
-            </div>
-            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="accordion-body">
-            <div class="accordion-content">
-              <div class="form-section">
-                <h3>${t('secAutoStart')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('enabledLbl')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('auto_start.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secDelay')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('auto_start.delay')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="number" id="f_auto_start_delay" value="${data.auto_start?.delay ?? 0}" oninput="validateField(this, 'port'); syncFormToText()"></div>
-                </div>
-              </div>
+      // Accordion 0: General
+      const genSec1 = renderSection(t('secAutoStart'), [
+        renderSettingRow(t('enabledLbl'), 'auto_start.enabled', `<input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secDelay'), 'auto_start.delay', `<input type="number" id="f_auto_start_delay" value="${data.auto_start?.delay ?? 0}" oninput="validateField(this, 'port'); syncFormToText()">`)
+      ].join(''));
 
-              <div class="form-section">
-                <h3>${t('secPolicy')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('enabledLbl')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('policy.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secSegment')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('policy.segment')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_policy_segment" value="${data.policy?.segment ?? ''}" oninput="validateField(this, 'segment'); syncFormToText()"></div>
-                </div>
-              </div>
+      const genSec2 = renderSection(t('secPolicy'), [
+        renderSettingRow(t('enabledLbl'), 'policy.enabled', `<input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secSegment'), 'policy.segment', `<input type="text" id="f_policy_segment" value="${data.policy?.segment ?? ''}" oninput="validateField(this, 'segment'); syncFormToText()">`)
+      ].join(''));
 
-              <div class="form-section">
-                <h3>${t('secNetwork')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secIpv6')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('network.ipv6')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secTuning')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('network.tuning')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secPingCheck')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('network.check')">?</button>
-                  </div>
-                  <div class="form-setting-input">
-                    <input type="text" id="f_network_check_display" readonly value="${networkCheckArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_network_check_display', '${t('secPingCheck')}', networkCheckArray, 'host')">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      const genSec3 = renderSection(t('secNetwork'), [
+        renderSettingRow(t('secIpv6'), 'network.ipv6', `<input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secTuning'), 'network.tuning', `<input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secPingCheck'), 'network.check', `<input type="text" id="f_network_check_display" readonly value="${networkCheckArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_network_check_display', '${t('secPingCheck')}', networkCheckArray, 'host')">`)
+      ].join(''));
 
-        <!-- Accordion 1: Sing-box -->
-        <div class="accordion-item ${activeAccordionIndex === 1 ? 'active' : ''}">
-          <div class="accordion-header" onclick="toggleAccordion(1)">
-            <div class="accordion-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-              <span>${t('secSingbox')}</span>
-            </div>
-            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="accordion-body">
-            <div class="accordion-content">
-              <div class="form-section">
-                <h3>${t('secSingbox')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUseDir')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.config.use_dir')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secConfigUrl')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.config.url')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_config_url" value="${data.singbox?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secSplit')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.config.split')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiUrl')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.api.url')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_api_url" value="${data.singbox?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiSecret')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.api.secret')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_api_secret" value="${data.singbox?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
-                </div>
-              </div>
+      const acc0 = renderAccordion(0, t('secGeneral'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`, genSec1 + genSec2 + genSec3);
 
-              <div class="form-section">
-                <h3>${t('secExtSingbox')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExtEnabled')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExtPath')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.path')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_path" value="${data.singbox?.external?.path ?? ''}" oninput="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUseDir')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.use_dir')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secConfigUrl')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.url')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_cfg_url" value="${data.singbox?.external?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secSplit')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.config.split')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiUrl')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.api.url')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_api_url" value="${data.singbox?.external?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiSecret')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('singbox.external.api.secret')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_singbox_ext_api_secret" value="${data.singbox?.external?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      // Accordion 1: Sing-box
+      const sbSec1 = renderSection(t('secSingbox'), [
+        renderSettingRow(t('secUseDir'), 'singbox.config.use_dir', `<input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secConfigUrl'), 'singbox.config.url', `<input type="text" id="f_singbox_config_url" value="${data.singbox?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
+        renderSettingRow(t('secSplit'), 'singbox.config.split', `<input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secApiUrl'), 'singbox.api.url', `<input type="text" id="f_singbox_api_url" value="${data.singbox?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
+        renderSettingRow(t('secApiSecret'), 'singbox.api.secret', `<input type="text" id="f_singbox_api_secret" value="${data.singbox?.api?.secret ?? ''}" oninput="syncFormToText()">`)
+      ].join(''));
 
-        <!-- Accordion 2: Services -->
-        <div class="accordion-item ${activeAccordionIndex === 2 ? 'active' : ''}">
-          <div class="accordion-header" onclick="toggleAccordion(2)">
-            <div class="accordion-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-              <span>${t('secServices')}</span>
-            </div>
-            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="accordion-body">
-            <div class="accordion-content">
-              <div class="form-section">
-                <h3>SKeen API</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiPort')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.api.port')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="number" id="f_services_api_port" value="${data.services?.api?.port ?? 5000}" oninput="validateField(this, 'port'); syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secApiSecret')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.api.secret')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_services_api_secret" value="${data.services?.api?.secret ?? ''}" oninput="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secCorsOrigins')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.api.cors_origin')">?</button>
-                  </div>
-                  <div class="form-setting-input">
-                    <input type="text" id="f_services_api_cors_display" readonly value="${apiCorsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', apiCorsArray, 'text')">
-                  </div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secDashboard')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.api.dashboard')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secAutoStart')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.api.auto_start')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-              </div>
+      const sbSec2 = renderSection(t('secExtSingbox'), [
+        renderSettingRow(t('secExtEnabled'), 'singbox.external.enabled', `<input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" id="f_singbox_ext_path" value="${data.singbox?.external?.path ?? ''}" oninput="syncFormToText()">`),
+        renderSettingRow(t('secUseDir'), 'singbox.external.config.use_dir', `<input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" id="f_singbox_ext_cfg_url" value="${data.singbox?.external?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
+        renderSettingRow(t('secSplit'), 'singbox.external.config.split', `<input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secApiUrl'), 'singbox.external.api.url', `<input type="text" id="f_singbox_ext_api_url" value="${data.singbox?.external?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
+        renderSettingRow(t('secApiSecret'), 'singbox.external.api.secret', `<input type="text" id="f_singbox_ext_api_secret" value="${data.singbox?.external?.api?.secret ?? ''}" oninput="syncFormToText()">`)
+      ].join(''));
 
-              <div class="form-section">
-                <h3>${t('secLocalProxy')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('enabledLbl')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.proxy.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secProxyPort')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.proxy.port')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_services_proxy_port" value="${data.services?.proxy?.port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secProxyUser')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.proxy.user')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_services_proxy_user" value="${data.services?.proxy?.user ?? ''}" oninput="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secProxyPass')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('services.proxy.pass')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_services_proxy_pass" value="${data.services?.proxy?.pass ?? ''}" oninput="syncFormToText()"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      const acc1 = renderAccordion(1, t('secSingbox'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`, sbSec1 + sbSec2);
 
-        <!-- Accordion 3: Firewall -->
-        <div class="accordion-item ${activeAccordionIndex === 3 ? 'active' : ''}">
-          <div class="accordion-header" onclick="toggleAccordion(3)">
-            <div class="accordion-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-              <span>${t('secFirewall')}</span>
-            </div>
-            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="accordion-body">
-            <div class="accordion-content">
-              <div class="form-section">
-                <h3>${t('secIntercept')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">DNS Intercept</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.dns')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secFakeip')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secFakeipClients')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.intercept.fakeip.clients')">?</button>
-                  </div>
-                  <div class="form-setting-input">
-                    <input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', fakeipClientsArray, 'ip')">
-                  </div>
-                </div>
-              </div>
+      // Accordion 2: Services
+      const srvSec1 = renderSection('SKeen API', [
+        renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" id="f_services_api_port" value="${data.services?.api?.port ?? 5000}" oninput="validateField(this, 'port'); syncFormToText()">`),
+        renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" id="f_services_api_secret" value="${data.services?.api?.secret ?? ''}" oninput="syncFormToText()">`),
+        renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" id="f_services_api_cors_display" readonly value="${apiCorsArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', apiCorsArray, 'text')">`),
+        renderSettingRow(t('secDashboard'), 'services.api.dashboard', `<input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secAutoStart'), 'services.api.auto_start', `<input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()">`)
+      ].join(''));
 
-              <div class="form-section">
-                <h3>${t('secExclude')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExcludePorts')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.port')">?</button>
-                  </div>
-                  <div class="form-setting-input">
-                    <input type="text" id="f_firewall_exclude_port_display" readonly value="${excludePortsArray.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', excludePortsArray, 'portRange')">
-                  </div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExcludeV4')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.ipv4_cidr')">?</button>
-                  </div>
-                  <div class="form-setting-input">
-                    <input type="text" id="f_firewall_exclude_v4_display" readonly value="${excludeV4Array.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', excludeV4Array, 'v4cidr')">
-                  </div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secExcludeV6')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.exclude.ipv6_cidr')">?</button>
-                  </div>
-                  <div class="form-setting-input">
-                    <input type="text" id="f_firewall_exclude_v6_display" readonly value="${excludeV6Array.join(', ')}" style="cursor: pointer;" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', excludeV6Array, 'v6cidr')">
-                  </div>
-                </div>
-              </div>
+      const srvSec2 = renderSection(t('secLocalProxy'), [
+        renderSettingRow(t('enabledLbl'), 'services.proxy.enabled', `<input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secProxyPort'), 'services.proxy.port', `<input type="text" id="f_services_proxy_port" value="${data.services?.proxy?.port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()">`),
+        renderSettingRow(t('secProxyUser'), 'services.proxy.user', `<input type="text" id="f_services_proxy_user" value="${data.services?.proxy?.user ?? ''}" oninput="syncFormToText()">`),
+        renderSettingRow(t('secProxyPass'), 'services.proxy.pass', `<input type="text" id="f_services_proxy_pass" value="${data.services?.proxy?.pass ?? ''}" oninput="syncFormToText()">`)
+      ].join(''));
 
-              <div class="form-section">
-                <h3>${t('secRedirectDns')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secRedirectDns')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secDnsPort')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.to_port')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="text" id="f_firewall_redirect_dns_port" value="${data.firewall?.redirect_dns?.to_port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUsePolicyDns')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.redirect_dns.use_policy')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-              </div>
+      const acc2 = renderAccordion(2, t('secServices'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`, srvSec1 + srvSec2);
 
-              <div class="form-section">
-                <h3>${t('secProxyRouter')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secProxyRouter')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('firewall.proxy_router')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      // Accordion 3: Firewall
+      const fwSec1 = renderSection(t('secIntercept'), [
+        renderSettingRow('DNS Intercept', 'firewall.intercept.dns', `<input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', fakeipClientsArray, 'ip')">`)
+      ].join(''));
 
-        <!-- Accordion 4: Updates -->
-        <div class="accordion-item ${activeAccordionIndex === 4 ? 'active' : ''}">
-          <div class="accordion-header" onclick="toggleAccordion(4)">
-            <div class="accordion-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-              <span>${t('secUpdates')}</span>
-            </div>
-            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="accordion-body">
-            <div class="accordion-content">
-              <div class="form-section">
-                <h3>${t('secUpdates')}</h3>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUpdateSingbox')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('update.singbox.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secBetaSingbox')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('update.singbox.beta')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUpdateSkeen')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('update.skeen.enabled')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-                <div class="form-setting-row">
-                  <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${t('secUpdateSkeenApi')}</span>
-                    <button type="button" class="help-btn" onclick="showHelp('update.skeen.api')">?</button>
-                  </div>
-                  <div class="form-setting-input"><input type="checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
+      const fwSec2 = renderSection(t('secExclude'), [
+        renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" id="f_firewall_exclude_port_display" readonly value="${excludePortsArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', excludePortsArray, 'portRange')">`),
+        renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" id="f_firewall_exclude_v4_display" readonly value="${excludeV4Array.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', excludeV4Array, 'v4cidr')">`),
+        renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" id="f_firewall_exclude_v6_display" readonly value="${excludeV6Array.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', excludeV6Array, 'v6cidr')">`)
+      ].join(''));
+
+      const fwSec3 = renderSection(t('secRedirectDns'), [
+        renderSettingRow(t('secRedirectDns'), 'firewall.redirect_dns.enabled', `<input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secDnsPort'), 'firewall.redirect_dns.to_port', `<input type="text" id="f_firewall_redirect_dns_port" value="${data.firewall?.redirect_dns?.to_port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()">`),
+        renderSettingRow(t('secUsePolicyDns'), 'firewall.redirect_dns.use_policy', `<input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()">`)
+      ].join(''));
+
+      const fwSec4 = renderSection(t('secProxyRouter'), [
+        renderSettingRow(t('secProxyRouter'), 'firewall.proxy_router', `<input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()">`)
+      ].join(''));
+
+      const acc3 = renderAccordion(3, t('secFirewall'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`, fwSec1 + fwSec2 + fwSec3 + fwSec4);
+
+      // Accordion 4: Updates
+      const updSec1 = renderSection(t('secUpdates'), [
+        renderSettingRow(t('secUpdateSingbox'), 'update.singbox.enabled', `<input type="checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secBetaSingbox'), 'update.singbox.beta', `<input type="checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secUpdateSkeen'), 'update.skeen.enabled', `<input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secUpdateSkeenApi'), 'update.skeen.api', `<input type="checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()">`)
+      ].join(''));
+
+      const acc4 = renderAccordion(4, t('secUpdates'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`, updSec1);
+
+      container.innerHTML = acc0 + acc1 + acc2 + acc3 + acc4;
 
       if (activeAccordionIndex !== -1) {
         setTimeout(() => {
@@ -3612,7 +3476,7 @@
           <span>${t('btnRestart')}</span>
         </button>
       ` : `
-        <button class="success-btn" style="width: 100%; font-size: 0.95rem; padding: 10px;" onclick="executeCommandParam('start')">
+        <button class="success-btn width-100" style="font-size: 0.95rem; padding: 10px;" onclick="executeCommandParam('start')">
           <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           <span>${t('btnStart')}</span>
         </button>
@@ -3657,21 +3521,21 @@
       if (val === 'restore') {
         container.style.display = 'flex';
         container.innerHTML = `
-          <div class="form-group" style="margin: 0;">
+          <div class="form-group margin-0">
             <label>${t('lblBackupFile')}</label>
             <input type="text" id="paramBackupFile" placeholder="${t('placeholderBackupFile')}">
           </div>`;
       } else if (val === 'sync') {
         container.style.display = 'flex';
         container.innerHTML = `
-          <div class="form-group" style="margin: 0;">
+          <div class="form-group margin-0">
             <label>${t('lblSyncUrl')}</label>
             <input type="text" id="paramSyncUrl" placeholder="${t('placeholderSyncUrl')}" oninput="validateField(this, 'url')">
           </div>`;
       } else if (val === 'tun') {
         container.style.display = 'flex';
         container.innerHTML = `
-          <div class="form-group" style="margin: 0;">
+          <div class="form-group margin-0">
             <label>${t('lblTunSubCommand')}</label>
             <select id="paramTunSub" onchange="handleTunSubChange()">
               <option value="list">tun list</option>
@@ -3679,7 +3543,7 @@
               <option value="delete">tun delete</option>
             </select>
           </div>
-          <div id="tunSubInputsContainer" style="display: none; flex-direction: column; gap: 8px;"></div>`;
+          <div id="tunSubInputsContainer" class="flex-col-gap-8" style="display: none;"></div>`;
         handleTunSubChange();
       } else {
         container.style.display = 'none';
@@ -3694,12 +3558,12 @@
       if (subVal === 'create') {
         subContainer.style.display = 'flex';
         subContainer.innerHTML = `
-          <div class="form-row" style="gap: 8px;">
-            <div class="form-group" style="flex: 1; margin: 0;">
+          <div class="form-row flex-row-gap-8">
+            <div class="form-group flex-1 margin-0">
               <label>${t('lblIpAddress')}</label>
               <input type="text" id="paramTunIp" placeholder="${t('placeholderIpAddress')}" oninput="validateField(this, 'ip')">
             </div>
-            <div class="form-group" style="flex: 1; margin: 0;">
+            <div class="form-group flex-1 margin-0">
               <label>${t('lblIfaceName')}</label>
               <input type="text" id="paramTunIface" placeholder="${t('placeholderIfaceName')}">
             </div>
@@ -3707,7 +3571,7 @@
       } else if (subVal === 'delete') {
         subContainer.style.display = 'flex';
         subContainer.innerHTML = `
-          <div class="form-group" style="margin: 0;">
+          <div class="form-group margin-0">
             <label>${t('lblIfaceName')}</label>
             <input type="text" id="paramTunIface" placeholder="${t('placeholderIfaceName')}">
           </div>`;
