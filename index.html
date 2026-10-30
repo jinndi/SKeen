@@ -1664,7 +1664,7 @@
     <div class="navbar">
       <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('skeenTab', this)" data-i18n="tabSKeen">SKeen</button>
-        <button class="tab-btn" onclick="switchTab('jsonTab', this)" data-i18n="tabConfig">Конфиг</button>
+        <button class="tab-btn" onclick="switchTab('configTab', this)" data-i18n="tabConfig">Конфиг</button>
       </div>
       <div class="nav-controls">
         <select id="activeConnSelect" class="conn-select" onchange="changeActiveConnection(this.value)"></select>
@@ -1735,7 +1735,7 @@
     </div>
 
     <!-- Tab 2: Configuration Editor -->
-    <div id="jsonTab" class="tab-content">
+    <div id="configTab" class="tab-content">
       <div class="card editor-card">
         <div class="flex-row-between">
           <h2 class="margin-0 border-none padding-0" data-i18n="jsonCardTitle">Конфигурация</h2>
@@ -2565,7 +2565,7 @@
       localStorage.setItem('keen_active_index', activeIndex);
       showStatus('jsonStatus', (currentLang === 'ru' ? 'Переключено на: ' : 'Switched to: ') + getActiveConnection().name);
       fetchServiceStatus();
-      if (document.getElementById('jsonTab').classList.contains('active')) loadFileList();
+      if (document.getElementById('configTab').classList.contains('active')) loadFileList();
     }
 
     function getHeaders() {
@@ -2584,7 +2584,7 @@
        UI Navigation & Tabs
        ========================================================================== */
     function switchTab(tabId, btn, save = true) {
-      if (tabId !== 'jsonTab' && hasUnsavedChanges()) {
+      if (tabId !== 'configTab' && hasUnsavedChanges()) {
         showConfirmModal(t('confirmUnsaved'), () => {
           originalFileContent = '';
           executeSwitchTab(tabId, btn, save);
@@ -2602,7 +2602,7 @@
       if (save) localStorage.setItem('keen_active_tab', tabId);
 
       if (tabId === 'skeenTab') fetchServiceStatus();
-      else if (tabId === 'jsonTab') loadFileList();
+      else if (tabId === 'configTab') loadFileList();
     }
 
     function switchModalTab(paneId, btn) {
