@@ -1604,6 +1604,57 @@
         font-size: 0.82rem;
       }
     }
+
+    /* ==========================================================================
+      11. Unifying Page Preloader
+       ========================================================================== */
+    #pagePreloader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--card-bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+      border-radius: 8px;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    /* При первом входе на весь экран */
+    body>#pagePreloader {
+      position: fixed;
+      background-color: var(--bg-color);
+      z-index: 99999;
+      border-radius: 0;
+    }
+
+    #pagePreloader.loaded {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .preloader-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-color);
+      border-radius: 50%;
+      animation: preloaderSpin 0.7s linear infinite;
+    }
+
+    @keyframes preloaderSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    body.preload * {
+      transition: none !important;
+    }
   </style>
 </head>
 
@@ -1696,7 +1747,10 @@
           </div>
         </div>
 
-        <div class="form-group-editor">
+        <div class="form-group-editor" style="position: relative;">
+          <div id="pagePreloader" class="loaded">
+            <div class="preloader-spinner"></div>
+          </div>
           <!-- Editor Mode Bar -->
           <div id="editorModeBar" class="editor-mode-bar" style="display: none;">
             <button type="button" class="mode-btn active" id="btnModeForm" onclick="switchEditorMode('form')"
@@ -1747,8 +1801,7 @@
         </div>
 
         <div class="form-row flex-shrink-0">
-          <button class="secondary" onclick="loadConfigFile()" title="Обновить"
-            data-i18n-title="btnUpdateJson">
+          <button class="secondary" onclick="loadConfigFile()" title="Обновить" data-i18n-title="btnUpdateJson">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -2396,12 +2449,19 @@
     }
 
     /* ==========================================================================
-       Modal Utility Helper (DRY)
+       Helper (DRY)
        ========================================================================== */
     function setModalState(modalId, isOpen) {
       const modal = document.getElementById(modalId);
       if (modal) {
         modal.classList.toggle('open', isOpen);
+      }
+    }
+
+    function togglePreloader(show) {
+      const preloader = document.getElementById('pagePreloader');
+      if (preloader) {
+        preloader.classList.toggle('loaded', !show);
       }
     }
 
@@ -2411,7 +2471,15 @@
     let connections = JSON.parse(localStorage.getItem('keen_connections') || '[]');
     let activeIndex = parseInt(localStorage.getItem('keen_active_index') || '0');
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
+      document.body.classList.add('preload');
+
+      const preloader = document.getElementById('pagePreloader');
+      if (preloader) {
+        document.body.appendChild(preloader);
+        togglePreloader(true);
+      }
+
       applyTheme(localStorage.getItem('keen_theme_mode') || 'auto');
       currentLang = resolveLanguage(localStorage.getItem('keen_lang_setting') || 'auto');
       document.getElementById('langSelect').value = localStorage.getItem('keen_lang_setting') || 'auto';
@@ -2424,8 +2492,17 @@
       const tabBtn = document.querySelector(`.tab-btn[onclick*="${savedTab}"]`);
       if (tabBtn) switchTab(savedTab, tabBtn, false);
 
-      fetchServiceStatus();
+      await fetchServiceStatus();
       startPolling();
+
+      setTimeout(() => {
+        const editorContainer = document.querySelector('.form-group-editor');
+        if (preloader && editorContainer) {
+          editorContainer.insertBefore(preloader, editorContainer.firstChild);
+        }
+        document.body.classList.remove('preload');
+        togglePreloader(false);
+      }, 100);
 
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && document.getElementById('skeenTab').classList.contains('active')) {
@@ -3238,6 +3315,8 @@
       const select = document.getElementById('configFileSelect');
       const prevSelected = select.value;
 
+      togglePreloader(true);
+
       try {
         const res = await fetch(`${baseUrl}/api/files-list`, { method: 'GET', headers: getHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -3245,6 +3324,7 @@
 
         if (!Array.isArray(files) || files.length === 0) {
           select.innerHTML = `<option value="">${t('noFilesAvailable')}</option>`;
+          togglePreloader(false);
           return;
         }
 
@@ -3254,10 +3334,12 @@
         select.value = Array.from(select.options).some(opt => opt.value === prevSelected) ? prevSelected : select.options[0].value;
         currentSelectedFile = select.value;
 
-        if (reloadConfig) loadConfigFile();
+        if (reloadConfig) await loadConfigFile();
+        else togglePreloader(false);
       } catch (e) {
         select.innerHTML = `<option value="">${t('errorLoadList')}</option>`;
         showStatus('jsonStatus', `Error: ${e.message}`, true);
+        togglePreloader(false);
       }
     }
 
@@ -3300,6 +3382,8 @@
 
       if (!fileKey) return;
 
+      togglePreloader(true);
+
       try {
         const res = await fetch(`${baseUrl}/api/file?name=${fileKey}`, { method: 'GET', headers: getHeaders() });
         if (!res.ok) {
@@ -3337,6 +3421,8 @@
         showStatus('jsonStatus', t('statusLoaded'));
       } catch (e) {
         showStatus('jsonStatus', `Error: ${e.message}`, true);
+      } finally {
+        togglePreloader(false);
       }
     }
 
