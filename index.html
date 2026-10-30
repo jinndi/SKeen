@@ -3751,27 +3751,67 @@
         const end = textarea.selectionEnd;
         const value = textarea.value;
 
-        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
-        let lineEnd = value.indexOf('\n', end);
-        if (lineEnd === -1) lineEnd = value.length;
+        if (start === end) {
+          let lineStart = start;
+          while (lineStart > 0 && value[lineStart - 1] !== '\n') {
+            lineStart--;
+          }
 
-        const selectedText = value.substring(lineStart, lineEnd);
-        const lines = selectedText.split('\n');
+          if (e.shiftKey) {
+            let lineEnd = start;
+            while (lineEnd < value.length && value[lineEnd] !== '\n') {
+              lineEnd++;
+            }
+            const currentLine = value.substring(lineStart, lineEnd);
+            let newLine = currentLine;
+            let removedChars = 0;
 
-        let newSelectedText;
-        if (e.shiftKey) {
-          newSelectedText = lines.map(line => {
-            if (line.startsWith('  ')) return line.substring(2);
-            if (line.startsWith(' ')) return line.substring(1);
-            return line;
-          }).join('\n');
+            if (currentLine.startsWith('  ')) {
+              newLine = currentLine.substring(2);
+              removedChars = 2;
+            } else if (currentLine.startsWith(' ')) {
+              newLine = currentLine.substring(1);
+              removedChars = 1;
+            }
+
+            if (removedChars > 0) {
+              const newPos = Math.max(lineStart, start - removedChars);
+              textarea.value = value.substring(0, lineStart) + newLine + value.substring(lineEnd);
+              textarea.selectionStart = textarea.selectionEnd = newPos;
+            }
+          } else {
+            textarea.value = value.substring(0, start) + '  ' + value.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + 2;
+          }
         } else {
-          newSelectedText = lines.map(line => '  ' + line).join('\n');
-        }
+          let lineStart = start;
+          while (lineStart > 0 && value[lineStart - 1] !== '\n') {
+            lineStart--;
+          }
 
-        textarea.value = value.substring(0, lineStart) + newSelectedText + value.substring(lineEnd);
-        textarea.selectionStart = lineStart;
-        textarea.selectionEnd = lineStart + newSelectedText.length;
+          let lineEnd = end;
+          while (lineEnd < value.length && value[lineEnd] !== '\n') {
+            lineEnd++;
+          }
+
+          const block = value.substring(lineStart, lineEnd);
+          const lines = block.split('\n');
+          let newBlock;
+
+          if (e.shiftKey) {
+            newBlock = lines.map(line => {
+              if (line.startsWith('  ')) return line.substring(2);
+              if (line.startsWith(' ')) return line.substring(1);
+              return line;
+            }).join('\n');
+          } else {
+            newBlock = lines.map(line => '  ' + line).join('\n');
+          }
+
+          textarea.value = value.substring(0, lineStart) + newBlock + value.substring(lineEnd);
+          textarea.selectionStart = lineStart;
+          textarea.selectionEnd = lineStart + newBlock.length;
+        }
 
         handleEditorInput();
       }
