@@ -676,12 +676,18 @@
       scrollbar-width: auto;
       scrollbar-color: var(--border-color) var(--code-bg);
     }
+    #formEditorContainer {
+      scrollbar-width: none;
+    }
 
     /* Chrome, Edge, Safari */
     .output-wrapper::-webkit-scrollbar,
     .code-editor-wrapper::-webkit-scrollbar {
       width: 14px;
       height: 14px;
+    }
+    #formEditorContainer::-webkit-scrollbar {
+      display: none;
     }
 
     .output-wrapper::-webkit-scrollbar-track,
@@ -1743,7 +1749,7 @@
         </div>
 
         <div class="form-row flex-shrink-0">
-          <button class="icon-btn secondary" onclick="loadConfigFile()" title="Обновить"
+          <button class="secondary" onclick="loadConfigFile()" title="Обновить"
             data-i18n-title="btnUpdateJson">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
