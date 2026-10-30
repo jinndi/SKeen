@@ -3388,6 +3388,18 @@
     }
 
     async function loadConfigFile() {
+      if (hasUnsavedChanges()) {
+        showConfirmModal(t('confirmUnsaved'), () => {
+          originalFileContent = '';
+          executeLoadConfigFile();
+        });
+        return;
+      }
+
+      executeLoadConfigFile();
+    }
+
+    async function executeLoadConfigFile() {
       const baseUrl = getBaseUrl();
       if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
       const fileSelect = document.getElementById('configFileSelect');
