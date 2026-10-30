@@ -34,7 +34,7 @@ Notes:
   <summary>2. Web UI?</summary>
 <br>
 
-Unlike bloated control panels built with Python, Go, or even Rust (which consume anywhere from 12 to 45+ MB of RAM), our solution is written in pure Lua and uses just **2 MB of RAM** (peaking at ~8 MB). The entire backend with the frontend is delivered as a single compact file under **150 KB**, alongside the essential Lua (~20 KB) and LuaSocket (~250 KB) packages.
+Unlike bloated control panels built with Python, Go, or even Rust (which consume anywhere from 12 to 45+ MB of RAM), our solution is written in pure Lua and uses just **~3 MB of RAM**. The entire backend with the frontend is delivered as a single compact file under **150 KB**, alongside the essential Lua (~20 KB) and LuaSocket (~250 KB) packages.
 
 For flexible automation and sing-box configuration synchronization, you can—and should—continue using external tools: [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) in a Docker container on a VPS or local host, [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on Desktop, or the [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox).
 

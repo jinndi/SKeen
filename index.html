@@ -777,7 +777,6 @@
       border-radius: 8px;
       overflow: hidden;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       flex-shrink: 0;
     }
 
@@ -787,7 +786,6 @@
 
     .accordion-item.active {
       border-color: var(--border-focus);
-      box-shadow: 0 4px 14px var(--accent-glow);
     }
 
     .accordion-header {
@@ -880,7 +878,7 @@
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       gap: 6px;
       min-width: 0;
     }
@@ -2045,7 +2043,6 @@
         secApiUrl: "API URL",
         secApiSecret: "API Секрет",
         secExtSingbox: "Сторонний Sing-box",
-        secExtEnabled: "Включить сторонний",
         secExtPath: "Путь к бинарнику",
         secServices: "Сервисы",
         secApiPort: "API Порт",
@@ -2176,7 +2173,6 @@
         secApiUrl: "API URL",
         secApiSecret: "API Secret",
         secExtSingbox: "External Sing-box",
-        secExtEnabled: "Enabled",
         secExtPath: "Path",
         secServices: "Services",
         secApiPort: "API Port",
@@ -2861,7 +2857,7 @@
       ].join(''));
 
       const sbSec2 = renderSection(t('secExtSingbox'), [
-        renderSettingRow(t('secExtEnabled'), 'singbox.external.enabled', `<input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('enabledLbl'), 'singbox.external.enabled', `<input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" id="f_singbox_ext_path" value="${data.singbox?.external?.path ?? ''}" oninput="syncFormToText()">`),
         renderSettingRow(t('secUseDir'), 'singbox.external.config.use_dir', `<input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" id="f_singbox_ext_cfg_url" value="${data.singbox?.external?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
