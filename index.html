@@ -1231,6 +1231,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       min-width: 0;
+      padding: 3px;
     }
 
     /* ==========================================================================
@@ -1391,7 +1392,7 @@
     }
 
     /* ==========================================================================
-       9. Reusable Utility Classes (Extracted from inline styles)
+       9. Reusable Utility Classes & Component Modifiers
        ========================================================================== */
     .flex-col {
       display: flex;
@@ -1488,7 +1489,7 @@
       border-color: var(--border-color);
       border-style: solid;
       width: 100%;
-      margin: 2px 0;
+      margin: 4px 0;
     }
 
     .modal-h3-title {
@@ -1512,12 +1513,42 @@
       width: 100%;
     }
 
-    .modal-max-380 {
+
+    .modal-header-title {
+      margin: 0;
+      border: none;
+      padding: 0;
+      font-size: 1rem;
+    }
+
+    .modal-content--sm {
+      max-width: 340px;
+    }
+
+    .modal-content--md {
       max-width: 380px;
     }
 
-    .modal-max-340 {
-      max-width: 340px;
+    .select-lang {
+      max-width: 140px;
+      height: 34px;
+    }
+
+    .btn-start-action {
+      font-size: 0.95rem;
+      padding: 10px;
+    }
+
+    .mt-4 {
+      margin-top: 4px;
+    }
+
+    .mt-8 {
+      margin-top: 8px;
+    }
+
+    .mt-10 {
+      margin-top: 10px;
     }
 
     .array-items-list {
@@ -1529,12 +1560,7 @@
       margin: 6px 0;
     }
 
-    .confirm-text {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin: 0;
-    }
-
+    .confirm-text,
     .alert-text {
       font-size: 0.85rem;
       color: var(--text-muted);
@@ -1552,6 +1578,9 @@
       font-weight: 500;
     }
 
+    /* ==========================================================================
+       10. Responsive Media Queries (< 360px)
+       ========================================================================== */
     @media (max-width: 360px) {
       body {
         padding: 4px;
@@ -1630,7 +1659,7 @@
               <span data-i18n="btnExecute">Выполнить</span>
             </button>
           </div>
-          <div id="extraParamsContainer" class="flex-col-gap-8" style="display: none; margin-top: 8px;">
+          <div id="extraParamsContainer" class="flex-col-gap-8 mt-8" style="display: none;">
           </div>
         </div>
 
@@ -1705,30 +1734,22 @@
             <div id="lineNumbers" class="line-numbers">1</div>
             <div class="editor-container">
               <pre id="highlighting" aria-hidden="true"><code id="highlightingContent"></code></pre>
-              <textarea id="jsonEditor" spellcheck="false" autocomplete="off"
-                placeholder='Выберите файл и нажмите "Загрузить"...' data-i18n-placeholder="jsonPlaceholder"
-                oninput="handleEditorInput()" onscroll="syncScroll()" onkeydown="handleEditorKeydown(event)"></textarea>
+              <textarea id="jsonEditor" spellcheck="false" autocomplete="off" placeholder='Выберите файл...'
+                data-i18n-placeholder="jsonPlaceholder" oninput="handleEditorInput()" onscroll="syncScroll()"
+                onkeydown="handleEditorKeydown(event)"></textarea>
             </div>
           </div>
           <div id="jsonStatus" class="status"></div>
         </div>
 
         <div class="form-row flex-shrink-0">
-          <button onclick="loadConfigFile()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
+          <button class="icon-btn secondary" onclick="loadConfigFile()" title="Обновить"
+            data-i18n-title="btnUpdateJson">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
             </svg>
-            <span data-i18n="btnLoadJson">Загрузить</span>
-          </button>
-          <button id="saveBtn" class="success-btn" onclick="saveConfigFile()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-              <polyline points="17 21 17 13 7 13 7 21"></polyline>
-              <polyline points="7 3 7 8 15 8"></polyline>
-            </svg>
-            <span data-i18n="btnSaveJson">Сохранить</span>
+            <span data-i18n="btnUpdateJson">Обновить</span>
           </button>
           <button id="formatBtn" class="secondary" onclick="formatJsonEditor()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1738,6 +1759,14 @@
               <line x1="21" y1="18" x2="3" y2="18"></line>
             </svg>
             <span data-i18n="btnFormat">Формат</span>
+          </button>
+          <button id="saveBtn" class="success-btn" onclick="saveConfigFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span data-i18n="btnSaveJson">Сохранить</span>
           </button>
         </div>
       </div>
@@ -1833,8 +1862,7 @@
             </svg>
             <span data-i18n="labelLanguage">Язык</span>
           </div>
-          <select id="langSelect" class="conn-select" style="max-width: 140px; height: 34px;"
-            onchange="changeLanguage(this.value)">
+          <select id="langSelect" class="conn-select select-lang" onchange="changeLanguage(this.value)">
             <option value="auto" data-i18n="langAuto">Как в системе</option>
             <option value="ru">Русский</option>
             <option value="en">English</option>
@@ -1852,10 +1880,9 @@
   <!-- Help Tooltip Modal -->
   <div id="tooltipModal" class="modal">
     <div class="tooltip-content">
-      <h2 class="margin-0 border-none padding-0" style="font-size: 1rem;" data-i18n="tooltipTitle">Справка по параметру
-      </h2>
+      <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="tooltipTitle">Справка по параметру</h2>
       <div id="tooltipModalText" class="tooltip-body"></div>
-      <div class="form-row" style="margin-top: 4px;">
+      <div class="form-row mt-4">
         <button class="secondary width-100" onclick="closeTooltipModal()" data-i18n="btnClose">Закрыть</button>
       </div>
     </div>
@@ -1863,9 +1890,9 @@
 
   <!-- Array Editor Modal -->
   <div id="arrayEditModal" class="modal">
-    <div class="modal-content modal-max-380">
-      <h2 id="arrayModalTitle" class="margin-0 border-none padding-0" style="font-size: 1rem;"
-        data-i18n="arrayModalTitle">Редактирование списка</h2>
+    <div class="modal-content modal-content--md">
+      <h2 id="arrayModalTitle" class="margin-0 border-none padding-0 modal-header-title" data-i18n="arrayModalTitle">
+        Редактирование списка</h2>
       <div id="arrayModalItemsList" class="array-items-list">
       </div>
       <div class="form-row flex-row-gap-8">
@@ -1875,7 +1902,7 @@
         <button type="button" onclick="addArrayModalItem()" class="secondary flex-shrink-0"
           data-i18n="btnAdd">Добавить</button>
       </div>
-      <div class="form-row" style="margin-top: 10px;">
+      <div class="form-row mt-10">
         <button type="button" onclick="saveArrayModal()" class="flex-1" data-i18n="btnOk">ОК</button>
         <button type="button" class="secondary flex-1" onclick="closeArrayModal()" data-i18n="btnCancel">Отмена</button>
       </div>
@@ -1884,9 +1911,8 @@
 
   <!-- Confirmation Modal -->
   <div id="confirmModal" class="modal">
-    <div class="modal-content modal-max-340">
-      <h2 class="margin-0 border-none padding-0" style="font-size: 1rem;" data-i18n="confirmModalTitle">Подтверждение
-      </h2>
+    <div class="modal-content modal-content--sm">
+      <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="confirmModalTitle">Подтверждение</h2>
       <p id="confirmText" class="confirm-text"></p>
       <div class="form-row">
         <button id="confirmYesBtn" onclick="resolveConfirm(true)" data-i18n="btnYes">Да</button>
@@ -1897,8 +1923,8 @@
 
   <!-- Alert Modal -->
   <div id="alertModal" class="modal">
-    <div class="modal-content modal-max-340">
-      <h2 class="margin-0 border-none padding-0" style="font-size: 1rem;" data-i18n="alertModalTitle">Внимание</h2>
+    <div class="modal-content modal-content--sm">
+      <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="alertModalTitle">Внимание</h2>
       <p id="alertText" class="alert-text"></p>
       <div class="form-row">
         <button id="alertOkBtn" onclick="closeAlertModal()" data-i18n="btnOk" class="flex-1">ОК</button>
@@ -1920,8 +1946,8 @@
         outputLabel: "Вывод (stdout / stderr):",
         waitingOutput: "Ожидание выполнения команды...",
         jsonCardTitle: "Конфигурация",
-        jsonPlaceholder: 'Выберите файл и нажмите "Загрузить"...',
-        btnLoadJson: "Загрузить",
+        jsonPlaceholder: 'Выберите файл...',
+        btnUpdateJson: "Обновить",
         btnSaveJson: "Сохранить",
         btnFormat: "Формат",
         modalTitle: "Настройки",
@@ -2051,8 +2077,8 @@
         outputLabel: "Output (stdout / stderr):",
         waitingOutput: "Waiting for command execution...",
         jsonCardTitle: "Configuration",
-        jsonPlaceholder: 'Select a file and click "Load"...',
-        btnLoadJson: "Load",
+        jsonPlaceholder: 'Select a file...',
+        btnUpdateJson: "Update",
         btnSaveJson: "Save",
         btnFormat: "Format",
         modalTitle: "Settings",
@@ -2176,7 +2202,7 @@
     };
 
     /* ==========================================================================
-       Schemas & Help Texts
+       Schemas, Validators & Application State
        ========================================================================== */
     const SKEEN_DEFAULT_SCHEMA = {
       auto_start: { enabled: 1, delay: 0 },
@@ -2534,11 +2560,11 @@
         const item = document.createElement('div');
         item.className = 'conn-item';
         item.innerHTML = `
-          <div style="overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;">
-              <strong style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.88rem;">${conn.name || 'Router'}</strong>
-              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${conn.url}</span>
+          <div class="modal-h3-title">
+              <strong>${conn.name || 'Router'}</strong>
+              <span>${conn.url}</span>
           </div>
-          <div style="display: flex; gap: 4px; flex-shrink: 0; align-items: center;">
+          <div class="flex-row-center-6 flex-shrink-0">
               <button class="icon-btn-sm secondary" onclick="editConnection(${index})" title="${t('btnEdit')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
               <button class="icon-btn-sm danger" onclick="deleteConnection(${index})" title="${t('btnDelete')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
           </div>
@@ -3313,6 +3339,11 @@
     }
 
     async function saveConfigFile() {
+      if (!hasUnsavedChanges()) {
+        showStatus('jsonStatus', t('noChangesNeeded'), false);
+        return;
+      }
+
       if (currentEditorMode === 'form' && !validateWholeForm()) return;
 
       const editor = document.getElementById('jsonEditor');
@@ -3476,7 +3507,7 @@
           <span>${t('btnRestart')}</span>
         </button>
       ` : `
-        <button class="success-btn width-100" style="font-size: 0.95rem; padding: 10px;" onclick="executeCommandParam('start')">
+        <button class="success-btn width-100 btn-start-action" onclick="executeCommandParam('start')">
           <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           <span>${t('btnStart')}</span>
         </button>
