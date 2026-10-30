@@ -928,6 +928,8 @@
       align-items: center;
       gap: 8px;
       min-width: 0;
+      min-height: 31px;
+      max-height: 31px;
     }
 
     .form-setting-input input[type="text"],
@@ -1993,266 +1995,134 @@
        Localization & Dictionaries
        ========================================================================== */
     const translations = {
-      ru: {
-        tabSKeen: "SKeen",
-        tabConfig: "Конфиг",
-        skeenCardTitle: "Управление SKeen",
-        extraActionLabel: "Дополнительные сервисные команды",
-        btnExecute: "Выполнить",
-        outputLabel: "Вывод (stdout / stderr):",
-        waitingOutput: "Ожидание выполнения команды...",
-        jsonCardTitle: "Конфигурация",
-        jsonPlaceholder: 'Выберите файл...',
-        btnUpdateJson: "Обновить",
-        btnSaveJson: "Сохранить",
-        btnFormat: "Формат",
-        modalTitle: "Настройки",
-        modalTabConnections: "Подключения",
-        modalTabMisc: "Прочее",
-        labelThemeAppearance: "Оформление",
-        labelLanguage: "Язык",
-        langAuto: "Как в системе",
-        formTitleAdd: "Добавить новое подключение",
-        formTitleEdit: "Редактировать подключение",
-        labelName: "Имя роутера",
-        placeholderName: "Необязательно",
-        labelUrl: "URL сервера",
-        labelKey: "Секрет",
-        placeholderKey: "Ключ",
-        btnSaveConn: "Сохранить",
-        btnClose: "Закрыть",
-        noConnections: "-- Нет подключений --",
-        emptyList: "Список пуст.",
-        btnEdit: "Изменить",
-        btnDelete: "Удалить",
-        statusLoaded: "Файл успешно загружен",
-        statusSaved: "Файл успешно сохранен. Перезапустите SKeen для применения изменений",
-        statusFormatted: "JSON отформатирован",
-        noChangesNeeded: "Сохранение не требуется",
-        executing: "Выполнение...",
-        emptyOutput: "(Пустой вывод)",
-        alertNoUrl: "Укажите URL сервера!",
-        alertNoConn: "Необходимо добавить хотя бы одно подключение!",
-        alertNeedSetup: "Сначала настройте подключение к роутеру!",
-        confirmDelete: "Удалить это подключение?",
-        confirmUnsaved: "Есть несохраненные изменения. Вы уверены, что хотите продолжить без сохранения?",
-        pingError: "❌ Ошибка подключения: не удалось достучаться до эндпоинта.\n\nДетали: ",
-        alertDuplicateUrl: "Подключение с таким URL уже существует!",
-        confirmModalTitle: "Подтверждение",
-        btnYes: "Да",
-        btnNo: "Отмена",
-        alertModalTitle: "Внимание",
-        btnOk: "ОК",
-        statusActive: "Работает",
-        statusInactive: "Остановлен",
-        statusServerUnavailable: 'Сервер недоступен',
-        statusNoConnection: 'API-сервер остановлен / Нет связи',
-        statusChecking: 'Проверка состояния...',
-        statusMode: 'Режим',
-        btnStart: "Запустить SKeen",
-        btnStop: "Остановить",
-        btnRestart: "Перезапустить",
-        lblBackupFile: "Имя бэкапа",
-        lblSyncUrl: "URL конфига (опционально)",
-        lblTunSubCommand: "Действие TUN",
-        lblIpAddress: "IP адрес",
-        lblIfaceName: "Имя интерфейса",
-        placeholderBackupFile: "skeen_backup_2026.tar.gz",
-        placeholderSyncUrl: "https://example.com/sub",
-        placeholderIpAddress: "172.16.250.1",
-        placeholderIfaceName: "MyTUN",
-        alertEmptyParam: "Заполните все необходимые параметры!",
-        btnClearOutput: "Очистить вывод",
-        modeForm: "Форма",
-        modeFormText: "Форма",
-        modeText: "JSON",
-        tooltipTitle: "Справка по параметру",
-        arrayModalTitle: "Редактирование списка",
-        arrayPlaceholder: "Новый элемент...",
-        btnAdd: "Добавить",
-        btnCancel: "Отмена",
-        loadingList: "Загрузка списка...",
-        noFilesAvailable: "Нет доступных файлов",
-        errorLoadList: "Ошибка загрузки списка",
-        fullscreenTitle: "На весь экран",
-        themeAutoTitle: "Как в системе",
-        themeLightTitle: "Светлая",
-        themeDarkTitle: "Темная",
-        // Form sections & labels
-        secGeneral: "Основные",
-        secAutoStart: "Автозапуск",
-        secDelay: "Задержка",
-        secPolicy: "Политика доступа",
-        secSegment: "Сегмент",
-        secNetwork: "Сеть",
-        secIpv6: "Включить IPv6",
-        secTuning: "Оптимизация",
-        secPingCheck: "Ping Check",
-        secSingbox: "Sing-box",
-        secUseDir: "Использовать папку",
-        secConfigUrl: "URL конфига",
-        secSplit: "Разбивать (split)",
-        secApiUrl: "API URL",
-        secApiSecret: "API Секрет",
-        secExtSingbox: "Сторонний Sing-box",
-        secExtPath: "Путь к бинарнику",
-        secServices: "Сервисы",
-        secApiPort: "API Порт",
-        secCorsOrigins: "CORS Origins",
-        secDashboard: "Dashboard",
-        secLocalProxy: "Локальный прокси",
-        secProxyPort: "Порт прокси",
-        secProxyUser: "Пользователь",
-        secProxyPass: "Пароль прокси",
-        secFirewall: "Фаервол",
-        secIntercept: "Перехват",
-        secFakeip: "FakeIP перехват",
-        secFakeipClients: "Клиенты FakeIP",
-        secExclude: "Исключения фаервола",
-        secExcludePorts: "Исключенные порты",
-        secExcludeV4: "Исключенные IPv4 CIDR",
-        secExcludeV6: "Исключенные IPv6 CIDR",
-        secRedirectDns: "Редирект DNS",
-        secDnsPort: "Порт редиректа DNS",
-        secUsePolicyDns: "Использовать политику DNS",
-        secProxyRouter: "Проксирование роутера",
-        secUpdates: "Обновления",
-        secUpdateSingbox: "Обновления Sing-box",
-        secBetaSingbox: "Бета-версии Sing-box",
-        secUpdateSkeen: "Обновления SKeen",
-        secUpdateSkeenApi: "Обновления SKeen API",
-        enabledLbl: "Включить"
-      },
-      en: {
-        tabSKeen: "SKeen",
-        tabConfig: "Config",
-        skeenCardTitle: "SKeen Management",
-        extraActionLabel: "Extra Service Commands",
-        btnExecute: "Execute",
-        outputLabel: "Output (stdout / stderr):",
-        waitingOutput: "Waiting for command execution...",
-        jsonCardTitle: "Configuration",
-        jsonPlaceholder: 'Select a file...',
-        btnUpdateJson: "Update",
-        btnSaveJson: "Save",
-        btnFormat: "Format",
-        modalTitle: "Settings",
-        modalTabConnections: "Connections",
-        modalTabMisc: "Misc",
-        labelThemeAppearance: "Appearance",
-        labelLanguage: "Language",
-        langAuto: "System default",
-        formTitleAdd: "Add New Connection",
-        formTitleEdit: "Edit Connection",
-        labelName: "Router Name",
-        placeholderName: "Optional",
-        labelUrl: "Server URL",
-        labelKey: "Secret",
-        placeholderKey: "Key",
-        btnSaveConn: "Save",
-        btnClose: "Close",
-        noConnections: "-- No connections --",
-        emptyList: "List is empty.",
-        btnEdit: "Edit",
-        btnDelete: "Delete",
-        statusLoaded: "File successfully loaded",
-        statusSaved: "File successfully saved. Restart SKeen to apply changes",
-        statusFormatted: "JSON formatted",
-        noChangesNeeded: "No changes to save",
-        executing: "Executing...",
-        emptyOutput: "(Empty output)",
-        alertNoUrl: "Specify the server URL!",
-        alertNoConn: "You must add at least one connection!",
-        alertNeedSetup: "Configure the router connection first!",
-        confirmDelete: "Delete this connection?",
-        confirmUnsaved: "You have unsaved changes. Are you sure you want to proceed without saving?",
-        pingError: "❌ Connection error: failed to reach endpoint.\n\nDetails: ",
-        alertDuplicateUrl: "Connection with this URL already exists!",
-        confirmModalTitle: "Confirmation",
-        btnYes: "Yes",
-        btnNo: "Cancel",
-        alertModalTitle: "Attention",
-        btnOk: "OK",
-        statusActive: "Running",
-        statusInactive: "Stopped",
-        statusServerUnavailable: 'Server unavailable',
-        statusNoConnection: 'API server stopped / No connection',
-        statusChecking: 'Checking status...',
-        statusMode: 'Mode',
-        btnStart: "Start SKeen",
-        btnStop: "Stop",
-        btnRestart: "Restart",
-        lblBackupFile: "Backup File Name",
-        lblSyncUrl: "Config URL (optional)",
-        lblTunSubCommand: "TUN Action",
-        lblIpAddress: "IP Address",
-        lblIfaceName: "Interface Name",
-        placeholderBackupFile: "skeen_backup_2026.tar.gz",
-        placeholderSyncUrl: "https://example.com/sub",
-        placeholderIpAddress: "172.16.250.1",
-        placeholderIfaceName: "MyTUN",
-        alertEmptyParam: "Please fill in all required parameters!",
-        btnClearOutput: "Clear output",
-        modeForm: "Form",
-        modeFormText: "Form",
-        modeText: "JSON",
-        tooltipTitle: "Parameter Help",
-        arrayModalTitle: "Edit List",
-        arrayPlaceholder: "New item...",
-        btnAdd: "Add",
-        btnCancel: "Cancel",
-        loadingList: "Loading list...",
-        noFilesAvailable: "No available files",
-        errorLoadList: "Error loading list",
-        fullscreenTitle: "Fullscreen",
-        themeAutoTitle: "System default",
-        themeLightTitle: "Light",
-        themeDarkTitle: "Dark",
-        // Form sections & labels
-        secGeneral: "General",
-        secAutoStart: "Auto Start",
-        secDelay: "Delay",
-        secPolicy: "Policy",
-        secSegment: "Segment",
-        secNetwork: "Network",
-        secIpv6: "IPv6 Enable",
-        secTuning: "Tuning",
-        secPingCheck: "Ping Check",
-        secSingbox: "Sing-box",
-        secUseDir: "Use folder",
-        secConfigUrl: "Config URL",
-        secSplit: "Config Split",
-        secApiUrl: "API URL",
-        secApiSecret: "API Secret",
-        secExtSingbox: "External Sing-box",
-        secExtPath: "Path",
-        secServices: "Services",
-        secApiPort: "API Port",
-        secCorsOrigins: "CORS Origin",
-        secDashboard: "Dashboard",
-        secLocalProxy: "Local Proxy",
-        secProxyPort: "Proxy Port",
-        secProxyUser: "User",
-        secProxyPass: "Proxy Pass",
-        secFirewall: "Firewall",
-        secIntercept: "Firewall Intercept",
-        secFakeip: "FakeIP Enabled",
-        secFakeipClients: "FakeIP Clients",
-        secExclude: "Firewall Exclude",
-        secExcludePorts: "Excluded Ports",
-        secExcludeV4: "IPv4 CIDR Exclude",
-        secExcludeV6: "IPv6 CIDR Exclude",
-        secRedirectDns: "Redirect DNS",
-        secDnsPort: "DNS To Port",
-        secUsePolicyDns: "Use Policy",
-        secProxyRouter: "Proxy Router",
-        secUpdates: "Updates",
-        secUpdateSingbox: "Update Sing-box",
-        secBetaSingbox: "Sing-box Beta",
-        secUpdateSkeen: "Update SKeen",
-        secUpdateSkeenApi: "Update SKeen API",
-        enabledLbl: "Enabled"
-      }
+      tabSKeen: { ru: "SKeen", en: "SKeen" },
+      tabConfig: { ru: "Конфиг", en: "Config" },
+      skeenCardTitle: { ru: "Управление SKeen", en: "SKeen Management" },
+      extraActionLabel: { ru: "Дополнительные сервисные команды", en: "Extra Service Commands" },
+      btnExecute: { ru: "Выполнить", en: "Execute" },
+      outputLabel: { ru: "Вывод (stdout / stderr):", en: "Output (stdout / stderr):" },
+      waitingOutput: { ru: "Ожидание выполнения команды...", en: "Waiting for command execution..." },
+      jsonCardTitle: { ru: "Конфигурация", en: "Configuration" },
+      jsonPlaceholder: { ru: "Выберите файл...", en: "Select a file..." },
+      btnUpdateJson: { ru: "Обновить", en: "Update" },
+      btnSaveJson: { ru: "Сохранить", en: "Save" },
+      btnFormat: { ru: "Формат", en: "Format" },
+      modalTitle: { ru: "Настройки", en: "Settings" },
+      modalTabConnections: { ru: "Подключения", en: "Connections" },
+      modalTabMisc: { ru: "Прочее", en: "Misc" },
+      labelThemeAppearance: { ru: "Оформление", en: "Appearance" },
+      labelLanguage: { ru: "Язык", en: "Language" },
+      langAuto: { ru: "Как в системе", en: "System default" },
+      formTitleAdd: { ru: "Добавить новое подключение", en: "Add new connection" },
+      formTitleEdit: { ru: "Редактировать подключение", en: "Edit connection" },
+      labelName: { ru: "Имя роутера", en: "Router name" },
+      placeholderName: { ru: "Необязательно", en: "Optional" },
+      labelUrl: { ru: "URL сервера", en: "Server URL" },
+      labelKey: { ru: "Секрет", en: "Secret" },
+      placeholderKey: { ru: "Секретный ключ", en: "Secret key" },
+      btnSaveConn: { ru: "Сохранить", en: "Save" },
+      btnClose: { ru: "Закрыть", en: "Close" },
+      noConnections: { ru: "-- Нет подключений --", en: "-- No connections --" },
+      emptyList: { ru: "Список пуст.", en: "List is empty." },
+      btnEdit: { ru: "Изменить", en: "Edit" },
+      btnDelete: { ru: "Удалить", en: "Delete" },
+      statusLoaded: { ru: "Файл успешно загружен", en: "File successfully loaded" },
+      statusSaved: { ru: "Файл успешно сохранен. Перезапустите SKeen для применения изменений", en: "File successfully saved. Restart SKeen to apply changes" },
+      statusFormatted: { ru: "JSON отформатирован", en: "JSON formatted" },
+      noChangesNeeded: { ru: "Сохранение не требуется", en: "No changes needed" },
+      executing: { ru: "Выполнение...", en: "Executing..." },
+      emptyOutput: { ru: "(Пустой вывод)", en: "(Empty output)" },
+      alertNoUrl: { ru: "Укажите URL сервера!", en: "Specify the server URL!" },
+      alertNoConn: { ru: "Необходимо добавить хотя бы одно подключение!", en: "You must add at least one connection!" },
+      alertNeedSetup: { ru: "Сначала настройте подключение к роутеру!", en: "Configure the router connection first!" },
+      confirmDelete: { ru: "Удалить это подключение?", en: "Delete this connection?" },
+      confirmUnsaved: { ru: "Есть несохраненные изменения. Вы уверены, что хотите продолжить без сохранения?", en: "You have unsaved changes. Are you sure you want to proceed without saving?" },
+      pingError: { ru: "❌ Ошибка подключения: не удалось достучаться до эндпоинта.\n\nДетали: ", en: "❌ Connection error: failed to reach endpoint.\n\nDetails: " },
+      alertDuplicateUrl: { ru: "Подключение с таким URL уже существует!", en: "Connection with this URL already exists!" },
+      confirmModalTitle: { ru: "Подтверждение", en: "Confirmation" },
+      btnYes: { ru: "Да", en: "Yes" },
+      btnNo: { ru: "Отмена", en: "Cancel" },
+      alertModalTitle: { ru: "Внимание", en: "Attention" },
+      btnOk: { ru: "ОК", en: "OK" },
+      statusActive: { ru: "Работает", en: "Running" },
+      statusInactive: { ru: "Остановлен", en: "Stopped" },
+      statusServerUnavailable: { ru: "Сервер недоступен", en: "Server unavailable" },
+      statusNoConnection: { ru: "API-сервер остановлен / Нет связи", en: "API server stopped / No connection" },
+      statusChecking: { ru: "Проверка состояния...", en: "Checking status..." },
+      statusMode: { ru: "Режим", en: "Mode" },
+      btnStart: { ru: "Запустить SKeen", en: "Start SKeen" },
+      btnStop: { ru: "Остановить", en: "Stop" },
+      btnRestart: { ru: "Перезапустить", en: "Restart" },
+      lblBackupFile: { ru: "Имя бэкапа", en: "Backup file name" },
+      lblSyncUrl: { ru: "URL конфига (опционально)", en: "Config URL (optional)" },
+      lblTunSubCommand: { ru: "Действие TUN", en: "TUN action" },
+      lblIpAddress: { ru: "IP адрес", en: "IP address" },
+      lblIfaceName: { ru: "Имя интерфейса", en: "Interface name" },
+      placeholderBackupFile: { ru: "skeen_backup_2026.tar.gz", en: "skeen_backup_2026.tar.gz" },
+      placeholderSyncUrl: { ru: "https://example.com/sub", en: "https://example.com/sub" },
+      placeholderIpAddress: { ru: "172.16.250.1", en: "172.16.250.1" },
+      placeholderIfaceName: { ru: "MyTUN", en: "MyTUN" },
+      alertEmptyParam: { ru: "Заполните все необходимые параметры!", en: "Please fill in all required parameters!" },
+      btnClearOutput: { ru: "Очистить вывод", en: "Clear output" },
+      modeForm: { ru: "Форма", en: "Form" },
+      modeFormText: { ru: "Форма", en: "Form" },
+      modeText: { ru: "JSON", en: "JSON" },
+      tooltipTitle: { ru: "Справка по параметру", en: "Parameter Help" },
+      arrayModalTitle: { ru: "Редактирование списка", en: "Edit list" },
+      arrayPlaceholder: { ru: "Новый элемент...", en: "New item..." },
+      btnAdd: { ru: "Добавить", en: "Add" },
+      btnCancel: { ru: "Отмена", en: "Cancel" },
+      loadingList: { ru: "Загрузка списка...", en: "Loading list..." },
+      noFilesAvailable: { ru: "Нет доступных файлов", en: "No available files" },
+      errorLoadList: { ru: "Ошибка загрузки списка", en: "Error loading list" },
+      fullscreenTitle: { ru: "На весь экран", en: "Fullscreen" },
+      themeAutoTitle: { ru: "Как в системе", en: "System default" },
+      themeLightTitle: { ru: "Светлая", en: "Light" },
+      themeDarkTitle: { ru: "Темная", en: "Dark" },
+      secGeneral: { ru: "Основные", en: "General" },
+      secAutoStart: { ru: "Автозапуск", en: "Auto start" },
+      secDelay: { ru: "Задержка", en: "Delay" },
+      secPolicy: { ru: "Политика доступа", en: "Access policy" },
+      secSegment: { ru: "Сегмент", en: "Segment" },
+      secNetwork: { ru: "Сеть", en: "Network" },
+      secIpv6: { ru: "Включить IPv6", en: "Enable IPv6" },
+      secTuning: { ru: "Оптимизация", en: "Tuning" },
+      secPingCheck: { ru: "Ping Check", en: "Ping check" },
+      secSingbox: { ru: "Sing-box", en: "Sing-box" },
+      secUseDir: { ru: "Использовать папку", en: "Use folder" },
+      secConfigUrl: { ru: "URL конфига", en: "Config URL" },
+      secSplit: { ru: "Разбивать (split)", en: "Split" },
+      secApiUrl: { ru: "API URL", en: "API URL" },
+      secApiSecret: { ru: "API Секрет", en: "API secret" },
+      secExtSingbox: { ru: "Сторонний Sing-box", en: "External Sing-box" },
+      secExtPath: { ru: "Путь к бинарнику", en: "Binary path" },
+      secServices: { ru: "Сервисы", en: "Services" },
+      secApiPort: { ru: "API Порт", en: "API port" },
+      secCorsOrigins: { ru: "CORS Origins", en: "CORS origins" },
+      secDashboard: { ru: "Dashboard", en: "Dashboard" },
+      secLocalProxy: { ru: "Локальный прокси", en: "Local proxy" },
+      secProxyPort: { ru: "Порт прокси", en: "Proxy port" },
+      secProxyUser: { ru: "Пользователь", en: "User" },
+      secProxyPass: { ru: "Пароль прокси", en: "Proxy password" },
+      secFirewall: { ru: "Фаервол", en: "Firewall" },
+      secIntercept: { ru: "Перехват", en: "Intercept" },
+      secInterceptDns: { ru: "Перехват DNS", en: "DNS intercept" },
+      secFakeip: { ru: "FakeIP перехват", en: "FakeIP intercept" },
+      secFakeipClients: { ru: "Клиенты FakeIP", en: "FakeIP clients" },
+      secExclude: { ru: "Исключения фаервола", en: "Firewall exclusions" },
+      secExcludePorts: { ru: "Исключенные порты", en: "Excluded ports" },
+      secExcludeV4: { ru: "Исключенные IPv4 CIDR", en: "Excluded IPv4 CIDR" },
+      secExcludeV6: { ru: "Исключенные IPv6 CIDR", en: "Excluded IPv6 CIDR" },
+      secRedirectDns: { ru: "Редирект DNS", en: "DNS redirect" },
+      secDnsPort: { ru: "Порт редиректа DNS", en: "DNS redirect port" },
+      secUsePolicyDns: { ru: "Использовать политику DNS", en: "Use DNS policy" },
+      secProxyRouter: { ru: "Проксирование роутера", en: "Proxy router" },
+      secUpdates: { ru: "Обновления", en: "Updates" },
+      secUpdateSingbox: { ru: "Обновления Sing-box", en: "Sing-box updates" },
+      secBetaSingbox: { ru: "Бета-версии Sing-box", en: "Sing-box beta versions" },
+      secUpdateSkeen: { ru: "Обновления SKeen", en: "SKeen updates" },
+      secUpdateSkeenApi: { ru: "Обновления SKeen API", en: "SKeen API updates" },
+      enabledLbl: { ru: "Включить", en: "Enable" }
     };
 
     /* ==========================================================================
@@ -2296,93 +2166,173 @@
     };
 
     const helpTexts = {
-      ru: {
-        "auto_start.enabled": "Автозапуск SKeen при загрузке роутера.",
-        "auto_start.delay": "Задержка автозапуска в секундах (по умолчанию: 0).",
-        "policy.enabled": "Включить маршрутизацию на основе политики сетевого сегмента.",
-        "policy.segment": "Имя интерфейса сегмента (Bridge), политика которой будет использоваться; начинается с \"br\", далее цифра от 0 и больше (например, br1).",
-        "network.ipv6": "Включить поддержку IPv6.",
-        "network.tuning": "Включить оптимизацию сети через sysctl.",
-        "network.check": "Домены или IPv4 адреса для проверки доступности сети (макс. 3).",
-        "services.api.port": "Порт встроенного API-сервера SKeen (по умолчанию: 3000).",
-        "services.api.secret": "Секретный ключ для доступа к API SKeen.",
-        "services.api.cors_origin": "Разрешенные CORS-источники.",
-        "services.api.dashboard": "Включить веб-панель управления.",
-        "services.api.auto_start": "Автозапуск API-сервера.",
-        "services.proxy.enabled": "Использовать локальный прокси (127.0.0.1) для команд update и sync.",
-        "services.proxy.port": "Порт локального прокси.",
-        "services.proxy.user": "Имя пользователя для подключения к прокси.",
-        "services.proxy.pass": "Пароль пользователя для подключения к прокси.",
-        "singbox.config.use_dir": "Использовать папку в /opt/etc/skeen/config с конфигурациями sing-box вместо файла.",
-        "singbox.config.url": "URL-адрес для синхронизации конфигурации.",
-        "singbox.config.split": "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
-        "singbox.api.url": "URL к сервису sing-box API, необходимый для консольных команд skeen api",
-        "singbox.api.secret": "Секретный ключ API sing-box.",
-        "singbox.external.enabled": "Использовать сторонний бинарный файл Sing-box.",
-        "singbox.external.path": "Полный путь к стороннему файлу sing-box или его имя (если он доступен в PATH).",
-        "singbox.external.config.use_dir": "Использовать папку в /opt/etc/skeen/config_ext с конфигурациями sing-box вместо файла.",
-        "singbox.external.config.url": "URL конфигурации для стороннего Sing-box.",
-        "singbox.external.config.split": "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
-        "singbox.external.api.url": "URL к сервису sing-box API, необходимый для консольных команд skeen api",
-        "singbox.external.api.secret": "Секрет API стороннего sing-box.",
-        "firewall.intercept.dns": "Перехватывать DNS-запросы в режимах TProxy/Hybrid.",
-        "firewall.intercept.fakeip.enabled": "Включить FakeIP-пул адресов в перехват Redirect/TProxy. Для чистых IP-адресов, не имеющих доменов, настраивается в файле pure_cidr.list",
-        "firewall.intercept.fakeip.clients": "Клиенты (IP или CIDR) для FakeIP перехвата.",
-        "firewall.exclude.port": "Порты, исключенные из Redirect/TProxy.",
-        "firewall.exclude.ipv4_cidr": "Исключенные подсети IPv4 или IP адреса.",
-        "firewall.exclude.ipv6_cidr": "Исключенные подсети IPv6 или IP адреса.",
-        "firewall.redirect_dns.enabled": "Включает редирект DNS-запросов.",
-        "firewall.redirect_dns.to_port": "Порт перенаправления DNS-запросов.",
-        "firewall.redirect_dns.use_policy": "Использовать настроенную политику для редиректа DNS.",
-        "firewall.proxy_router": "Проксировать все сервисы роутера. Доступно в режимах redirect, tproxy и hybrid, исключения подсетей и порты исключения учитываются.",
-        "update.singbox.enabled": "Включить проверку обновлений Sing-box (CLI).",
-        "update.singbox.beta": "Включает проверку pre-release версий (CLI).",
-        "update.skeen.enabled": "Включить проверку обновлений SKeen (CLI).",
-        "update.skeen.api": "Включить проверку обновлений SKeen API (CLI)."
+      "auto_start.enabled": {
+        ru: "Автозапуск SKeen при загрузке роутера.",
+        en: "SKeen autostart on router reboot."
       },
-      en: {
-        "auto_start.enabled": "SKeen autostart on router reboot.",
-        "auto_start.delay": "Auto-start delay in seconds.",
-        "policy.enabled": "Enable routing based on segment policy.",
-        "policy.segment": "Name of the segment interface starting with 'br'.",
-        "network.ipv6": "Enable IPv6 support.",
-        "network.tuning": "Enable sysctl network optimization.",
-        "network.check": "Domains or IPv4 for connectivity tests.",
-        "services.api.port": "SKeen built-in API server port (dafault: 3000).",
-        "services.api.secret": "API secret key.",
-        "services.api.cors_origin": "Allowed CORS origins.",
-        "services.api.dashboard": "Enable web dashboard.",
-        "services.api.auto_start": "Auto-start API server.",
-        "services.proxy.enabled": "Use local proxy for update and sync.",
-        "services.proxy.port": "Local proxy port.",
-        "services.proxy.user": "Proxy username.",
-        "services.proxy.pass": "Proxy password.",
-        "singbox.config.use_dir": "Use a folder in /opt/etc/skeen/config with sing-box configurations instead of a file.",
-        "singbox.config.url": "URL for syncing config.",
-        "singbox.config.split": "The synced config will be split into separate files by key names if folder mode is enabled.",
-        "singbox.api.url": "URL for the sing-box API service, required for skeen-api CLI commands.",
-        "singbox.api.secret": "Sing-box API secret key.",
-        "singbox.external.enabled": "Use external binary file for Sing-box.",
-        "singbox.external.path": "Full path to the external sing-box executable or its command name (if in PATH).",
-        "singbox.external.config.use_dir": "Use a folder in /opt/etc/skeen/config_ext with sing-box configurations instead of a file.",
-        "singbox.external.config.url": "Config URL for external Sing-box.",
-        "singbox.external.config.split": "The synced config will be split into separate files by key names if folder mode is enabled.",
-        "singbox.external.api.url": "URL for sing-box API service, required for skeen-api CLI commands.",
-        "singbox.external.api.secret": "External sing-box API secret.",
-        "firewall.intercept.dns": "Intercept DNS queries.",
-        "firewall.intercept.fakeip.enabled": "Include FakeIP pool in Redirect/TProxy interception. Direct IPs without domains are configured in pure_cidr.list",
-        "firewall.intercept.fakeip.clients": "Clients (IP or CIDR) for FakeIP interception.",
-        "firewall.exclude.port": "Ports excluded from interception.",
-        "firewall.exclude.ipv4_cidr": "Excluded IPv4 subnets or IP addresses.",
-        "firewall.exclude.ipv6_cidr": "Excluded IPv6 subnets or IP addresses.",
-        "firewall.redirect_dns.enabled": "Enable DNS redirection.",
-        "firewall.redirect_dns.to_port": "DNS redirect port.",
-        "firewall.redirect_dns.use_policy": "Use configured policy for DNS.",
-        "firewall.proxy_router": "Proxy all router services. Available in redirect, tproxy, and hybrid modes; subnet and port exclusions are taken into account.",
-        "update.singbox.enabled": "Enable Sing-box update check (CLI).",
-        "update.singbox.beta": "Enable checking pre-release versions (CLI).",
-        "update.skeen.enabled": "Enable SKeen update check (CLI).",
-        "update.skeen.api": "Enable SKeen API update check (CLI)."
+      "auto_start.delay": {
+        ru: "Задержка автозапуска в секундах (по умолчанию: 0).",
+        en: "Auto-start delay in seconds (default: 0)."
+      },
+      "policy.enabled": {
+        ru: "Включить маршрутизацию на основе политики сетевого сегмента.",
+        en: "Enable routing based on network segment policy."
+      },
+      "policy.segment": {
+        ru: "Имя интерфейса сегмента (Bridge), политика которой будет использоваться; начинается с \"br\", далее цифра от 0 и больше (например, br1).",
+        en: "Name of the segment interface (Bridge) whose policy will be used; starts with 'br', followed by a digit from 0 and above (e.g., br1)."
+      },
+      "network.ipv6": {
+        ru: "Включить поддержку IPv6.",
+        en: "Enable IPv6 support."
+      },
+      "network.tuning": {
+        ru: "Включить оптимизацию сети через sysctl.",
+        en: "Enable network optimization via sysctl."
+      },
+      "network.check": {
+        ru: "Домены или IPv4 адреса для проверки доступности сети (макс. 3).",
+        en: "Domains or IPv4 addresses to check network connectivity (max. 3)."
+      },
+      "services.api.port": {
+        ru: "Порт встроенного API-сервера SKeen (по умолчанию: 3000).",
+        en: "Port of the built-in SKeen API server (default: 3000)."
+      },
+      "services.api.secret": {
+        ru: "Секретный ключ для доступа к API SKeen.",
+        en: "Secret key for accessing the SKeen API."
+      },
+      "services.api.cors_origin": {
+        ru: "Разрешенные CORS-источники.",
+        en: "Allowed CORS origins."
+      },
+      "services.api.dashboard": {
+        ru: "Включить веб-панель управления.",
+        en: "Enable the web management dashboard."
+      },
+      "services.api.auto_start": {
+        ru: "Автозапуск API-сервера.",
+        en: "Auto-start the API server."
+      },
+      "services.proxy.enabled": {
+        ru: "Использовать локальный прокси (127.0.0.1) для команд update и sync.",
+        en: "Use local proxy (127.0.0.1) for update and sync commands."
+      },
+      "services.proxy.port": {
+        ru: "Порт локального прокси.",
+        en: "Local proxy port."
+      },
+      "services.proxy.user": {
+        ru: "Имя пользователя для подключения к прокси.",
+        en: "Username for proxy connection."
+      },
+      "services.proxy.pass": {
+        ru: "Пароль пользователя для подключения к прокси.",
+        en: "Password for proxy connection."
+      },
+      "singbox.config.use_dir": {
+        ru: "Использовать папку в /opt/etc/skeen/config с конфигурациями sing-box вместо файла.",
+        en: "Use a folder in /opt/etc/skeen/config with sing-box configurations instead of a single file."
+      },
+      "singbox.config.url": {
+        ru: "URL-адрес для синхронизации конфигурации.",
+        en: "URL for configuration synchronization."
+      },
+      "singbox.config.split": {
+        ru: "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
+        en: "The synchronized config will be split into separate files by key names if folder mode is used."
+      },
+      "singbox.api.url": {
+        ru: "URL к сервису sing-box API, необходимый для консольных команд skeen api",
+        en: "URL to the sing-box API service, required for skeen api console commands."
+      },
+      "singbox.api.secret": {
+        ru: "Секретный ключ API sing-box.",
+        en: "Sing-box API secret key."
+      },
+      "singbox.external.enabled": {
+        ru: "Использовать сторонний бинарный файл Sing-box.",
+        en: "Use an external Sing-box binary file."
+      },
+      "singbox.external.path": {
+        ru: "Полный путь к стороннему файлу sing-box или его имя (если он доступен в PATH).",
+        en: "Full path to the external sing-box file or its name (if available in PATH)."
+      },
+      "singbox.external.config.use_dir": {
+        ru: "Использовать папку в /opt/etc/skeen/config_ext с конфигурациями sing-box вместо файла.",
+        en: "Use a folder in /opt/etc/skeen/config_ext with sing-box configurations instead of a file."
+      },
+      "singbox.external.config.url": {
+        ru: "URL конфигурации для стороннего Sing-box.",
+        en: "Configuration URL for the external Sing-box."
+      },
+      "singbox.external.config.split": {
+        ru: "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
+        en: "The synchronized config will be split into separate files by key names if folder mode is used."
+      },
+      "singbox.external.api.url": {
+        ru: "URL к сервису sing-box API, необходимый для консольных команд skeen api",
+        en: "URL to the sing-box API service, required for skeen api console commands."
+      },
+      "singbox.external.api.secret": {
+        ru: "Секрет API стороннего sing-box.",
+        en: "API secret for the external sing-box."
+      },
+      "firewall.intercept.dns": {
+        ru: "Перехватывать DNS-запросы в режимах TProxy/Hybrid.",
+        en: "Intercept DNS queries in TProxy/Hybrid modes."
+      },
+      "firewall.intercept.fakeip.enabled": {
+        ru: "Включить FakeIP-пул адресов в перехват Redirect/TProxy. Для чистых IP-адресов, не имеющих доменов, настраивается в файле pure_cidr.list",
+        en: "Include FakeIP address pool in Redirect/TProxy interception. Pure IP addresses without domains are configured in pure_cidr.list"
+      },
+      "firewall.intercept.fakeip.clients": {
+        ru: "Клиенты (IP или CIDR) для FakeIP перехвата.",
+        en: "Clients (IP or CIDR) for FakeIP interception."
+      },
+      "firewall.exclude.port": {
+        ru: "Порты, исключенные из Redirect/TProxy.",
+        en: "Ports excluded from Redirect/TProxy interception."
+      },
+      "firewall.exclude.ipv4_cidr": {
+        ru: "Исключенные подсети IPv4 или IP адреса.",
+        en: "Excluded IPv4 subnets or IP addresses."
+      },
+      "firewall.exclude.ipv6_cidr": {
+        ru: "Исключенные подсети IPv6 или IP адреса.",
+        en: "Excluded IPv6 subnets or IP addresses."
+      },
+      "firewall.redirect_dns.enabled": {
+        ru: "Включает редирект DNS-запросов.",
+        en: "Enables DNS query redirection."
+      },
+      "firewall.redirect_dns.to_port": {
+        ru: "Порт перенаправления DNS-запросов.",
+        en: "Port for redirecting DNS queries."
+      },
+      "firewall.redirect_dns.use_policy": {
+        ru: "Использовать настроенную политику для редиректа DNS.",
+        en: "Use the configured policy for DNS redirection."
+      },
+      "firewall.proxy_router": {
+        ru: "Проксировать все сервисы роутера. Доступно в режимах redirect, tproxy и hybrid, исключения подсетей и порты исключения учитываются.",
+        en: "Proxy all router services. Available in redirect, tproxy, and hybrid modes; subnet and port exclusions are taken into account."
+      },
+      "update.singbox.enabled": {
+        ru: "Включить проверку обновлений Sing-box (CLI).",
+        en: "Enable Sing-box update check (CLI)."
+      },
+      "update.singbox.beta": {
+        ru: "Включает проверку pre-release версий (CLI).",
+        en: "Enable checking pre-release versions (CLI)."
+      },
+      "update.skeen.enabled": {
+        ru: "Включить проверку обновлений SKeen (CLI).",
+        en: "Enable SKeen update check (CLI)."
+      },
+      "update.skeen.api": {
+        ru: "Включить проверку обновлений SKeen API (CLI).",
+        en: "Enable SKeen API update check (CLI)."
       }
     };
 
@@ -2964,7 +2914,7 @@
 
       // Accordion 3: Firewall
       const fwSec1 = renderSection(t('secIntercept'), [
-        renderSettingRow('DNS Intercept', 'firewall.intercept.dns', `<input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
+        renderSettingRow(t('secInterceptDns'), 'firewall.intercept.dns', `<input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', fakeipClientsArray, 'ip')">`)
       ].join(''));
@@ -3176,8 +3126,8 @@
     }
 
     function showHelp(key) {
-      const l = currentLang || 'ru';
-      const text = (helpTexts[l] && helpTexts[l][key]) || helpTexts['ru'][key] || 'Описание отсутствует.';
+      const item = helpTexts[key];
+      const text = item ? (item[currentLang] || item['en'] || item['ru']) : 'No info :-(';
       document.getElementById('tooltipModalText').textContent = text;
       setModalState('tooltipModal', true);
     }
@@ -3287,21 +3237,26 @@
     }
 
     function t(key) {
-      return translations[currentLang][key] || translations['en'][key] || key;
+      if (!translations[key]) return key;
+      return translations[key][currentLang] || translations[key]['en'] || key;
     }
 
     function applyLanguage() {
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[currentLang][key]) el.textContent = translations[currentLang][key];
-      });
-      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (translations[currentLang][key]) el.placeholder = translations[currentLang][key];
-      });
-      document.querySelectorAll('[data-i18n-title]').forEach(el => {
-        const key = el.getAttribute('data-i18n-title');
-        if (translations[currentLang][key]) el.title = translations[currentLang][key];
+      const elements = document.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title]');
+
+      elements.forEach(el => {
+        if (el.hasAttribute('data-i18n')) {
+          const key = el.getAttribute('data-i18n');
+          el.textContent = t(key);
+        }
+        if (el.hasAttribute('data-i18n-placeholder')) {
+          const key = el.getAttribute('data-i18n-placeholder');
+          el.placeholder = t(key);
+        }
+        if (el.hasAttribute('data-i18n-title')) {
+          const key = el.getAttribute('data-i18n-title');
+          el.title = t(key);
+        }
       });
     }
 
