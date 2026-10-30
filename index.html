@@ -3628,7 +3628,7 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
         const res = await fetch(`${baseUrl}/api/exec`, {
           method: 'POST',
@@ -3652,7 +3652,7 @@
           }, 3000);
         }
       } catch (e) {
-        outputEl.innerHTML = `<span class="ansi-red">Error: ${e.name === 'AbortError' ? 'Request timeout (30s limit exceeded)' : e.message}</span>`;
+        outputEl.innerHTML = `<span class="ansi-red">Error: ${e.name === 'AbortError' ? 'Request timeout (25s limit exceeded)' : e.message}</span>`;
       } finally {
         if (param !== 'areload') {
           disabledElements.forEach(el => el.disabled = false);
