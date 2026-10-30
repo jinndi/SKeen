@@ -254,7 +254,7 @@ local function update_script()
   if remote_version == VERSION then
     cleanup()
     print("[OK] API script is already up to date (v" .. VERSION .. ")")
-    return true
+    return false
   end
 
   print("Updating API script: v" .. VERSION .. " -> v" .. remote_version)
@@ -374,7 +374,8 @@ local function is_allowed_param(param)
     ["clean"]    = true,
     ["sync"]     = true,
     ["headers"]  = true,
-    ["areload"]  = true
+    ["areload"]  = true,
+    ["aupdate"]  = true
   }
   if exact_allowed[param] then return true end
 
@@ -1094,10 +1095,39 @@ local function handle_client(client)
         if param == "areload" then
           -- Restart is executed in the background with a 2-second delay
           -- so that the current HTTP request has time to return a 200 OK status to the browser
-          os.execute("(sleep 2 && skeen areload) >/dev/null 2>&1 &")
+          os.execute('(sleep 2 && "' .. SCRIPT .. '" restart) >/dev/null 2>&1 &')
           response_data = {
             success = true,
             stdout = "API reload initiated, restarting in 2 seconds..."
+          }
+        elseif param == "aupdate" then
+          local log_buffer = {}
+
+          -- Intercept print to collect all function output into an array
+          local old_print = _G.print
+          _G.print = function(...)
+            table.insert(log_buffer, table.concat({...}, "\t"))
+          end
+
+          -- Safely call the update function via pcall (to prevent crashing the server on error)
+          local success_pcall, did_update = pcall(update_script)
+
+          -- Restore the standard print
+          _G.print = old_print
+
+          local result = table.concat(log_buffer, "\n")
+          if not success_pcall then
+            result = result .. "\nError: " .. tostring(did_update)
+          end
+
+          -- If everything succeeded, schedule a restart
+          if success_pcall and did_update == true then
+            os.execute('(sleep 2 && "' .. SCRIPT .. '" restart) >/dev/null 2>&1 &')
+          end
+
+          response_data = {
+            success = success_pcall,
+            stdout = result ~= "" and result or ""
           }
         else
           local command = "FORCE_COLOR=1 skeen " .. param

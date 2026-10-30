@@ -3562,7 +3562,6 @@
 
       const options = [
         { val: "reload", label: (currentLang === 'ru' ? "reload - Перезагрузка sing-box" : "reload - Reload sing-box") },
-        { val: "areload", label: (currentLang === 'ru' ? "areload - Перезагрузка API" : "areload - Reload API") },
         { val: "sync", label: (currentLang === 'ru' ? "sync - Синхронизировать конфиг" : "sync - Synchronize config") },
         { val: "status", label: (currentLang === 'ru' ? "status - Показать статус" : "status - Show status") },
         { val: "kill", label: (currentLang === 'ru' ? "kill - Принудительная остановка" : "kill - Force stop") },
@@ -3578,7 +3577,9 @@
         { val: "restore", label: (currentLang === 'ru' ? "restore - Восстановить из архива" : "restore - Restore backup") },
         { val: "clean", label: (currentLang === 'ru' ? "clean - Очистить кэш sing-box" : "clean - Clear sing-box cache") },
         { val: "headers", label: (currentLang === 'ru' ? "headers - Сгенерировать заголовки" : "headers - Generate headers") },
-        { val: "tun", label: "OpkgTun (KeeneticOS v5+)" }
+        { val: "tun", label: "OpkgTun (KeeneticOS v5+)" },
+        { val: "areload", label: (currentLang === 'ru' ? "areload - Перезагрузка API" : "areload - Reload API") },
+        { val: "aupdate", label: (currentLang === 'ru' ? "aupdate - Обновление API" : "aupdate - Update API") },
       ];
 
       select.innerHTML = options.map(o => `<option value="${o.val}">${o.label}</option>`).join('');

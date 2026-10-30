@@ -3990,7 +3990,6 @@ if [ -f "$SKEEN_SCRIPT" ]; then
     ;;
   get_singbox_config) get_singbox_config --json ;;
   get_api_config) get_service_api_config --json ;;
-  areload) "$SERVICE_API_SCRIPT" restart ;;
   "") show_menu ;;
   help | *) show_help ;;
   esac

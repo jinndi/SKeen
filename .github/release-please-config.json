@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "last-release-sha": "7aa10abd538f9897e5391f2b1186bef4e0d8f6be",
+  "last-release-sha": "0a9be460acca62b8810ce02c3067a72be7c5ae52",
   "packages": {
     ".": {
       "release-type": "simple",
@@ -22,6 +22,8 @@
     { "type": "env", "section": "🌐 Env" },
     { "type": "config", "section": "⚙️ Config" },
     { "type": "test", "section": "🧪 Test" },
+    { "type": "api", "section": "🔌 API" },
+    { "type": "dashboard", "section": "📊 Dashboard" },
     { "type": "chore", "section": "🧰 Chore" }
   ]
 }
