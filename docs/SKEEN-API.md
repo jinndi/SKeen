@@ -386,7 +386,7 @@ Executes allowed CLI commands (`skeen <param>`).
 
 #### Allowed Commands (`param`):
 
-`start`, `stop`, `restart`, `reload`, `kill`, `status`, `version`, `help`, `iface`, `connstat`, `test`, `deps`, `check`, `format`, `backup`, `backups`, `clean`, `sync`, `headers`, `areload`, `restore <file>`, `sync <url>`, `tun list`, `tun create <ip> <dev>`, `tun delete <dev>`.
+`start`, `stop`, `restart`, `reload`, `kill`, `status`, `version`, `help`, `iface`, `connstat`, `test`, `deps`, `check`, `format`, `backup`, `backups`, `clean`, `sync`, `headers`, `restore <file>`, `sync <url>`, `tun list`, `tun create <ip> <dev>`, `tun delete <dev>`, `areload`, `aupdate`.
 
 > **Note:** The `areload` and `aupdate` commands are executed directly via the API server's internal functions (without spawning the external `skeen` CLI tool). The update check and download process (`aupdate`) runs synchronously to capture and return the full output log in `stdout`, while the service restart (`areload` / `restart`) on successful update is scheduled asynchronously with a 2-second delay to ensure the current HTTP request responds with `200 OK` to the browser.
 
