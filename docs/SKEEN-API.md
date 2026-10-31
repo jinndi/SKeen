@@ -144,15 +144,23 @@ If missing or invalid, the server returns `401 Unauthorized`.
 
 ### CORS & Security Headers
 
-Every server response includes security headers:
+Each server response is equipped with security and CORS policy headers:
 
+- `Access-Control-Allow-Origin` — Dynamically populated based on the `cors_origin` whitelist from the configuration. If the domain is allowed, the client's exact `Origin` is returned; if not, the header is omitted, and the browser blocks the request.
+- `Vary: Origin` — Informs caching proxies and browsers that the response depends on the `Origin` header value.
+- `Access-Control-Allow-Methods: GET, POST, OPTIONS`
+- `Access-Control-Allow-Headers: X-API-Key, Content-Type`
 - `X-Content-Type-Options: nosniff`
-
 - `X-Frame-Options: SAMEORIGIN`
 
-- `Access-Control-Allow-Methods: GET, POST, OPTIONS`
-
-- `Access-Control-Allow-Headers: X-API-Key, Content-Type`
+> **Important when deploying via KeenDNS/CrazeDNS (OS 4.2+):**
+> To prevent the router's built-in proxy server from stripping the `Origin` header (provided that specific allowed domain names are specified in `cors_origin`) for requests from the external network, make sure that the corresponding option is enabled in the router's CLI for your application:
+>
+> ```text
+> ip http proxy myapi preserve-origin
+> system configuration save
+> ```
+> Where "myapi" is the 4th-level application DNS name from the KeenDNS/CrazeDNS section.
 
 ## 6. REST API Endpoints
 

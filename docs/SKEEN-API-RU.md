@@ -152,15 +152,23 @@ X-API-Key: ваш_секретный_ключ
 
 ### CORS & Security Headers
 
-Каждый ответ сервера снабжается заголовками безопасности:
+Каждый ответ сервера снабжается заголовками безопасности и CORS-политики:
 
-* `X-Content-Type-Options: nosniff`
+- `Access-Control-Allow-Origin` — динамически подставляется на основе белого списка `cors_origin` из конфигурации. Если домен разрешен, возвращается точный `Origin` клиента; если нет — заголовок не передается, и браузер блокирует запрос.
+- `Vary: Origin` — сообщает кеширующим прокси и браузерам, что ответ зависит от значения заголовка `Origin`.
+- `Access-Control-Allow-Methods: GET, POST, OPTIONS`
+- `Access-Control-Allow-Headers: X-API-Key, Content-Type`
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: SAMEORIGIN`
 
-* `X-Frame-Options: SAMEORIGIN`
-
-* `Access-Control-Allow-Methods: GET, POST, OPTIONS`
-
-* `Access-Control-Allow-Headers: X-API-Key, Content-Type`
+> **Важно при развертывании через KeenDNS/CrazeDNS (OS 4.2+):**
+> Чтобы встроенный прокси-сервер роутера не вырезал заголовок `Origin` (при условии, что в `cors_origin` заданы конкретные разрешенные доменные имена) для запросов из внешней сети, убедитесь, что в CLI роутера активирована соответствующая опция для вашего приложения:
+>
+> ```text
+> ip http proxy myapi preserve-origin
+> system configuration save
+> ```
+> Где "myapi" - это dns имя приложения (4-го уровня) из раздела KeenDNS/CrazeDNS
 
 ---
 
