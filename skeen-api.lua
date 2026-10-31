@@ -1,6 +1,7 @@
 #!/opt/bin/lua
 
 local socket = require("socket")
+local lfs = require("lfs")
 
 -------------------------------------------------------------------------------
 -- 0. VERSION AND COMMAND LINE ARGUMENT (CLI) HANDLING
@@ -157,16 +158,8 @@ local function get_uptime(pid)
     return nil
   end
 
-  local ticks_file = io.popen("getconf CLK_TCK 2>/dev/null")
-  local ticks = ticks_file and tonumber(ticks_file:read("*l"))
-
-  if ticks_file then
-    ticks_file:close()
-  end
-
-  ticks = ticks or 100
-
-  return math.max(0, math.floor(uptime - start_ticks / ticks))
+  -- Standard CLK_TCK value for Linux 100 (getconf CLK_TCK)
+  return math.max(0, math.floor(uptime - start_ticks / 100))
 end
 
 -- Pretty format seconds into days, hours, and minutes
@@ -749,7 +742,7 @@ local function write_raw_file(filepath, content)
   return ok ~= nil
 end
 
--- Build a map of configuration files available for reading/editing via the API
+-- Build a map of configuration files available for reading/editing via the API (using lfs)
 local function get_allowed_files_map()
   local default_path = SKEEN_DIR .. DEFAULT_FILES.singbox
   local map = {
@@ -766,26 +759,25 @@ local function get_allowed_files_map()
   local is_dir = (ok and cfg_info and cfg_info.is_dir) or false
 
   if is_dir then
-    local safe_path = path:gsub("'", "'\\''")
-    local cmd = string.format("find '%s' -maxdepth 1 -name '*.json' | sort", safe_path)
+    local files = {}
+    local parent_dir = path:match("([^/]+)$") or "config"
 
-    local p_find = io.popen(cmd)
-    if p_find then
-      local idx = 0
-      for file_full_path in p_find:lines() do
-        if file_full_path ~= "" then
-          local parent, filename = file_full_path:match("([^/]+)/([^/]+)$")
-          local display_name = (parent and filename) and (parent .. "/" .. filename) or
-              (file_full_path:match("^.+/(.+)$") or file_full_path)
-
-          map["sb_file_" .. idx] = { path = file_full_path, type = "json", name = display_name }
-          idx = idx + 1
+    for file in lfs.dir(path) do
+      if file:match("%.json$") then
+        local full_path = path .. "/" .. file
+        if lfs.attributes(full_path, "mode") == "file" then
+          table.insert(files, { path = full_path, name = parent_dir .. "/" .. file })
         end
       end
-      p_find:close()
+    end
+
+    table.sort(files, function(a, b) return a.name < b.name end)
+
+    for idx, item in ipairs(files) do
+      map["sb_file_" .. (idx - 1)] = { path = item.path, type = "json", name = item.name }
     end
   else
-    local filename = path:match("^.+/(.+)$") or "config.json"
+    local filename = path:match("([^/]+)$") or "config.json"
     map["singbox"] = { path = path, type = "json", name = filename }
   end
 

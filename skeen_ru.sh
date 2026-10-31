@@ -19,7 +19,7 @@ CALLER="${2:-}"
 [ -z "$CALLER" ] && CALLER="cli"
 [ -z "$ACTION" ] && CALLER="menu"
 
-readonly DEPENDENCIES="lua luasocket skeen-api iptables ip-full ipset net-tools conntrack curl tar jsonfilter logger"
+readonly DEPENDENCIES="lua luasocket luafilesystem skeen-api iptables ip-full ipset net-tools conntrack curl tar jsonfilter logger"
 
 readonly ENTWARE_DIR="/opt"
 readonly WORK_DIR="${ENTWARE_DIR}/etc/skeen"
