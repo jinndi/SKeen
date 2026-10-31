@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.9.3](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.2...SKeen-v5.9.3) (2026-10-31)
+
+
+### 🔌 API
+
+* replace shell commands with lfs for file operations ([fdfccd7](https://github.com/jinndi/SKeen/commit/fdfccd7a15e1c362089f2ea6b82b54ffc3c92bc6))
+
 ## [5.9.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.1...SKeen-v5.9.2) (2026-10-31)
 
 
