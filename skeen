@@ -15,7 +15,7 @@ readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.9.1"
+readonly SKEEN_VERSION="5.9.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="$RUN_DIR/$SKEEN_PROC.sh"
@@ -933,7 +933,7 @@ rm -f "$FIREWALL_HOOK_FILE"
 echomsg "Removing $SKEEN_NAME script..."
 rm -f "$SKEEN_SCRIPT"
 echomsg "Removing $SKEEN_NAME caches..."
-rm -f "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG" "$SINGBOX_RUN_VERSION"
+rm -f "$RUN_DIR"
 echomsg "Delete group $SKEEN_PROC..."
 delgroup "$SKEEN_PROC"
 if [ -f "$SINGBOX_BIN_PATH" ];then
@@ -1621,14 +1621,16 @@ iptables -w -t filter -A INPUT -i opkgtun+ -j "$CHAIN_TUN"
 iptables -w -t filter -A OUTPUT -o opkgtun+ -j "$CHAIN_TUN"
 }
 get_skeen_run_script_cmd(){
+local script="$SKEEN_SCRIPT"
 if [ ! -f "$SKEEN_RUN_SCRIPT" ]||files_differ "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT";then
 if create_run_dir&&cp -fp "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT";then
 chmod 700 "$SKEEN_RUN_SCRIPT"
-echo "$SKEEN_RUN_SCRIPT apply_firewall netfilter \"\$table\""
-else
-echo "$SKEEN_SCRIPT apply_firewall netfilter \"\$table\""
+script=$SKEEN_RUN_SCRIPT
 fi
+elif [ -f "$SKEEN_RUN_SCRIPT" ];then
+script="$SKEEN_RUN_SCRIPT"
 fi
+printf '%s apply_firewall netfilter "$%s"\n' "$script" 'table'
 }
 prepare_firewall(){
 local complete_msg redirect_data tproxy_data has_opkgtun route_all exclude_ports
@@ -1979,8 +1981,8 @@ done
 echook "Firewall rules applied successfully"
 }
 clean_firewall(){
-if [ -f "$SKEEN_RUN_SCRIPT" ];then
-"$SKEEN_RUN_SCRIPT" clean_firewall run_state
+if [ -n "$is_check_update" ]&&[ "$is_check_update" -eq 1 ];then
+"$SKEEN_RUN_SCRIPT" clean_firewall update
 return 0
 fi
 echomsg "Cleaning firewall rules..."
@@ -2612,6 +2614,7 @@ return 0
 }
 check_updates(){
 check_tty
+is_check_update=1
 is_update_skeen=0
 get_update_config
 if [ "$UPDATE_SINGBOX_ENABLED" != "1" ]&&[ "$UPDATE_SKEEN_ENABLED" != "1" ];then
@@ -2633,6 +2636,7 @@ fi
 if [ "$UPDATE_SKEEN_API" = "1" ]&&[ -f "$SERVICE_API_SCRIPT" ];then
 "$SERVICE_API_SCRIPT" update
 fi
+unset is_check_update
 if [ "$is_update_skeen" -eq 1 ];then
 exec sh "$SKEEN_SCRIPT" deps menu
 else
@@ -3223,7 +3227,7 @@ case "$CALLER:$ACTION" in
 netfilter:apply_firewall)apply_firewall "$3"
 exit 0
 ;;
-run_state:clean_firewall)rm -f "$SKEEN_RUN_SCRIPT"
+update:clean_firewall)rm -f "$SKEEN_RUN_SCRIPT"
 clean_firewall
 exit 0
 ;;
