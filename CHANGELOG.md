@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.9.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.1...SKeen-v5.9.2) (2026-10-31)
+
+
+### 🛠 Refactor
+
+* [#234](https://github.com/jinndi/SKeen/issues/234) improve firewall script handling ([e366a2b](https://github.com/jinndi/SKeen/commit/e366a2b2ccd8a5332eecc349a4537616ffdee66f))
+
 ## [5.9.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.0...SKeen-v5.9.1) (2026-10-30)
 
 
