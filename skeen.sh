@@ -32,7 +32,7 @@ readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:18
 readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.9.1"
+readonly SKEEN_VERSION="5.9.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="${RUN_DIR}/${SKEEN_PROC}.sh"
@@ -1131,7 +1131,7 @@ uninstall() {
   rm -f "$SKEEN_SCRIPT"
 
   echomsg "Removing ${SKEEN_NAME} caches..."
-  rm -f "$SKEEN_RUN_SCRIPT" "$SKEEN_RUN_CONFIG" "$SINGBOX_RUN_VERSION"
+  rm -f "$RUN_DIR"
 
   echomsg "Delete group ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
@@ -1991,14 +1991,18 @@ set_tun_rules() {
 }
 
 get_skeen_run_script_cmd() {
+  local script="$SKEEN_SCRIPT"
+
   if [ ! -f "$SKEEN_RUN_SCRIPT" ] || files_differ "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT"; then
     if create_run_dir && cp -fp "$SKEEN_SCRIPT" "$SKEEN_RUN_SCRIPT"; then
       chmod 700 "$SKEEN_RUN_SCRIPT"
-      echo "$SKEEN_RUN_SCRIPT apply_firewall netfilter \"\$table\""
-    else
-      echo "$SKEEN_SCRIPT apply_firewall netfilter \"\$table\""
+      script=$SKEEN_RUN_SCRIPT
     fi
+  elif [ -f "$SKEEN_RUN_SCRIPT" ]; then
+    script="$SKEEN_RUN_SCRIPT"
   fi
+
+  printf '%s apply_firewall netfilter "$%s"\n' "$script" 'table'
 }
 
 prepare_firewall() {
@@ -2437,8 +2441,8 @@ apply_firewall() {
 }
 
 clean_firewall() {
-  if [ -f "$SKEEN_RUN_SCRIPT" ]; then
-    "$SKEEN_RUN_SCRIPT" clean_firewall run_state
+  if [ -n "$is_check_update" ] && [ "$is_check_update" -eq 1 ]; then
+    "$SKEEN_RUN_SCRIPT" clean_firewall update
     return 0
   fi
 
@@ -3213,7 +3217,7 @@ ask_and_update() {
 check_updates() {
   check_tty
 
-  is_update_skeen=0
+  is_check_update=1; is_update_skeen=0
 
   get_update_config
   if [ "$UPDATE_SINGBOX_ENABLED" != "1" ] && [ "$UPDATE_SKEEN_ENABLED" != "1" ]; then
@@ -3242,6 +3246,8 @@ check_updates() {
   if [ "$UPDATE_SKEEN_API" = "1" ] && [ -f "$SERVICE_API_SCRIPT" ]; then
     "$SERVICE_API_SCRIPT" update
   fi
+
+  unset is_check_update
 
   if [ "$is_update_skeen" -eq 1 ]; then
     exec sh "$SKEEN_SCRIPT" deps menu
@@ -3945,7 +3951,7 @@ EOF
 
 case "$CALLER:$ACTION" in
   netfilter:apply_firewall) apply_firewall "$3"; exit 0 ;;
-  run_state:clean_firewall) rm -f "$SKEEN_RUN_SCRIPT"; clean_firewall; exit 0 ;;
+  update:clean_firewall) rm -f "$SKEEN_RUN_SCRIPT"; clean_firewall; exit 0 ;;
   netfilter:*) exit 0 ;;
 esac
 
