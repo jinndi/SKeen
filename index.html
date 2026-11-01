@@ -1624,7 +1624,6 @@
       transition: opacity 0.2s ease, visibility 0.2s ease;
     }
 
-    /* При первом входе на весь экран */
     body>#pagePreloader {
       position: fixed;
       background-color: var(--bg-color);
@@ -1656,6 +1655,79 @@
     body.preload * {
       transition: none !important;
     }
+
+    /* ==========================================================================
+       12. System Telemetry Modal Styles & Progress Bars
+       ========================================================================== */
+    .telemetry-metrics-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .telemetry-metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .telemetry-metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: var(--text-color);
+    }
+
+    .telemetry-metric-values {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .telemetry-progress-track {
+      width: 100%;
+      height: 8px;
+      background-color: var(--code-bg);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .telemetry-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 3px;
+      transition: width 0.4s ease, background-color 0.4s ease;
+    }
+
+    .telemetry-network-panel {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+
+    .telemetry-net-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .telemetry-net-label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .telemetry-net-val {
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace, ui-monospace;
+    }
   </style>
 </head>
 
@@ -1670,6 +1742,13 @@
       </div>
       <div class="nav-controls">
         <select id="activeConnSelect" class="conn-select" onchange="changeActiveConnection(this.value)"></select>
+        <!-- System Telemetry button -->
+        <button id="sysTelemetryBtn" class="icon-btn" onclick="openSystemTelemetryModal()" title="Системная телеметрия"
+          aria-label="System Telemetry" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+        </button>
         <button class="icon-btn" onclick="openConnModal()" title="Настройки" data-i18n-title="modalTitle"
           aria-label="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -1827,6 +1906,84 @@
             <span data-i18n="btnSaveJson">Сохранить</span>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Telemetry Modal -->
+  <div id="sysTelemetryModal" class="modal">
+    <div class="modal-content modal-content--md">
+      <h2 data-i18n="telemetryModalTitle" class="modal-title-margin-4">Системная телеметрия</h2>
+
+      <div class="telemetry-metrics-grid">
+        <!-- CPU Load -->
+        <div class="telemetry-metric-item">
+          <div class="telemetry-metric-header">
+            <span data-i18n="metricCpu">ЦП</span>
+            <span id="telCpuVal">0%</span>
+          </div>
+          <div class="telemetry-progress-track">
+            <div id="telCpuBar" class="telemetry-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- RAM -->
+        <div class="telemetry-metric-item">
+          <div class="telemetry-metric-header">
+            <span data-i18n="metricMem">ОЗУ</span>
+            <span id="telMemVal">0 / 0 MB</span>
+          </div>
+          <div class="telemetry-progress-track">
+            <div id="telMemBar" class="telemetry-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- SWAP -->
+        <div id="swapMetricItem" class="telemetry-metric-item">
+          <div class="telemetry-metric-header">
+            <span data-i18n="metricSwap">Подкачка</span>
+            <span id="telSwapVal">0 / 0 MB</span>
+          </div>
+          <div class="telemetry-progress-track">
+            <div id="telSwapBar" class="telemetry-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Entware /opt -->
+        <div class="telemetry-metric-item">
+          <div class="telemetry-metric-header">
+            <span data-i18n="metricOpt">Entware</span>
+            <span id="telOptVal">0 / 0 KB</span>
+          </div>
+          <div class="telemetry-progress-track">
+            <div id="telOptBar" class="telemetry-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network and Connections -->
+      <div class="telemetry-network-panel">
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netIface">Интерфейс:</span>
+          <span id="telNetIface" class="telemetry-net-val">-</span>
+        </div>
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netRx">Загрузка:</span>
+          <span id="telRxSpeed" class="telemetry-net-val">0 B/s</span>
+        </div>
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netTx">Отдача:</span>
+          <span id="telTxSpeed" class="telemetry-net-val">0 B/s</span>
+        </div>
+        <hr class="hr-custom" style="margin: 4px 0;">
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netConns">Соединений:</span>
+          <span id="telConnCount" class="telemetry-net-val">0</span>
+        </div>
+      </div>
+
+      <div class="form-row modal-footer-row mt-8">
+        <button class="secondary width-100" onclick="closeSystemTelemetryModal()" data-i18n="btnClose">Закрыть</button>
       </div>
     </div>
   </div>
@@ -2122,7 +2279,16 @@
       secBetaSingbox: { ru: "Бета-версии Sing-box", en: "Sing-box beta versions" },
       secUpdateSkeen: { ru: "Обновления SKeen", en: "SKeen updates" },
       secUpdateSkeenApi: { ru: "Обновления SKeen API", en: "SKeen API updates" },
-      enabledLbl: { ru: "Включить", en: "Enable" }
+      enabledLbl: { ru: "Включить", en: "Enable" },
+      telemetryModalTitle: { ru: "Системная телеметрия", en: "System Telemetry" },
+      metricCpu: { ru: "ЦП", en: "CPU" },
+      metricMem: { ru: "ОЗУ", en: "RAM" },
+      metricSwap: { ru: "Подкачка", en: "SWAP" },
+      metricOpt: { ru: "Entware", en: "Entware" },
+      netIface: { ru: "Интерфейс:", en: "Interface:" },
+      netRx: { ru: "Загрузка:", en: "Download:" },
+      netTx: { ru: "Отдача:", en: "Upload:" },
+      netConns: { ru: "Соединений:", en: "Connections:" }
     };
 
     /* ==========================================================================
@@ -2364,6 +2530,10 @@
     let currentCancelCallback = null;
     let currentLang = 'en';
 
+    // Telemetry Polling State
+    let telemetryPollingTimer = null;
+    let isServerConnected = false;
+
     /* ==========================================================================
        Validators
        ========================================================================== */
@@ -2467,7 +2637,7 @@
           return;
         }
         fetchServiceStatus();
-      }, 5000);
+      }, 3500);
     }
 
     /* ==========================================================================
@@ -2709,6 +2879,145 @@
       el.style.display = 'block';
       if (statusTimeout) clearTimeout(statusTimeout);
       statusTimeout = setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    /* ==========================================================================
+       System Telemetry Modal & Polling Logic
+       ========================================================================== */
+    function formatBytesOrSpeed(bps) {
+      if (bps === undefined || bps === null || isNaN(bps)) return "0 B/s";
+      if (bps >= 1048576) {
+        return (bps / 1048576).toFixed(2) + " MB/s";
+      } else if (bps >= 1024) {
+        return (bps / 1024).toFixed(2) + " KB/s";
+      } else {
+        return bps.toFixed(0) + " B/s";
+      }
+    }
+
+    function formatKBSize(kb) {
+      if (kb === undefined || kb === null || isNaN(kb)) return "0 KB";
+      if (kb >= 1048576) {
+        return (kb / 1048576).toFixed(2) + " GB";
+      } else if (kb >= 1024) {
+        return (kb / 1024).toFixed(2) + " MB";
+      } else {
+        return kb.toFixed(0) + " KB";
+      }
+    }
+
+    function kbToMb(kb) {
+      if (kb === undefined || kb === null || isNaN(kb)) return 0;
+      return Math.round(kb / 1024);
+    }
+
+    function getGradientColor(percent) {
+      let r, g, b = 0;
+      if (percent < 50) {
+        r = Math.round(51 + (percent / 50) * (246 - 51));
+        g = Math.round(204 + (percent / 50) * (226 - 204));
+        b = Math.round(94 + (percent / 50) * (31 - 94));
+      } else {
+        let p = (percent - 50) / 50;
+        r = Math.round(246 + p * (243 - 246));
+        g = Math.round(226 - p * (137 - 226));
+        b = Math.round(31 - p * (31 - 168));
+      }
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function updateProgressBar(barId, valId, used, total, isPercentage = false, unitStr = "MB") {
+      const bar = document.getElementById(barId);
+      const val = document.getElementById(valId);
+
+      let pct = 0;
+      if (isPercentage) {
+        pct = Math.max(0, Math.min(100, used));
+        val.textContent = pct.toFixed(1) + "%";
+      } else {
+        if (total > 0) {
+          pct = Math.max(0, Math.min(100, (used / total) * 100));
+        }
+        if (unitStr === "КБ") {
+          val.textContent = `${formatKBSize(used)} / ${formatKBSize(total)}`;
+        } else {
+          val.textContent = `${used} / ${total} ${unitStr}`;
+        }
+      }
+
+      bar.style.width = pct + "%";
+      bar.style.backgroundColor = getGradientColor(pct);
+    }
+
+    function openSystemTelemetryModal() {
+      if (!isServerConnected) return;
+      setModalState('sysTelemetryModal', true);
+      fetchSystemTelemetryData();
+      if (telemetryPollingTimer) clearInterval(telemetryPollingTimer);
+      telemetryPollingTimer = setInterval(fetchSystemTelemetryData, 2000);
+    }
+
+    function closeSystemTelemetryModal() {
+      setModalState('sysTelemetryModal', false);
+      if (telemetryPollingTimer) {
+        clearInterval(telemetryPollingTimer);
+        telemetryPollingTimer = null;
+      }
+    }
+
+    async function fetchSystemTelemetryData() {
+      const baseUrl = getBaseUrl();
+      if (!baseUrl) return;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1800);
+        const res = await fetch(`${baseUrl}/api/system/status`, { method: 'GET', headers: getHeaders(), signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        isServerConnected = true;
+        const telBtn = document.getElementById('sysTelemetryBtn');
+        if (telBtn) telBtn.disabled = false;
+
+        const memUsedMb = kbToMb(data.mem_used);
+        const memTotalMb = kbToMb(data.mem_total);
+        const swapUsedMb = kbToMb(data.swap_used);
+        const swapTotalMb = kbToMb(data.swap_total);
+        const optUsedMb = kbToMb(data.opt_used);
+        const optTotalMb = kbToMb(data.opt_total);
+
+        const swapItemEl = document.getElementById('swapMetricItem');
+        if (swapItemEl) {
+          if (!swapTotalMb || swapTotalMb <= 0) {
+            swapItemEl.style.display = 'none';
+          } else {
+            swapItemEl.style.display = 'flex';
+            updateProgressBar('telSwapBar', 'telSwapVal', swapUsedMb, swapTotalMb, false, "MB");
+          }
+        }
+
+        updateProgressBar('telCpuBar', 'telCpuVal', data.cpu_load || 0, 100, true);
+        updateProgressBar('telMemBar', 'telMemVal', memUsedMb, memTotalMb, false, "MB");
+        updateProgressBar('telOptBar', 'telOptVal', optUsedMb, optTotalMb, false, "MB");
+
+        document.getElementById('telNetIface').textContent = data.def_iface || "br0";
+        document.getElementById('telRxSpeed').textContent = formatBytesOrSpeed(data.rx_speed);
+        document.getElementById('telTxSpeed').textContent = formatBytesOrSpeed(data.tx_speed);
+        document.getElementById('telConnCount').textContent = data.conn_cnt || 0;
+
+      } catch (e) {
+        isServerConnected = false;
+        const telBtn = document.getElementById('sysTelemetryBtn');
+        if (telBtn) telBtn.disabled = true;
+
+        const modal = document.getElementById('sysTelemetryModal');
+        if (modal && modal.classList.contains('open')) {
+          closeSystemTelemetryModal();
+        }
+      }
     }
 
     /* ==========================================================================
@@ -3494,12 +3803,18 @@
         if (res.ok) {
           const data = await res.json();
           isServiceRunning = data.running;
+          isServerConnected = true;
+          document.getElementById('sysTelemetryBtn').disabled = false;
           updateStatusBadge(data, false);
           renderDynamicActions();
         } else {
+          isServerConnected = false;
+          document.getElementById('sysTelemetryBtn').disabled = true;
           updateStatusBadge(null, true);
         }
       } catch (e) {
+        isServerConnected = false;
+        document.getElementById('sysTelemetryBtn').disabled = true;
         updateStatusBadge(null, true);
       }
     }
