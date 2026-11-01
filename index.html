@@ -2995,7 +2995,7 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1800);
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
         const res = await fetch(`${baseUrl}/api/system/status`, { method: 'GET', headers: getHeaders(), signal: controller.signal });
         clearTimeout(timeoutId);
 
@@ -3823,7 +3823,7 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1500);
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
         const res = await fetch(`${baseUrl}/api/status`, { method: 'GET', headers: getHeaders(), signal: controller.signal });
         clearTimeout(timeoutId);
 

@@ -5,7 +5,7 @@ local socket = require("socket")
 -------------------------------------------------------------------------------
 -- 0. VERSION AND COMMAND LINE ARGUMENT (CLI) HANDLING
 -------------------------------------------------------------------------------
-local VERSION = "1.1.0"
+local VERSION = "1.1.1"
 local SCRIPT = "/opt/bin/skeen-api"
 local LUA_BIN = "/opt/bin/lua"
 local PID_FILE = "/tmp/run/skeen-api.pid"
@@ -815,7 +815,7 @@ local function get_cpuload()
   if not line then return 0 end
 
   local user, nice, system, idle, iowait, irq, softirq = line:match(
-  "^cpu%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)")
+    "^cpu%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)")
   if not user then return 0 end
 
   local total = tonumber(user) + tonumber(nice) + tonumber(system) + tonumber(idle) +
@@ -1030,17 +1030,17 @@ local function get_cached_system_status()
   local opt_used, opt_total = get_opt_disk_info()
 
   local sys_st = {
-    cpu_load    = get_cpuload() or 0,
-    def_iface   = def_iface,
-    rx_speed    = rx_sp or 0,
-    tx_speed    = tx_sp or 0,
-    conn_cnt    = get_connections_count() or 0,
-    mem_used    = mem_used or 0,
-    mem_total   = mem_total or 0,
-    swap_used   = swap_used or 0,
-    swap_total  = swap_total or 0,
-    opt_used    = opt_used or 0,
-    opt_total   = opt_total or 0
+    cpu_load   = get_cpuload() or 0,
+    def_iface  = def_iface,
+    rx_speed   = rx_sp or 0,
+    tx_speed   = tx_sp or 0,
+    conn_cnt   = get_connections_count() or 0,
+    mem_used   = mem_used or 0,
+    mem_total  = mem_total or 0,
+    swap_used  = swap_used or 0,
+    swap_total = swap_total or 0,
+    opt_used   = opt_used or 0,
+    opt_total  = opt_total or 0
   }
 
   -- Cache the enriched result for 2 seconds to reduce CPU overhead
@@ -1352,6 +1352,13 @@ local function handle_client(client)
           }
         else
           local cmd = "FORCE_COLOR=1 " .. get_skeen_cmd(param)
+
+          -- Invalidate status cache for service control commands
+          local actions = { start = true, stop = true, restart = true, reload = true, kill = true }
+          if actions[param] then
+            skeen_status_cache.expire = 0
+          end
+
           local handle = io.popen(cmd .. " 2>&1")
           local stdout = ""
           if handle then
