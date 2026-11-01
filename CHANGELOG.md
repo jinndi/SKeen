@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.10.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.2...SKeen-v5.10.0) (2026-11-01)
+
+
+### 🚀 Feat
+
+* **api:** add /api/system/status endpoint and implement memory-cached script execution for skeen commands ([5c7317f](https://github.com/jinndi/SKeen/commit/5c7317ff6ea7acbfd7e7a649232b1ceed3a4319b))
+
+
+### 📊 Dashboard
+
+* add system telemetry modal and metrics visualization ([c725f13](https://github.com/jinndi/SKeen/commit/c725f1383f044a43049055bb3fd7ed67bac768a8))
+
+
+### 🧰 Chore
+
+* bump version to v1.1.0  and 5.10.0 ([696a0cb](https://github.com/jinndi/SKeen/commit/696a0cbfdb4afee9da503099e467185f245fafb6))
+* **docs:** update documentation for system telemetry and endpoint ordering ([7f6f4db](https://github.com/jinndi/SKeen/commit/7f6f4dbb43c4f520c0424d48108538d7a29f9849))
+
 ## [5.9.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.1...SKeen-v5.9.2) (2026-10-31)
 
 
