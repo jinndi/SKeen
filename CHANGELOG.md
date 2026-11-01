@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.10.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.10.0...SKeen-v5.10.1) (2026-11-01)
+
+
+### 🎨 Style
+
+* **api:** reformat cpu pattern matching and table alignment ([33074be](https://github.com/jinndi/SKeen/commit/33074be321e7e5dd1ac70406b99791c569730910))
+
 ## [5.10.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.2...SKeen-v5.10.0) (2026-11-01)
 
 
