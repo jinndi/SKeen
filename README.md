@@ -14,20 +14,12 @@ SKeen configures transparent proxying on Keenetic and Netcraze routers using sin
 
 ## Features
 
-- TProxy, Redirect, Hybrid, Tun and DNS modes
-- IPv4 and IPv6 support
-- Working sing-box DNS module
-- Working sing-box FakeIP
-- FakeIP proxying at iptables level
-- Configured Web UI via built-in API
-- Network settings optimization
-- Commands working via router's Web CLI
-- Switch between official and third-party sing-box
-- Sing-box config sync via HTTP(S) link
-- Sub-Store usage examples for synchronization
-- Ready-to-use sing-box config templates
-- Optional proxying for the router itself
-- No access token required for RCI requests
+- **Network Modes:** TProxy, Redirect, Hybrid, Tun, and DNS (IPv4 / IPv6).
+- **DNS & Routing:** Functional sing-box DNS and FakeIP, FakeIP proxying at the `iptables` level.
+- **Sing-box Core:** Switch between official and third-party cores, ready-to-use configuration templates.
+- **Management & API:** Lightweight Lua API server with an integrated control panel, command execution via the router's WEB CLI.
+- **Synchronization:** Download and update configs via HTTP(S) link, Sub-Store usage examples.
+- **Additional Features:** Optional router self-proxying, independence from RCI API (no access token required), automatic network settings optimization.
 
 ## Requirements
 
