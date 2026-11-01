@@ -2624,8 +2624,18 @@
       }, 100);
 
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && document.getElementById('skeenTab').classList.contains('active')) {
-          fetchServiceStatus();
+        const modal = document.getElementById('sysTelemetryModal');
+        const isModalOpen = modal && modal.classList.contains('open');
+
+        if (document.hidden) {
+          stopTelemetryPolling();
+        } else {
+          if (document.getElementById('skeenTab').classList.contains('active')) {
+            fetchServiceStatus();
+          }
+          if (isModalOpen && isServerConnected) {
+            openSystemTelemetryModal();
+          }
         }
       });
     });
@@ -2959,6 +2969,10 @@
 
     function closeSystemTelemetryModal() {
       setModalState('sysTelemetryModal', false);
+      stopTelemetryPolling();
+    }
+
+    function stopTelemetryPolling() {
       if (telemetryPollingTimer) {
         clearInterval(telemetryPollingTimer);
         telemetryPollingTimer = null;
@@ -2966,6 +2980,16 @@
     }
 
     async function fetchSystemTelemetryData() {
+      const modal = document.getElementById('sysTelemetryModal');
+      const isModalOpen = modal && modal.classList.contains('open');
+
+      if (document.hidden || !isModalOpen) {
+        if (!isModalOpen) {
+          stopTelemetryPolling();
+        }
+        return;
+      }
+
       const baseUrl = getBaseUrl();
       if (!baseUrl) return;
 
@@ -3013,7 +3037,6 @@
         const telBtn = document.getElementById('sysTelemetryBtn');
         if (telBtn) telBtn.disabled = true;
 
-        const modal = document.getElementById('sysTelemetryModal');
         if (modal && modal.classList.contains('open')) {
           closeSystemTelemetryModal();
         }
@@ -3791,6 +3814,10 @@
     }
 
     async function fetchServiceStatus() {
+      if (document.hidden || !document.getElementById('skeenTab').classList.contains('active')) {
+        return;
+      }
+
       const baseUrl = getBaseUrl();
       if (!baseUrl) return;
 
