@@ -22,13 +22,15 @@ REST API documentation for the **SKeen** system — a lightweight HTTP configura
 
    * [GET /api/status](#3-get-apistatus)
 
-   * [GET /api/files-list](#4-get-apifiles-list)
+   * [GET /api/system/status](#4-get-apisystemstatus)
 
-   * [GET /api/file](#5-get-apifile)
+   * [GET /api/files-list](#5-get-apifiles-list)
 
-   * [POST /api/file](#6-post-apifile)
+   * [GET /api/file](#6-get-apifile)
 
-   * [POST /api/exec](#7-post-apiexec)
+   * [POST /api/file](#7-post-apifile)
+
+   * [POST /api/exec](#8-post-apiexec)
 
 7. [HTTP Response Codes](#7-http-response-codes)
 
@@ -65,7 +67,7 @@ skeen deps
   - Safe request execution wrapped in `pcall` to ensure socket cleanup and prevent file descriptor leaks during connection drops.
 
 - **Performance Optimization**:
-  - Built-in TTL cache for SKeen system status calls (refreshed every 3 seconds), significantly reducing router CPU load caused by frequent web dashboard status polling.
+  - Built-in TTL caches for SKeen system status calls and hardware telemetry (refreshed every 2–3 seconds), significantly reducing router CPU load during frequent web dashboard polling.
 
 - **Data Format**: JSON (custom parser with support for stripping `//`, `/* */`, and `#` comments while preserving key ordering via the `__order` field).
 
@@ -236,7 +238,58 @@ curl -X GET http://192.168.1.1:3000/api/status \
 }
 ```
 
-### 4. GET /api/files-list
+### 4. GET /api/system/status
+
+Retrieves hardware metrics and system resource load (CPU, RAM, SWAP, Entware `/opt` disk, network throughput, active connection count).
+
+- **Method**: `GET`
+
+- **Authentication**: Required.
+
+- **Feature**: Cached for 2 seconds (TTL) in the Lua daemon to minimize CPU overhead on the router.
+
+#### Response Field Reference:
+
+| Field | Type | Description |
+| ----- | ----- | ----- |
+| `cpu_load` | *number* | CPU load percentage (0 to 100). |
+| `def_iface` | *string* | Primary network interface name (e.g., `br0` or `eth3`). |
+| `rx_speed` | *number* | Inbound network traffic speed (in bits per second, bps). |
+| `tx_speed` | *number* | Outbound network traffic speed (in bits per second, bps). |
+| `conn_cnt` | *number* | Total tracked active connections count from `/proc/net/nf_conntrack`. |
+| `mem_used` | *number* | Used RAM memory size (in kilobytes, KB). |
+| `mem_total` | *number* | Total RAM memory size (in kilobytes, KB). |
+| `swap_used` | *number* | Used SWAP space (in kilobytes, KB). |
+| `swap_total` | *number* | Total SWAP space (in kilobytes, KB; `0` if not configured). |
+| `opt_used` | *number* | Used Entware `/opt` partition space (in kilobytes, KB). |
+| `opt_total` | *number* | Total Entware `/opt` partition space (in kilobytes, KB). |
+
+#### Request Example:
+
+```bash
+curl -X GET http://192.168.1.1:3000/api/system/status \
+     -H "X-API-Key: your_secret_key"
+```
+
+#### Successful Response (`200 OK`):
+
+```json
+{
+  "cpu_load": 12,
+  "def_iface": "br0",
+  "rx_speed": 1048576,
+  "tx_speed": 524288,
+  "conn_cnt": 142,
+  "mem_used": 262144,
+  "mem_total": 524288,
+  "swap_used": 0,
+  "swap_total": 0,
+  "opt_used": 154200,
+  "opt_total": 7771236
+}
+```
+
+### 5. GET /api/files-list
 
 Retrieves list of configuration files allowed for reading and editing.
 
@@ -278,7 +331,7 @@ curl -X GET http://192.168.1.1:3000/api/files-list \
 ]
 ```
 
-### 5. GET /api/file
+### 6. GET /api/file
 
 Reads the contents of a configuration file by its identifier (`id`).
 
@@ -331,7 +384,7 @@ curl -X GET "http://192.168.1.1:3000/api/file?name=skeen" \
 }
 ```
 
-### 6. POST /api/file
+### 7. POST /api/file
 
 Saves or updates configuration file content.
 
@@ -382,7 +435,7 @@ curl -X POST http://192.168.1.1:3000/api/file \
 }
 ```
 
-### 7. POST /api/exec
+### 8. POST /api/exec
 
 Executes allowed CLI commands (`skeen <param>`).
 
