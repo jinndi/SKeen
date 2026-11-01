@@ -9,6 +9,8 @@ local VERSION = "1.0.4"
 local SCRIPT = "/opt/bin/skeen-api"
 local LUA_BIN = "/opt/bin/lua"
 local PID_FILE = "/tmp/run/skeen-api.pid"
+local SKEEN_RAM_SCRIPT = "/tmp/.skeen/skeen.sh"
+local SKEEN_OPT_SCRIPT = "/opt/bin/skeen"
 local REPO_BASE_URL = "https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/static/"
 local VERSION_URL = REPO_BASE_URL .. "api-version"
 local SCRIPT_URL = REPO_BASE_URL .. "skeen-api"
@@ -16,6 +18,17 @@ local SCRIPT_URL = REPO_BASE_URL .. "skeen-api"
 -- Function for safely escaping arguments to pass them into the command line
 local function shell_quote(value)
   return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+end
+
+-- Helper function to resolve the target skeen executable (prefers memory-cached tmpfs script)
+local function get_skeen_cmd(args)
+  local script_path = SKEEN_OPT_SCRIPT
+  local f = io.open(SKEEN_RAM_SCRIPT, "r")
+  if f then
+    f:close()
+    script_path = SKEEN_RAM_SCRIPT
+  end
+  return shell_quote(script_path) .. (args and (" " .. args) or "")
 end
 
 -- Function to read a text file from a given path
@@ -157,16 +170,8 @@ local function get_uptime(pid)
     return nil
   end
 
-  local ticks_file = io.popen("getconf CLK_TCK 2>/dev/null")
-  local ticks = ticks_file and tonumber(ticks_file:read("*l"))
-
-  if ticks_file then
-    ticks_file:close()
-  end
-
-  ticks = ticks or 100
-
-  return math.max(0, math.floor(uptime - start_ticks / ticks))
+  -- Standard CLK_TCK value for Linux 100 (getconf CLK_TCK)
+  return math.max(0, math.floor(uptime - start_ticks / 100))
 end
 
 -- Pretty format seconds into days, hours, and minutes
@@ -359,7 +364,7 @@ local function is_allowed_param(param)
     ["kill"]     = true,
     ["status"]   = true,
     ["version"]  = true,
-    ["help"]     = true,
+    ["help"]     = false,
     ["iface"]    = true,
     ["connstat"] = true,
     ["update"]   = false,
@@ -757,7 +762,8 @@ local function get_allowed_files_map()
     ["pure_cidr"] = { path = SKEEN_DIR .. DEFAULT_FILES.pure_cidr, type = "text", name = DEFAULT_FILES.pure_cidr }
   }
 
-  local handle = io.popen("skeen get_singbox_config --json 2>/dev/null")
+  local cmd = get_skeen_cmd("get_singbox_config --json 2>/dev/null")
+  local handle = io.popen(cmd)
   local result_str = handle and handle:read("*a") or ""
   if handle then handle:close() end
 
@@ -766,35 +772,207 @@ local function get_allowed_files_map()
   local is_dir = (ok and cfg_info and cfg_info.is_dir) or false
 
   if is_dir then
-    local safe_path = path:gsub("'", "'\\''")
-    local cmd = string.format("find '%s' -maxdepth 1 -name '*.json' | sort", safe_path)
+    local files = {}
+    local parent_dir = path:match("([^/]+)$") or "config"
 
-    local p_find = io.popen(cmd)
-    if p_find then
-      local idx = 0
-      for file_full_path in p_find:lines() do
-        if file_full_path ~= "" then
-          local parent, filename = file_full_path:match("([^/]+)/([^/]+)$")
-          local display_name = (parent and filename) and (parent .. "/" .. filename) or
-              (file_full_path:match("^.+/(.+)$") or file_full_path)
-
-          map["sb_file_" .. idx] = { path = file_full_path, type = "json", name = display_name }
-          idx = idx + 1
+    local handle_ls = io.popen(string.format("ls -1 %s 2>/dev/null", path))
+    if handle_ls then
+      for file in handle_ls:lines() do
+        if file and file ~= "" and file:match("%.json$") then
+          local full_path = path .. "/" .. file
+          local f_check = io.open(full_path, "r")
+          if f_check then
+            f_check:close()
+            table.insert(files, { path = full_path, name = parent_dir .. "/" .. file })
+          end
         end
       end
-      p_find:close()
+      handle_ls:close()
+    end
+
+    table.sort(files, function(a, b) return a.name < b.name end)
+
+    for idx, item in ipairs(files) do
+      map["sb_file_" .. (idx - 1)] = { path = item.path, type = "json", name = item.name }
     end
   else
-    local filename = path:match("^.+/(.+)$") or "config.json"
+    local filename = path:match("([^/]+)$") or "config.json"
     map["singbox"] = { path = path, type = "json", name = filename }
   end
 
   return map
 end
 
--- Get the real working status of SKeen by invoking the CLI utility
+-- Cache for CPU delta calculation
+local cpu_cache = { total = 0, idle = 0 }
+
+local function get_cpuload()
+  local f = io.open("/proc/stat", "r")
+  if not f then return 0 end
+  local line = f:read("*line")
+  f:close()
+
+  if not line then return 0 end
+
+  local user, nice, system, idle, iowait, irq, softirq = line:match(
+  "^cpu%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)")
+  if not user then return 0 end
+
+  local total = tonumber(user) + tonumber(nice) + tonumber(system) + tonumber(idle) +
+      tonumber(iowait) + tonumber(irq) + tonumber(softirq)
+  local current_idle = tonumber(idle) + tonumber(iowait)
+
+  local cpuload = 0
+  if cpu_cache.total > 0 then
+    local dt = total - cpu_cache.total
+    local di = current_idle - cpu_cache.idle
+    if dt > 0 then
+      cpuload = math.floor(100 * (dt - di) / dt + 0.5)
+    end
+  end
+
+  cpu_cache.total = total
+  cpu_cache.idle = current_idle
+
+  return cpuload
+end
+
+-- Resolve default network interface
+local function get_default_interface()
+  local handle = io.popen("ip route show default 2>/dev/null")
+  if handle then
+    local result = handle:read("*line")
+    handle:close()
+    if result then
+      local iface = result:match("dev%s+(%S+)")
+      if iface and iface ~= "" then
+        return iface
+      end
+    end
+  end
+  return "br0"
+end
+
+-- Cache for network RX/TX speed calculation
+local net_cache = { time = 0, rx = 0, tx = 0 }
+
+local function get_rtx_speed(iface)
+  iface = iface or "br0"
+
+  local function read_num(path)
+    local f = io.open(path, "r")
+    if not f then return 0 end
+    local val = tonumber(f:read("*all"))
+    f:close()
+    return val or 0
+  end
+
+  local rx = read_num("/sys/class/net/" .. iface .. "/statistics/rx_bytes")
+  local tx = read_num("/sys/class/net/" .. iface .. "/statistics/tx_bytes")
+  local time_now = os.time()
+
+  local rx_speed, tx_speed = 0, 0
+
+  if net_cache.time > 0 then
+    local dt = time_now - net_cache.time
+    if dt <= 0 then dt = 1 end
+
+    if rx >= net_cache.rx and tx >= net_cache.tx then
+      rx_speed = math.floor((rx - net_cache.rx) / dt)
+      tx_speed = math.floor((tx - net_cache.tx) / dt)
+    end
+  end
+
+  net_cache.time = time_now
+  net_cache.rx = rx
+  net_cache.tx = tx
+
+  return rx_speed, tx_speed
+end
+
+-- Get active netfilter connection tracking count
+local function get_connections_count()
+  local f = io.open("/proc/net/nf_conntrack", "r")
+  if not f then return 0 end
+
+  local count = 0
+  for _ in f:lines() do
+    count = count + 1
+  end
+  f:close()
+  return count
+end
+
+-- Get system RAM usage (in kB)
+local function get_memory_info()
+  local f = io.open("/proc/meminfo", "r")
+  if not f then return 0, 0 end
+  local content = f:read("*all")
+  f:close()
+
+  local total = tonumber(content:match("MemTotal:%s+(%d+)")) or 0
+  local available = tonumber(content:match("MemAvailable:%s+(%d+)")) or 0
+  local used = total - available
+  if used < 0 then used = 0 end
+
+  return used, total
+end
+
+-- Get SWAP memory usage (in kB)
+local function get_swap_info()
+  local f = io.open("/proc/swaps", "r")
+  if not f then return 0, 0 end
+
+  local used_total, size_total = 0, 0
+  local header = true
+  for line in f:lines() do
+    if header then
+      header = false
+    else
+      local _, _, size, used = line:match("(%S+)%s+(%S+)%s+(%d+)%s+(%d+)")
+      if size and used then
+        size_total = size_total + tonumber(size)
+        used_total = used_total + tonumber(used)
+      end
+    end
+  end
+  f:close()
+  return used_total, size_total
+end
+
+-- Retrieve /opt disk usage information in kilobytes (KB)
+local function get_opt_disk_info()
+  -- Execute df command for /opt with 1K blocks, suppressing errors
+  local handle = io.popen("df -k /opt 2>/dev/null")
+  if not handle then return 0, 0 end
+
+  local output = handle:read("*all")
+  handle:close()
+
+  -- Split the command output into lines
+  local lines = {}
+  for line in output:gmatch("[^\r\n]+") do
+    table.insert(lines, line)
+  end
+
+  -- Parse the data line (skipping the header)
+  if #lines >= 2 then
+    -- Extract total KB and used KB from the second line
+    local total_kb, used_kb = lines[2]:match("^%S+%s+(%d+)%s+(%d+)")
+    if total_kb and used_kb then
+      return tonumber(used_kb) or 0, tonumber(total_kb) or 0
+    end
+  end
+
+  return 0, 0
+end
+
+-- Get the real working status of SKeen
 local function get_skeen_status()
-  local handle = io.popen("skeen status --json 2>&1")
+  -- Resolve command line targeting memory-cached local script or fallback to global CLI
+  local cmd = get_skeen_cmd("status --json 2>&1")
+
+  local handle = io.popen(cmd)
   local out = ""
   if handle then
     out = handle:read("*a") or ""
@@ -803,41 +981,78 @@ local function get_skeen_status()
 
   local success, data = pcall(json.decode, out)
   if success and type(data) == "table" then
-    data.success = true
-    data.api_version = VERSION
     data.__order = nil
     return data
   end
 
   -- Safe default value in case status retrieval fails
   return {
-    success = false,
     running = false,
     version = "unknown",
     mode = "unknown",
-    sb_version = "unknown",
-    api_version = VERSION
+    sb_version = "unknown"
   }
 end
 
 -- Cache for SKeen status to reduce router CPU load during frequent requests
-local status_cache = { data = nil, expire = 0 }
+local skeen_status_cache = { data = nil, expire = 0 }
 
 local function get_cached_skeen_status()
   local now = os.time()
-  if status_cache.data and now < status_cache.expire then
-    return status_cache.data
+  if skeen_status_cache.data and now < skeen_status_cache.expire then
+    return skeen_status_cache.data
   end
 
+  -- Retrieve base status from SKeen CLI / memory script
   local st = get_skeen_status()
-  status_cache.data = st
-  status_cache.expire = now + 3 -- Cache the result for 3 seconds
+
+  st.api_version = VERSION
+
+  skeen_status_cache.data = st
+  skeen_status_cache.expire = now + 3 -- Cache the result for 3 seconds
   return st
+end
+
+-- Cache for System status to reduce router CPU load during frequent requests
+local system_status_cache = { data = nil, expire = 0 }
+
+local function get_cached_system_status()
+  local now = os.time()
+  if system_status_cache.data and now < system_status_cache.expire then
+    return system_status_cache.data
+  end
+
+  -- Collect system metrics with safety fallbacks
+  local def_iface = get_default_interface() or "br0"
+  local rx_sp, tx_sp = get_rtx_speed(def_iface)
+  local mem_used, mem_total = get_memory_info()
+  local swap_used, swap_total = get_swap_info()
+  local opt_used, opt_total = get_opt_disk_info()
+
+  local sys_st = {
+    cpu_load    = get_cpuload() or 0,
+    def_iface   = def_iface,
+    rx_speed    = rx_sp or 0,
+    tx_speed    = tx_sp or 0,
+    conn_cnt    = get_connections_count() or 0,
+    mem_used    = mem_used or 0,
+    mem_total   = mem_total or 0,
+    swap_used   = swap_used or 0,
+    swap_total  = swap_total or 0,
+    opt_used    = opt_used or 0,
+    opt_total   = opt_total or 0
+  }
+
+  -- Cache the enriched result for 2 seconds to reduce CPU overhead
+  system_status_cache.data = sys_st
+  system_status_cache.expire = now + 2
+  return sys_st
 end
 
 -- Load the configuration of the API server itself (port, secret key, CORS)
 local function load_api_config()
-  local handle = io.popen("skeen get_api_config 2>&1")
+  local cmd = get_skeen_cmd("get_api_config 2>&1")
+  local handle = io.popen(cmd)
   local out = ""
   if handle then
     out = handle:read("*a") or ""
@@ -1006,6 +1221,12 @@ local function handle_client(client)
       response_body = json.encode(st)
       status = "200 OK"
       content_type = "application/json"
+    elseif path:find("^/api/system/status") and method == "GET" then
+      local st = get_cached_system_status()
+      st.success = true
+      response_body = json.encode(st)
+      status = "200 OK"
+      content_type = "application/json"
     elseif path == "/api/files-list" and method == "GET" then
       local map = get_allowed_files_map()
       local files_list = {}
@@ -1106,7 +1327,7 @@ local function handle_client(client)
           -- Intercept print to collect all function output into an array
           local old_print = _G.print
           _G.print = function(...)
-            table.insert(log_buffer, table.concat({...}, "\t"))
+            table.insert(log_buffer, table.concat({ ... }, "\t"))
           end
 
           -- Safely call the update function via pcall (to prevent crashing the server on error)
@@ -1130,8 +1351,8 @@ local function handle_client(client)
             stdout = result ~= "" and result or ""
           }
         else
-          local command = "FORCE_COLOR=1 skeen " .. param
-          local handle = io.popen(command .. " 2>&1")
+          local cmd = "FORCE_COLOR=1 " .. get_skeen_cmd(param)
+          local handle = io.popen(cmd .. " 2>&1")
           local stdout = ""
           if handle then
             stdout = handle:read("*a")

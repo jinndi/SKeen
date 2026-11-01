@@ -2900,8 +2900,10 @@ status_json() {
     [ -z "$mode" ] && mode="unknown"
   fi
 
-  get_singbox_config
-  sb_version="$(get_current_version "sing")"
+  if [ -f "$SINGBOX_RUN_VERSION" ]; then
+    sb_version="$(awk -F '|' '{print $NF}' "$SINGBOX_RUN_VERSION" 2>/dev/null)"
+    [ -z "$sb_version" ] && sb_version="unknown"
+  fi
 
   printf '{"running":%s,"version":"%s","mode":"%s","sb_version":"%s"}\n' \
     "$running" "${SKEEN_VERSION:-unknown}" "$mode" "${sb_version:-unknown}"
