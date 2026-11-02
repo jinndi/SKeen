@@ -41,7 +41,7 @@ For flexible automation and sing-box configuration synchronization, you can—an
 **Why this is the optimal router solution:**
 
 - **Ultra Resource Efficiency (2–3 MB RAM)**: Powered by Lua with zero heavy frameworks, leaving RAM and CPU entirely free for their primary job—routing traffic.
-- **Zero External Dependencies**: A single [vanilla HTML interface](../index.html) with no third-party JS/CSS libraries guarantees instant load times and complete self-reliance.
+- **Zero External Dependencies**: A single [vanilla HTML interface](../dashboard/) with no third-party JS/CSS libraries guarantees instant load times and complete self-reliance.
 - **Seamless Management & [REST API](./SKEEN-API-EN.md)**: Quickly edit configurations, monitor service status, and execute CLI commands directly from your browser or via external scripts.
 - **Security & Stability**: Stripped of software bloat, there are no extra failure points or conflicts with KeeneticOS / Entware components.
 - **Balance of Simplicity and Control**: The built-in web dashboard handles everyday router management tasks without turning a lightweight networking tool into an over-engineered utility.

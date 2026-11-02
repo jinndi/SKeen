@@ -1,0 +1,22 @@
+{
+  "name": "skeen-dashboard",
+  "version": "1.2.1",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node dev-server.js",
+    "build": "npm run build:dashboard",
+    "build:dashboard": "node build.js",
+    "build:api": "node ../.github/build-api.js",
+    "build:all": "npm run build:dashboard && npm run build:api"
+  },
+  "devDependencies": {
+    "cssnano": "^9.9.0",
+    "htmlnano": "^3.6.1",
+    "luamin": "^1.0.4",
+    "postcss": "^8.5.32",
+    "terser": "^5.51.2"
+  }
+}

@@ -1,0 +1,5087 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzFlMjkzYiIvPjx0ZXh0IHg9IjE2IiB5PSIyMyIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZGh0PSJib2xkIiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TPC90ZXh0Pjwvc3ZnPg==">
+  <title>SKeen dashboard</title>
+  <style>
+    /* ==========================================================================
+   1. Theme Variables (Catppuccin Mocha & High-Contrast Light Theme)
+   ========================================================================== */
+:root {
+  --bg-color: #16161e;
+  --card-bg: #1e1e2e;
+  --card-hover: #2a2a3c;
+  --text-color: #cdd6f4;
+  --text-muted: #969ecd;
+  --accent-color: #5d8edc;
+  --accent-glow: rgba(137, 180, 250, 0.15);
+  --success-color: #a6e3a1;
+  --danger-color: #f38ba8;
+  --warning-color: #f9e2af;
+  --info-color: #89dceb;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(137, 180, 250, 0.4);
+  --code-bg: rgba(32, 32, 52, 0.6);
+  --line-num-bg: rgba(10, 10, 14, 0.4);
+  --active-line-bg: rgba(137, 180, 250, 0.07);
+  --folded-line-bg: rgba(69, 92, 140, 0.2);
+  --fold-placeholder-fg: rgba(205, 214, 244, 0.4);
+  --editor-line-height: 18px;
+  --modal-tab-bg: transparent;
+}
+
+[data-theme="light"] {
+  --bg-color: #e9ecef;
+  --card-bg: #ffffff;
+  --card-hover: #f1f3f5;
+  --text-color: #212529;
+  --text-muted: #5e627d;
+  --accent-color: #1971c2;
+  --accent-glow: rgba(25, 113, 194, 0.15);
+  --success-color: #2b8a3e;
+  --danger-color: #c92a2a;
+  --warning-color: #e67700;
+  --info-color: #0b7285;
+  --border-color: rgba(0, 0, 0, 0.15);
+  --border-focus: rgba(25, 113, 194, 0.5);
+  --code-bg: #ffffff;
+  --line-num-bg: #f1f3f5;
+  --active-line-bg: rgba(25, 113, 194, 0.08);
+  --folded-line-bg: rgba(25, 71, 120, 0.14);
+  --fold-placeholder-fg: rgba(94, 98, 125, 0.55);
+  --modal-tab-bg: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   2. Base Resets & Layout
+   ========================================================================== */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  padding: clamp(4px, min(2.5vh, 2vw), 40px);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.container {
+  max-width: 900px;
+  height: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.5vh, 16px);
+  min-width: 0;
+}
+
+/* ==========================================================================
+   3. Navigation & Header
+   ========================================================================== */
+.navbar {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: clamp(8px, 1.2vh, 12px) clamp(10px, 2vw, 16px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  min-width: 0;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+@media (max-width: 319px) {
+  .navbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nav-controls {
+    justify-content: space-between;
+  }
+}
+
+
+
+/* ==========================================================================
+   4. Buttons, Inputs & Interactive Elements
+   ========================================================================== */
+button {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+button svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke-width: 1.75;
+}
+
+button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button.secondary {
+  background-color: var(--card-hover);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+button.secondary:hover {
+  border-color: var(--border-focus);
+  opacity: 1;
+}
+
+button.danger {
+  background-color: rgba(243, 139, 168, 0.15);
+  color: var(--danger-color);
+  border: 1px solid rgba(243, 139, 168, 0.2);
+}
+
+button.danger:hover {
+  background-color: rgba(243, 139, 168, 0.25);
+}
+
+button.success-btn {
+  background-color: rgba(166, 227, 161, 0.15);
+  color: var(--success-color);
+  border: 1px solid rgba(166, 227, 161, 0.3);
+}
+
+button.success-btn:hover {
+  background-color: rgba(166, 227, 161, 0.25);
+}
+
+.icon-btn,
+.icon-btn-sm,
+.terminal-clear-btn,
+.fullscreen-icon-btn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn {
+  background-color: var(--card-hover);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+
+.icon-btn:hover {
+  border-color: var(--border-focus);
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-color);
+  stroke-width: 1.75;
+}
+
+.icon-btn-sm {
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.icon-btn-sm svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.75;
+}
+
+.icon-btn-sm.secondary {
+  background-color: var(--card-hover);
+  color: var(--text-color);
+}
+
+.icon-btn-sm.secondary:hover {
+  border-color: var(--border-focus);
+}
+
+.icon-btn-sm.danger {
+  background-color: rgba(243, 139, 168, 0.1);
+  color: var(--danger-color);
+}
+
+.icon-btn-sm.danger svg {
+  stroke: var(--danger-color);
+}
+
+.icon-btn-sm.danger:hover {
+  background-color: rgba(243, 139, 168, 0.2);
+}
+
+.fullscreen-icon-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  opacity: 0.7;
+  padding: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  backdrop-filter: blur(6px);
+}
+
+.fold-all-btn {
+  right: 44px;
+}
+
+.fullscreen-icon-btn:hover {
+  opacity: 1;
+  border-color: var(--border-focus);
+}
+
+.fullscreen-icon-btn svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+}
+
+.terminal-clear-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  opacity: 0.7;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  padding: 0;
+}
+
+.terminal-clear-btn:hover {
+  opacity: 1;
+  color: var(--text-color);
+  border-color: var(--border-focus);
+}
+
+.terminal-clear-btn svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-size: 0.88rem;
+}
+
+.tab-btn:hover {
+  color: var(--text-color);
+  background-color: var(--card-hover);
+}
+
+.tab-btn.active {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Form Fields & Selects */
+select.conn-select,
+select,
+input[type="text"],
+input[type="number"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--code-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c7086' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 8px 30px 8px 10px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  width: 100%;
+  transition: all 0.2s ease;
+  outline: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+input[type="text"],
+input[type="number"] {
+  background-image: none;
+  padding-right: 10px;
+  cursor: text;
+}
+
+select.conn-select:hover,
+select:hover,
+input[type="text"]:hover,
+input[type="number"]:hover {
+  border-color: var(--border-focus);
+}
+
+select.conn-select:focus,
+select:focus,
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+input.invalid-input,
+select.invalid-input {
+  border-color: var(--danger-color) !important;
+  box-shadow: 0 0 0 2px rgba(243, 139, 168, 0.3) !important;
+  background-color: rgba(243, 139, 168, 0.05) !important;
+}
+
+select.conn-select {
+  height: 36px;
+  min-width: 70px;
+  max-width: 180px;
+  text-overflow: ellipsis;
+}
+
+/* Checkbox Customization */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 18px;
+  height: var(--editor-line-height);
+  min-width: 18px;
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+  outline: none;
+  margin: 0 10px 0 0;
+}
+
+input[type="checkbox"]:hover {
+  border-color: var(--border-focus);
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 2px;
+}
+
+input[type="checkbox"]:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+button:disabled,
+select:disabled,
+input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+button:disabled:hover,
+select:disabled:hover {
+  opacity: 0.65;
+  transform: none !important;
+  border-color: var(--border-color) !important;
+}
+
+
+
+/* ==========================================================================
+   5. Cards & Status Panels
+   ========================================================================== */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: clamp(10px, 2vh, 20px);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.editor-card {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.2vh, 12px);
+  min-width: 0;
+}
+
+.tab-content {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.tab-content.active {
+  display: flex;
+  flex-direction: column;
+}
+
+h2,
+h3 {
+  margin-top: 0;
+  color: var(--text-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+h2::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 12px;
+  background-color: var(--accent-color);
+  border-radius: 2px;
+}
+
+.status-badge-panel {
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+}
+
+.status-dot.active {
+  background-color: var(--success-color);
+  box-shadow: 0 0 8px var(--success-color);
+}
+
+.status-dot.inactive {
+  background-color: var(--danger-color);
+}
+
+.action-buttons-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.action-buttons-group button {
+  flex: 1;
+  min-width: 110px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  min-width: 0;
+}
+
+.form-group-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  position: relative;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.form-row>button,
+.form-row>.form-group {
+  flex: 1;
+  min-width: 110px;
+}
+
+label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 0;
+}
+
+.status {
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: none;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 25;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  pointer-events: none;
+}
+
+.status.success {
+  background-color: var(--card-bg);
+  color: var(--success-color);
+  border-color: rgba(43, 138, 62, 0.3);
+  display: block;
+}
+
+.status.error {
+  background-color: var(--card-bg);
+  color: var(--danger-color);
+  border-color: rgba(201, 42, 42, 0.3);
+  display: block;
+}
+
+.terminal-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.output-wrapper {
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 12px;
+  padding-right: 36px;
+  margin: 0;
+  font-size: 0.82rem;
+  font-family: 'JetBrains Mono', monospace, ui-monospace;
+  white-space: pre;
+  word-break: normal;
+}
+
+/* Scrollbar styling */
+.output-wrapper,
+.code-editor-wrapper {
+  scrollbar-width: auto;
+  scrollbar-color: var(--border-color) var(--code-bg);
+}
+
+#formEditorContainer {
+  scrollbar-width: none;
+}
+
+/* Chrome, Edge, Safari */
+.output-wrapper::-webkit-scrollbar,
+.code-editor-wrapper::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+#formEditorContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.output-wrapper::-webkit-scrollbar-track,
+.code-editor-wrapper::-webkit-scrollbar-track {
+  background: var(--code-bg);
+  border-radius: 7px;
+}
+
+.output-wrapper::-webkit-scrollbar-thumb,
+.code-editor-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 7px;
+  border: 3px solid var(--code-bg);
+}
+
+.output-wrapper::-webkit-scrollbar-thumb:hover,
+.code-editor-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary, #888);
+}
+
+.output-wrapper::-webkit-scrollbar-corner,
+.code-editor-wrapper::-webkit-scrollbar-corner {
+  background: var(--code-bg);
+}
+
+
+
+/* ==========================================================================
+   6. Form Editor & Accordions
+   ========================================================================== */
+.editor-mode-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.mode-btn {
+  background-color: var(--card-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mode-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  flex-shrink: 0;
+}
+
+.mode-btn:hover {
+  color: var(--text-color);
+  border-color: var(--border-focus);
+}
+
+.mode-btn.active {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  font-weight: 600;
+  border-color: var(--accent-color);
+}
+
+#formEditorContainer {
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.accordion-item {
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+
+.accordion-item:hover {
+  border-color: var(--border-focus);
+}
+
+.accordion-item.active {
+  border-color: var(--border-focus);
+}
+
+.accordion-header {
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+  background-color: var(--card-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.accordion-header:hover {
+  background-color: var(--card-hover);
+}
+
+.accordion-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.accordion-title svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--accent-color);
+  stroke-width: 1.75;
+  flex-shrink: 0;
+}
+
+.accordion-chevron {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion-item.active .accordion-chevron {
+  transform: rotate(180deg);
+  stroke: var(--accent-color);
+}
+
+.accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--code-bg);
+}
+
+.accordion-content {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-section {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  margin-left: 0;
+  min-width: 0;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.form-section h3 {
+  font-size: 0.84rem;
+  color: var(--accent-color);
+  margin-bottom: 14px;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.form-section h3::before {
+  display: none;
+}
+
+.form-setting-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 16px;
+  gap: 6px;
+  min-width: 0;
+}
+
+@media (min-width: 480px) {
+  .form-setting-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+}
+
+.form-setting-row label {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-weight: 500;
+  min-width: 0;
+}
+
+@media (min-width: 480px) {
+  .form-setting-row label {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-setting-row:has(input[type="checkbox"]) {
+    flex-direction: row !important;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .form-setting-row:has(input[type="checkbox"]) .form-setting-input {
+    flex: 0 0 auto;
+    width: auto;
+  }
+}
+
+.form-setting-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 31px;
+  max-height: 31px;
+}
+
+.form-setting-input input[type="text"],
+.form-setting-input input[type="number"],
+.form-setting-input select {
+  width: 100%;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s ease;
+  min-width: 0;
+}
+
+.form-setting-input input[type="text"]:focus,
+.form-setting-input input[type="number"]:focus,
+.form-setting-input select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.help-btn {
+  background-color: var(--card-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  max-width: 16px;
+  min-height: 16px;
+  max-height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  margin: 0 6px 0 0;
+  vertical-align: middle;
+}
+
+.help-btn:hover {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-color: var(--accent-color);
+}
+
+.tooltip-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.tooltip-body {
+  font-size: 0.85rem;
+  color: var(--text-color);
+  line-height: 1.5;
+  white-space: pre-line;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.array-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-hover);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+.array-item-row span {
+  flex: 1;
+  word-break: break-all;
+  min-width: 0;
+}
+
+
+
+/* ==========================================================================
+   7. Modals
+   ========================================================================== */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(10, 10, 15, 0);
+  backdrop-filter: blur(6px);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 10px;
+}
+
+.modal.open {
+  display: flex;
+}
+
+.modal-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-tabs {
+  display: flex;
+  gap: 6px;
+  background-color: var(--modal-tab-bg);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.modal-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.modal-tab-btn:hover {
+  color: var(--text-color);
+  background-color: var(--card-hover);
+}
+
+.modal-tab-btn.active {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.modal-tab-content {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: calc(90vh - 120px);
+  padding-right: 2px;
+}
+
+.modal-tab-content.active {
+  display: flex;
+}
+
+.setting-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+  gap: 10px;
+}
+
+.setting-item-row:last-child {
+  border-bottom: none;
+}
+
+.setting-label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-color);
+  min-width: 0;
+}
+
+.setting-label-group svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-muted);
+  stroke-width: 1.75;
+  flex-shrink: 0;
+}
+
+.theme-segmented-control {
+  display: flex;
+  background-color: var(--modal-tab-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.theme-segment-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 32px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.theme-segment-btn:hover {
+  color: var(--text-color);
+  background-color: var(--card-hover);
+  transform: none;
+}
+
+.theme-segment-btn.active {
+  background-color: var(--card-bg);
+  color: var(--accent-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+}
+
+.theme-segment-btn svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+}
+
+#connList {
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
+}
+
+.conn-item {
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  padding: 2px 5px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.2s ease;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.conn-item:hover {
+  border-color: var(--border-focus);
+}
+
+.conn-item.active {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.conn-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+
+.conn-status-dot.available {
+  background-color: #22c55e;
+}
+
+.conn-status-dot.unavailable {
+  background-color: #ef4444;
+}
+
+.conn-item-select {
+  flex: 1;
+  cursor: pointer;
+  outline: none;
+}
+
+.conn-item-select:focus-visible {
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--border-focus);
+}
+
+.conn-item div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  padding: 3px;
+}
+
+
+
+/* ==========================================================================
+   8. Code Editor & Syntax Highlighting
+   ========================================================================== */
+.code-editor-wrapper {
+  display: flex;
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+  min-width: 0;
+}
+
+.code-editor-wrapper.fullscreen-mode {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  margin: 0 !important;
+  background-color: var(--bg-color);
+}
+
+.line-numbers {
+  padding: 10px 4px;
+  background-color: var(--line-num-bg);
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace, ui-monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+  user-select: none;
+  border-right: 1px solid var(--border-color);
+  overflow: hidden;
+  flex-shrink: 0;
+  min-width: 48px;
+  white-space: pre;
+  box-sizing: border-box;
+}
+
+.line-number-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 var(--editor-line-height);
+  height: var(--editor-line-height);
+  line-height: var(--editor-line-height);
+}
+
+.line-number {
+  min-width: 2ch;
+}
+
+.fold-toggle {
+  width: 14px;
+  min-width: 14px;
+  height: 16px;
+  padding: 0;
+  margin-left: 2px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  line-height: 1;
+}
+
+.fold-toggle:hover {
+  background: var(--card-hover);
+  color: var(--text-color);
+  opacity: 1;
+  transform: none;
+}
+
+.fold-toggle-placeholder {
+  width: 14px;
+  min-width: 14px;
+  margin-left: 2px;
+}
+
+.fold-placeholder {
+  position: relative;
+  z-index: 0;
+  user-select: none;
+}
+
+.fold-placeholder::after {
+  content: "\00a0…\00a0";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  color: var(--fold-placeholder-fg);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.fold-placeholder::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  height: var(--editor-line-height);
+  transform: translateY(-50%);
+  left: -100vw;
+  right: -100vw;
+  background-color: var(--folded-line-bg);
+  pointer-events: none;
+}
+
+.editor-container {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  display: grid;
+  grid-template: 1fr / 1fr;
+  min-width: 0;
+}
+
+.editor-container textarea,
+.editor-container pre {
+  max-height: none !important;
+  height: 100% !important;
+  grid-area: 1 / 1;
+  margin: 0;
+  padding: 10px;
+  font-family: 'JetBrains Mono', monospace, ui-monospace;
+  font-size: 12px;
+  line-height: var(--editor-line-height);
+  white-space: pre;
+  word-break: normal;
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+}
+
+.editor-container textarea {
+  color: transparent;
+  caret-color: var(--accent-color);
+  resize: none;
+  outline: none;
+  z-index: 2;
+  overflow: auto;
+}
+
+.editor-container pre {
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  color: var(--text-color);
+}
+
+#activeEditorLine {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--editor-line-height);
+  background-color: var(--active-line-bg);
+  pointer-events: none;
+}
+
+.editor-container pre code {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  display: block;
+}
+
+.code-editor-wrapper::selection,
+.code-editor-wrapper *::selection,
+.output-wrapper::selection,
+.output-wrapper *::selection {
+  background-color: var(--border-focus);
+  color: var(--text-color);
+  -webkit-text-fill-color: var(--text-color);
+}
+
+/* Firefox */
+.code-editor-wrapper::-moz-selection,
+.code-editor-wrapper *::-moz-selection,
+.output-wrapper::-moz-selection,
+.output-wrapper *::-moz-selection {
+  background-color: var(--border-focus);
+  color: var(--text-color);
+}
+
+/* ANSI Colors for Terminal Logs */
+.ansi-cyan {
+  color: var(--info-color);
+}
+
+.ansi-cyan-bold {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.ansi-red {
+  color: var(--danger-color);
+}
+
+.ansi-green {
+  color: var(--success-color);
+}
+
+.ansi-yellow {
+  color: var(--warning-color);
+}
+
+/* JSON Syntax Tokens */
+.token-key {
+  color: var(--accent-color);
+}
+
+.token-string {
+  color: var(--success-color);
+}
+
+.token-number {
+  color: #d97706;
+}
+
+.token-boolean {
+  color: #7c3aed;
+}
+
+.token-null {
+  color: var(--danger-color);
+}
+
+
+
+/* ==========================================================================
+   9. Reusable Utility Classes & Component Modifiers
+   ========================================================================== */
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-col-gap-10 {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.flex-col-gap-8 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flex-row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.flex-row-center-6 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flex-row-gap-8 {
+  display: flex;
+  gap: 8px;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-2 {
+  flex: 2;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.margin-0 {
+  margin: 0;
+}
+
+.padding-0 {
+  padding: 0;
+}
+
+.border-none {
+  border: none;
+}
+
+.text-version {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.form-group-extra {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.terminal-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 0;
+  margin-top: 4px;
+}
+
+.label-margin-4 {
+  margin-bottom: 4px;
+}
+
+.modal-title-margin-4 {
+  margin-bottom: 4px;
+}
+
+.hr-custom {
+  border-color: var(--border-color);
+  border-style: solid;
+  width: 100%;
+  margin: 4px 0;
+}
+
+.modal-h3-title {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  border: none;
+  padding: 0;
+}
+
+.spacer-v-10 {
+  flex: 1;
+  min-height: 10px;
+}
+
+.modal-footer-row {
+  margin-top: auto;
+}
+
+.width-100 {
+  width: 100%;
+}
+
+
+.modal-header-title {
+  margin: 0;
+  border: none;
+  padding: 0;
+  font-size: 1rem;
+}
+
+.modal-content--sm {
+  max-width: 340px;
+}
+
+.modal-content--md {
+  max-width: 380px;
+}
+
+.select-lang {
+  max-width: 140px;
+  height: 34px;
+}
+
+.btn-start-action {
+  font-size: 0.95rem;
+  padding: 10px;
+}
+
+.mt-4 {
+  margin-top: 4px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.array-items-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.confirm-text,
+.alert-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+  word-break: break-word;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.setting-label-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+
+
+/* ==========================================================================
+   10. Responsive Media Queries (< 360px)
+   ========================================================================== */
+@media (max-width: 360px) {
+  body {
+    padding: 4px;
+  }
+
+  .navbar {
+    padding: 8px;
+  }
+
+  select.conn-select {
+    max-width: 110px;
+    padding-right: 22px;
+  }
+
+  button {
+    padding: 7px 10px;
+    font-size: 0.82rem;
+  }
+}
+
+
+
+/* ==========================================================================
+  11. Unifying Page Preloader
+   ========================================================================== */
+#pagePreloader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--card-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  border-radius: 8px;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+body>#pagePreloader {
+  position: fixed;
+  background-color: var(--bg-color);
+  z-index: 99999;
+  border-radius: 0;
+}
+
+#pagePreloader.loaded {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.preloader-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: preloaderSpin 0.7s linear infinite;
+}
+
+@keyframes preloaderSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+body.preload * {
+  transition: none !important;
+}
+
+
+
+/* ==========================================================================
+   12. System Telemetry Modal Styles & Progress Bars
+   ========================================================================== */
+.telemetry-metrics-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.telemetry-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.telemetry-metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.telemetry-metric-values {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.telemetry-progress-track {
+  width: 100%;
+  height: 8px;
+  background-color: var(--code-bg);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.telemetry-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  transition: width 0.4s ease, background-color 0.4s ease;
+}
+
+.telemetry-network-panel {
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.telemetry-net-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.telemetry-net-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.telemetry-net-val {
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace, ui-monospace;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <!-- Navbar -->
+    <div class="navbar">
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('skeenTab', this)" data-i18n="tabSKeen">SKeen</button>
+        <button class="tab-btn" onclick="switchTab('configTab', this)" data-i18n="tabConfig">Конфиг</button>
+      </div>
+      <div class="nav-controls">
+        <!-- System Telemetry button -->
+        <button id="sysTelemetryBtn" class="icon-btn" onclick="openSystemTelemetryModal()" title="Системная телеметрия"
+          aria-label="System Telemetry" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+        </button>
+        <button class="icon-btn" onclick="openConnModal()" title="Настройки" data-i18n-title="modalTitle"
+          aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab 1: SKeen Management -->
+    <div id="skeenTab" class="tab-content active">
+      <div class="card flex-col-gap-10">
+        <div class="flex-row-between">
+          <h2 class="margin-0 border-none padding-0" data-i18n="skeenCardTitle">Управление SKeen</h2>
+          <div class="flex-row-center-6">
+            <span id="headerApiVersion" class="text-version">API v0.0.0</span>
+          </div>
+        </div>
+        <!-- Current Status Panel -->
+        <div class="status-badge-panel">
+          <div class="status-badge">
+            <div id="serviceDot" class="status-dot"></div>
+            <span id="serviceStatusText" data-i18n="statusChecking">Проверка состояния...</span>
+          </div>
+          <div class="text-version" id="serviceDetails"></div>
+        </div>
+
+        <!-- Dynamic Action Buttons -->
+        <div id="dynamicActions" class="action-buttons-group"></div>
+
+        <!-- Extra Service Commands -->
+        <div class="form-group form-group-extra">
+          <label for="extraParam" data-i18n="extraActionLabel">Дополнительные сервисные команды</label>
+          <div class="form-row flex-row-gap-8">
+            <select id="extraParam" class="flex-2" onchange="handleExtraParamChange()"></select>
+            <button class="secondary flex-1" onclick="executeExtraCommand()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span data-i18n="btnExecute">Выполнить</span>
+            </button>
+          </div>
+          <div id="extraParamsContainer" class="flex-col-gap-8 mt-8" style="display: none;">
+          </div>
+        </div>
+
+        <!-- Terminal Output -->
+        <div class="form-group terminal-group">
+          <label data-i18n="outputLabel" class="label-margin-4">Вывод (stdout / stderr):</label>
+          <div class="terminal-container">
+            <button class="terminal-clear-btn" onclick="clearTerminalOutput()" title="Очистить"
+              data-i18n-title="btnClearOutput">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+            <pre id="cmdOutput" class="output-wrapper" data-i18n="waitingOutput">Ожидание выполнения команды...</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Configuration Editor -->
+    <div id="configTab" class="tab-content">
+      <div class="card editor-card">
+        <div class="flex-row-between">
+          <h2 class="margin-0 border-none padding-0" data-i18n="jsonCardTitle">Конфигурация</h2>
+          <div class="flex-row-center-6">
+            <select id="configFileSelect" class="conn-select flex-1" onchange="handleFileSelectChange()">
+              <option value="" data-i18n="loadingList">Загрузка списка...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group-editor" style="position: relative;">
+          <div id="pagePreloader" class="loaded">
+            <div class="preloader-spinner"></div>
+          </div>
+          <!-- Editor Mode Bar -->
+          <div id="editorModeBar" class="editor-mode-bar" style="display: none;">
+            <button type="button" class="mode-btn active" id="btnModeForm" onclick="switchEditorMode('form')"
+              data-i18n="modeForm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                </path>
+              </svg>
+              <span data-i18n="modeFormText">Форма</span>
+            </button>
+            <button type="button" class="mode-btn" id="btnModeText" onclick="switchEditorMode('text')"
+              data-i18n="modeText">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span>JSON</span>
+            </button>
+          </div>
+
+          <!-- Visual Form Container (Accordions) -->
+          <div id="formEditorContainer" style="display: none;"></div>
+
+          <!-- Text Editor Wrapper -->
+          <div id="editorWrapper" class="code-editor-wrapper">
+            <button id="foldAllBtn" class="fullscreen-icon-btn fold-all-btn" onclick="toggleAllJsonFolds()"
+              type="button" aria-label="Свернуть все блоки" title="Свернуть все блоки">
+              <svg id="foldAllSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+                <path d="M10 5h10M10 12h10M10 19h10M5 5v7m-2-2 2 2 2-2M5 19v-7m-2 2 2-2 2 2"></path>
+              </svg>
+            </button>
+            <button id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран"
+              data-i18n-title="fullscreenTitle">
+              <svg id="fullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                </path>
+              </svg>
+            </button>
+            <div id="lineNumbers" class="line-numbers">1</div>
+            <div class="editor-container">
+              <pre id="highlighting" aria-hidden="true"><code id="highlightingContent"></code></pre>
+              <div id="activeEditorLine" aria-hidden="true"></div>
+              <textarea id="jsonEditor" spellcheck="false" autocomplete="off" placeholder='Выберите файл...'
+                data-i18n-placeholder="jsonPlaceholder" oninput="handleEditorInput()" onscroll="syncScroll()"
+                onkeydown="handleEditorKeydown(event)" onkeyup="updateActiveEditorLine()"
+                onclick="updateActiveEditorLine()" onmouseup="updateActiveEditorLine()"
+                onselect="updateActiveEditorLine()" onbeforeinput="guardFoldPlaceholderEdit(event)"></textarea>
+            </div>
+          </div>
+          <div id="jsonStatus" class="status"></div>
+        </div>
+
+        <div class="form-row flex-shrink-0">
+          <button class="secondary" onclick="loadConfigFile()" title="Обновить" data-i18n-title="btnUpdateJson">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            <span data-i18n="btnUpdateJson">Обновить</span>
+          </button>
+          <button id="formatBtn" class="secondary" onclick="formatJsonEditor()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="21" y1="10" x2="3" y2="10"></line>
+              <line x1="21" y1="6" x2="3" y2="6"></line>
+              <line x1="21" y1="14" x2="3" y2="14"></line>
+              <line x1="21" y1="18" x2="3" y2="18"></line>
+            </svg>
+            <span data-i18n="btnFormat">Формат</span>
+          </button>
+          <button id="saveBtn" class="success-btn" onclick="saveConfigFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span data-i18n="btnSaveJson">Сохранить</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Telemetry Modal -->
+  <div id="sysTelemetryModal" class="modal">
+    <div class="modal-content modal-content--md">
+      <h2 data-i18n="telemetryModalTitle" class="modal-title-margin-4">Системная телеметрия</h2>
+
+      <div class="telemetry-metrics-grid">
+        <!-- CPU Load -->
+        <div class="telemetry-metric-item">
+          <div class="telemetry-metric-header">
+            <span data-i18n="metricCpu">ЦП</span>
+            <span id="telCpuVal">0%</span>
+          </div>
+          <div class="telemetry-progress-track">
+            <div id="telCpuBar" class="telemetry-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- RAM -->
+        <div class="telemetry-metric-item">
+          <div class="telemetry-metric-header">
+            <span data-i18n="metricMem">ОЗУ</span>
+            <span id="telMemVal">0 / 0 MB</span>
+          </div>
+          <div class="telemetry-progress-track">
+            <div id="telMemBar" class="telemetry-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- SWAP -->
+        <div id="swapMetricItem" class="telemetry-metric-item">
+          <div class="telemetry-metric-header">
+            <span data-i18n="metricSwap">Подкачка</span>
+            <span id="telSwapVal">0 / 0 MB</span>
+          </div>
+          <div class="telemetry-progress-track">
+            <div id="telSwapBar" class="telemetry-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Entware /opt -->
+        <div class="telemetry-metric-item">
+          <div class="telemetry-metric-header">
+            <span data-i18n="metricOpt">Entware</span>
+            <span id="telOptVal">0 / 0 KB</span>
+          </div>
+          <div class="telemetry-progress-track">
+            <div id="telOptBar" class="telemetry-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network and Connections -->
+      <div class="telemetry-network-panel">
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netIface">Интерфейс:</span>
+          <span id="telNetIface" class="telemetry-net-val">-</span>
+        </div>
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netRx">Загрузка:</span>
+          <span id="telRxSpeed" class="telemetry-net-val">0 B/s</span>
+        </div>
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netTx">Отдача:</span>
+          <span id="telTxSpeed" class="telemetry-net-val">0 B/s</span>
+        </div>
+        <hr class="hr-custom" style="margin: 4px 0;">
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netConns">Соединений:</span>
+          <span id="telConnCount" class="telemetry-net-val">0</span>
+        </div>
+      </div>
+
+      <div class="form-row modal-footer-row mt-8">
+        <button class="secondary width-100" onclick="closeSystemTelemetryModal()" data-i18n="btnClose">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Settings Modal -->
+  <div id="connModal" class="modal">
+    <div class="modal-content">
+      <h2 data-i18n="modalTitle" class="modal-title-margin-4">Настройки</h2>
+
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" onclick="switchModalTab('connectionsPane', this)"
+          data-i18n="modalTabConnections">Подключения</button>
+        <button class="modal-tab-btn" onclick="switchModalTab('miscPane', this)"
+          data-i18n="modalTabMisc">Прочее</button>
+      </div>
+
+      <!-- Connections Tab -->
+      <div id="connectionsPane" class="modal-tab-content active">
+        <div id="connList"></div>
+        <hr class="hr-custom">
+        <h3 id="formTitle" class="modal-h3-title" data-i18n="formTitleAdd">Добавить новое подключение</h3>
+        <input type="hidden" id="editIndex" value="-1">
+        <div class="form-group">
+          <label data-i18n="labelName">Имя роутера</label>
+          <input type="text" id="connName" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
+        </div>
+        <div class="form-group">
+          <label data-i18n="labelUrl">URL сервера</label>
+          <input type="text" id="connUrl" placeholder="http://192.168.1.1:3000">
+        </div>
+        <div class="form-group">
+          <label data-i18n="labelKey">Секрет</label>
+          <input type="text" id="connKey" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+        </div>
+        <div class="form-row">
+          <button onclick="saveConnection()" data-i18n="btnSaveConn">Сохранить</button>
+          <button class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
+        </div>
+      </div>
+
+      <!-- Misc Tab -->
+      <div id="miscPane" class="modal-tab-content">
+        <div class="setting-item-row">
+          <div class="setting-label-group">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <span data-i18n="labelThemeAppearance">Оформление</span>
+          </div>
+          <div class="theme-segmented-control">
+            <button class="theme-segment-btn" id="themeBtnAuto" onclick="setThemeMode('auto')" title="Как в системе"
+              data-i18n-title="themeAutoTitle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 3v18"></path>
+              </svg>
+            </button>
+            <button class="theme-segment-btn" id="themeBtnLight" onclick="setThemeMode('light')" title="Светлая"
+              data-i18n-title="themeLightTitle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path
+                  d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.02-12.02l-1.41 1.41">
+                </path>
+              </svg>
+            </button>
+            <button class="theme-segment-btn" id="themeBtnDark" onclick="setThemeMode('dark')" title="Темная"
+              data-i18n-title="themeDarkTitle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-item-row">
+          <div class="setting-label-group">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+              </path>
+            </svg>
+            <span data-i18n="labelLanguage">Язык</span>
+          </div>
+          <select id="langSelect" class="conn-select select-lang" onchange="changeLanguage(this.value)">
+            <option value="auto" data-i18n="langAuto">Как в системе</option>
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+
+        <div class="spacer-v-10"></div>
+        <div class="form-row modal-footer-row">
+          <button class="secondary width-100" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Tooltip Modal -->
+  <div id="tooltipModal" class="modal">
+    <div class="tooltip-content">
+      <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="tooltipTitle">Справка по параметру</h2>
+      <div id="tooltipModalText" class="tooltip-body"></div>
+      <div class="form-row mt-4">
+        <button class="secondary width-100" onclick="closeTooltipModal()" data-i18n="btnClose">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Array Editor Modal -->
+  <div id="arrayEditModal" class="modal">
+    <div class="modal-content modal-content--md">
+      <h2 id="arrayModalTitle" class="margin-0 border-none padding-0 modal-header-title" data-i18n="arrayModalTitle">
+        Редактирование списка</h2>
+      <div id="arrayModalItemsList" class="array-items-list">
+      </div>
+      <div class="form-row flex-row-gap-8">
+        <input type="text" id="arrayModalNewItemInput" data-i18n-placeholder="arrayPlaceholder"
+          placeholder="Новый элемент..." class="flex-1"
+          onkeydown="if(event.key==='Enter'){addArrayModalItem();event.preventDefault();}">
+        <button type="button" onclick="addArrayModalItem()" class="secondary flex-shrink-0"
+          data-i18n="btnAdd">Добавить</button>
+      </div>
+      <div class="form-row mt-10">
+        <button type="button" onclick="saveArrayModal()" class="flex-1" data-i18n="btnOk">ОК</button>
+        <button type="button" class="secondary flex-1" onclick="closeArrayModal()" data-i18n="btnCancel">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal">
+    <div class="modal-content modal-content--sm">
+      <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="confirmModalTitle">Подтверждение</h2>
+      <p id="confirmText" class="confirm-text"></p>
+      <div class="form-row">
+        <button id="confirmYesBtn" onclick="resolveConfirm(true)" data-i18n="btnYes">Да</button>
+        <button class="secondary" onclick="resolveConfirm(false)" data-i18n="btnNo">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Modal -->
+  <div id="alertModal" class="modal">
+    <div class="modal-content modal-content--sm">
+      <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="alertModalTitle">Внимание</h2>
+      <p id="alertText" class="alert-text"></p>
+      <div class="form-row">
+        <button id="alertOkBtn" onclick="closeAlertModal()" data-i18n="btnOk" class="flex-1">ОК</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+   Localization & Dictionaries
+   ========================================================================== */
+const translations = {
+  tabSKeen: { ru: "SKeen", en: "SKeen" },
+  tabConfig: { ru: "Конфиг", en: "Config" },
+  skeenCardTitle: { ru: "Управление SKeen", en: "SKeen Management" },
+  extraActionLabel: { ru: "Дополнительные сервисные команды", en: "Extra Service Commands" },
+  btnExecute: { ru: "Выполнить", en: "Execute" },
+  outputLabel: { ru: "Вывод (stdout / stderr):", en: "Output (stdout / stderr):" },
+  waitingOutput: { ru: "Ожидание выполнения команды...", en: "Waiting for command execution..." },
+  jsonCardTitle: { ru: "Конфигурация", en: "Configuration" },
+  jsonPlaceholder: { ru: "Выберите файл...", en: "Select a file..." },
+  btnUpdateJson: { ru: "Обновить", en: "Update" },
+  btnSaveJson: { ru: "Сохранить", en: "Save" },
+  btnFormat: { ru: "Формат", en: "Format" },
+  modalTitle: { ru: "Настройки", en: "Settings" },
+  modalTabConnections: { ru: "Подключения", en: "Connections" },
+  modalTabMisc: { ru: "Прочее", en: "Misc" },
+  labelThemeAppearance: { ru: "Оформление", en: "Appearance" },
+  labelLanguage: { ru: "Язык", en: "Language" },
+  langAuto: { ru: "Как в системе", en: "System default" },
+  formTitleAdd: { ru: "Добавить новое подключение", en: "Add new connection" },
+  formTitleEdit: { ru: "Редактировать подключение", en: "Edit connection" },
+  labelName: { ru: "Имя роутера", en: "Router name" },
+  placeholderName: { ru: "Необязательно", en: "Optional" },
+  labelUrl: { ru: "URL сервера", en: "Server URL" },
+  labelKey: { ru: "Секрет", en: "Secret" },
+  placeholderKey: { ru: "Секретный ключ", en: "Secret key" },
+  btnSaveConn: { ru: "Сохранить", en: "Save" },
+  btnClose: { ru: "Закрыть", en: "Close" },
+  noConnections: { ru: "-- Нет подключений --", en: "-- No connections --" },
+  emptyList: { ru: "Список пуст.", en: "List is empty." },
+  btnEdit: { ru: "Изменить", en: "Edit" },
+  btnDelete: { ru: "Удалить", en: "Delete" },
+  statusLoaded: { ru: "Файл успешно загружен", en: "File successfully loaded" },
+  statusSaved: { ru: "Файл успешно сохранен. Перезапустите SKeen для применения изменений", en: "File successfully saved. Restart SKeen to apply changes" },
+  statusFormatted: { ru: "JSON отформатирован", en: "JSON formatted" },
+  noChangesNeeded: { ru: "Сохранение не требуется", en: "No changes needed" },
+  executing: { ru: "Выполнение...", en: "Executing..." },
+  emptyOutput: { ru: "(Пустой вывод)", en: "(Empty output)" },
+  alertNoUrl: { ru: "Укажите URL сервера!", en: "Specify the server URL!" },
+  alertNoConn: { ru: "Необходимо добавить хотя бы одно подключение!", en: "You must add at least one connection!" },
+  alertNeedSetup: { ru: "Сначала настройте подключение к роутеру!", en: "Configure the router connection first!" },
+  confirmDelete: { ru: "Удалить это подключение?", en: "Delete this connection?" },
+  pingError: { ru: "❌ Не удалось подключиться к серверу. Подключение не сохранено.\n\nДетали: ", en: "❌ Could not connect to the server. The connection was not saved.\n\nDetails: " },
+  confirmUnsaved: { ru: "Есть несохраненные изменения. Вы уверены, что хотите продолжить без сохранения?", en: "You have unsaved changes. Are you sure you want to proceed without saving?" },
+  alertDuplicateUrl: { ru: "Подключение с таким URL уже существует!", en: "Connection with this URL already exists!" },
+  confirmModalTitle: { ru: "Подтверждение", en: "Confirmation" },
+  btnYes: { ru: "Да", en: "Yes" },
+  btnNo: { ru: "Отмена", en: "Cancel" },
+  alertModalTitle: { ru: "Внимание", en: "Attention" },
+  btnOk: { ru: "ОК", en: "OK" },
+  statusActive: { ru: "Работает", en: "Running" },
+  statusInactive: { ru: "Остановлен", en: "Stopped" },
+  statusServerUnavailable: { ru: "Сервер недоступен", en: "Server unavailable" },
+  connectionAvailable: { ru: "Подключение доступно", en: "Connection available" },
+  connectionUnavailable: { ru: "Подключение недоступно", en: "Connection unavailable" },
+  statusNoConnection: { ru: "API-сервер остановлен / Нет связи", en: "API server stopped / No connection" },
+  statusChecking: { ru: "Проверка состояния...", en: "Checking status..." },
+  statusMode: { ru: "Режим", en: "Mode" },
+  statusSwitchedTo: { ru: "Переключено на: ", en: "Switched to: " },
+  statusFormatNotApplicable: { ru: "Форматирование неприменимо к текстовым спискам", en: "Format not applicable for text lists" },
+  errorPrefix: { ru: "Ошибка: ", en: "Error: " },
+  jsonErrorPrefix: { ru: "Ошибка JSON: ", en: "JSON Error: " },
+  requestTimeout: { ru: "Превышено время ожидания запроса (лимит 25 секунд)", en: "Request timeout (25s limit exceeded)" },
+  foldBlock: { ru: "Свернуть блок", en: "Fold block" },
+  unfoldBlock: { ru: "Развернуть блок", en: "Unfold block" },
+  foldAllBlocks: { ru: "Свернуть все блоки", en: "Fold all blocks" },
+  unfoldAllBlocks: { ru: "Развернуть все блоки", en: "Unfold all blocks" },
+  foldEditHint: { ru: "Сначала разверните этот блок, чтобы изменить его содержимое.", en: "Unfold this block before editing its contents." },
+  foldRestoreError: { ru: "Не удалось восстановить свёрнутый блок. Разверните все блоки и повторите действие.", en: "A folded block could not be restored. Unfold all blocks and try again." },
+  alertCorruptConnections: { ru: "Сохраненные подключения повреждены или имеют неверный формат. Они не загружены; добавьте их заново.", en: "Saved connections are corrupted or have an invalid format. They were not loaded; please add them again." },
+  alertInvalidJson: { ru: "Ошибка в формате JSON. Исправьте синтаксис в текстовом режиме.", en: "JSON syntax error. Fix it in text mode." },
+  alertInvalidForm: { ru: "Исправьте подсвеченные ошибки в форме перед сохранением!", en: "Fix highlighted form errors before saving!" },
+  titleRestore: { ru: "Восстановить", en: "Restore" },
+  titleFullscreen: { ru: "На весь экран", en: "Fullscreen" },
+  cmdReload: { ru: "reload - Перезагрузка sing-box", en: "reload - Reload sing-box" },
+  cmdSync: { ru: "sync - Синхронизировать конфиг", en: "sync - Synchronize config" },
+  cmdStatus: { ru: "status - Показать статус", en: "status - Show status" },
+  cmdKill: { ru: "kill - Принудительная остановка", en: "kill - Force stop" },
+  cmdVersion: { ru: "version - Показать версию", en: "version - Show version" },
+  cmdIface: { ru: "iface - Таблица сетевых интерфейсов", en: "iface - Interface table" },
+  cmdConnstat: { ru: "connstat - Диагностика соединений", en: "connstat - Diagnostics" },
+  cmdTest: { ru: "test - Тестировать правила фаервола", en: "test - Test firewall rules" },
+  cmdDeps: { ru: "deps - Проверить зависимости", en: "deps - Check dependencies" },
+  cmdCheck: { ru: "check - Проверить конфигурацию", en: "check - Check config" },
+  cmdFormat: { ru: "format - Отформатировать конфиг", en: "format - Format configuration" },
+  cmdBackup: { ru: "backup - Создать архив /opt/etc/skeen", en: "backup - Create archive" },
+  cmdBackups: { ru: "backups - Список архивов в /opt", en: "backups - List archives" },
+  cmdRestore: { ru: "restore - Восстановить из архива", en: "restore - Restore backup" },
+  cmdClean: { ru: "clean - Очистить кэш sing-box", en: "clean - Clear sing-box cache" },
+  cmdHeaders: { ru: "headers - Сгенерировать заголовки", en: "headers - Generate headers" },
+  cmdTun: { ru: "OpkgTun (KeeneticOS v5+)", en: "OpkgTun (KeeneticOS v5+)" },
+  cmdApiReload: { ru: "areload - Перезагрузка API", en: "areload - Reload API" },
+  cmdApiUpdate: { ru: "aupdate - Обновление API", en: "aupdate - Update API" },
+  btnStart: { ru: "Запустить SKeen", en: "Start SKeen" },
+  btnStop: { ru: "Остановить", en: "Stop" },
+  btnRestart: { ru: "Перезапустить", en: "Restart" },
+  lblBackupFile: { ru: "Имя бэкапа", en: "Backup file name" },
+  lblSyncUrl: { ru: "URL конфига (опционально)", en: "Config URL (optional)" },
+  lblTunSubCommand: { ru: "Действие TUN", en: "TUN action" },
+  lblIpAddress: { ru: "IP адрес", en: "IP address" },
+  lblIfaceName: { ru: "Имя интерфейса", en: "Interface name" },
+  placeholderBackupFile: { ru: "skeen_backup_2026.tar.gz", en: "skeen_backup_2026.tar.gz" },
+  placeholderSyncUrl: { ru: "https://example.com/sub", en: "https://example.com/sub" },
+  placeholderIpAddress: { ru: "172.16.250.1", en: "172.16.250.1" },
+  placeholderIfaceName: { ru: "MyTUN", en: "MyTUN" },
+  alertEmptyParam: { ru: "Заполните все необходимые параметры!", en: "Please fill in all required parameters!" },
+  btnClearOutput: { ru: "Очистить вывод", en: "Clear output" },
+  modeForm: { ru: "Форма", en: "Form" },
+  modeFormText: { ru: "Форма", en: "Form" },
+  modeText: { ru: "JSON", en: "JSON" },
+  tooltipTitle: { ru: "Справка по параметру", en: "Parameter Help" },
+  arrayModalTitle: { ru: "Редактирование списка", en: "Edit list" },
+  arrayPlaceholder: { ru: "Новый элемент...", en: "New item..." },
+  btnAdd: { ru: "Добавить", en: "Add" },
+  btnCancel: { ru: "Отмена", en: "Cancel" },
+  loadingList: { ru: "Загрузка списка...", en: "Loading list..." },
+  noFilesAvailable: { ru: "Нет доступных файлов", en: "No available files" },
+  errorLoadList: { ru: "Ошибка загрузки списка", en: "Error loading list" },
+  fullscreenTitle: { ru: "На весь экран", en: "Fullscreen" },
+  themeAutoTitle: { ru: "Как в системе", en: "System default" },
+  themeLightTitle: { ru: "Светлая", en: "Light" },
+  themeDarkTitle: { ru: "Темная", en: "Dark" },
+  secGeneral: { ru: "Основные", en: "General" },
+  secAutoStart: { ru: "Автозапуск", en: "Auto start" },
+  secDelay: { ru: "Задержка", en: "Delay" },
+  secPolicy: { ru: "Политика доступа", en: "Access policy" },
+  secSegment: { ru: "Сегмент", en: "Segment" },
+  secNetwork: { ru: "Сеть", en: "Network" },
+  secIpv6: { ru: "Включить IPv6", en: "Enable IPv6" },
+  secTuning: { ru: "Оптимизация", en: "Tuning" },
+  secPingCheck: { ru: "Ping Check", en: "Ping check" },
+  secSingbox: { ru: "Sing-box", en: "Sing-box" },
+  secUseDir: { ru: "Использовать папку", en: "Use folder" },
+  secConfigUrl: { ru: "URL конфига", en: "Config URL" },
+  secSplit: { ru: "Разбивать (split)", en: "Split" },
+  secApiUrl: { ru: "API URL", en: "API URL" },
+  secApiSecret: { ru: "API Секрет", en: "API secret" },
+  secExtSingbox: { ru: "Сторонний Sing-box", en: "External Sing-box" },
+  secExtPath: { ru: "Путь к бинарнику", en: "Binary path" },
+  secServices: { ru: "Сервисы", en: "Services" },
+  secApiPort: { ru: "API Порт", en: "API port" },
+  secCorsOrigins: { ru: "CORS Origins", en: "CORS origins" },
+  secDashboard: { ru: "Dashboard", en: "Dashboard" },
+  secLocalProxy: { ru: "Локальный прокси", en: "Local proxy" },
+  secProxyPort: { ru: "Порт прокси", en: "Proxy port" },
+  secProxyUser: { ru: "Пользователь", en: "User" },
+  secProxyPass: { ru: "Пароль прокси", en: "Proxy password" },
+  secFirewall: { ru: "Фаервол", en: "Firewall" },
+  secIntercept: { ru: "Перехват", en: "Intercept" },
+  secInterceptDns: { ru: "Перехват DNS", en: "DNS intercept" },
+  secFakeip: { ru: "FakeIP перехват", en: "FakeIP intercept" },
+  secFakeipClients: { ru: "Клиенты FakeIP", en: "FakeIP clients" },
+  secExclude: { ru: "Исключения фаервола", en: "Firewall exclusions" },
+  secExcludePorts: { ru: "Исключенные порты", en: "Excluded ports" },
+  secExcludeV4: { ru: "Исключенные IPv4 CIDR", en: "Excluded IPv4 CIDR" },
+  secExcludeV6: { ru: "Исключенные IPv6 CIDR", en: "Excluded IPv6 CIDR" },
+  secRedirectDns: { ru: "Редирект DNS", en: "DNS redirect" },
+  secDnsPort: { ru: "Порт редиректа DNS", en: "DNS redirect port" },
+  secUsePolicyDns: { ru: "Использовать политику DNS", en: "Use DNS policy" },
+  secProxyRouter: { ru: "Проксирование роутера", en: "Proxy router" },
+  secUpdates: { ru: "Обновления", en: "Updates" },
+  secUpdateSingbox: { ru: "Обновления Sing-box", en: "Sing-box updates" },
+  secBetaSingbox: { ru: "Бета-версии Sing-box", en: "Sing-box beta versions" },
+  secUpdateSkeen: { ru: "Обновления SKeen", en: "SKeen updates" },
+  secUpdateSkeenApi: { ru: "Обновления SKeen API", en: "SKeen API updates" },
+  enabledLbl: { ru: "Включить", en: "Enable" },
+  telemetryModalTitle: { ru: "Системная телеметрия", en: "System Telemetry" },
+  metricCpu: { ru: "ЦП", en: "CPU" },
+  metricMem: { ru: "ОЗУ", en: "RAM" },
+  metricSwap: { ru: "Подкачка", en: "SWAP" },
+  metricOpt: { ru: "Entware", en: "Entware" },
+  netIface: { ru: "Интерфейс:", en: "Interface:" },
+  netRx: { ru: "Загрузка:", en: "Download:" },
+  netTx: { ru: "Отдача:", en: "Upload:" },
+  netConns: { ru: "Соединений:", en: "Connections:" }
+};
+
+/* ==========================================================================
+   Schemas, Validators & Application State
+   ========================================================================== */
+const SKEEN_DEFAULT_SCHEMA = {
+  auto_start: { enabled: 1, delay: 0 },
+  policy: { enabled: 0, segment: "br1" },
+  network: { ipv6: 1, tuning: 0, check: ["vk.com", "77.88.8.8", "77.88.8.1"] },
+  singbox: {
+    config: { use_dir: 0, url: "", split: 1 },
+    api: { url: "http://127.0.0.1:9999", secret: "" },
+    external: {
+      enabled: 0,
+      path: "/opt/bin/sing-box",
+      config: { use_dir: 0, url: "", split: 1 },
+      api: { url: "", secret: "" }
+    }
+  },
+  services: {
+    api: { port: 3000, secret: "", cors_origin: ["*"], dashboard: 1, auto_start: 1 },
+    proxy: { enabled: 0, port: "", user: "", pass: "" }
+  },
+  firewall: {
+    intercept: {
+      dns: 1,
+      fakeip: { enabled: 0, clients: [] }
+    },
+    exclude: {
+      port: ["137:139", 445, 1900],
+      ipv4_cidr: [],
+      ipv6_cidr: []
+    },
+    redirect_dns: { enabled: 0, to_port: "", use_policy: 1 },
+    proxy_router: 0
+  },
+  update: {
+    singbox: { enabled: 1, beta: 0 },
+    skeen: { enabled: 1, api: 0 }
+  }
+};
+
+const helpTexts = {
+  "auto_start.enabled": {
+    ru: "Автозапуск SKeen при загрузке роутера.",
+    en: "SKeen autostart on router reboot."
+  },
+  "auto_start.delay": {
+    ru: "Задержка автозапуска в секундах (по умолчанию: 0).",
+    en: "Auto-start delay in seconds (default: 0)."
+  },
+  "policy.enabled": {
+    ru: "Включить маршрутизацию на основе политики сетевого сегмента.",
+    en: "Enable routing based on network segment policy."
+  },
+  "policy.segment": {
+    ru: "Имя интерфейса сегмента (Bridge), политика которой будет использоваться; начинается с \"br\", далее цифра от 0 и больше (например, br1).",
+    en: "Name of the segment interface (Bridge) whose policy will be used; starts with 'br', followed by a digit from 0 and above (e.g., br1)."
+  },
+  "network.ipv6": {
+    ru: "Включить поддержку IPv6.",
+    en: "Enable IPv6 support."
+  },
+  "network.tuning": {
+    ru: "Включить оптимизацию сети через sysctl.",
+    en: "Enable network optimization via sysctl."
+  },
+  "network.check": {
+    ru: "Домены или IPv4 адреса для проверки доступности сети (макс. 3).",
+    en: "Domains or IPv4 addresses to check network connectivity (max. 3)."
+  },
+  "services.api.port": {
+    ru: "Порт встроенного API-сервера SKeen (по умолчанию: 3000).",
+    en: "Port of the built-in SKeen API server (default: 3000)."
+  },
+  "services.api.secret": {
+    ru: "Секретный ключ для доступа к API SKeen.",
+    en: "Secret key for accessing the SKeen API."
+  },
+  "services.api.cors_origin": {
+    ru: "Разрешенные CORS-источники.",
+    en: "Allowed CORS origins."
+  },
+  "services.api.dashboard": {
+    ru: "Включить веб-панель управления.",
+    en: "Enable the web management dashboard."
+  },
+  "services.api.auto_start": {
+    ru: "Автозапуск API-сервера.",
+    en: "Auto-start the API server."
+  },
+  "services.proxy.enabled": {
+    ru: "Использовать локальный прокси (127.0.0.1) для команд update и sync.",
+    en: "Use local proxy (127.0.0.1) for update and sync commands."
+  },
+  "services.proxy.port": {
+    ru: "Порт локального прокси.",
+    en: "Local proxy port."
+  },
+  "services.proxy.user": {
+    ru: "Имя пользователя для подключения к прокси.",
+    en: "Username for proxy connection."
+  },
+  "services.proxy.pass": {
+    ru: "Пароль пользователя для подключения к прокси.",
+    en: "Password for proxy connection."
+  },
+  "singbox.config.use_dir": {
+    ru: "Использовать папку в /opt/etc/skeen/config с конфигурациями sing-box вместо файла.",
+    en: "Use a folder in /opt/etc/skeen/config with sing-box configurations instead of a single file."
+  },
+  "singbox.config.url": {
+    ru: "URL-адрес для синхронизации конфигурации.",
+    en: "URL for configuration synchronization."
+  },
+  "singbox.config.split": {
+    ru: "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
+    en: "The synchronized config will be split into separate files by key names if folder mode is used."
+  },
+  "singbox.api.url": {
+    ru: "URL к сервису sing-box API, необходимый для консольных команд skeen api",
+    en: "URL to the sing-box API service, required for skeen api console commands."
+  },
+  "singbox.api.secret": {
+    ru: "Секретный ключ API sing-box.",
+    en: "Sing-box API secret key."
+  },
+  "singbox.external.enabled": {
+    ru: "Использовать сторонний бинарный файл Sing-box.",
+    en: "Use an external Sing-box binary file."
+  },
+  "singbox.external.path": {
+    ru: "Полный путь к стороннему файлу sing-box или его имя (если он доступен в PATH).",
+    en: "Full path to the external sing-box file or its name (if available in PATH)."
+  },
+  "singbox.external.config.use_dir": {
+    ru: "Использовать папку в /opt/etc/skeen/config_ext с конфигурациями sing-box вместо файла.",
+    en: "Use a folder in /opt/etc/skeen/config_ext with sing-box configurations instead of a file."
+  },
+  "singbox.external.config.url": {
+    ru: "URL конфигурации для стороннего Sing-box.",
+    en: "Configuration URL for the external Sing-box."
+  },
+  "singbox.external.config.split": {
+    ru: "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
+    en: "The synchronized config will be split into separate files by key names if folder mode is used."
+  },
+  "singbox.external.api.url": {
+    ru: "URL к сервису sing-box API, необходимый для консольных команд skeen api",
+    en: "URL to the sing-box API service, required for skeen api console commands."
+  },
+  "singbox.external.api.secret": {
+    ru: "Секрет API стороннего sing-box.",
+    en: "API secret for the external sing-box."
+  },
+  "firewall.intercept.dns": {
+    ru: "Перехватывать DNS-запросы в режимах TProxy/Hybrid.",
+    en: "Intercept DNS queries in TProxy/Hybrid modes."
+  },
+  "firewall.intercept.fakeip.enabled": {
+    ru: "Включить FakeIP-пул адресов в перехват Redirect/TProxy. Для чистых IP-адресов, не имеющих доменов, настраивается в файле pure_cidr.list",
+    en: "Include FakeIP address pool in Redirect/TProxy interception. Pure IP addresses without domains are configured in pure_cidr.list"
+  },
+  "firewall.intercept.fakeip.clients": {
+    ru: "Клиенты (IP или CIDR) для FakeIP перехвата.",
+    en: "Clients (IP or CIDR) for FakeIP interception."
+  },
+  "firewall.exclude.port": {
+    ru: "Порты, исключенные из Redirect/TProxy.",
+    en: "Ports excluded from Redirect/TProxy interception."
+  },
+  "firewall.exclude.ipv4_cidr": {
+    ru: "Исключенные подсети IPv4 или IP адреса.",
+    en: "Excluded IPv4 subnets or IP addresses."
+  },
+  "firewall.exclude.ipv6_cidr": {
+    ru: "Исключенные подсети IPv6 или IP адреса.",
+    en: "Excluded IPv6 subnets or IP addresses."
+  },
+  "firewall.redirect_dns.enabled": {
+    ru: "Включает редирект DNS-запросов.",
+    en: "Enables DNS query redirection."
+  },
+  "firewall.redirect_dns.to_port": {
+    ru: "Порт перенаправления DNS-запросов.",
+    en: "Port for redirecting DNS queries."
+  },
+  "firewall.redirect_dns.use_policy": {
+    ru: "Использовать настроенную политику для редиректа DNS.",
+    en: "Use the configured policy for DNS redirection."
+  },
+  "firewall.proxy_router": {
+    ru: "Проксировать все сервисы роутера. Доступно в режимах redirect, tproxy и hybrid, исключения подсетей и порты исключения учитываются.",
+    en: "Proxy all router services. Available in redirect, tproxy, and hybrid modes; subnet and port exclusions are taken into account."
+  },
+  "update.singbox.enabled": {
+    ru: "Включить проверку обновлений Sing-box (CLI).",
+    en: "Enable Sing-box update check (CLI)."
+  },
+  "update.singbox.beta": {
+    ru: "Включает проверку pre-release версий (CLI).",
+    en: "Enable checking pre-release versions (CLI)."
+  },
+  "update.skeen.enabled": {
+    ru: "Включить проверку обновлений SKeen (CLI).",
+    en: "Enable SKeen update check (CLI)."
+  },
+  "update.skeen.api": {
+    ru: "Включить проверку обновлений SKeen API (CLI).",
+    en: "Enable SKeen API update check (CLI)."
+  }
+};
+
+/* ==========================================================================
+   State Management
+   ========================================================================== */
+const appState = { connectionStorageWarning: false };
+const editorState = {
+  originalFileContent: '',
+  baselineParsedJson: null,
+  currentSelectedFile: '',
+  cachedLines: [],
+  editorMode: localStorage.getItem('keen_editor_mode') === 'text' ? 'text' : 'form'
+};
+const serviceState = {
+  pollingTimer: null,
+  isServiceRunning: false,
+  telemetryPollingTimer: null,
+  isServerConnected: false
+};
+const noticeState = { statusTimeout: null };
+const modalState = {
+  currentAlertCallback: null,
+  currentConfirmCallback: null,
+  currentCancelCallback: null
+};
+const languageState = { currentLang: 'en' };
+const formState = {
+  activeAccordionIndex: -1,
+  arrays: {
+    networkCheck: [],
+    apiCors: [],
+    fakeipClients: [],
+    excludePorts: [],
+    excludeV4: [],
+    excludeV6: []
+  },
+  arrayEditor: {
+    target: null,
+    displayInputId: null,
+    validationType: 'text'
+  }
+};
+
+function loadStoredConnections() {
+  const serialized = localStorage.getItem('keen_connections');
+  if (serialized === null) return [];
+
+  let storedConnections;
+  try {
+    storedConnections = JSON.parse(serialized);
+  } catch (error) {
+    appState.connectionStorageWarning = true;
+    console.error('Saved connections contain invalid JSON and were not loaded.', error);
+    return [];
+  }
+
+  if (!Array.isArray(storedConnections) || storedConnections.some(conn =>
+    !conn || typeof conn !== 'object' || Array.isArray(conn) ||
+    typeof conn.url !== 'string' || !conn.url.trim() ||
+    (conn.name !== undefined && typeof conn.name !== 'string') ||
+    (conn.apiKey !== undefined && typeof conn.apiKey !== 'string')
+  )) {
+    appState.connectionStorageWarning = true;
+    console.error('Saved connections have an invalid format and were not loaded.');
+    return [];
+  }
+
+  return storedConnections.map(conn => ({
+    name: conn.name || conn.url,
+    url: conn.url,
+    apiKey: conn.apiKey || ''
+  }));
+}
+
+/* ==========================================================================
+   Validators
+   ========================================================================== */
+const VALIDATORS = {
+  ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+  ipv6: /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::1$|^([0-9a-fA-F]{1,4}:){1,7}:$/,
+  ipv4Cidr: /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:[0-2]?[0-9]|3[0-2])$/,
+  ipv6Cidr: /^([0-9a-fA-F]{1,4}:){1,7}:?\/(?:[0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/,
+  url: /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)(:[0-9]{1,5})?(\/.*)?$/i,
+  port: /^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/,
+  portRange: /^([1-9][0-9]{0,4}):([1-9][0-9]{0,4})$/,
+  segment: /^br\d+$/,
+  host: /^([a-zA-Z0-9][-a-zA-Z0-9]*\.)+[a-zA-Z]{2,}$|^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+};
+
+function validateField(inputElement, type) {
+  if (!inputElement) return true;
+  const val = inputElement.value.trim();
+  if (!val) {
+    inputElement.classList.remove('invalid-input');
+    return true;
+  }
+  let isValid = true;
+  if (type === 'port') isValid = VALIDATORS.port.test(val);
+  else if (type === 'url') isValid = VALIDATORS.url.test(val);
+  else if (type === 'segment') isValid = VALIDATORS.segment.test(val);
+  else if (type === 'host') isValid = VALIDATORS.host.test(val);
+  else if (type === 'ip') isValid = VALIDATORS.ipv4.test(val) || VALIDATORS.ipv6.test(val);
+
+  inputElement.classList.toggle('invalid-input', !isValid);
+  return isValid;
+}
+
+/* ==========================================================================
+   Helper (DRY)
+   ========================================================================== */
+function setModalState(modalId, isOpen) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.toggle('open', isOpen);
+  }
+  if (modalId === 'connModal') updateConnectionPingPolling();
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const externalSignal = options.signal;
+  const abortRequest = () => controller.abort(externalSignal.reason);
+  if (externalSignal?.aborted) abortRequest();
+  else externalSignal?.addEventListener('abort', abortRequest, { once: true });
+
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+    externalSignal?.removeEventListener('abort', abortRequest);
+  }
+}
+
+function togglePreloader(show) {
+  const preloader = document.getElementById('pagePreloader');
+  if (preloader) {
+    preloader.classList.toggle('loaded', !show);
+  }
+}
+
+/* ==========================================================================
+   Initialization & App Lifecycle
+   ========================================================================== */
+const storedActiveIndex = Number.parseInt(localStorage.getItem('keen_active_index') || '0', 10);
+const connectionState = {
+  connections: loadStoredConnections(),
+  activeIndex: Number.isInteger(storedActiveIndex) && storedActiveIndex >= 0 ? storedActiveIndex : 0,
+  pingStatus: new Map(),
+  pingTimer: null,
+  pingController: null,
+  pingRunId: 0,
+  pingRunActive: false,
+  saveInProgress: false
+};
+
+window.addEventListener('DOMContentLoaded', async () => {
+  document.body.classList.add('preload');
+
+  const preloader = document.getElementById('pagePreloader');
+  if (preloader) {
+    document.body.appendChild(preloader);
+    togglePreloader(true);
+  }
+
+  const savedTheme = localStorage.getItem('keen_theme_mode') || 'auto';
+  applyTheme(['auto', 'light', 'dark'].includes(savedTheme) ? savedTheme : 'auto');
+  const savedLanguage = localStorage.getItem('keen_lang_setting') || 'auto';
+  const languageSetting = ['auto', 'ru', 'en'].includes(savedLanguage) ? savedLanguage : 'auto';
+  languageState.currentLang = resolveLanguage(languageSetting);
+  document.getElementById('langSelect').value = languageSetting;
+
+  applyLanguage();
+  initConnections();
+  if (appState.connectionStorageWarning) {
+    showAlertModal(t('alertCorruptConnections'));
+  }
+  renderExtraParamOptions();
+
+  const storedTab = localStorage.getItem('keen_active_tab');
+  const savedTab = storedTab === 'configTab' ? 'configTab' : 'skeenTab';
+  const tabBtn = document.querySelectorAll('.tab-btn')[savedTab === 'configTab' ? 1 : 0];
+  if (tabBtn) switchTab(savedTab, tabBtn, false);
+
+  await fetchServiceStatus();
+  startPolling();
+
+  setTimeout(() => {
+    const editorContainer = document.querySelector('.form-group-editor');
+    if (preloader && editorContainer) {
+      editorContainer.insertBefore(preloader, editorContainer.firstChild);
+    }
+    document.body.classList.remove('preload');
+    togglePreloader(false);
+  }, 100);
+
+  document.addEventListener('visibilitychange', () => {
+    const modal = document.getElementById('sysTelemetryModal');
+    const isModalOpen = modal && modal.classList.contains('open');
+
+    if (document.hidden) {
+      stopTelemetryPolling();
+    } else {
+      if (document.getElementById('skeenTab').classList.contains('active')) {
+        fetchServiceStatus();
+      }
+      if (isModalOpen && serviceState.isServerConnected) {
+        openSystemTelemetryModal();
+      }
+    }
+    updateConnectionPingPolling();
+  });
+});
+
+function startPolling() {
+  if (serviceState.pollingTimer) clearInterval(serviceState.pollingTimer);
+  serviceState.pollingTimer = setInterval(() => {
+    if (document.hidden || !document.getElementById('skeenTab').classList.contains('active')) {
+      return;
+    }
+    fetchServiceStatus();
+  }, 3500);
+}
+
+/* ==========================================================================
+   Connections Management
+   ========================================================================== */
+function initConnections() {
+  if (connectionState.connections.length === 0) {
+    openConnModal();
+    return;
+  }
+  if (connectionState.activeIndex >= connectionState.connections.length) connectionState.activeIndex = 0;
+}
+
+function openConnModal() {
+  renderConnList();
+  clearConnForm();
+  setModalState('connModal', true);
+}
+
+function closeConnModal() {
+  if (connectionState.connections.length === 0) {
+    showAlertModal(t('alertNoConn'));
+    return;
+  }
+  setModalState('connModal', false);
+  initConnections();
+}
+
+function renderConnList() {
+  const listEl = document.getElementById('connList');
+  listEl.innerHTML = '';
+  if (connectionState.connections.length === 0) {
+    listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem;">${t('emptyList')}</div>`;
+    return;
+  }
+  connectionState.connections.forEach((conn, index) => {
+    const item = document.createElement('div');
+    const isActive = index === connectionState.activeIndex;
+    item.className = `conn-item${isActive ? ' active' : ''}`;
+    const details = document.createElement('div');
+    details.className = 'conn-item-select';
+    details.tabIndex = 0;
+    details.setAttribute('role', 'button');
+    details.setAttribute('aria-pressed', String(isActive));
+    details.setAttribute('aria-label', conn.name || conn.url);
+    details.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        changeActiveConnection(String(index));
+      }
+    });
+
+    const name = document.createElement('h3');
+    name.className = 'modal-h3-title';
+    const statusDot = document.createElement('span');
+    statusDot.className = 'conn-status-dot';
+    statusDot.setAttribute('aria-hidden', 'true');
+    const knownStatus = connectionState.pingStatus.get(conn.url);
+    if (knownStatus !== undefined) {
+      statusDot.classList.add(knownStatus ? 'available' : 'unavailable');
+      statusDot.title = knownStatus ? t('connectionAvailable') : t('connectionUnavailable');
+      statusDot.setAttribute('aria-label', statusDot.title);
+      statusDot.removeAttribute('aria-hidden');
+    }
+    name.textContent = conn.name || 'Router';
+    name.prepend(statusDot);
+    item.dataset.connectionUrl = conn.url;
+    const url = document.createElement('label');
+    url.textContent = conn.url;
+    details.append(name, url);
+
+    const actions = document.createElement('div');
+    actions.className = 'flex-row-center-6 flex-shrink-0';
+    actions.addEventListener('click', event => event.stopPropagation());
+
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.className = 'icon-btn-sm secondary';
+    editButton.title = t('btnEdit');
+    editButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+    editButton.addEventListener('click', () => editConnection(index));
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'icon-btn-sm danger';
+    deleteButton.title = t('btnDelete');
+    deleteButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+    deleteButton.addEventListener('click', () => deleteConnection(index));
+
+    actions.append(editButton, deleteButton);
+    item.append(details, actions);
+    item.addEventListener('click', event => {
+      if (!actions.contains(event.target)) changeActiveConnection(String(index));
+    });
+    listEl.appendChild(item);
+  });
+}
+
+async function saveConnection() {
+  if (connectionState.saveInProgress) return;
+  const name = document.getElementById('connName').value.trim();
+  const url = document.getElementById('connUrl').value.trim().replace(/\/$/, '');
+  const apiKey = document.getElementById('connKey').value.trim();
+  const editIndex = parseInt(document.getElementById('editIndex').value, 10);
+
+  if (!url) {
+    showAlertModal(t('alertNoUrl'));
+    return;
+  }
+  if (connectionState.connections.some((conn, idx) => idx !== editIndex && conn.url === url)) {
+    showAlertModal(t('alertDuplicateUrl'));
+    return;
+  }
+
+  connectionState.saveInProgress = true;
+  const saveButton = document.querySelector('#connectionsPane button[data-i18n="btnSaveConn"]');
+  if (saveButton) saveButton.disabled = true;
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['X-API-Key'] = apiKey;
+    const response = await fetchWithTimeout(`${url}/api/ping`, {
+      method: 'GET',
+      headers
+    }, 4000);
+    if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+  } catch (error) {
+    showAlertModal(t('pingError') + (error instanceof Error ? error.message : String(error)));
+    return;
+  } finally {
+    connectionState.saveInProgress = false;
+    if (saveButton) saveButton.disabled = false;
+  }
+
+  const newConn = { name: name || url, url, apiKey };
+  const previousUrl = editIndex >= 0 ? connectionState.connections[editIndex]?.url : null;
+  if (editIndex === -1) {
+    connectionState.connections.push(newConn);
+    connectionState.activeIndex = connectionState.connections.length - 1;
+  } else {
+    connectionState.connections[editIndex] = newConn;
+  }
+
+  localStorage.setItem('keen_connections', JSON.stringify(connectionState.connections));
+  localStorage.setItem('keen_active_index', connectionState.activeIndex);
+  if (previousUrl && previousUrl !== url) connectionState.pingStatus.delete(previousUrl);
+  connectionState.pingStatus.set(url, true);
+  renderConnList();
+  clearConnForm();
+  initConnections();
+  restartConnectionPingPolling();
+  fetchServiceStatus();
+}
+
+function editConnection(index) {
+  const conn = connectionState.connections[index];
+  document.getElementById('connName').value = conn.name;
+  document.getElementById('connUrl').value = conn.url;
+  document.getElementById('connKey').value = conn.apiKey || '';
+  document.getElementById('editIndex').value = index;
+  document.getElementById('formTitle').textContent = t('formTitleEdit');
+}
+
+function deleteConnection(index) {
+  showConfirmModal(t('confirmDelete'), () => {
+    connectionState.connections.splice(index, 1);
+    if (connectionState.activeIndex >= connectionState.connections.length) {
+      connectionState.activeIndex = Math.max(0, connectionState.connections.length - 1);
+    }
+    localStorage.setItem('keen_connections', JSON.stringify(connectionState.connections));
+    localStorage.setItem('keen_active_index', connectionState.activeIndex);
+    connectionState.pingStatus.clear();
+    renderConnList();
+    clearConnForm();
+    initConnections();
+    restartConnectionPingPolling();
+  });
+}
+
+function clearConnForm() {
+  document.getElementById('connName').value = '';
+  document.getElementById('connUrl').value = window.location.origin;
+  document.getElementById('connKey').value = '';
+  document.getElementById('editIndex').value = '-1';
+  document.getElementById('formTitle').textContent = t('formTitleAdd');
+}
+
+function updateConnectionPingPolling() {
+  const modal = document.getElementById('connModal');
+  const shouldPoll = connectionState.connections.length > 0 && modal?.classList.contains('open') && !document.hidden;
+  if (!shouldPoll) {
+    if (connectionState.pingTimer !== null) {
+      clearTimeout(connectionState.pingTimer);
+      connectionState.pingTimer = null;
+    }
+    connectionState.pingRunId += 1;
+    connectionState.pingRunActive = false;
+    connectionState.pingController?.abort();
+    connectionState.pingController = null;
+    return;
+  }
+
+  if (connectionState.pingRunActive) return;
+  connectionState.pingRunActive = true;
+  const runId = ++connectionState.pingRunId;
+  void pingConnectionsSequentially(runId);
+}
+
+async function pingConnectionsSequentially(runId) {
+  try {
+    for (const conn of [...connectionState.connections]) {
+      const modal = document.getElementById('connModal');
+      if (runId !== connectionState.pingRunId || document.hidden ||
+        !modal?.classList.contains('open')) return;
+
+      const controller = new AbortController();
+      connectionState.pingController = controller;
+      let isAvailable = false;
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (conn.apiKey) headers['X-API-Key'] = conn.apiKey;
+        const response = await fetchWithTimeout(`${conn.url.replace(/\/$/, '')}/api/ping`, {
+          method: 'GET',
+          headers,
+          signal: controller.signal
+        }, 3000);
+        isAvailable = response.ok;
+      } catch {
+        isAvailable = false;
+      } finally {
+        if (connectionState.pingController === controller) connectionState.pingController = null;
+      }
+
+      if (runId !== connectionState.pingRunId) return;
+      connectionState.pingStatus.set(conn.url, isAvailable);
+      const item = [...document.querySelectorAll('#connList .conn-item')]
+        .find(element => element.dataset.connectionUrl === conn.url);
+      const dot = item?.querySelector('.conn-status-dot');
+      if (dot) {
+        dot.classList.toggle('available', isAvailable);
+        dot.classList.toggle('unavailable', !isAvailable);
+        dot.title = isAvailable ? t('connectionAvailable') : t('connectionUnavailable');
+        dot.setAttribute('aria-label', dot.title);
+      }
+    }
+  } finally {
+    if (runId === connectionState.pingRunId) {
+      connectionState.pingRunActive = false;
+      connectionState.pingTimer = setTimeout(() => {
+        connectionState.pingTimer = null;
+        updateConnectionPingPolling();
+      }, 5000);
+    }
+  }
+}
+
+function restartConnectionPingPolling() {
+  if (connectionState.pingTimer !== null) {
+    clearTimeout(connectionState.pingTimer);
+    connectionState.pingTimer = null;
+  }
+  connectionState.pingRunId += 1;
+  connectionState.pingRunActive = false;
+  connectionState.pingController?.abort();
+  connectionState.pingController = null;
+  updateConnectionPingPolling();
+}
+
+function getActiveConnection() {
+  if (connectionState.connections.length === 0) return null;
+  return connectionState.connections[connectionState.activeIndex] || connectionState.connections[0];
+}
+
+function changeActiveConnection(indexStr) {
+  const nextIndex = Number.parseInt(indexStr, 10);
+  if (!Number.isInteger(nextIndex) || nextIndex < 0 ||
+    nextIndex >= connectionState.connections.length || nextIndex === connectionState.activeIndex) return;
+  if (hasUnsavedChanges()) {
+    showConfirmModal(t('confirmUnsaved'), () => {
+      editorState.originalFileContent = '';
+      executeChangeConnection(nextIndex);
+    });
+    return;
+  }
+  executeChangeConnection(nextIndex);
+}
+
+function executeChangeConnection(nextIndex) {
+  connectionState.activeIndex = nextIndex;
+  localStorage.setItem('keen_active_index', connectionState.activeIndex);
+  renderConnList();
+  showStatus('jsonStatus', t('statusSwitchedTo') + (getActiveConnection().name || getActiveConnection().url));
+  fetchServiceStatus();
+  if (document.getElementById('configTab').classList.contains('active')) loadFileList();
+}
+
+function getHeaders() {
+  const conn = getActiveConnection();
+  const headers = { 'Content-Type': 'application/json' };
+  if (conn && conn.apiKey) headers['X-API-Key'] = conn.apiKey;
+  return headers;
+}
+
+function getBaseUrl() {
+  const conn = getActiveConnection();
+  return conn ? conn.url.replace(/\/$/, '') : '';
+}
+
+/* ==========================================================================
+   UI Navigation & Tabs
+   ========================================================================== */
+function switchTab(tabId, btn, save = true) {
+  if (tabId !== 'configTab' && hasUnsavedChanges()) {
+    showConfirmModal(t('confirmUnsaved'), () => {
+      editorState.originalFileContent = '';
+      executeSwitchTab(tabId, btn, save);
+    });
+    return;
+  }
+  executeSwitchTab(tabId, btn, save);
+}
+
+function executeSwitchTab(tabId, btn, save) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+  if (save) localStorage.setItem('keen_active_tab', tabId);
+
+  if (tabId === 'skeenTab') fetchServiceStatus();
+  else if (tabId === 'configTab') loadFileList();
+}
+
+function switchModalTab(paneId, btn) {
+  document.querySelectorAll('.modal-tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.modal-tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(paneId).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ==========================================================================
+   Modals & Notifications Helper
+   ========================================================================== */
+function showConfirmModal(message, onConfirm, onCancel) {
+  document.getElementById('confirmText').textContent = message;
+  setModalState('confirmModal', true);
+  modalState.currentConfirmCallback = onConfirm || null;
+  modalState.currentCancelCallback = onCancel || null;
+}
+
+function resolveConfirm(result) {
+  setModalState('confirmModal', false);
+  if (result && typeof modalState.currentConfirmCallback === 'function') modalState.currentConfirmCallback();
+  else if (!result && typeof modalState.currentCancelCallback === 'function') modalState.currentCancelCallback();
+  modalState.currentConfirmCallback = null;
+  modalState.currentCancelCallback = null;
+}
+
+function showAlertModal(message, callback) {
+  document.getElementById('alertText').textContent = message;
+  setModalState('alertModal', true);
+  modalState.currentAlertCallback = callback || null;
+}
+
+function closeAlertModal() {
+  setModalState('alertModal', false);
+  if (typeof modalState.currentAlertCallback === 'function') modalState.currentAlertCallback();
+  modalState.currentAlertCallback = null;
+}
+
+function showStatus(elementId, message, isError = false) {
+  const el = document.getElementById(elementId);
+  el.textContent = message;
+  el.className = 'status ' + (isError ? 'error' : 'success');
+  el.style.display = 'block';
+  if (noticeState.statusTimeout) clearTimeout(noticeState.statusTimeout);
+  noticeState.statusTimeout = setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+/* ==========================================================================
+   System Telemetry Modal & Polling Logic
+   ========================================================================== */
+function formatBytesOrSpeed(bps) {
+  if (bps === undefined || bps === null || isNaN(bps)) return "0 B/s";
+  if (bps >= 1048576) {
+    return (bps / 1048576).toFixed(2) + " MB/s";
+  } else if (bps >= 1024) {
+    return (bps / 1024).toFixed(2) + " KB/s";
+  } else {
+    return bps.toFixed(0) + " B/s";
+  }
+}
+
+function formatKBSize(kb) {
+  if (kb === undefined || kb === null || isNaN(kb)) return "0 KB";
+  if (kb >= 1048576) {
+    return (kb / 1048576).toFixed(2) + " GB";
+  } else if (kb >= 1024) {
+    return (kb / 1024).toFixed(2) + " MB";
+  } else {
+    return kb.toFixed(0) + " KB";
+  }
+}
+
+function kbToMb(kb) {
+  if (kb === undefined || kb === null || isNaN(kb)) return 0;
+  return Math.round(kb / 1024);
+}
+
+function getGradientColor(percent) {
+  let r, g, b = 0;
+  if (percent < 50) {
+    r = Math.round(51 + (percent / 50) * (246 - 51));
+    g = Math.round(204 + (percent / 50) * (226 - 204));
+    b = Math.round(94 + (percent / 50) * (31 - 94));
+  } else {
+    let p = (percent - 50) / 50;
+    r = Math.round(246 + p * (243 - 246));
+    g = Math.round(226 - p * (137 - 226));
+    b = Math.round(31 - p * (31 - 168));
+  }
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function updateProgressBar(barId, valId, used, total, isPercentage = false, unitStr = "MB") {
+  const bar = document.getElementById(barId);
+  const val = document.getElementById(valId);
+
+  let pct = 0;
+  if (isPercentage) {
+    pct = Math.max(0, Math.min(100, used));
+    val.textContent = pct.toFixed(1) + "%";
+  } else {
+    if (total > 0) {
+      pct = Math.max(0, Math.min(100, (used / total) * 100));
+    }
+    if (unitStr === "КБ") {
+      val.textContent = `${formatKBSize(used)} / ${formatKBSize(total)}`;
+    } else {
+      val.textContent = `${used} / ${total} ${unitStr}`;
+    }
+  }
+
+  bar.style.width = pct + "%";
+  bar.style.backgroundColor = getGradientColor(pct);
+}
+
+function openSystemTelemetryModal() {
+  if (!serviceState.isServerConnected) return;
+  setModalState('sysTelemetryModal', true);
+  fetchSystemTelemetryData();
+  if (serviceState.telemetryPollingTimer) clearInterval(serviceState.telemetryPollingTimer);
+  serviceState.telemetryPollingTimer = setInterval(fetchSystemTelemetryData, 2000);
+}
+
+function closeSystemTelemetryModal() {
+  setModalState('sysTelemetryModal', false);
+  stopTelemetryPolling();
+}
+
+function stopTelemetryPolling() {
+  if (serviceState.telemetryPollingTimer) {
+    clearInterval(serviceState.telemetryPollingTimer);
+    serviceState.telemetryPollingTimer = null;
+  }
+}
+
+async function fetchSystemTelemetryData() {
+  const modal = document.getElementById('sysTelemetryModal');
+  const isModalOpen = modal && modal.classList.contains('open');
+
+  if (document.hidden || !isModalOpen) {
+    if (!isModalOpen) {
+      stopTelemetryPolling();
+    }
+    return;
+  }
+
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) return;
+
+  try {
+    const res = await fetchWithTimeout(
+      `${baseUrl}/api/system/status`,
+      { method: 'GET', headers: getHeaders() },
+      6000
+    );
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    serviceState.isServerConnected = true;
+    const telBtn = document.getElementById('sysTelemetryBtn');
+    if (telBtn) telBtn.disabled = false;
+
+    const memUsedMb = kbToMb(data.mem_used);
+    const memTotalMb = kbToMb(data.mem_total);
+    const swapUsedMb = kbToMb(data.swap_used);
+    const swapTotalMb = kbToMb(data.swap_total);
+    const optUsedMb = kbToMb(data.opt_used);
+    const optTotalMb = kbToMb(data.opt_total);
+
+    const swapItemEl = document.getElementById('swapMetricItem');
+    if (swapItemEl) {
+      if (!swapTotalMb || swapTotalMb <= 0) {
+        swapItemEl.style.display = 'none';
+      } else {
+        swapItemEl.style.display = 'flex';
+        updateProgressBar('telSwapBar', 'telSwapVal', swapUsedMb, swapTotalMb, false, "MB");
+      }
+    }
+
+    updateProgressBar('telCpuBar', 'telCpuVal', data.cpu_load || 0, 100, true);
+    updateProgressBar('telMemBar', 'telMemVal', memUsedMb, memTotalMb, false, "MB");
+    updateProgressBar('telOptBar', 'telOptVal', optUsedMb, optTotalMb, false, "MB");
+
+    document.getElementById('telNetIface').textContent = data.def_iface || "br0";
+    document.getElementById('telRxSpeed').textContent = formatBytesOrSpeed(data.rx_speed);
+    document.getElementById('telTxSpeed').textContent = formatBytesOrSpeed(data.tx_speed);
+    document.getElementById('telConnCount').textContent = data.conn_cnt || 0;
+
+  } catch (e) {
+    serviceState.isServerConnected = false;
+    const telBtn = document.getElementById('sysTelemetryBtn');
+    if (telBtn) telBtn.disabled = true;
+
+    if (modal && modal.classList.contains('open')) {
+      closeSystemTelemetryModal();
+    }
+  }
+}
+
+/* ==========================================================================
+   Config & JSON Editor Operations
+   ========================================================================== */
+function deepMerge(target, source) {
+  for (const key of Object.keys(target)) {
+    if (source[key] !== undefined) {
+      if (typeof target[key] === 'object' && target[key] !== null && !Array.isArray(target[key])) {
+        deepMerge(target[key], source[key]);
+      } else {
+        target[key] = source[key];
+      }
+    }
+  }
+  return target;
+}
+
+function toggleAccordion(index) {
+  const items = document.querySelectorAll('#formEditorContainer .accordion-item');
+  items.forEach((item, idx) => {
+    const body = item.querySelector('.accordion-body');
+    if (idx === index) {
+      const isOpen = item.classList.contains('active');
+      item.classList.toggle('active', !isOpen);
+      body.style.maxHeight = isOpen ? '0px' : (body.scrollHeight + 100) + 'px';
+      formState.activeAccordionIndex = isOpen ? -1 : index;
+    } else {
+      item.classList.remove('active');
+      body.style.maxHeight = '0px';
+    }
+  });
+}
+
+function syncFormToText() {
+  if (editorState.editorMode !== 'form') return;
+  let formData;
+  try {
+    formData = collectFormData();
+  } catch (error) {
+    showStatus('jsonStatus', `${t('errorPrefix')}${error.message}`, true);
+    return;
+  }
+  const textArea = document.getElementById('jsonEditor');
+  textArea.value = JSON.stringify(formData, null, 2);
+  editorState.cachedLines = textArea.value.split('\n');
+  updateLineNumbers();
+  updateEditorVisuals();
+
+  const activeItem = document.querySelector('#formEditorContainer .accordion-item.active');
+  if (activeItem) {
+    const body = activeItem.querySelector('.accordion-body');
+    body.style.maxHeight = (body.scrollHeight + 100) + 'px';
+  }
+}
+
+function switchEditorMode(mode) {
+  const fileSelect = document.getElementById('configFileSelect');
+  if (fileSelect.value !== 'skeen') return;
+  if (mode === 'text' && editorState.editorMode === 'text' && editorFolds.size > 0) return;
+
+  const formContainer = document.getElementById('formEditorContainer');
+  const editorWrapper = document.getElementById('editorWrapper');
+  const btnForm = document.getElementById('btnModeForm');
+  const btnText = document.getElementById('btnModeText');
+  const textArea = document.getElementById('jsonEditor');
+  const formatBtn = document.getElementById('formatBtn');
+
+  if (mode === 'form' && editorFolds.size > 0) {
+    try {
+      textArea.value = expandFoldedJson(textArea.value);
+      editorFolds.clear();
+    } catch (error) {
+      showAlertModal(error.message);
+      return;
+    }
+  }
+
+  editorState.editorMode = mode;
+  localStorage.setItem('keen_editor_mode', mode);
+
+  if (mode === 'form') {
+    try {
+      let data = JSON.parse(textArea.value || '{}');
+      data = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), data);
+      renderFormFields(data);
+    } catch (e) {
+      showAlertModal(t('alertInvalidJson'));
+      switchEditorMode('text');
+      return;
+    }
+    formContainer.style.display = 'flex';
+    editorWrapper.style.display = 'none';
+    btnForm.classList.add('active');
+    btnText.classList.remove('active');
+    formatBtn.style.display = 'none';
+  } else {
+    let formData;
+    try {
+      formData = collectFormData();
+    } catch (error) {
+      showAlertModal(error.message);
+      return;
+    }
+    textArea.value = JSON.stringify(formData, null, 2);
+    editorState.cachedLines = textArea.value.split('\n');
+    updateLineNumbers();
+    updateEditorVisuals();
+    formContainer.style.display = 'none';
+    editorWrapper.style.display = 'flex';
+    btnText.classList.add('active');
+    btnForm.classList.remove('active');
+    formatBtn.style.display = '';
+  }
+}
+
+// --- Template-based Reusable UI Builders ---
+function renderSettingRow(labelText, helpKey, inputHtml) {
+  return `
+    <div class="form-setting-row">
+      <div class="flex-row-center-6 flex-1 min-width-0">
+        <span class="setting-label-text">${labelText}</span>
+        <button type="button" class="help-btn" onclick="showHelp('${helpKey}')">?</button>
+      </div>
+      <div class="form-setting-input">${inputHtml}</div>
+    </div>
+  `;
+}
+
+function renderSection(title, rowsHtml) {
+  return `
+    <div class="form-section">
+      ${title ? `<h3>${title}</h3>` : ''}
+      ${rowsHtml}
+    </div>
+  `;
+}
+
+function renderAccordion(index, titleText, iconSvg, contentHtml) {
+  const isActive = formState.activeAccordionIndex === index ? 'active' : '';
+  return `
+    <div class="accordion-item ${isActive}">
+      <div class="accordion-header" onclick="toggleAccordion(${index})">
+        <div class="accordion-title">
+          ${iconSvg}
+          <span>${titleText}</span>
+        </div>
+        <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          ${contentHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function safeFormValue(value) {
+  return escapeHtml(String(value ?? ''));
+}
+
+function renderGeneralAccordion(data) {
+  const generalSections = [
+    renderSection(t('secAutoStart'), [
+      renderSettingRow(t('enabledLbl'), 'auto_start.enabled', `<input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secDelay'), 'auto_start.delay', `<input type="number" id="f_auto_start_delay" value="${safeFormValue(data.auto_start?.delay ?? 0)}" oninput="validateField(this, 'port'); syncFormToText()">`)
+    ].join('')),
+    renderSection(t('secPolicy'), [
+      renderSettingRow(t('enabledLbl'), 'policy.enabled', `<input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secSegment'), 'policy.segment', `<input type="text" id="f_policy_segment" value="${safeFormValue(data.policy?.segment)}" oninput="validateField(this, 'segment'); syncFormToText()">`)
+    ].join('')),
+    renderSection(t('secNetwork'), [
+      renderSettingRow(t('secIpv6'), 'network.ipv6', `<input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secTuning'), 'network.tuning', `<input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secPingCheck'), 'network.check', `<input type="text" id="f_network_check_display" readonly value="${safeFormValue(formState.arrays.networkCheck.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_network_check_display', '${t('secPingCheck')}', formState.arrays.networkCheck, 'host')">`)
+    ].join(''))
+  ].join('');
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`;
+  return renderAccordion(0, t('secGeneral'), icon, generalSections);
+}
+
+function renderSingboxAccordion(data) {
+  const singboxSections = [
+    renderSection(t('secSingbox'), [
+      renderSettingRow(t('secUseDir'), 'singbox.config.use_dir', `<input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secConfigUrl'), 'singbox.config.url', `<input type="text" id="f_singbox_config_url" value="${safeFormValue(data.singbox?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+      renderSettingRow(t('secSplit'), 'singbox.config.split', `<input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secApiUrl'), 'singbox.api.url', `<input type="text" id="f_singbox_api_url" value="${safeFormValue(data.singbox?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+      renderSettingRow(t('secApiSecret'), 'singbox.api.secret', `<input type="text" id="f_singbox_api_secret" value="${safeFormValue(data.singbox?.api?.secret)}" oninput="syncFormToText()">`)
+    ].join('')),
+    renderSection(t('secExtSingbox'), [
+      renderSettingRow(t('enabledLbl'), 'singbox.external.enabled', `<input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" id="f_singbox_ext_path" value="${safeFormValue(data.singbox?.external?.path)}" oninput="syncFormToText()">`),
+      renderSettingRow(t('secUseDir'), 'singbox.external.config.use_dir', `<input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" id="f_singbox_ext_cfg_url" value="${safeFormValue(data.singbox?.external?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+      renderSettingRow(t('secSplit'), 'singbox.external.config.split', `<input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secApiUrl'), 'singbox.external.api.url', `<input type="text" id="f_singbox_ext_api_url" value="${safeFormValue(data.singbox?.external?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+      renderSettingRow(t('secApiSecret'), 'singbox.external.api.secret', `<input type="text" id="f_singbox_ext_api_secret" value="${safeFormValue(data.singbox?.external?.api?.secret)}" oninput="syncFormToText()">`)
+    ].join(''))
+  ].join('');
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+  return renderAccordion(1, t('secSingbox'), icon, singboxSections);
+}
+
+function renderServicesAccordion(data) {
+  const serviceSections = [
+    renderSection('SKeen API', [
+      renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" id="f_services_api_port" value="${safeFormValue(data.services?.api?.port ?? 5000)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+      renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" id="f_services_api_secret" value="${safeFormValue(data.services?.api?.secret)}" oninput="syncFormToText()">`),
+      renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" id="f_services_api_cors_display" readonly value="${safeFormValue(formState.arrays.apiCors.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', formState.arrays.apiCors, 'text')">`),
+      renderSettingRow(t('secDashboard'), 'services.api.dashboard', `<input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secAutoStart'), 'services.api.auto_start', `<input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()">`)
+    ].join('')),
+    renderSection(t('secLocalProxy'), [
+      renderSettingRow(t('enabledLbl'), 'services.proxy.enabled', `<input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secProxyPort'), 'services.proxy.port', `<input type="text" id="f_services_proxy_port" value="${safeFormValue(data.services?.proxy?.port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+      renderSettingRow(t('secProxyUser'), 'services.proxy.user', `<input type="text" id="f_services_proxy_user" value="${safeFormValue(data.services?.proxy?.user)}" oninput="syncFormToText()">`),
+      renderSettingRow(t('secProxyPass'), 'services.proxy.pass', `<input type="text" id="f_services_proxy_pass" value="${safeFormValue(data.services?.proxy?.pass)}" oninput="syncFormToText()">`)
+    ].join(''))
+  ].join('');
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`;
+  return renderAccordion(2, t('secServices'), icon, serviceSections);
+}
+
+function renderFirewallAccordion(data) {
+  const firewallSections = [
+    renderSection(t('secIntercept'), [
+      renderSettingRow(t('secInterceptDns'), 'firewall.intercept.dns', `<input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" id="f_firewall_fakeip_clients_display" readonly value="${safeFormValue(formState.arrays.fakeipClients.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', formState.arrays.fakeipClients, 'ip')">`)
+    ].join('')),
+    renderSection(t('secExclude'), [
+      renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" id="f_firewall_exclude_port_display" readonly value="${safeFormValue(formState.arrays.excludePorts.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', formState.arrays.excludePorts, 'portRange')">`),
+      renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" id="f_firewall_exclude_v4_display" readonly value="${safeFormValue(formState.arrays.excludeV4.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', formState.arrays.excludeV4, 'v4cidr')">`),
+      renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" id="f_firewall_exclude_v6_display" readonly value="${safeFormValue(formState.arrays.excludeV6.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', formState.arrays.excludeV6, 'v6cidr')">`)
+    ].join('')),
+    renderSection(t('secRedirectDns'), [
+      renderSettingRow(t('secRedirectDns'), 'firewall.redirect_dns.enabled', `<input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secDnsPort'), 'firewall.redirect_dns.to_port', `<input type="text" id="f_firewall_redirect_dns_port" value="${safeFormValue(data.firewall?.redirect_dns?.to_port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+      renderSettingRow(t('secUsePolicyDns'), 'firewall.redirect_dns.use_policy', `<input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()">`)
+    ].join('')),
+    renderSection(t('secProxyRouter'), [
+      renderSettingRow(t('secProxyRouter'), 'firewall.proxy_router', `<input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()">`)
+    ].join(''))
+  ].join('');
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`;
+  return renderAccordion(3, t('secFirewall'), icon, firewallSections);
+}
+
+function renderUpdatesAccordion(data) {
+  const updateSection = renderSection(t('secUpdates'), [
+    renderSettingRow(t('secUpdateSingbox'), 'update.singbox.enabled', `<input type="checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+    renderSettingRow(t('secBetaSingbox'), 'update.singbox.beta', `<input type="checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()">`),
+    renderSettingRow(t('secUpdateSkeen'), 'update.skeen.enabled', `<input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+    renderSettingRow(t('secUpdateSkeenApi'), 'update.skeen.api', `<input type="checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()">`)
+  ].join(''));
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`;
+  return renderAccordion(4, t('secUpdates'), icon, updateSection);
+}
+
+function renderFormFields(data) {
+  const container = document.getElementById('formEditorContainer');
+  formState.arrays.networkCheck = Array.isArray(data.network?.check) ? [...data.network.check] : [];
+  formState.arrays.apiCors = Array.isArray(data.services?.api?.cors_origin) ? [...data.services.api.cors_origin] : [];
+  formState.arrays.fakeipClients = Array.isArray(data.firewall?.intercept?.fakeip?.clients) ? [...data.firewall.intercept.fakeip.clients] : [];
+  formState.arrays.excludePorts = Array.isArray(data.firewall?.exclude?.port) ? [...data.firewall.exclude.port] : [];
+  formState.arrays.excludeV4 = Array.isArray(data.firewall?.exclude?.ipv4_cidr) ? [...data.firewall.exclude.ipv4_cidr] : [];
+  formState.arrays.excludeV6 = Array.isArray(data.firewall?.exclude?.ipv6_cidr) ? [...data.firewall.exclude.ipv6_cidr] : [];
+
+  container.innerHTML = [
+    renderGeneralAccordion(data),
+    renderSingboxAccordion(data),
+    renderServicesAccordion(data),
+    renderFirewallAccordion(data),
+    renderUpdatesAccordion(data)
+  ].join('');
+
+  if (formState.activeAccordionIndex !== -1) {
+    setTimeout(() => {
+      const activeItem = container.querySelector('.accordion-item.active');
+      if (activeItem) {
+        const body = activeItem.querySelector('.accordion-body');
+        body.style.maxHeight = (body.scrollHeight + 100) + 'px';
+      }
+    }, 50);
+  }
+}
+
+/* ==========================================================================
+   Array Editor Modal Operations
+   ========================================================================== */
+function openArrayModal(displayInputId, titleText, targetArrayRef, validationType = 'text') {
+  document.getElementById('arrayModalTitle').textContent = titleText;
+  formState.arrayEditor.target = targetArrayRef;
+  formState.arrayEditor.displayInputId = displayInputId;
+  formState.arrayEditor.validationType = validationType;
+
+  renderArrayModalItems();
+  const input = document.getElementById('arrayModalNewItemInput');
+  input.value = '';
+  input.classList.remove('invalid-input');
+  setModalState('arrayEditModal', true);
+}
+
+function renderArrayModalItems() {
+  const listEl = document.getElementById('arrayModalItemsList');
+  listEl.innerHTML = '';
+  if (!formState.arrayEditor.target || formState.arrayEditor.target.length === 0) {
+    listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem; padding: 6px;">${t('emptyList')}</div>`;
+    return;
+  }
+  formState.arrayEditor.target.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'array-item-row';
+    const value = document.createElement('span');
+    value.textContent = String(item);
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'icon-btn-sm danger';
+    removeButton.title = t('btnDelete');
+    removeButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+    removeButton.addEventListener('click', () => removeArrayModalItem(idx));
+    row.append(value, removeButton);
+    listEl.appendChild(row);
+  });
+}
+
+function validateArrayItemValue(val, type) {
+  if (!val) return false;
+  if (type === 'portRange') return VALIDATORS.port.test(val) || VALIDATORS.portRange.test(val);
+  if (type === 'v4cidr') return VALIDATORS.ipv4Cidr.test(val) || VALIDATORS.ipv4.test(val);
+  if (type === 'v6cidr') return VALIDATORS.ipv6Cidr.test(val) || VALIDATORS.ipv6.test(val);
+  if (type === 'ip') return VALIDATORS.ipv4.test(val) || VALIDATORS.ipv4Cidr.test(val) || VALIDATORS.ipv6.test(val) || VALIDATORS.ipv6Cidr.test(val);
+  if (type === 'host') return VALIDATORS.host.test(val);
+  return true;
+}
+
+function addArrayModalItem() {
+  const input = document.getElementById('arrayModalNewItemInput');
+  const val = input.value.trim();
+  if (!val) return;
+
+  if (!validateArrayItemValue(val, formState.arrayEditor.validationType)) {
+    input.classList.add('invalid-input');
+    return;
+  }
+  input.classList.remove('invalid-input');
+
+  formState.arrayEditor.target.push(val);
+  input.value = '';
+  renderArrayModalItems();
+}
+
+function removeArrayModalItem(idx) {
+  formState.arrayEditor.target.splice(idx, 1);
+  renderArrayModalItems();
+}
+
+function saveArrayModal() {
+  if (formState.arrayEditor.displayInputId) {
+    document.getElementById(formState.arrayEditor.displayInputId).value = formState.arrayEditor.target.join(', ');
+  }
+  setModalState('arrayEditModal', false);
+  formState.arrayEditor.target = null;
+  formState.arrayEditor.displayInputId = null;
+  syncFormToText();
+}
+
+function closeArrayModal() {
+  setModalState('arrayEditModal', false);
+  formState.arrayEditor.target = null;
+  formState.arrayEditor.displayInputId = null;
+}
+
+function collectFormData() {
+  if (editorState.editorMode === 'text') {
+    return JSON.parse(document.getElementById('jsonEditor').value);
+  }
+
+  let result = JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA));
+
+  try {
+    result.auto_start.enabled = document.getElementById('f_auto_start_enabled')?.checked ? 1 : 0;
+    result.auto_start.delay = parseInt(document.getElementById('f_auto_start_delay')?.value) || 0;
+
+    result.policy.enabled = document.getElementById('f_policy_enabled')?.checked ? 1 : 0;
+    result.policy.segment = (document.getElementById('f_policy_segment')?.value || '').trim();
+
+    result.network.ipv6 = document.getElementById('f_network_ipv6')?.checked ? 1 : 0;
+    result.network.tuning = document.getElementById('f_network_tuning')?.checked ? 1 : 0;
+    result.network.check = [...formState.arrays.networkCheck];
+
+    if (!result.services) result.services = {};
+    result.services.api = {
+      port: parseInt(document.getElementById('f_services_api_port')?.value) || 5000,
+      secret: (document.getElementById('f_services_api_secret')?.value || '').trim(),
+      cors_origin: [...formState.arrays.apiCors],
+      dashboard: document.getElementById('f_services_api_dashboard')?.checked ? 1 : 0,
+      auto_start: document.getElementById('f_services_api_autostart')?.checked ? 1 : 0
+    };
+    result.services.proxy = {
+      enabled: document.getElementById('f_services_proxy_enabled')?.checked ? 1 : 0,
+      port: (document.getElementById('f_services_proxy_port')?.value || '').trim(),
+      user: (document.getElementById('f_services_proxy_user')?.value || '').trim(),
+      pass: (document.getElementById('f_services_proxy_pass')?.value || '').trim()
+    };
+
+    result.singbox.config.use_dir = document.getElementById('f_singbox_config_use_dir')?.checked ? 1 : 0;
+    result.singbox.config.url = (document.getElementById('f_singbox_config_url')?.value || '').trim();
+    result.singbox.config.split = document.getElementById('f_singbox_config_split')?.checked ? 1 : 0;
+    result.singbox.api.url = (document.getElementById('f_singbox_api_url')?.value || '').trim();
+    result.singbox.api.secret = (document.getElementById('f_singbox_api_secret')?.value || '').trim();
+
+    result.singbox.external.enabled = document.getElementById('f_singbox_ext_enabled')?.checked ? 1 : 0;
+    result.singbox.external.path = (document.getElementById('f_singbox_ext_path')?.value || '').trim();
+    result.singbox.external.config.use_dir = document.getElementById('f_singbox_ext_cfg_use_dir')?.checked ? 1 : 0;
+    result.singbox.external.config.url = (document.getElementById('f_singbox_ext_cfg_url')?.value || '').trim();
+    result.singbox.external.config.split = document.getElementById('f_singbox_ext_cfg_split')?.checked ? 1 : 0;
+    result.singbox.external.api.url = (document.getElementById('f_singbox_ext_api_url')?.value || '').trim();
+    result.singbox.external.api.secret = (document.getElementById('f_singbox_ext_api_secret')?.value || '').trim();
+
+    result.firewall.intercept.dns = document.getElementById('f_firewall_intercept_dns')?.checked ? 1 : 0;
+    result.firewall.intercept.fakeip.enabled = document.getElementById('f_firewall_fakeip_enabled')?.checked ? 1 : 0;
+    result.firewall.intercept.fakeip.clients = [...formState.arrays.fakeipClients];
+
+    result.firewall.exclude.port = formState.arrays.excludePorts.map(p => isNaN(p) ? p : Number(p));
+    result.firewall.exclude.ipv4_cidr = [...formState.arrays.excludeV4];
+    result.firewall.exclude.ipv6_cidr = [...formState.arrays.excludeV6];
+
+    result.firewall.redirect_dns.enabled = document.getElementById('f_firewall_redirect_dns_enabled')?.checked ? 1 : 0;
+    result.firewall.redirect_dns.to_port = (document.getElementById('f_firewall_redirect_dns_port')?.value || '').trim();
+    result.firewall.redirect_dns.use_policy = document.getElementById('f_firewall_redirect_dns_policy')?.checked ? 1 : 0;
+    result.firewall.proxy_router = document.getElementById('f_firewall_proxy_router')?.checked ? 1 : 0;
+
+    result.update.singbox.enabled = document.getElementById('f_update_singbox_enabled')?.checked ? 1 : 0;
+    result.update.singbox.beta = document.getElementById('f_update_singbox_beta')?.checked ? 1 : 0;
+    result.update.skeen.enabled = document.getElementById('f_update_skeen_enabled')?.checked ? 1 : 0;
+    result.update.skeen.api = document.getElementById('f_update_skeen_api')?.checked ? 1 : 0;
+  } catch (err) {
+    console.error('Error collecting form data:', err);
+    throw err;
+  }
+
+  return result;
+}
+
+function validateWholeForm() {
+  if (editorState.editorMode !== 'form') return true;
+  const invalidFields = document.querySelectorAll('#formEditorContainer .invalid-input');
+  if (invalidFields.length > 0) {
+    showAlertModal(t('alertInvalidForm'));
+    return false;
+  }
+  return true;
+}
+
+function showHelp(key) {
+  const item = helpTexts[key];
+  const text = item ? (item[languageState.currentLang] || item['en'] || item['ru']) : 'No info :-(';
+  document.getElementById('tooltipModalText').textContent = text;
+  setModalState('tooltipModal', true);
+}
+
+function closeTooltipModal() {
+  setModalState('tooltipModal', false);
+}
+
+function hasUnsavedChanges() {
+  const editor = document.getElementById('jsonEditor');
+  if (!editorState.originalFileContent) return false;
+
+  const fileSelect = document.getElementById('configFileSelect');
+  const fileKey = fileSelect ? fileSelect.value : '';
+  const fileName = fileSelect && fileSelect.options[fileSelect.selectedIndex] ? fileSelect.options[fileSelect.selectedIndex].text : '';
+  const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
+
+  if (isTextFile) return editor && editor.value.trim() !== editorState.originalFileContent.trim();
+  let editorText = editor?.value || '';
+  try {
+    editorText = expandFoldedJson(editorText);
+  } catch (error) {
+    return true;
+  }
+
+  if (fileKey === 'skeen' && editorState.baselineParsedJson) {
+    try {
+      const currentObj = editorState.editorMode === 'form' ? collectFormData() : JSON.parse(editorText);
+      return JSON.stringify(currentObj) !== JSON.stringify(editorState.baselineParsedJson);
+    } catch {
+      return true;
+    }
+  }
+
+  try {
+    return JSON.stringify(JSON.parse(editorText)) !== JSON.stringify(JSON.parse(editorState.originalFileContent));
+  } catch (e) {
+    return editorText.trim() !== editorState.originalFileContent.trim();
+  }
+}
+
+window.addEventListener('beforeunload', (e) => {
+  if (hasUnsavedChanges()) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+/* ==========================================================================
+   Fullscreen & Theme Handling
+   ========================================================================== */
+function toggleFullscreen() {
+  const editorWrapper = document.getElementById('editorWrapper');
+  const svg = document.getElementById('fullscreenSvg');
+  const btn = document.getElementById('fullscreenBtn');
+
+  editorWrapper.classList.toggle('fullscreen-mode');
+  const isFull = editorWrapper.classList.contains('fullscreen-mode');
+
+  if (isFull) {
+    svg.innerHTML = '<path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4v6m0 0h6m0-6l-7 7M10 4v6m0 0H4m0-6l7 7"></path>';
+    btn.title = t('titleRestore');
+  } else {
+    svg.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
+    btn.title = t('titleFullscreen');
+  }
+
+  setTimeout(() => updateEditorVisuals(), 100);
+}
+
+function getSystemTheme() {
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function applyTheme(mode) {
+  const activeTheme = mode === 'auto' ? getSystemTheme() : mode;
+  document.documentElement.toggleAttribute('data-theme', activeTheme === 'light');
+  if (activeTheme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  else document.documentElement.removeAttribute('data-theme');
+
+  ['auto', 'light', 'dark'].forEach(m => {
+    const btn = document.getElementById(`themeBtn${m.charAt(0).toUpperCase() + m.slice(1)}`);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+}
+
+function setThemeMode(mode) {
+  localStorage.setItem('keen_theme_mode', mode);
+  applyTheme(mode);
+}
+
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+  if ((localStorage.getItem('keen_theme_mode') || 'auto') === 'auto') applyTheme('auto');
+});
+
+/* ==========================================================================
+   Localization Execution
+   ========================================================================== */
+function resolveLanguage(langSetting) {
+  return langSetting === 'auto' ? ((navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en') : langSetting;
+}
+
+function changeLanguage(langSetting) {
+  localStorage.setItem('keen_lang_setting', langSetting);
+  languageState.currentLang = resolveLanguage(langSetting);
+  document.getElementById('langSelect').value = langSetting;
+  applyLanguage();
+  updateLineNumbers();
+  initConnections();
+  renderConnList();
+  renderDynamicActions();
+  renderExtraParamOptions();
+  if (editorState.editorMode === 'form') {
+    try {
+      renderFormFields(collectFormData());
+    } catch (error) {
+      showStatus('jsonStatus', `${t('errorPrefix')}${error.message}`, true);
+    }
+  }
+}
+
+function t(key) {
+  if (!translations[key]) return key;
+  return translations[key][languageState.currentLang] || translations[key]['en'] || key;
+}
+
+function applyLanguage() {
+  const elements = document.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title]');
+
+  elements.forEach(el => {
+    if (el.hasAttribute('data-i18n')) {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = t(key);
+    }
+    if (el.hasAttribute('data-i18n-placeholder')) {
+      const key = el.getAttribute('data-i18n-placeholder');
+      el.placeholder = t(key);
+    }
+    if (el.hasAttribute('data-i18n-title')) {
+      const key = el.getAttribute('data-i18n-title');
+      el.title = t(key);
+    }
+  });
+}
+
+/* ==========================================================================
+   API & Service Operations
+   ========================================================================== */
+async function loadFileList(reloadConfig = true) {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
+  const select = document.getElementById('configFileSelect');
+  const prevSelected = select.value;
+
+  togglePreloader(true);
+
+  try {
+    const res = await fetchWithTimeout(`${baseUrl}/api/files-list`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    let files = await res.json();
+
+    if (!Array.isArray(files)) {
+      throw new Error('Invalid file list response');
+    }
+    if (files.length === 0) {
+      select.innerHTML = `<option value="">${t('noFilesAvailable')}</option>`;
+      togglePreloader(false);
+      return;
+    }
+
+    if (files.some(file => !file || typeof file.id !== 'string' || typeof file.name !== 'string')) {
+      throw new Error('Invalid file list response');
+    }
+    files.sort((a, b) => (a.id === 'skeen' ? -1 : b.id === 'skeen' ? 1 : a.id.localeCompare(b.id)));
+    select.replaceChildren(...files.map(file => {
+      const option = document.createElement('option');
+      option.value = file.id;
+      option.textContent = file.name;
+      return option;
+    }));
+
+    select.value = Array.from(select.options).some(opt => opt.value === prevSelected) ? prevSelected : select.options[0].value;
+    editorState.currentSelectedFile = select.value;
+
+    if (reloadConfig) await loadConfigFile();
+    else togglePreloader(false);
+  } catch (e) {
+    select.innerHTML = `<option value="">${t('errorLoadList')}</option>`;
+    showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
+    togglePreloader(false);
+  }
+}
+
+function handleFileSelectChange() {
+  const select = document.getElementById('configFileSelect');
+  const newFile = select.value;
+
+  if (hasUnsavedChanges()) {
+    showConfirmModal(t('confirmUnsaved'), () => {
+      editorState.originalFileContent = '';
+      editorState.currentSelectedFile = newFile;
+      loadConfigFile();
+    }, () => {
+      select.value = editorState.currentSelectedFile;
+    });
+    return;
+  }
+  editorState.currentSelectedFile = newFile;
+  loadConfigFile();
+}
+
+async function loadConfigFile() {
+  if (hasUnsavedChanges()) {
+    showConfirmModal(t('confirmUnsaved'), () => {
+      editorState.originalFileContent = '';
+      executeLoadConfigFile();
+    });
+    return;
+  }
+
+  executeLoadConfigFile();
+}
+
+async function executeLoadConfigFile() {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
+  const fileSelect = document.getElementById('configFileSelect');
+  const fileKey = fileSelect.value;
+  const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
+
+  if (!fileKey) return;
+
+  togglePreloader(true);
+
+  try {
+    const res = await fetchWithTimeout(`${baseUrl}/api/file?name=${encodeURIComponent(fileKey)}`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `Error ${res.status}`);
+    }
+    const data = await res.json();
+    const editor = document.getElementById('jsonEditor');
+
+    editorFolds.clear();
+    editor.value = typeof data.content === 'string' ? data.content : JSON.stringify(data.content, null, 2);
+    editorState.originalFileContent = editor.value;
+    editorState.cachedLines = editor.value.split('\n');
+    updateLineNumbers();
+    updateEditorVisuals();
+
+    if (fileKey === 'skeen') {
+      try {
+        editorState.baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), JSON.parse(editor.value || '{}'));
+      } catch (e) {
+        editorState.baselineParsedJson = null;
+      }
+      document.getElementById('editorModeBar').style.display = 'flex';
+      switchEditorMode(editorState.editorMode);
+    } else {
+      editorState.baselineParsedJson = null;
+      document.getElementById('editorModeBar').style.display = 'none';
+      document.getElementById('formEditorContainer').style.display = 'none';
+      document.getElementById('editorWrapper').style.display = 'flex';
+      editorState.editorMode = 'text';
+      document.getElementById('btnModeText').classList.add('active');
+      document.getElementById('btnModeForm').classList.remove('active');
+      document.getElementById('formatBtn').style.display = fileKey === 'pure_cidr' ? 'none' : '';
+    }
+
+    showStatus('jsonStatus', t('statusLoaded'));
+  } catch (e) {
+    showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
+  } finally {
+    togglePreloader(false);
+  }
+}
+
+async function saveConfigFile() {
+  if (!hasUnsavedChanges()) {
+    showStatus('jsonStatus', t('noChangesNeeded'), false);
+    return;
+  }
+
+  if (editorState.editorMode === 'form' && !validateWholeForm()) return;
+
+  const editor = document.getElementById('jsonEditor');
+  const fileSelect = document.getElementById('configFileSelect');
+  const fileKey = fileSelect.value;
+  const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
+  const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
+
+  let editorText = editor.value;
+  if (!isTextFile) {
+    try {
+      editorText = expandFoldedJson(editorText);
+    } catch (error) {
+      showStatus('jsonStatus', error.message, true);
+      return;
+    }
+  }
+
+  let contentToSend;
+  if (fileKey === 'skeen' && editorState.editorMode === 'form') {
+    try {
+      contentToSend = collectFormData();
+    } catch (error) {
+      showStatus('jsonStatus', `${t('errorPrefix')}${error.message}`, true);
+      return;
+    }
+  } else {
+    try {
+      contentToSend = isTextFile ? editorText : JSON.parse(editorText);
+    } catch (e) {
+      showStatus('jsonStatus', `${t('jsonErrorPrefix')}${e.message}`, true);
+      return;
+    }
+  }
+
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) return;
+
+  try {
+    const res = await fetchWithTimeout(`${baseUrl}/api/file`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ name: fileKey, content: contentToSend })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `Error ${res.status}`);
+    }
+
+    if (fileKey === 'skeen' && editorState.editorMode === 'form') {
+      editor.value = JSON.stringify(contentToSend, null, 2);
+    }
+    editorState.originalFileContent = editorFolds.size > 0 ? editorText : editor.value;
+
+    if (fileKey === 'skeen') {
+      editorState.baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), contentToSend);
+    }
+
+    showStatus('jsonStatus', t('statusSaved'));
+
+    if (fileKey === 'skeen') {
+      await loadFileList(false);
+      fileSelect.value = 'skeen';
+      editorState.currentSelectedFile = 'skeen';
+    }
+  } catch (e) {
+    showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
+  }
+}
+
+function formatJsonEditor() {
+  const fileSelect = document.getElementById('configFileSelect');
+  const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
+  if (fileName.endsWith('.list') || fileName.endsWith('.txt')) {
+    showStatus('jsonStatus', t('statusFormatNotApplicable'), true);
+    return;
+  }
+  try {
+    const editor = document.getElementById('jsonEditor');
+    if (!editor.value.trim()) return;
+    const expandedText = expandFoldedJson(editor.value);
+    editor.value = JSON.stringify(JSON.parse(expandedText), null, 2);
+    editorFolds.clear();
+    editorState.cachedLines = editor.value.split('\n');
+    updateLineNumbers();
+    updateEditorVisuals();
+    showStatus('jsonStatus', t('statusFormatted'));
+  } catch (e) {
+    showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
+  }
+}
+
+/* ==========================================================================
+   Terminal & Command Execution
+   ========================================================================== */
+function renderAnsiOutput(text) {
+  if (!text) return '';
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\033\[1;38;5;30m(.*?)\033\[0m/g, '<span class="ansi-cyan-bold">$1</span>')
+    .replace(/\033\[36m(.*?)\033\[0m/g, '<span class="ansi-cyan">$1</span>')
+    .replace(/\033\[31m(.*?)\033\[0m/g, '<span class="ansi-red">$1</span>')
+    .replace(/\033\[32m(.*?)\033\[0m/g, '<span class="ansi-green">$1</span>')
+    .replace(/\033\[33m(.*?)\033\[0m/g, '<span class="ansi-yellow">$1</span>')
+    .replace(/\033\[[0-9;]*m/g, '');
+}
+
+function clearTerminalOutput() {
+  document.getElementById('cmdOutput').textContent = t('waitingOutput');
+}
+
+async function fetchServiceStatus() {
+  if (document.hidden || !document.getElementById('skeenTab').classList.contains('active')) {
+    return;
+  }
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) return;
+
+  try {
+    const res = await fetchWithTimeout(
+      `${baseUrl}/api/status`,
+      { method: 'GET', headers: getHeaders() },
+      6000
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      serviceState.isServiceRunning = data.running;
+      serviceState.isServerConnected = true;
+      document.getElementById('sysTelemetryBtn').disabled = false;
+      updateStatusBadge(data, false);
+      renderDynamicActions();
+    } else {
+      serviceState.isServerConnected = false;
+      document.getElementById('sysTelemetryBtn').disabled = true;
+      updateStatusBadge(null, true);
+    }
+  } catch (e) {
+    serviceState.isServerConnected = false;
+    document.getElementById('sysTelemetryBtn').disabled = true;
+    updateStatusBadge(null, true);
+  }
+}
+
+function updateStatusBadge(data, isOffline = false) {
+  const verEl = document.getElementById('headerApiVersion');
+  const dot = document.getElementById('serviceDot');
+  const text = document.getElementById('serviceStatusText');
+  const details = document.getElementById('serviceDetails');
+
+  if (isOffline) {
+    if (dot) dot.className = 'status-dot inactive';
+    if (text) text.textContent = t('statusServerUnavailable');
+    if (details) details.textContent = t('statusNoConnection');
+    return;
+  }
+
+  if (verEl) verEl.textContent = `API v${data.api_version}`;
+
+  if (data.running) {
+    if (dot) dot.className = 'status-dot active';
+    if (text) text.textContent = t('statusActive');
+    if (details) {
+      details.textContent = `${t('statusMode')}: ${data.mode} | SKeen: v${data.version} | Sing-box: v${data.sb_version}`;
+    }
+  } else {
+    if (dot) dot.className = 'status-dot inactive';
+    if (text) text.textContent = t('statusInactive');
+    if (details) {
+      details.textContent = data.version ? `SKeen: v${data.version}` : '';
+    }
+  }
+}
+
+function renderDynamicActions() {
+  const container = document.getElementById('dynamicActions');
+  container.innerHTML = serviceState.isServiceRunning ? `
+    <button class="danger" onclick="executeCommandParam('stop')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
+      <span>${t('btnStop')}</span>
+    </button>
+    <button class="secondary" onclick="executeCommandParam('restart')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      <span>${t('btnRestart')}</span>
+    </button>
+  ` : `
+    <button class="success-btn width-100 btn-start-action" onclick="executeCommandParam('start')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      <span>${t('btnStart')}</span>
+    </button>
+  `;
+}
+
+function renderExtraParamOptions() {
+  const select = document.getElementById('extraParam');
+  const currentValue = select.value || 'reload';
+
+  const options = [
+    { val: "reload", label: t('cmdReload') },
+    { val: "sync", label: t('cmdSync') },
+    { val: "status", label: t('cmdStatus') },
+    { val: "kill", label: t('cmdKill') },
+    { val: "version", label: t('cmdVersion') },
+    { val: "iface", label: t('cmdIface') },
+    { val: "connstat", label: t('cmdConnstat') },
+    { val: "test", label: t('cmdTest') },
+    { val: "deps", label: t('cmdDeps') },
+    { val: "check", label: t('cmdCheck') },
+    { val: "format", label: t('cmdFormat') },
+    { val: "backup", label: t('cmdBackup') },
+    { val: "backups", label: t('cmdBackups') },
+    { val: "restore", label: t('cmdRestore') },
+    { val: "clean", label: t('cmdClean') },
+    { val: "headers", label: t('cmdHeaders') },
+    { val: "tun", label: t('cmdTun') },
+    { val: "areload", label: t('cmdApiReload') },
+    { val: "aupdate", label: t('cmdApiUpdate') },
+  ];
+
+  select.innerHTML = options.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
+  select.value = currentValue;
+  handleExtraParamChange();
+}
+
+function handleExtraParamChange() {
+  const val = document.getElementById('extraParam').value;
+  const container = document.getElementById('extraParamsContainer');
+  container.innerHTML = '';
+
+  if (val === 'restore') {
+    container.style.display = 'flex';
+    container.innerHTML = `
+      <div class="form-group margin-0">
+        <label>${t('lblBackupFile')}</label>
+        <input type="text" id="paramBackupFile" placeholder="${t('placeholderBackupFile')}">
+      </div>`;
+  } else if (val === 'sync') {
+    container.style.display = 'flex';
+    container.innerHTML = `
+      <div class="form-group margin-0">
+        <label>${t('lblSyncUrl')}</label>
+        <input type="text" id="paramSyncUrl" placeholder="${t('placeholderSyncUrl')}" oninput="validateField(this, 'url')">
+      </div>`;
+  } else if (val === 'tun') {
+    container.style.display = 'flex';
+    container.innerHTML = `
+      <div class="form-group margin-0">
+        <label>${t('lblTunSubCommand')}</label>
+        <select id="paramTunSub" onchange="handleTunSubChange()">
+          <option value="list">tun list</option>
+          <option value="create">tun create</option>
+          <option value="delete">tun delete</option>
+        </select>
+      </div>
+      <div id="tunSubInputsContainer" class="flex-col-gap-8" style="display: none;"></div>`;
+    handleTunSubChange();
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+function handleTunSubChange() {
+  const subVal = document.getElementById('paramTunSub').value;
+  const subContainer = document.getElementById('tunSubInputsContainer');
+  subContainer.innerHTML = '';
+
+  if (subVal === 'create') {
+    subContainer.style.display = 'flex';
+    subContainer.innerHTML = `
+      <div class="form-row flex-row-gap-8">
+        <div class="form-group flex-1 margin-0">
+          <label>${t('lblIpAddress')}</label>
+          <input type="text" id="paramTunIp" placeholder="${t('placeholderIpAddress')}" oninput="validateField(this, 'ip')">
+        </div>
+        <div class="form-group flex-1 margin-0">
+          <label>${t('lblIfaceName')}</label>
+          <input type="text" id="paramTunIface" placeholder="${t('placeholderIfaceName')}">
+        </div>
+      </div>`;
+  } else if (subVal === 'delete') {
+    subContainer.style.display = 'flex';
+    subContainer.innerHTML = `
+      <div class="form-group margin-0">
+        <label>${t('lblIfaceName')}</label>
+        <input type="text" id="paramTunIface" placeholder="${t('placeholderIfaceName')}">
+      </div>`;
+  } else {
+    subContainer.style.display = 'none';
+  }
+}
+
+async function executeCommandParam(param) {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
+
+  if (serviceState.pollingTimer) {
+    clearInterval(serviceState.pollingTimer);
+    serviceState.pollingTimer = null;
+  }
+
+  const outputEl = document.getElementById('cmdOutput');
+  outputEl.textContent = t('executing');
+
+  const disabledElements = document.querySelectorAll('button, select, input');
+  disabledElements.forEach(el => el.disabled = true);
+  let shouldReload = false;
+
+  try {
+    const res = await fetchWithTimeout(`${baseUrl}/api/exec`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ param })
+    }, 25000);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `Error ${res.status}`);
+    }
+
+    const data = await res.json();
+    outputEl.innerHTML = renderAnsiOutput(data.stdout || t('emptyOutput'));
+
+    shouldReload = param === 'areload' || (param === 'aupdate' && data.updated === true);
+    if (shouldReload) {
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    }
+  } catch (e) {
+    const errorOutput = document.createElement('span');
+    errorOutput.className = 'ansi-red';
+    const errorMessage = e instanceof Error
+      ? (e.name === 'AbortError' ? t('requestTimeout') : e.message)
+      : String(e);
+    errorOutput.textContent = `${t('errorPrefix')}${errorMessage}`;
+    outputEl.replaceChildren(errorOutput);
+  } finally {
+    if (param !== 'areload' && !shouldReload) {
+      disabledElements.forEach(el => el.disabled = false);
+      await fetchServiceStatus();
+      startPolling();
+    }
+  }
+}
+
+async function executeExtraCommand() {
+  const selectedCmd = document.getElementById('extraParam').value;
+  let finalParam = selectedCmd;
+
+  if (selectedCmd === 'restore') {
+    const fileName = (document.getElementById('paramBackupFile')?.value || '').trim();
+    if (!fileName) { showAlertModal(t('alertEmptyParam')); return; }
+    finalParam = `restore ${fileName}`;
+  } else if (selectedCmd === 'sync') {
+    const urlInput = document.getElementById('paramSyncUrl');
+    const url = (urlInput?.value || '').trim();
+    if (url && urlInput.classList.contains('invalid-input')) { showAlertModal(t('alertEmptyParam')); return; }
+    finalParam = url ? `sync ${url}` : 'sync';
+  } else if (selectedCmd === 'tun') {
+    const subCmd = document.getElementById('paramTunSub').value;
+    if (subCmd === 'list') {
+      finalParam = 'tun list';
+    } else if (subCmd === 'create') {
+      const ipInput = document.getElementById('paramTunIp');
+      const ip = (ipInput?.value || '').trim();
+      const iface = (document.getElementById('paramTunIface')?.value || '').trim();
+      if (!ip || !iface || ipInput.classList.contains('invalid-input')) { showAlertModal(t('alertEmptyParam')); return; }
+      finalParam = `tun create ${ip} ${iface}`;
+    } else if (subCmd === 'delete') {
+      const iface = (document.getElementById('paramTunIface')?.value || '').trim();
+      if (!iface) { showAlertModal(t('alertEmptyParam')); return; }
+      finalParam = `tun delete ${iface}`;
+    }
+  }
+
+  await executeCommandParam(finalParam);
+}
+
+/* ==========================================================================
+   Editor Highlighting & Utilities
+   ========================================================================== */
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, character => htmlEntities[character]);
+}
+
+const htmlEntities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const editorFolds = new Map();
+let editorFoldCounter = 0;
+const jsonTokenPattern = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g;
+const foldedMarkerPattern = /\u2060+/g;
+
+function findJsonBlockRanges(text) {
+  const stack = [];
+  const ranges = [];
+  const foldedTokens = [...editorFolds.keys()].sort((a, b) => b.length - a.length);
+  let inString = false;
+  let escaped = false;
+  let line = 0;
+
+  for (let i = 0; i < text.length; i++) {
+    if (!inString && text.charCodeAt(i) === 0x2060) {
+      const foldedToken = foldedTokens.find(token => text.startsWith(token, i));
+      if (foldedToken) {
+        const open = stack.pop();
+        if (open?.isTopLevel) {
+          const markerEnd = i + foldedToken.length;
+          let closePosition = markerEnd;
+          while (/\s/.test(text[closePosition] || '')) {
+            if (text[closePosition] === '\n') line++;
+            closePosition++;
+          }
+          const closeChar = text[closePosition];
+          if ((open.char === '{' ? '}' : ']') !== closeChar) {
+            i += foldedToken.length - 1;
+            continue;
+          }
+          ranges.push({
+            openPosition: open.position,
+            closePosition,
+            markerEnd,
+            closeChar,
+            openLine: open.line,
+            closeLine: line,
+            inner: foldedToken,
+            isObject: open.char === '{',
+            foldedToken
+          });
+          i = closePosition;
+          if (text[i] === '\n') line++;
+          continue;
+        }
+        i += foldedToken.length - 1;
+        continue;
+      }
+    }
+
+    const char = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      if (char === '\n') line++;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === '{' || char === '[') {
+      stack.push({ char, position: i, line, isTopLevel: stack.length === 1 });
+      continue;
+    }
+    if (char !== '}' && char !== ']') {
+      if (char === '\n') line++;
+      continue;
+    }
+
+    const open = stack.pop();
+    if (open?.isTopLevel && (open.char === '{' ? '}' : ']') === char) {
+      const openLineStart = text.lastIndexOf('\n', open.position - 1) + 1;
+      const closeLineStart = text.lastIndexOf('\n', i - 1) + 1;
+      const openLineEndIndex = text.indexOf('\n', open.position);
+      const closeLineEndIndex = text.indexOf('\n', i);
+      const openLineEnd = openLineEndIndex === -1 ? text.length : openLineEndIndex;
+      const closeLineEnd = closeLineEndIndex === -1 ? text.length : closeLineEndIndex;
+      const openLine = text.slice(openLineStart, openLineEnd);
+      const closeLine = text.slice(closeLineStart, closeLineEnd);
+      const openSuffix = openLine.slice(open.position - openLineStart + 1).trim();
+      const closePrefix = closeLine.slice(0, i - closeLineStart).trim();
+      const closeSuffix = closeLine.slice(i - closeLineStart + 1).trim();
+
+      if (openLineStart !== closeLineStart && (!openSuffix || openSuffix === ',') &&
+        !closePrefix && (!closeSuffix || closeSuffix === ',')) {
+        ranges.push({
+          openPosition: open.position,
+          closePosition: i,
+          openLine: open.line,
+          closeLine: line,
+          inner: text.slice(open.position + 1, closeLineStart - 1),
+          isObject: open.char === '{',
+          foldedToken: null
+        });
+      }
+    }
+
+    if (char === '\n') line++;
+  }
+
+  return ranges;
+}
+
+function expandFoldedJson(text) {
+  return text.replace(/\u2060+/g, marker => {
+    const fold = editorFolds.get(marker);
+    if (!fold) throw new Error(t('foldRestoreError'));
+    return fold.inner;
+  });
+}
+
+function toggleJsonFold(lineIndex) {
+  const editor = document.getElementById('jsonEditor');
+  const block = findJsonBlockRanges(editor.value).find(range => range.openLine === lineIndex);
+  if (!block) return;
+
+  applyJsonFold(editor, block);
+
+  refreshJsonEditorAfterFold(editor);
+  const cursorLine = Math.min(lineIndex, editorState.cachedLines.length - 1);
+  const cursorPosition = editorState.cachedLines.slice(0, cursorLine + 1).join('\n').length;
+  editor.focus();
+  editor.setSelectionRange(cursorPosition, cursorPosition);
+  updateActiveEditorLine();
+}
+
+function applyJsonFold(editor, block) {
+  if (block.foldedToken) {
+    editor.value = editor.value.slice(0, block.openPosition + 1) +
+      expandFoldedJson(block.foldedToken) +
+      editor.value.slice(block.markerEnd);
+    editorFolds.delete(block.foldedToken);
+    return;
+  }
+
+  const marker = '\u2060'.repeat(++editorFoldCounter);
+  const closeLineStart = editor.value.lastIndexOf('\n', block.closePosition - 1) + 1;
+  editorFolds.set(marker, {
+    inner: block.inner,
+    isObject: block.isObject,
+    closeChar: editor.value[block.closePosition],
+    hiddenLineCount: block.closeLine - block.openLine - 1
+  });
+  editor.value = editor.value.slice(0, block.openPosition + 1) + marker +
+    editor.value.slice(closeLineStart - 1, block.closePosition + 1) +
+    editor.value.slice(block.closePosition + 1);
+}
+
+function refreshJsonEditorAfterFold(editor) {
+  editorState.cachedLines = editor.value.split('\n');
+  updateLineNumbers();
+  updateEditorVisuals();
+  syncScroll();
+}
+
+function toggleAllJsonFolds() {
+  const editor = document.getElementById('jsonEditor');
+  const blocks = findJsonBlockRanges(editor.value);
+  if (!blocks.length) return;
+
+  const shouldFold = blocks.some(block => !block.foldedToken);
+  const targets = blocks
+    .filter(block => shouldFold ? !block.foldedToken : block.foldedToken)
+    .sort((a, b) => b.openPosition - a.openPosition);
+
+  for (const block of targets) applyJsonFold(editor, block);
+
+  refreshJsonEditorAfterFold(editor);
+}
+
+function guardFoldPlaceholderEdit(event) {
+  if (!event.inputType.startsWith('insert') && !event.inputType.startsWith('delete')) return;
+
+  const editor = event.currentTarget;
+  const selectionStart = editor.selectionStart;
+  const selectionEnd = editor.selectionEnd;
+  for (const token of editorFolds.keys()) {
+    const tokenPosition = editor.value.indexOf(token);
+    if (tokenPosition === -1) continue;
+
+    const tokenEnd = tokenPosition + token.length;
+    if (selectionStart <= tokenEnd && selectionEnd >= tokenPosition) {
+      event.preventDefault();
+      if (event.inputType === 'deleteContentBackward' ||
+        event.inputType === 'deleteContentForward' ||
+        event.inputType === 'deleteByCut') {
+        deleteFoldedJsonBlock(editor, token);
+      } else {
+        showStatus('jsonStatus', t('foldEditHint'), true);
+      }
+      return;
+    }
+  }
+}
+
+function deleteFoldedJsonBlock(editor, token) {
+  const block = findJsonBlockRanges(editor.value).find(range => range.foldedToken === token);
+  if (!block) return;
+
+  const lineStart = editor.value.lastIndexOf('\n', block.openPosition - 1) + 1;
+  const closeLineEndIndex = editor.value.indexOf('\n', block.closePosition);
+  const closeLineEnd = closeLineEndIndex === -1 ? editor.value.length : closeLineEndIndex;
+  const line = editor.value.slice(lineStart, closeLineEnd);
+  const lineEndsWithComma = /,\s*$/.test(line);
+  let deleteStart = lineStart;
+  let deleteEnd = closeLineEndIndex === -1 ? closeLineEnd : closeLineEndIndex + 1;
+  let nextText = editor.value.slice(0, deleteStart) + editor.value.slice(deleteEnd);
+
+  if (!lineEndsWithComma && lineStart > 0) {
+    const previousLineEnd = lineStart - 1;
+    const previousLineStart = editor.value.lastIndexOf('\n', previousLineEnd - 1) + 1;
+    const previousLine = editor.value.slice(previousLineStart, previousLineEnd);
+    const commaIndex = previousLineEnd - 1 - previousLine.match(/\s*$/)[0].length;
+    if (commaIndex >= previousLineStart && editor.value[commaIndex] === ',') {
+      nextText = nextText.slice(0, commaIndex) + nextText.slice(commaIndex + 1);
+      if (commaIndex < deleteStart) deleteStart--;
+    }
+  }
+
+  editor.value = nextText;
+  editorFolds.delete(token);
+  editorState.cachedLines = editor.value.split('\n');
+  updateLineNumbers();
+  updateEditorVisuals();
+  editor.focus();
+  editor.setSelectionRange(deleteStart, deleteStart);
+  updateActiveEditorLine();
+}
+
+function highlightJson(text) {
+  if (!text) return '';
+  let highlighted = '';
+  let lastIndex = 0;
+  for (const match of text.matchAll(foldedMarkerPattern)) {
+    const token = match[0];
+    if (!editorFolds.has(token)) continue;
+
+    highlighted += highlightJsonTokens(text.slice(lastIndex, match.index));
+    highlighted += `<span class="fold-placeholder">${escapeHtml(token)}</span>`;
+    lastIndex = match.index + token.length;
+  }
+  return highlighted + highlightJsonTokens(text.slice(lastIndex));
+}
+
+function highlightJsonTokens(text) {
+  if (!text) return '';
+  let highlighted = '';
+  let lastIndex = 0;
+
+  for (const tokenMatch of text.matchAll(jsonTokenPattern)) {
+    const match = tokenMatch[0];
+    highlighted += escapeHtml(text.slice(lastIndex, tokenMatch.index));
+    let cls = 'token-number';
+    if (match.charCodeAt(0) === 34) cls = match.endsWith(':') ? 'token-key' : 'token-string';
+    else if (match === 'true' || match === 'false') cls = 'token-boolean';
+    else if (match === 'null') cls = 'token-null';
+    highlighted += `<span class="${cls}">${escapeHtml(match)}</span>`;
+    lastIndex = tokenMatch.index + match.length;
+  }
+
+  return highlighted + escapeHtml(text.slice(lastIndex));
+}
+
+function updateLineNumbers() {
+  const lineNumbers = document.getElementById('lineNumbers');
+  const totalLines = editorState.cachedLines.length;
+  const fileSelect = document.getElementById('configFileSelect');
+  const fileName = fileSelect?.options[fileSelect.selectedIndex]?.text || '';
+  const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
+  const foldableBlocks = isTextFile ? [] : findJsonBlockRanges(document.getElementById('jsonEditor').value);
+  const foldableBlocksByLine = new Map(foldableBlocks.map(block => [block.openLine, block]));
+  const foldStructure = `${isTextFile ? 'text' : 'json'}:${totalLines}:` +
+    foldableBlocks.map(block => `${block.openLine}:${block.foldedToken ? 1 : 0}`).join(',');
+  const foldAllButton = document.getElementById('foldAllBtn');
+  if (foldAllButton) {
+    const shouldFoldAll = foldableBlocks.some(block => !block.foldedToken);
+    const disabled = foldableBlocks.length === 0;
+    const title = t(shouldFoldAll ? 'foldAllBlocks' : 'unfoldAllBlocks');
+    if (foldAllButton.disabled !== disabled) foldAllButton.disabled = disabled;
+    if (foldAllButton.title !== title) {
+      foldAllButton.title = title;
+      foldAllButton.setAttribute('aria-label', title);
+    }
+    const foldAllIconPath = 'M10 5h10M10 12h10M10 19h10M5 5v7m-2-2 2 2 2-2M5 19v-7m-2 2 2-2 2 2';
+    const unfoldAllIconPath = 'M10 5h10M10 12h10M10 19h10M5 12V5M3 7l2-2 2 2M5 12v7m-2-2 2 2 2-2';
+    const iconPath = shouldFoldAll ? foldAllIconPath : unfoldAllIconPath;
+    const foldAllIcon = document.getElementById('foldAllSvg');
+    if (foldAllIcon.dataset.path !== iconPath) {
+      foldAllIcon.innerHTML = `<path d="${iconPath}"></path>`;
+      foldAllIcon.dataset.path = iconPath;
+    }
+  }
+
+  if (lineNumbers.dataset.foldStructure === foldStructure &&
+    lineNumbers.children.length === totalLines) {
+    let sourceLineNumber = 1;
+    for (let i = 0; i < totalLines; i++) {
+      const row = lineNumbers.children[i];
+      const number = row.children[0];
+      if (number.textContent !== String(sourceLineNumber)) {
+        number.textContent = String(sourceLineNumber);
+      }
+
+      const block = foldableBlocksByLine.get(i);
+      const button = row.children[1];
+      if (button.tagName === 'BUTTON') {
+        const title = t(block.foldedToken ? 'unfoldBlock' : 'foldBlock');
+        const icon = block.foldedToken ? '▸' : '▾';
+        if (button.textContent !== icon) button.textContent = icon;
+        if (button.title !== title) {
+          button.title = title;
+          button.setAttribute('aria-label', title);
+        }
+      }
+
+      sourceLineNumber += 1;
+      if (block?.foldedToken) {
+        sourceLineNumber += editorFolds.get(block.foldedToken)?.hiddenLineCount || 0;
+      }
+    }
+    return;
+  }
+
+  const rows = [];
+  let sourceLineNumber = 1;
+
+  for (let i = 0; i < totalLines; i++) {
+    const row = document.createElement('div');
+    row.className = 'line-number-row';
+    const number = document.createElement('span');
+    number.className = 'line-number';
+    number.textContent = String(sourceLineNumber);
+    row.appendChild(number);
+
+    const block = foldableBlocksByLine.get(i);
+    if (block) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'fold-toggle';
+      button.textContent = block.foldedToken ? '▸' : '▾';
+      button.title = t(block.foldedToken ? 'unfoldBlock' : 'foldBlock');
+      button.setAttribute('aria-label', button.title);
+      button.addEventListener('click', () => toggleJsonFold(i));
+      row.appendChild(button);
+    } else {
+      const spacer = document.createElement('span');
+      spacer.className = 'fold-toggle-placeholder';
+      row.appendChild(spacer);
+    }
+
+    rows.push(row);
+    sourceLineNumber += 1;
+    if (block?.foldedToken) {
+      sourceLineNumber += editorFolds.get(block.foldedToken)?.hiddenLineCount || 0;
+    }
+  }
+
+  lineNumbers.replaceChildren(...rows);
+  lineNumbers.dataset.foldStructure = foldStructure;
+}
+
+let highlightFrame = null;
+function handleEditorInput(updateImmediately = false) {
+  const textarea = document.getElementById('jsonEditor');
+  editorState.cachedLines = textarea.value.split('\n');
+  updateLineNumbers();
+  updateActiveEditorLine();
+  if (updateImmediately) {
+    if (highlightFrame !== null) cancelAnimationFrame(highlightFrame);
+    highlightFrame = null;
+    updateEditorVisuals();
+  } else if (highlightFrame === null) {
+    highlightFrame = requestAnimationFrame(() => {
+      highlightFrame = null;
+      updateEditorVisuals();
+    });
+  }
+}
+
+function updateEditorVisuals() {
+  const textarea = document.getElementById('jsonEditor');
+  const content = document.getElementById('highlightingContent');
+  const fileSelect = document.getElementById('configFileSelect');
+  const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
+  const text = textarea.value;
+
+  content.innerHTML = (fileName.endsWith('.list') || fileName.endsWith('.txt')) ? escapeHtml(text) : highlightJson(text);
+  content.style.paddingTop = '0px';
+  content.style.paddingBottom = '0px';
+  updateActiveEditorLine();
+}
+
+function updateActiveEditorLine() {
+  const textarea = document.getElementById('jsonEditor');
+  const activeLine = document.getElementById('activeEditorLine');
+  if (!textarea || !activeLine) return;
+
+  activeLine.style.visibility = textarea.selectionStart === textarea.selectionEnd ? 'visible' : 'hidden';
+  if (textarea.selectionStart !== textarea.selectionEnd) return;
+
+  const lineIndex = textarea.value.slice(0, textarea.selectionStart).split('\n').length - 1;
+  const styles = getComputedStyle(textarea);
+  const lineHeight = Number.parseFloat(styles.lineHeight) || 18;
+  const paddingTop = Number.parseFloat(styles.paddingTop) || 10;
+  activeLine.style.transform = `translateY(${paddingTop + lineIndex * lineHeight - textarea.scrollTop}px)`;
+}
+
+let isScrolling = false;
+function syncScroll() {
+  if (isScrolling) return;
+  isScrolling = true;
+  requestAnimationFrame(() => {
+    const textarea = document.getElementById('jsonEditor');
+    const highlighting = document.getElementById('highlighting');
+    const lineNumbers = document.getElementById('lineNumbers');
+    highlighting.scrollTop = textarea.scrollTop;
+    highlighting.scrollLeft = textarea.scrollLeft;
+    lineNumbers.scrollTop = textarea.scrollTop;
+    updateActiveEditorLine();
+    isScrolling = false;
+  });
+}
+
+function handleEditorKeydown(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const textarea = e.target;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+
+    if (start === end) {
+      let lineStart = start;
+      while (lineStart > 0 && value[lineStart - 1] !== '\n') {
+        lineStart--;
+      }
+
+      if (e.shiftKey) {
+        let lineEnd = start;
+        while (lineEnd < value.length && value[lineEnd] !== '\n') {
+          lineEnd++;
+        }
+        const currentLine = value.substring(lineStart, lineEnd);
+        let newLine = currentLine;
+        let removedChars = 0;
+
+        if (currentLine.startsWith('  ')) {
+          newLine = currentLine.substring(2);
+          removedChars = 2;
+        } else if (currentLine.startsWith(' ')) {
+          newLine = currentLine.substring(1);
+          removedChars = 1;
+        }
+
+        if (removedChars > 0) {
+          const newPos = Math.max(lineStart, start - removedChars);
+          textarea.value = value.substring(0, lineStart) + newLine + value.substring(lineEnd);
+          textarea.selectionStart = textarea.selectionEnd = newPos;
+        }
+      } else {
+        textarea.value = value.substring(0, start) + '  ' + value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + 2;
+      }
+    } else {
+      let lineStart = start;
+      while (lineStart > 0 && value[lineStart - 1] !== '\n') {
+        lineStart--;
+      }
+
+      let lineEnd = end;
+      while (lineEnd < value.length && value[lineEnd] !== '\n') {
+        lineEnd++;
+      }
+
+      const block = value.substring(lineStart, lineEnd);
+      const lines = block.split('\n');
+      let newBlock;
+
+      if (e.shiftKey) {
+        newBlock = lines.map(line => {
+          if (line.startsWith('  ')) return line.substring(2);
+          if (line.startsWith(' ')) return line.substring(1);
+          return line;
+        }).join('\n');
+      } else {
+        newBlock = lines.map(line => '  ' + line).join('\n');
+      }
+
+      textarea.value = value.substring(0, lineStart) + newBlock + value.substring(lineEnd);
+      textarea.selectionStart = lineStart;
+      textarea.selectionEnd = lineStart + newBlock.length;
+    }
+
+    handleEditorInput(true);
+  }
+}
+
+  </script>
+</body>
+
+</html>

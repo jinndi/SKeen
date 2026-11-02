@@ -21,12 +21,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Build skeen-api
         run: |
-          npm install html-minifier-terser esbuild-minify-templates luamin
-          node .github/build-api.js
+          npm ci --prefix dashboard
+          npm --prefix dashboard run build:api
           cp skeen-api skeen-api_tmp
           cp api-version api-version_tmp
 

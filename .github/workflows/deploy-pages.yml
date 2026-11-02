@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "index.html"
+      - "dashboard/**"
 
 permissions:
   contents: write
@@ -22,13 +22,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install dependencies
-        run: npm install html-minifier-terser esbuild-minify-templates
+        run: npm ci --prefix dashboard
 
       - name: Minify HTML
-        run: node .github/minify-html.js index.html index.min.html
+        run: npm --prefix dashboard run build:dashboard
 
       - name: Deploy index.html to gh-pages
         env:
@@ -39,7 +39,7 @@ jobs:
           DEPLOY_DIR=$(mktemp -d)
           trap 'rm -rf "$DEPLOY_DIR"' EXIT
 
-          cp index.min.html "$DEPLOY_DIR/index.html"
+          cp dashboard/index.min.html "$DEPLOY_DIR/index.html"
 
           git -C "$DEPLOY_DIR" init -b gh-pages
           git -C "$DEPLOY_DIR" config user.name "github-actions[bot]"
