@@ -1351,7 +1351,12 @@ local function handle_client(client)
             stdout = result ~= "" and result or ""
           }
         else
-          local cmd = "FORCE_COLOR=1 " .. get_skeen_cmd(param)
+          local command_args = param
+          local sync_url = param:match("^sync%s+(https?://.+)$")
+          if sync_url then
+            command_args = "sync " .. shell_quote(sync_url)
+          end
+          local cmd = "FORCE_COLOR=1 " .. get_skeen_cmd(command_args)
 
           -- Invalidate status cache for service control commands
           local actions = { start = true, stop = true, restart = true, reload = true, kill = true }
