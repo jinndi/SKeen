@@ -35,11 +35,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           SHFMT_VERSION="v3.14.1"
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Downloading shfmt"
           sudo curl -sL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] shfmt download finished"
           sudo chmod +x /usr/local/bin/shfmt
 
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Formatting scripts"
           shfmt -s -mn skeen.sh > skeen_min
           shfmt -s -mn skeen_ru.sh > skeen_ru_min
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Script formatting finished"
 
           cp config.json config.json_tmp
           cp config_beta.json config_beta.json_tmp
@@ -47,9 +51,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Fetching static branch"
           if git fetch origin static; then
+            echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Static branch fetch finished"
             git checkout -f static
           else
+            echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Static branch fetch failed; creating orphan branch"
             git checkout --orphan static
             git rm -rf .
           fi

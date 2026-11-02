@@ -353,7 +353,36 @@ local function get_dashboard_html()
   return EMBEDDED_HTML
 end
 
--- Strict security check: validation of allowed SKeen CLI command line parameters
+-- Strict security check: validation of allowed SKeen CLI command line parameters.
+-- Keep the allowlist intentionally narrow while still accepting common, non-shell-safe URL
+-- formats used for config sync tasks. The shell command is always built via shell_quote(),
+-- so we reject metacharacters that could escape the single-quoted argument boundary.
+local function is_valid_sync_url(value)
+  if type(value) ~= "string" then return false end
+  if not value:match("^https?://") then return false end
+  if value == "" or value:find("%s") then return false end
+
+  for i = 1, #value do
+    local c = value:sub(i, i)
+
+    if c:match("%c") then
+      return false
+    end
+
+    if c == '"' or c == "'" or c == '`' or c == '$' or c == '\\' or
+       c == ';' or c == '|' or c == '<' or c == '>' or c == '(' or c == ')' or
+       c == '{' or c == '}' or c == '[' or c == ']' then
+      return false
+    end
+
+    if not c:match("[%w%-%._~:/?%#%@!%*+,=%&%[%]]") then
+      return false
+    end
+  end
+
+  return true
+end
+
 local function is_allowed_param(param)
   if not param or type(param) ~= "string" then return false end
   local exact_allowed = {
@@ -385,7 +414,7 @@ local function is_allowed_param(param)
   if exact_allowed[param] then return true end
 
   if param:match("^restore%s+[%w%-_%.]+$") then return true end
-  if param:match("^sync%s+https?://[%w%-_%.%:/%?&=]+$") then return true end
+  if param:match("^sync%s+") and is_valid_sync_url(param:match("^sync%s+(.-)$")) then return true end
   if param:match("^tun%s+list$") then return true end
   if param:match("^tun%s+create%s+[%d%.]+%s+[%w%-_]+$") then return true end
   if param:match("^tun%s+delete%s+[%w%-_]+$") then return true end
