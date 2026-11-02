@@ -686,6 +686,7 @@
       scrollbar-width: auto;
       scrollbar-color: var(--border-color) var(--code-bg);
     }
+
     #formEditorContainer {
       scrollbar-width: none;
     }
@@ -696,6 +697,7 @@
       width: 14px;
       height: 14px;
     }
+
     #formEditorContainer::-webkit-scrollbar {
       display: none;
     }
@@ -2010,8 +2012,7 @@
                 data-i18n-placeholder="jsonPlaceholder" oninput="handleEditorInput()" onscroll="syncScroll()"
                 onkeydown="handleEditorKeydown(event)" onkeyup="updateActiveEditorLine()"
                 onclick="updateActiveEditorLine()" onmouseup="updateActiveEditorLine()"
-                onselect="updateActiveEditorLine()"
-                onbeforeinput="guardFoldPlaceholderEdit(event)"></textarea>
+                onselect="updateActiveEditorLine()" onbeforeinput="guardFoldPlaceholderEdit(event)"></textarea>
             </div>
           </div>
           <div id="jsonStatus" class="status"></div>
@@ -2679,36 +2680,43 @@
     /* ==========================================================================
        State Management
        ========================================================================== */
-    let originalFileContent = '';
-    let baselineParsedJson = null;
-    let currentSelectedFile = '';
-    let cachedLines = [];
-    let statusTimeout = null;
-    let currentAlertCallback = null;
-    let pollingTimer = null;
-    let isServiceRunning = false;
-    const storedEditorMode = localStorage.getItem('keen_editor_mode');
-    let currentEditorMode = storedEditorMode === 'text' ? 'text' : 'form';
-    let activeAccordionIndex = -1;
-
-    let currentEditingArrayRef = null;
-    let currentEditingDisplayId = null;
-    let networkCheckArray = [];
-    let apiCorsArray = [];
-    let fakeipClientsArray = [];
-    let excludePortsArray = [];
-    let excludeV4Array = [];
-    let excludeV6Array = [];
-    let currentItemValidationType = 'text';
-
-    let currentConfirmCallback = null;
-    let currentCancelCallback = null;
-    let currentLang = 'en';
-
-    // Telemetry Polling State
-    let telemetryPollingTimer = null;
-    let isServerConnected = false;
-    let connectionStorageWarning = false;
+    const appState = { connectionStorageWarning: false };
+    const editorState = {
+      originalFileContent: '',
+      baselineParsedJson: null,
+      currentSelectedFile: '',
+      cachedLines: [],
+      editorMode: localStorage.getItem('keen_editor_mode') === 'text' ? 'text' : 'form'
+    };
+    const serviceState = {
+      pollingTimer: null,
+      isServiceRunning: false,
+      telemetryPollingTimer: null,
+      isServerConnected: false
+    };
+    const noticeState = { statusTimeout: null };
+    const modalState = {
+      currentAlertCallback: null,
+      currentConfirmCallback: null,
+      currentCancelCallback: null
+    };
+    const languageState = { currentLang: 'en' };
+    const formState = {
+      activeAccordionIndex: -1,
+      arrays: {
+        networkCheck: [],
+        apiCors: [],
+        fakeipClients: [],
+        excludePorts: [],
+        excludeV4: [],
+        excludeV6: []
+      },
+      arrayEditor: {
+        target: null,
+        displayInputId: null,
+        validationType: 'text'
+      }
+    };
 
     function loadStoredConnections() {
       const serialized = localStorage.getItem('keen_connections');
@@ -2718,7 +2726,7 @@
       try {
         storedConnections = JSON.parse(serialized);
       } catch (error) {
-        connectionStorageWarning = true;
+        appState.connectionStorageWarning = true;
         console.error('Saved connections contain invalid JSON and were not loaded.', error);
         return [];
       }
@@ -2729,7 +2737,7 @@
         (conn.name !== undefined && typeof conn.name !== 'string') ||
         (conn.apiKey !== undefined && typeof conn.apiKey !== 'string')
       )) {
-        connectionStorageWarning = true;
+        appState.connectionStorageWarning = true;
         console.error('Saved connections have an invalid format and were not loaded.');
         return [];
       }
@@ -2785,6 +2793,22 @@
       if (modalId === 'connModal') updateConnectionPingPolling();
     }
 
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+      const controller = new AbortController();
+      const externalSignal = options.signal;
+      const abortRequest = () => controller.abort(externalSignal.reason);
+      if (externalSignal?.aborted) abortRequest();
+      else externalSignal?.addEventListener('abort', abortRequest, { once: true });
+
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+        externalSignal?.removeEventListener('abort', abortRequest);
+      }
+    }
+
     function togglePreloader(show) {
       const preloader = document.getElementById('pagePreloader');
       if (preloader) {
@@ -2795,15 +2819,17 @@
     /* ==========================================================================
        Initialization & App Lifecycle
        ========================================================================== */
-    let connections = loadStoredConnections();
-    let activeIndex = Number.parseInt(localStorage.getItem('keen_active_index') || '0', 10);
-    if (!Number.isInteger(activeIndex) || activeIndex < 0) activeIndex = 0;
-    const connectionPingStatus = new Map();
-    let connectionPingTimer = null;
-    let connectionPingController = null;
-    let connectionPingRunId = 0;
-    let connectionPingRunActive = false;
-    let connectionSaveInProgress = false;
+    const storedActiveIndex = Number.parseInt(localStorage.getItem('keen_active_index') || '0', 10);
+    const connectionState = {
+      connections: loadStoredConnections(),
+      activeIndex: Number.isInteger(storedActiveIndex) && storedActiveIndex >= 0 ? storedActiveIndex : 0,
+      pingStatus: new Map(),
+      pingTimer: null,
+      pingController: null,
+      pingRunId: 0,
+      pingRunActive: false,
+      saveInProgress: false
+    };
 
     window.addEventListener('DOMContentLoaded', async () => {
       document.body.classList.add('preload');
@@ -2818,12 +2844,12 @@
       applyTheme(['auto', 'light', 'dark'].includes(savedTheme) ? savedTheme : 'auto');
       const savedLanguage = localStorage.getItem('keen_lang_setting') || 'auto';
       const languageSetting = ['auto', 'ru', 'en'].includes(savedLanguage) ? savedLanguage : 'auto';
-      currentLang = resolveLanguage(languageSetting);
+      languageState.currentLang = resolveLanguage(languageSetting);
       document.getElementById('langSelect').value = languageSetting;
 
       applyLanguage();
       initConnections();
-      if (connectionStorageWarning) {
+      if (appState.connectionStorageWarning) {
         showAlertModal(t('alertCorruptConnections'));
       }
       renderExtraParamOptions();
@@ -2855,7 +2881,7 @@
           if (document.getElementById('skeenTab').classList.contains('active')) {
             fetchServiceStatus();
           }
-          if (isModalOpen && isServerConnected) {
+          if (isModalOpen && serviceState.isServerConnected) {
             openSystemTelemetryModal();
           }
         }
@@ -2864,8 +2890,8 @@
     });
 
     function startPolling() {
-      if (pollingTimer) clearInterval(pollingTimer);
-      pollingTimer = setInterval(() => {
+      if (serviceState.pollingTimer) clearInterval(serviceState.pollingTimer);
+      serviceState.pollingTimer = setInterval(() => {
         if (document.hidden || !document.getElementById('skeenTab').classList.contains('active')) {
           return;
         }
@@ -2877,63 +2903,61 @@
        Connections Management
        ========================================================================== */
     function initConnections() {
-      if (connections.length === 0) {
+      if (connectionState.connections.length === 0) {
         openConnModal();
         return;
       }
-      if (activeIndex >= connections.length) activeIndex = 0;
+      if (connectionState.activeIndex >= connectionState.connections.length) connectionState.activeIndex = 0;
     }
 
     function updateConnectionPingPolling() {
       const modal = document.getElementById('connModal');
-      const shouldPoll = connections.length > 0 && modal?.classList.contains('open') && !document.hidden;
+      const shouldPoll = connectionState.connections.length > 0 && modal?.classList.contains('open') && !document.hidden;
       if (!shouldPoll) {
-        if (connectionPingTimer !== null) {
-          clearTimeout(connectionPingTimer);
-          connectionPingTimer = null;
+        if (connectionState.pingTimer !== null) {
+          clearTimeout(connectionState.pingTimer);
+          connectionState.pingTimer = null;
         }
-        connectionPingRunId += 1;
-        connectionPingRunActive = false;
-        connectionPingController?.abort();
-        connectionPingController = null;
+        connectionState.pingRunId += 1;
+        connectionState.pingRunActive = false;
+        connectionState.pingController?.abort();
+        connectionState.pingController = null;
         return;
       }
 
-      if (connectionPingRunActive) return;
-      connectionPingRunActive = true;
-      const runId = ++connectionPingRunId;
+      if (connectionState.pingRunActive) return;
+      connectionState.pingRunActive = true;
+      const runId = ++connectionState.pingRunId;
       void pingConnectionsSequentially(runId);
     }
 
     async function pingConnectionsSequentially(runId) {
       try {
-        for (const conn of [...connections]) {
+        for (const conn of [...connectionState.connections]) {
           const modal = document.getElementById('connModal');
-          if (runId !== connectionPingRunId || document.hidden ||
-              !modal?.classList.contains('open')) return;
+          if (runId !== connectionState.pingRunId || document.hidden ||
+            !modal?.classList.contains('open')) return;
 
           const controller = new AbortController();
-          connectionPingController = controller;
-          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          connectionState.pingController = controller;
           let isAvailable = false;
           try {
             const headers = { 'Content-Type': 'application/json' };
             if (conn.apiKey) headers['X-API-Key'] = conn.apiKey;
-            const response = await fetch(`${conn.url.replace(/\/$/, '')}/api/ping`, {
+            const response = await fetchWithTimeout(`${conn.url.replace(/\/$/, '')}/api/ping`, {
               method: 'GET',
               headers,
               signal: controller.signal
-            });
+            }, 3000);
             isAvailable = response.ok;
           } catch {
             isAvailable = false;
           } finally {
-            clearTimeout(timeoutId);
-            if (connectionPingController === controller) connectionPingController = null;
+            if (connectionState.pingController === controller) connectionState.pingController = null;
           }
 
-          if (runId !== connectionPingRunId) return;
-          connectionPingStatus.set(conn.url, isAvailable);
+          if (runId !== connectionState.pingRunId) return;
+          connectionState.pingStatus.set(conn.url, isAvailable);
           const item = [...document.querySelectorAll('#connList .conn-item')]
             .find(element => element.dataset.connectionUrl === conn.url);
           const dot = item?.querySelector('.conn-status-dot');
@@ -2945,10 +2969,10 @@
           }
         }
       } finally {
-        if (runId === connectionPingRunId) {
-          connectionPingRunActive = false;
-          connectionPingTimer = setTimeout(() => {
-            connectionPingTimer = null;
+        if (runId === connectionState.pingRunId) {
+          connectionState.pingRunActive = false;
+          connectionState.pingTimer = setTimeout(() => {
+            connectionState.pingTimer = null;
             updateConnectionPingPolling();
           }, 5000);
         }
@@ -2956,29 +2980,29 @@
     }
 
     function restartConnectionPingPolling() {
-      if (connectionPingTimer !== null) {
-        clearTimeout(connectionPingTimer);
-        connectionPingTimer = null;
+      if (connectionState.pingTimer !== null) {
+        clearTimeout(connectionState.pingTimer);
+        connectionState.pingTimer = null;
       }
-      connectionPingRunId += 1;
-      connectionPingRunActive = false;
-      connectionPingController?.abort();
-      connectionPingController = null;
+      connectionState.pingRunId += 1;
+      connectionState.pingRunActive = false;
+      connectionState.pingController?.abort();
+      connectionState.pingController = null;
       updateConnectionPingPolling();
     }
 
     function getActiveConnection() {
-      if (connections.length === 0) return null;
-      return connections[activeIndex] || connections[0];
+      if (connectionState.connections.length === 0) return null;
+      return connectionState.connections[connectionState.activeIndex] || connectionState.connections[0];
     }
 
     function changeActiveConnection(indexStr) {
       const nextIndex = Number.parseInt(indexStr, 10);
       if (!Number.isInteger(nextIndex) || nextIndex < 0 ||
-          nextIndex >= connections.length || nextIndex === activeIndex) return;
+        nextIndex >= connectionState.connections.length || nextIndex === connectionState.activeIndex) return;
       if (hasUnsavedChanges()) {
         showConfirmModal(t('confirmUnsaved'), () => {
-          originalFileContent = '';
+          editorState.originalFileContent = '';
           executeChangeConnection(nextIndex);
         });
         return;
@@ -2987,8 +3011,8 @@
     }
 
     function executeChangeConnection(nextIndex) {
-      activeIndex = nextIndex;
-      localStorage.setItem('keen_active_index', activeIndex);
+      connectionState.activeIndex = nextIndex;
+      localStorage.setItem('keen_active_index', connectionState.activeIndex);
       renderConnList();
       showStatus('jsonStatus', t('statusSwitchedTo') + (getActiveConnection().name || getActiveConnection().url));
       fetchServiceStatus();
@@ -3013,7 +3037,7 @@
     function switchTab(tabId, btn, save = true) {
       if (tabId !== 'configTab' && hasUnsavedChanges()) {
         showConfirmModal(t('confirmUnsaved'), () => {
-          originalFileContent = '';
+          editorState.originalFileContent = '';
           executeSwitchTab(tabId, btn, save);
         });
         return;
@@ -3046,7 +3070,7 @@
     }
 
     function closeConnModal() {
-      if (connections.length === 0) {
+      if (connectionState.connections.length === 0) {
         showAlertModal(t('alertNoConn'));
         return;
       }
@@ -3057,13 +3081,13 @@
     function renderConnList() {
       const listEl = document.getElementById('connList');
       listEl.innerHTML = '';
-      if (connections.length === 0) {
+      if (connectionState.connections.length === 0) {
         listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem;">${t('emptyList')}</div>`;
         return;
       }
-      connections.forEach((conn, index) => {
+      connectionState.connections.forEach((conn, index) => {
         const item = document.createElement('div');
-        const isActive = index === activeIndex;
+        const isActive = index === connectionState.activeIndex;
         item.className = `conn-item${isActive ? ' active' : ''}`;
         const details = document.createElement('div');
         details.className = 'conn-item-select';
@@ -3082,7 +3106,7 @@
         const statusDot = document.createElement('span');
         statusDot.className = 'conn-status-dot';
         statusDot.setAttribute('aria-hidden', 'true');
-        const knownStatus = connectionPingStatus.get(conn.url);
+        const knownStatus = connectionState.pingStatus.get(conn.url);
         if (knownStatus !== undefined) {
           statusDot.classList.add(knownStatus ? 'available' : 'unavailable');
           statusDot.title = knownStatus ? t('connectionAvailable') : t('connectionUnavailable');
@@ -3121,54 +3145,50 @@
     }
 
     async function saveConnection() {
-      if (connectionSaveInProgress) return;
+      if (connectionState.saveInProgress) return;
       const name = document.getElementById('connName').value.trim();
       const url = document.getElementById('connUrl').value.trim().replace(/\/$/, '');
       const apiKey = document.getElementById('connKey').value.trim();
       const editIndex = parseInt(document.getElementById('editIndex').value);
 
       if (!url) { showAlertModal(t('alertNoUrl')); return; }
-      if (connections.some((conn, idx) => idx !== editIndex && conn.url === url)) {
+      if (connectionState.connections.some((conn, idx) => idx !== editIndex && conn.url === url)) {
         showAlertModal(t('alertDuplicateUrl'));
         return;
       }
 
-      connectionSaveInProgress = true;
+      connectionState.saveInProgress = true;
       const saveButton = document.querySelector('#connectionsPane button[data-i18n="btnSaveConn"]');
       if (saveButton) saveButton.disabled = true;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
       try {
         const headers = { 'Content-Type': 'application/json' };
         if (apiKey) headers['X-API-Key'] = apiKey;
-        const response = await fetch(`${url}/api/ping`, {
+        const response = await fetchWithTimeout(`${url}/api/ping`, {
           method: 'GET',
-          headers,
-          signal: controller.signal
-        });
+          headers
+        }, 4000);
         if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
       } catch (error) {
         showAlertModal(t('pingError') + (error instanceof Error ? error.message : String(error)));
         return;
       } finally {
-        clearTimeout(timeoutId);
-        connectionSaveInProgress = false;
+        connectionState.saveInProgress = false;
         if (saveButton) saveButton.disabled = false;
       }
 
       const newConn = { name: name || url, url, apiKey };
-      const previousUrl = editIndex >= 0 ? connections[editIndex]?.url : null;
+      const previousUrl = editIndex >= 0 ? connectionState.connections[editIndex]?.url : null;
       if (editIndex === -1) {
-        connections.push(newConn);
-        activeIndex = connections.length - 1;
+        connectionState.connections.push(newConn);
+        connectionState.activeIndex = connectionState.connections.length - 1;
       } else {
-        connections[editIndex] = newConn;
+        connectionState.connections[editIndex] = newConn;
       }
 
-      localStorage.setItem('keen_connections', JSON.stringify(connections));
-      localStorage.setItem('keen_active_index', activeIndex);
-      if (previousUrl && previousUrl !== url) connectionPingStatus.delete(previousUrl);
-      connectionPingStatus.set(url, true);
+      localStorage.setItem('keen_connections', JSON.stringify(connectionState.connections));
+      localStorage.setItem('keen_active_index', connectionState.activeIndex);
+      if (previousUrl && previousUrl !== url) connectionState.pingStatus.delete(previousUrl);
+      connectionState.pingStatus.set(url, true);
       renderConnList();
       clearConnForm();
       initConnections();
@@ -3177,7 +3197,7 @@
     }
 
     function editConnection(index) {
-      const conn = connections[index];
+      const conn = connectionState.connections[index];
       document.getElementById('connName').value = conn.name;
       document.getElementById('connUrl').value = conn.url;
       document.getElementById('connKey').value = conn.apiKey || '';
@@ -3187,11 +3207,11 @@
 
     function deleteConnection(index) {
       showConfirmModal(t('confirmDelete'), () => {
-        connections.splice(index, 1);
-        if (activeIndex >= connections.length) activeIndex = Math.max(0, connections.length - 1);
-        localStorage.setItem('keen_connections', JSON.stringify(connections));
-        localStorage.setItem('keen_active_index', activeIndex);
-        connectionPingStatus.clear();
+        connectionState.connections.splice(index, 1);
+        if (connectionState.activeIndex >= connectionState.connections.length) connectionState.activeIndex = Math.max(0, connectionState.connections.length - 1);
+        localStorage.setItem('keen_connections', JSON.stringify(connectionState.connections));
+        localStorage.setItem('keen_active_index', connectionState.activeIndex);
+        connectionState.pingStatus.clear();
         renderConnList();
         clearConnForm();
         initConnections();
@@ -3213,28 +3233,28 @@
     function showConfirmModal(message, onConfirm, onCancel) {
       document.getElementById('confirmText').textContent = message;
       setModalState('confirmModal', true);
-      currentConfirmCallback = onConfirm || null;
-      currentCancelCallback = onCancel || null;
+      modalState.currentConfirmCallback = onConfirm || null;
+      modalState.currentCancelCallback = onCancel || null;
     }
 
     function resolveConfirm(result) {
       setModalState('confirmModal', false);
-      if (result && typeof currentConfirmCallback === 'function') currentConfirmCallback();
-      else if (!result && typeof currentCancelCallback === 'function') currentCancelCallback();
-      currentConfirmCallback = null;
-      currentCancelCallback = null;
+      if (result && typeof modalState.currentConfirmCallback === 'function') modalState.currentConfirmCallback();
+      else if (!result && typeof modalState.currentCancelCallback === 'function') modalState.currentCancelCallback();
+      modalState.currentConfirmCallback = null;
+      modalState.currentCancelCallback = null;
     }
 
     function showAlertModal(message, callback) {
       document.getElementById('alertText').textContent = message;
       setModalState('alertModal', true);
-      currentAlertCallback = callback || null;
+      modalState.currentAlertCallback = callback || null;
     }
 
     function closeAlertModal() {
       setModalState('alertModal', false);
-      if (typeof currentAlertCallback === 'function') currentAlertCallback();
-      currentAlertCallback = null;
+      if (typeof modalState.currentAlertCallback === 'function') modalState.currentAlertCallback();
+      modalState.currentAlertCallback = null;
     }
 
     function showStatus(elementId, message, isError = false) {
@@ -3242,8 +3262,8 @@
       el.textContent = message;
       el.className = 'status ' + (isError ? 'error' : 'success');
       el.style.display = 'block';
-      if (statusTimeout) clearTimeout(statusTimeout);
-      statusTimeout = setTimeout(() => { el.style.display = 'none'; }, 3000);
+      if (noticeState.statusTimeout) clearTimeout(noticeState.statusTimeout);
+      noticeState.statusTimeout = setTimeout(() => { el.style.display = 'none'; }, 3000);
     }
 
     /* ==========================================================================
@@ -3315,11 +3335,11 @@
     }
 
     function openSystemTelemetryModal() {
-      if (!isServerConnected) return;
+      if (!serviceState.isServerConnected) return;
       setModalState('sysTelemetryModal', true);
       fetchSystemTelemetryData();
-      if (telemetryPollingTimer) clearInterval(telemetryPollingTimer);
-      telemetryPollingTimer = setInterval(fetchSystemTelemetryData, 2000);
+      if (serviceState.telemetryPollingTimer) clearInterval(serviceState.telemetryPollingTimer);
+      serviceState.telemetryPollingTimer = setInterval(fetchSystemTelemetryData, 2000);
     }
 
     function closeSystemTelemetryModal() {
@@ -3328,9 +3348,9 @@
     }
 
     function stopTelemetryPolling() {
-      if (telemetryPollingTimer) {
-        clearInterval(telemetryPollingTimer);
-        telemetryPollingTimer = null;
+      if (serviceState.telemetryPollingTimer) {
+        clearInterval(serviceState.telemetryPollingTimer);
+        serviceState.telemetryPollingTimer = null;
       }
     }
 
@@ -3349,15 +3369,16 @@
       if (!baseUrl) return;
 
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const res = await fetch(`${baseUrl}/api/system/status`, { method: 'GET', headers: getHeaders(), signal: controller.signal });
-        clearTimeout(timeoutId);
+        const res = await fetchWithTimeout(
+          `${baseUrl}/api/system/status`,
+          { method: 'GET', headers: getHeaders() },
+          6000
+        );
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        isServerConnected = true;
+        serviceState.isServerConnected = true;
         const telBtn = document.getElementById('sysTelemetryBtn');
         if (telBtn) telBtn.disabled = false;
 
@@ -3388,7 +3409,7 @@
         document.getElementById('telConnCount').textContent = data.conn_cnt || 0;
 
       } catch (e) {
-        isServerConnected = false;
+        serviceState.isServerConnected = false;
         const telBtn = document.getElementById('sysTelemetryBtn');
         if (telBtn) telBtn.disabled = true;
 
@@ -3422,7 +3443,7 @@
           const isOpen = item.classList.contains('active');
           item.classList.toggle('active', !isOpen);
           body.style.maxHeight = isOpen ? '0px' : (body.scrollHeight + 100) + 'px';
-          activeAccordionIndex = isOpen ? -1 : index;
+          formState.activeAccordionIndex = isOpen ? -1 : index;
         } else {
           item.classList.remove('active');
           body.style.maxHeight = '0px';
@@ -3431,11 +3452,17 @@
     }
 
     function syncFormToText() {
-      if (currentEditorMode !== 'form') return;
-      const formData = collectFormData();
+      if (editorState.editorMode !== 'form') return;
+      let formData;
+      try {
+        formData = collectFormData();
+      } catch (error) {
+        showStatus('jsonStatus', `${t('errorPrefix')}${error.message}`, true);
+        return;
+      }
       const textArea = document.getElementById('jsonEditor');
       textArea.value = JSON.stringify(formData, null, 2);
-      cachedLines = textArea.value.split('\n');
+      editorState.cachedLines = textArea.value.split('\n');
       updateLineNumbers();
       updateEditorVisuals();
 
@@ -3449,7 +3476,7 @@
     function switchEditorMode(mode) {
       const fileSelect = document.getElementById('configFileSelect');
       if (fileSelect.value !== 'skeen') return;
-      if (mode === 'text' && currentEditorMode === 'text' && editorFolds.size > 0) return;
+      if (mode === 'text' && editorState.editorMode === 'text' && editorFolds.size > 0) return;
 
       const formContainer = document.getElementById('formEditorContainer');
       const editorWrapper = document.getElementById('editorWrapper');
@@ -3468,7 +3495,7 @@
         }
       }
 
-      currentEditorMode = mode;
+      editorState.editorMode = mode;
       localStorage.setItem('keen_editor_mode', mode);
 
       if (mode === 'form') {
@@ -3487,9 +3514,15 @@
         btnText.classList.remove('active');
         formatBtn.style.display = 'none';
       } else {
-        const formData = collectFormData();
+        let formData;
+        try {
+          formData = collectFormData();
+        } catch (error) {
+          showAlertModal(error.message);
+          return;
+        }
         textArea.value = JSON.stringify(formData, null, 2);
-        cachedLines = textArea.value.split('\n');
+        editorState.cachedLines = textArea.value.split('\n');
         updateLineNumbers();
         updateEditorVisuals();
         formContainer.style.display = 'none';
@@ -3523,7 +3556,7 @@
     }
 
     function renderAccordion(index, titleText, iconSvg, contentHtml) {
-      const isActive = activeAccordionIndex === index ? 'active' : '';
+      const isActive = formState.activeAccordionIndex === index ? 'active' : '';
       return `
         <div class="accordion-item ${isActive}">
           <div class="accordion-header" onclick="toggleAccordion(${index})">
@@ -3542,113 +3575,127 @@
       `;
     }
 
-    function renderFormFields(data) {
-      const container = document.getElementById('formEditorContainer');
-      const safeValue = value => escapeHtml(String(value ?? ''));
+    function safeFormValue(value) {
+      return escapeHtml(String(value ?? ''));
+    }
 
-      networkCheckArray = Array.isArray(data.network?.check) ? [...data.network.check] : [];
-      apiCorsArray = Array.isArray(data.services?.api?.cors_origin) ? [...data.services.api.cors_origin] : [];
-      fakeipClientsArray = Array.isArray(data.firewall?.intercept?.fakeip?.clients) ? [...data.firewall.intercept.fakeip.clients] : [];
-      excludePortsArray = Array.isArray(data.firewall?.exclude?.port) ? [...data.firewall.exclude.port] : [];
-      excludeV4Array = Array.isArray(data.firewall?.exclude?.ipv4_cidr) ? [...data.firewall.exclude.ipv4_cidr] : [];
-      excludeV6Array = Array.isArray(data.firewall?.exclude?.ipv6_cidr) ? [...data.firewall.exclude.ipv6_cidr] : [];
+    function renderGeneralAccordion(data) {
+      const generalSections = [
+        renderSection(t('secAutoStart'), [
+          renderSettingRow(t('enabledLbl'), 'auto_start.enabled', `<input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secDelay'), 'auto_start.delay', `<input type="number" id="f_auto_start_delay" value="${safeFormValue(data.auto_start?.delay ?? 0)}" oninput="validateField(this, 'port'); syncFormToText()">`)
+        ].join('')),
+        renderSection(t('secPolicy'), [
+          renderSettingRow(t('enabledLbl'), 'policy.enabled', `<input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secSegment'), 'policy.segment', `<input type="text" id="f_policy_segment" value="${safeFormValue(data.policy?.segment)}" oninput="validateField(this, 'segment'); syncFormToText()">`)
+        ].join('')),
+        renderSection(t('secNetwork'), [
+          renderSettingRow(t('secIpv6'), 'network.ipv6', `<input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secTuning'), 'network.tuning', `<input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secPingCheck'), 'network.check', `<input type="text" id="f_network_check_display" readonly value="${safeFormValue(formState.arrays.networkCheck.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_network_check_display', '${t('secPingCheck')}', formState.arrays.networkCheck, 'host')">`)
+        ].join(''))
+      ].join('');
+      const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`;
+      return renderAccordion(0, t('secGeneral'), icon, generalSections);
+    }
 
-      // Accordion 0: General
-      const genSec1 = renderSection(t('secAutoStart'), [
-        renderSettingRow(t('enabledLbl'), 'auto_start.enabled', `<input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secDelay'), 'auto_start.delay', `<input type="number" id="f_auto_start_delay" value="${safeValue(data.auto_start?.delay ?? 0)}" oninput="validateField(this, 'port'); syncFormToText()">`)
-      ].join(''));
+    function renderSingboxAccordion(data) {
+      const singboxSections = [
+        renderSection(t('secSingbox'), [
+          renderSettingRow(t('secUseDir'), 'singbox.config.use_dir', `<input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secConfigUrl'), 'singbox.config.url', `<input type="text" id="f_singbox_config_url" value="${safeFormValue(data.singbox?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+          renderSettingRow(t('secSplit'), 'singbox.config.split', `<input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secApiUrl'), 'singbox.api.url', `<input type="text" id="f_singbox_api_url" value="${safeFormValue(data.singbox?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+          renderSettingRow(t('secApiSecret'), 'singbox.api.secret', `<input type="text" id="f_singbox_api_secret" value="${safeFormValue(data.singbox?.api?.secret)}" oninput="syncFormToText()">`)
+        ].join('')),
+        renderSection(t('secExtSingbox'), [
+          renderSettingRow(t('enabledLbl'), 'singbox.external.enabled', `<input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" id="f_singbox_ext_path" value="${safeFormValue(data.singbox?.external?.path)}" oninput="syncFormToText()">`),
+          renderSettingRow(t('secUseDir'), 'singbox.external.config.use_dir', `<input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" id="f_singbox_ext_cfg_url" value="${safeFormValue(data.singbox?.external?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+          renderSettingRow(t('secSplit'), 'singbox.external.config.split', `<input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secApiUrl'), 'singbox.external.api.url', `<input type="text" id="f_singbox_ext_api_url" value="${safeFormValue(data.singbox?.external?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+          renderSettingRow(t('secApiSecret'), 'singbox.external.api.secret', `<input type="text" id="f_singbox_ext_api_secret" value="${safeFormValue(data.singbox?.external?.api?.secret)}" oninput="syncFormToText()">`)
+        ].join(''))
+      ].join('');
+      const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+      return renderAccordion(1, t('secSingbox'), icon, singboxSections);
+    }
 
-      const genSec2 = renderSection(t('secPolicy'), [
-        renderSettingRow(t('enabledLbl'), 'policy.enabled', `<input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secSegment'), 'policy.segment', `<input type="text" id="f_policy_segment" value="${safeValue(data.policy?.segment)}" oninput="validateField(this, 'segment'); syncFormToText()">`)
-      ].join(''));
+    function renderServicesAccordion(data) {
+      const serviceSections = [
+        renderSection('SKeen API', [
+          renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" id="f_services_api_port" value="${safeFormValue(data.services?.api?.port ?? 5000)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+          renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" id="f_services_api_secret" value="${safeFormValue(data.services?.api?.secret)}" oninput="syncFormToText()">`),
+          renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" id="f_services_api_cors_display" readonly value="${safeFormValue(formState.arrays.apiCors.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', formState.arrays.apiCors, 'text')">`),
+          renderSettingRow(t('secDashboard'), 'services.api.dashboard', `<input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secAutoStart'), 'services.api.auto_start', `<input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()">`)
+        ].join('')),
+        renderSection(t('secLocalProxy'), [
+          renderSettingRow(t('enabledLbl'), 'services.proxy.enabled', `<input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secProxyPort'), 'services.proxy.port', `<input type="text" id="f_services_proxy_port" value="${safeFormValue(data.services?.proxy?.port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+          renderSettingRow(t('secProxyUser'), 'services.proxy.user', `<input type="text" id="f_services_proxy_user" value="${safeFormValue(data.services?.proxy?.user)}" oninput="syncFormToText()">`),
+          renderSettingRow(t('secProxyPass'), 'services.proxy.pass', `<input type="text" id="f_services_proxy_pass" value="${safeFormValue(data.services?.proxy?.pass)}" oninput="syncFormToText()">`)
+        ].join(''))
+      ].join('');
+      const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`;
+      return renderAccordion(2, t('secServices'), icon, serviceSections);
+    }
 
-      const genSec3 = renderSection(t('secNetwork'), [
-        renderSettingRow(t('secIpv6'), 'network.ipv6', `<input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secTuning'), 'network.tuning', `<input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secPingCheck'), 'network.check', `<input type="text" id="f_network_check_display" readonly value="${safeValue(networkCheckArray.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_network_check_display', '${t('secPingCheck')}', networkCheckArray, 'host')">`)
-      ].join(''));
+    function renderFirewallAccordion(data) {
+      const firewallSections = [
+        renderSection(t('secIntercept'), [
+          renderSettingRow(t('secInterceptDns'), 'firewall.intercept.dns', `<input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" id="f_firewall_fakeip_clients_display" readonly value="${safeFormValue(formState.arrays.fakeipClients.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', formState.arrays.fakeipClients, 'ip')">`)
+        ].join('')),
+        renderSection(t('secExclude'), [
+          renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" id="f_firewall_exclude_port_display" readonly value="${safeFormValue(formState.arrays.excludePorts.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', formState.arrays.excludePorts, 'portRange')">`),
+          renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" id="f_firewall_exclude_v4_display" readonly value="${safeFormValue(formState.arrays.excludeV4.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', formState.arrays.excludeV4, 'v4cidr')">`),
+          renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" id="f_firewall_exclude_v6_display" readonly value="${safeFormValue(formState.arrays.excludeV6.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', formState.arrays.excludeV6, 'v6cidr')">`)
+        ].join('')),
+        renderSection(t('secRedirectDns'), [
+          renderSettingRow(t('secRedirectDns'), 'firewall.redirect_dns.enabled', `<input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+          renderSettingRow(t('secDnsPort'), 'firewall.redirect_dns.to_port', `<input type="text" id="f_firewall_redirect_dns_port" value="${safeFormValue(data.firewall?.redirect_dns?.to_port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+          renderSettingRow(t('secUsePolicyDns'), 'firewall.redirect_dns.use_policy', `<input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()">`)
+        ].join('')),
+        renderSection(t('secProxyRouter'), [
+          renderSettingRow(t('secProxyRouter'), 'firewall.proxy_router', `<input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()">`)
+        ].join(''))
+      ].join('');
+      const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`;
+      return renderAccordion(3, t('secFirewall'), icon, firewallSections);
+    }
 
-      const acc0 = renderAccordion(0, t('secGeneral'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`, genSec1 + genSec2 + genSec3);
-
-      // Accordion 1: Sing-box
-      const sbSec1 = renderSection(t('secSingbox'), [
-        renderSettingRow(t('secUseDir'), 'singbox.config.use_dir', `<input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secConfigUrl'), 'singbox.config.url', `<input type="text" id="f_singbox_config_url" value="${safeValue(data.singbox?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
-        renderSettingRow(t('secSplit'), 'singbox.config.split', `<input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secApiUrl'), 'singbox.api.url', `<input type="text" id="f_singbox_api_url" value="${safeValue(data.singbox?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
-        renderSettingRow(t('secApiSecret'), 'singbox.api.secret', `<input type="text" id="f_singbox_api_secret" value="${safeValue(data.singbox?.api?.secret)}" oninput="syncFormToText()">`)
-      ].join(''));
-
-      const sbSec2 = renderSection(t('secExtSingbox'), [
-        renderSettingRow(t('enabledLbl'), 'singbox.external.enabled', `<input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" id="f_singbox_ext_path" value="${safeValue(data.singbox?.external?.path)}" oninput="syncFormToText()">`),
-        renderSettingRow(t('secUseDir'), 'singbox.external.config.use_dir', `<input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" id="f_singbox_ext_cfg_url" value="${safeValue(data.singbox?.external?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
-        renderSettingRow(t('secSplit'), 'singbox.external.config.split', `<input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secApiUrl'), 'singbox.external.api.url', `<input type="text" id="f_singbox_ext_api_url" value="${safeValue(data.singbox?.external?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
-        renderSettingRow(t('secApiSecret'), 'singbox.external.api.secret', `<input type="text" id="f_singbox_ext_api_secret" value="${safeValue(data.singbox?.external?.api?.secret)}" oninput="syncFormToText()">`)
-      ].join(''));
-
-      const acc1 = renderAccordion(1, t('secSingbox'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`, sbSec1 + sbSec2);
-
-      // Accordion 2: Services
-      const srvSec1 = renderSection('SKeen API', [
-        renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" id="f_services_api_port" value="${safeValue(data.services?.api?.port ?? 5000)}" oninput="validateField(this, 'port'); syncFormToText()">`),
-        renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" id="f_services_api_secret" value="${safeValue(data.services?.api?.secret)}" oninput="syncFormToText()">`),
-        renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" id="f_services_api_cors_display" readonly value="${safeValue(apiCorsArray.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', apiCorsArray, 'text')">`),
-        renderSettingRow(t('secDashboard'), 'services.api.dashboard', `<input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secAutoStart'), 'services.api.auto_start', `<input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()">`)
-      ].join(''));
-
-      const srvSec2 = renderSection(t('secLocalProxy'), [
-        renderSettingRow(t('enabledLbl'), 'services.proxy.enabled', `<input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secProxyPort'), 'services.proxy.port', `<input type="text" id="f_services_proxy_port" value="${safeValue(data.services?.proxy?.port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
-        renderSettingRow(t('secProxyUser'), 'services.proxy.user', `<input type="text" id="f_services_proxy_user" value="${safeValue(data.services?.proxy?.user)}" oninput="syncFormToText()">`),
-        renderSettingRow(t('secProxyPass'), 'services.proxy.pass', `<input type="text" id="f_services_proxy_pass" value="${safeValue(data.services?.proxy?.pass)}" oninput="syncFormToText()">`)
-      ].join(''));
-
-      const acc2 = renderAccordion(2, t('secServices'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`, srvSec1 + srvSec2);
-
-      // Accordion 3: Firewall
-      const fwSec1 = renderSection(t('secIntercept'), [
-        renderSettingRow(t('secInterceptDns'), 'firewall.intercept.dns', `<input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" id="f_firewall_fakeip_clients_display" readonly value="${safeValue(fakeipClientsArray.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', fakeipClientsArray, 'ip')">`)
-      ].join(''));
-
-      const fwSec2 = renderSection(t('secExclude'), [
-        renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" id="f_firewall_exclude_port_display" readonly value="${safeValue(excludePortsArray.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', excludePortsArray, 'portRange')">`),
-        renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" id="f_firewall_exclude_v4_display" readonly value="${safeValue(excludeV4Array.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', excludeV4Array, 'v4cidr')">`),
-        renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" id="f_firewall_exclude_v6_display" readonly value="${safeValue(excludeV6Array.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', excludeV6Array, 'v6cidr')">`)
-      ].join(''));
-
-      const fwSec3 = renderSection(t('secRedirectDns'), [
-        renderSettingRow(t('secRedirectDns'), 'firewall.redirect_dns.enabled', `<input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secDnsPort'), 'firewall.redirect_dns.to_port', `<input type="text" id="f_firewall_redirect_dns_port" value="${safeValue(data.firewall?.redirect_dns?.to_port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
-        renderSettingRow(t('secUsePolicyDns'), 'firewall.redirect_dns.use_policy', `<input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()">`)
-      ].join(''));
-
-      const fwSec4 = renderSection(t('secProxyRouter'), [
-        renderSettingRow(t('secProxyRouter'), 'firewall.proxy_router', `<input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()">`)
-      ].join(''));
-
-      const acc3 = renderAccordion(3, t('secFirewall'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`, fwSec1 + fwSec2 + fwSec3 + fwSec4);
-
-      // Accordion 4: Updates
-      const updSec1 = renderSection(t('secUpdates'), [
+    function renderUpdatesAccordion(data) {
+      const updateSection = renderSection(t('secUpdates'), [
         renderSettingRow(t('secUpdateSingbox'), 'update.singbox.enabled', `<input type="checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secBetaSingbox'), 'update.singbox.beta', `<input type="checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secUpdateSkeen'), 'update.skeen.enabled', `<input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secUpdateSkeenApi'), 'update.skeen.api', `<input type="checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()">`)
       ].join(''));
+      const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`;
+      return renderAccordion(4, t('secUpdates'), icon, updateSection);
+    }
 
-      const acc4 = renderAccordion(4, t('secUpdates'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`, updSec1);
+    function renderFormFields(data) {
+      const container = document.getElementById('formEditorContainer');
+      formState.arrays.networkCheck = Array.isArray(data.network?.check) ? [...data.network.check] : [];
+      formState.arrays.apiCors = Array.isArray(data.services?.api?.cors_origin) ? [...data.services.api.cors_origin] : [];
+      formState.arrays.fakeipClients = Array.isArray(data.firewall?.intercept?.fakeip?.clients) ? [...data.firewall.intercept.fakeip.clients] : [];
+      formState.arrays.excludePorts = Array.isArray(data.firewall?.exclude?.port) ? [...data.firewall.exclude.port] : [];
+      formState.arrays.excludeV4 = Array.isArray(data.firewall?.exclude?.ipv4_cidr) ? [...data.firewall.exclude.ipv4_cidr] : [];
+      formState.arrays.excludeV6 = Array.isArray(data.firewall?.exclude?.ipv6_cidr) ? [...data.firewall.exclude.ipv6_cidr] : [];
 
-      container.innerHTML = acc0 + acc1 + acc2 + acc3 + acc4;
+      container.innerHTML = [
+        renderGeneralAccordion(data),
+        renderSingboxAccordion(data),
+        renderServicesAccordion(data),
+        renderFirewallAccordion(data),
+        renderUpdatesAccordion(data)
+      ].join('');
 
-      if (activeAccordionIndex !== -1) {
+      if (formState.activeAccordionIndex !== -1) {
         setTimeout(() => {
           const activeItem = container.querySelector('.accordion-item.active');
           if (activeItem) {
@@ -3664,9 +3711,9 @@
        ========================================================================== */
     function openArrayModal(displayInputId, titleText, targetArrayRef, validationType = 'text') {
       document.getElementById('arrayModalTitle').textContent = titleText;
-      currentEditingArrayRef = targetArrayRef;
-      currentEditingDisplayId = displayInputId;
-      currentItemValidationType = validationType;
+      formState.arrayEditor.target = targetArrayRef;
+      formState.arrayEditor.displayInputId = displayInputId;
+      formState.arrayEditor.validationType = validationType;
 
       renderArrayModalItems();
       const input = document.getElementById('arrayModalNewItemInput');
@@ -3678,11 +3725,11 @@
     function renderArrayModalItems() {
       const listEl = document.getElementById('arrayModalItemsList');
       listEl.innerHTML = '';
-      if (!currentEditingArrayRef || currentEditingArrayRef.length === 0) {
+      if (!formState.arrayEditor.target || formState.arrayEditor.target.length === 0) {
         listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem; padding: 6px;">${t('emptyList')}</div>`;
         return;
       }
-      currentEditingArrayRef.forEach((item, idx) => {
+      formState.arrayEditor.target.forEach((item, idx) => {
         const row = document.createElement('div');
         row.className = 'array-item-row';
         const value = document.createElement('span');
@@ -3713,42 +3760,41 @@
       const val = input.value.trim();
       if (!val) return;
 
-      if (!validateArrayItemValue(val, currentItemValidationType)) {
+      if (!validateArrayItemValue(val, formState.arrayEditor.validationType)) {
         input.classList.add('invalid-input');
         return;
       }
       input.classList.remove('invalid-input');
 
-      currentEditingArrayRef.push(val);
+      formState.arrayEditor.target.push(val);
       input.value = '';
       renderArrayModalItems();
     }
 
     function removeArrayModalItem(idx) {
-      currentEditingArrayRef.splice(idx, 1);
+      formState.arrayEditor.target.splice(idx, 1);
       renderArrayModalItems();
     }
 
     function saveArrayModal() {
-      if (currentEditingDisplayId) {
-        document.getElementById(currentEditingDisplayId).value = currentEditingArrayRef.join(', ');
+      if (formState.arrayEditor.displayInputId) {
+        document.getElementById(formState.arrayEditor.displayInputId).value = formState.arrayEditor.target.join(', ');
       }
       setModalState('arrayEditModal', false);
-      currentEditingArrayRef = null;
-      currentEditingDisplayId = null;
+      formState.arrayEditor.target = null;
+      formState.arrayEditor.displayInputId = null;
       syncFormToText();
     }
 
     function closeArrayModal() {
       setModalState('arrayEditModal', false);
-      currentEditingArrayRef = null;
-      currentEditingDisplayId = null;
+      formState.arrayEditor.target = null;
+      formState.arrayEditor.displayInputId = null;
     }
 
     function collectFormData() {
-      if (currentEditorMode === 'text') {
-        try { return JSON.parse(document.getElementById('jsonEditor').value); }
-        catch (e) { return SKEEN_DEFAULT_SCHEMA; }
+      if (editorState.editorMode === 'text') {
+        return JSON.parse(document.getElementById('jsonEditor').value);
       }
 
       let result = JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA));
@@ -3762,13 +3808,13 @@
 
         result.network.ipv6 = document.getElementById('f_network_ipv6')?.checked ? 1 : 0;
         result.network.tuning = document.getElementById('f_network_tuning')?.checked ? 1 : 0;
-        result.network.check = [...networkCheckArray];
+        result.network.check = [...formState.arrays.networkCheck];
 
         if (!result.services) result.services = {};
         result.services.api = {
           port: parseInt(document.getElementById('f_services_api_port')?.value) || 5000,
           secret: (document.getElementById('f_services_api_secret')?.value || '').trim(),
-          cors_origin: [...apiCorsArray],
+          cors_origin: [...formState.arrays.apiCors],
           dashboard: document.getElementById('f_services_api_dashboard')?.checked ? 1 : 0,
           auto_start: document.getElementById('f_services_api_autostart')?.checked ? 1 : 0
         };
@@ -3795,11 +3841,11 @@
 
         result.firewall.intercept.dns = document.getElementById('f_firewall_intercept_dns')?.checked ? 1 : 0;
         result.firewall.intercept.fakeip.enabled = document.getElementById('f_firewall_fakeip_enabled')?.checked ? 1 : 0;
-        result.firewall.intercept.fakeip.clients = [...fakeipClientsArray];
+        result.firewall.intercept.fakeip.clients = [...formState.arrays.fakeipClients];
 
-        result.firewall.exclude.port = excludePortsArray.map(p => isNaN(p) ? p : Number(p));
-        result.firewall.exclude.ipv4_cidr = [...excludeV4Array];
-        result.firewall.exclude.ipv6_cidr = [...excludeV6Array];
+        result.firewall.exclude.port = formState.arrays.excludePorts.map(p => isNaN(p) ? p : Number(p));
+        result.firewall.exclude.ipv4_cidr = [...formState.arrays.excludeV4];
+        result.firewall.exclude.ipv6_cidr = [...formState.arrays.excludeV6];
 
         result.firewall.redirect_dns.enabled = document.getElementById('f_firewall_redirect_dns_enabled')?.checked ? 1 : 0;
         result.firewall.redirect_dns.to_port = (document.getElementById('f_firewall_redirect_dns_port')?.value || '').trim();
@@ -3812,13 +3858,14 @@
         result.update.skeen.api = document.getElementById('f_update_skeen_api')?.checked ? 1 : 0;
       } catch (err) {
         console.error('Error collecting form data:', err);
+        throw err;
       }
 
       return result;
     }
 
     function validateWholeForm() {
-      if (currentEditorMode !== 'form') return true;
+      if (editorState.editorMode !== 'form') return true;
       const invalidFields = document.querySelectorAll('#formEditorContainer .invalid-input');
       if (invalidFields.length > 0) {
         showAlertModal(t('alertInvalidForm'));
@@ -3829,7 +3876,7 @@
 
     function showHelp(key) {
       const item = helpTexts[key];
-      const text = item ? (item[currentLang] || item['en'] || item['ru']) : 'No info :-(';
+      const text = item ? (item[languageState.currentLang] || item['en'] || item['ru']) : 'No info :-(';
       document.getElementById('tooltipModalText').textContent = text;
       setModalState('tooltipModal', true);
     }
@@ -3840,14 +3887,14 @@
 
     function hasUnsavedChanges() {
       const editor = document.getElementById('jsonEditor');
-      if (!originalFileContent) return false;
+      if (!editorState.originalFileContent) return false;
 
       const fileSelect = document.getElementById('configFileSelect');
       const fileKey = fileSelect ? fileSelect.value : '';
       const fileName = fileSelect && fileSelect.options[fileSelect.selectedIndex] ? fileSelect.options[fileSelect.selectedIndex].text : '';
       const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
 
-      if (isTextFile) return editor && editor.value.trim() !== originalFileContent.trim();
+      if (isTextFile) return editor && editor.value.trim() !== editorState.originalFileContent.trim();
       let editorText = editor?.value || '';
       try {
         editorText = expandFoldedJson(editorText);
@@ -3855,19 +3902,19 @@
         return true;
       }
 
-      if (fileKey === 'skeen' && baselineParsedJson) {
+      if (fileKey === 'skeen' && editorState.baselineParsedJson) {
         try {
-          const currentObj = currentEditorMode === 'form' ? collectFormData() : JSON.parse(editorText);
-          return JSON.stringify(currentObj) !== JSON.stringify(baselineParsedJson);
-        } catch (e) {
-          return editorText.trim() !== originalFileContent.trim();
+          const currentObj = editorState.editorMode === 'form' ? collectFormData() : JSON.parse(editorText);
+          return JSON.stringify(currentObj) !== JSON.stringify(editorState.baselineParsedJson);
+        } catch {
+          return true;
         }
       }
 
       try {
-        return JSON.stringify(JSON.parse(editorText)) !== JSON.stringify(JSON.parse(originalFileContent));
+        return JSON.stringify(JSON.parse(editorText)) !== JSON.stringify(JSON.parse(editorState.originalFileContent));
       } catch (e) {
-        return editorText.trim() !== originalFileContent.trim();
+        return editorText.trim() !== editorState.originalFileContent.trim();
       }
     }
 
@@ -3934,7 +3981,7 @@
 
     function changeLanguage(langSetting) {
       localStorage.setItem('keen_lang_setting', langSetting);
-      currentLang = resolveLanguage(langSetting);
+      languageState.currentLang = resolveLanguage(langSetting);
       document.getElementById('langSelect').value = langSetting;
       applyLanguage();
       updateLineNumbers();
@@ -3942,12 +3989,18 @@
       renderConnList();
       renderDynamicActions();
       renderExtraParamOptions();
-      if (currentEditorMode === 'form') renderFormFields(collectFormData());
+      if (editorState.editorMode === 'form') {
+        try {
+          renderFormFields(collectFormData());
+        } catch (error) {
+          showStatus('jsonStatus', `${t('errorPrefix')}${error.message}`, true);
+        }
+      }
     }
 
     function t(key) {
       if (!translations[key]) return key;
-      return translations[key][currentLang] || translations[key]['en'] || key;
+      return translations[key][languageState.currentLang] || translations[key]['en'] || key;
     }
 
     function applyLanguage() {
@@ -3981,7 +4034,10 @@
       togglePreloader(true);
 
       try {
-        const res = await fetch(`${baseUrl}/api/files-list`, { method: 'GET', headers: getHeaders() });
+        const res = await fetchWithTimeout(`${baseUrl}/api/files-list`, {
+          method: 'GET',
+          headers: getHeaders()
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let files = await res.json();
 
@@ -4006,7 +4062,7 @@
         }));
 
         select.value = Array.from(select.options).some(opt => opt.value === prevSelected) ? prevSelected : select.options[0].value;
-        currentSelectedFile = select.value;
+        editorState.currentSelectedFile = select.value;
 
         if (reloadConfig) await loadConfigFile();
         else togglePreloader(false);
@@ -4023,22 +4079,22 @@
 
       if (hasUnsavedChanges()) {
         showConfirmModal(t('confirmUnsaved'), () => {
-          originalFileContent = '';
-          currentSelectedFile = newFile;
+          editorState.originalFileContent = '';
+          editorState.currentSelectedFile = newFile;
           loadConfigFile();
         }, () => {
-          select.value = currentSelectedFile;
+          select.value = editorState.currentSelectedFile;
         });
         return;
       }
-      currentSelectedFile = newFile;
+      editorState.currentSelectedFile = newFile;
       loadConfigFile();
     }
 
     async function loadConfigFile() {
       if (hasUnsavedChanges()) {
         showConfirmModal(t('confirmUnsaved'), () => {
-          originalFileContent = '';
+          editorState.originalFileContent = '';
           executeLoadConfigFile();
         });
         return;
@@ -4059,7 +4115,10 @@
       togglePreloader(true);
 
       try {
-        const res = await fetch(`${baseUrl}/api/file?name=${encodeURIComponent(fileKey)}`, { method: 'GET', headers: getHeaders() });
+        const res = await fetchWithTimeout(`${baseUrl}/api/file?name=${encodeURIComponent(fileKey)}`, {
+          method: 'GET',
+          headers: getHeaders()
+        });
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: res.statusText }));
           throw new Error(err.error || `Error ${res.status}`);
@@ -4069,25 +4128,25 @@
 
         editorFolds.clear();
         editor.value = typeof data.content === 'string' ? data.content : JSON.stringify(data.content, null, 2);
-        originalFileContent = editor.value;
-        cachedLines = editor.value.split('\n');
+        editorState.originalFileContent = editor.value;
+        editorState.cachedLines = editor.value.split('\n');
         updateLineNumbers();
         updateEditorVisuals();
 
         if (fileKey === 'skeen') {
           try {
-            baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), JSON.parse(editor.value || '{}'));
+            editorState.baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), JSON.parse(editor.value || '{}'));
           } catch (e) {
-            baselineParsedJson = null;
+            editorState.baselineParsedJson = null;
           }
           document.getElementById('editorModeBar').style.display = 'flex';
-          switchEditorMode(currentEditorMode);
+          switchEditorMode(editorState.editorMode);
         } else {
-          baselineParsedJson = null;
+          editorState.baselineParsedJson = null;
           document.getElementById('editorModeBar').style.display = 'none';
           document.getElementById('formEditorContainer').style.display = 'none';
           document.getElementById('editorWrapper').style.display = 'flex';
-          currentEditorMode = 'text';
+          editorState.editorMode = 'text';
           document.getElementById('btnModeText').classList.add('active');
           document.getElementById('btnModeForm').classList.remove('active');
           document.getElementById('formatBtn').style.display = fileKey === 'pure_cidr' ? 'none' : '';
@@ -4107,7 +4166,7 @@
         return;
       }
 
-      if (currentEditorMode === 'form' && !validateWholeForm()) return;
+      if (editorState.editorMode === 'form' && !validateWholeForm()) return;
 
       const editor = document.getElementById('jsonEditor');
       const fileSelect = document.getElementById('configFileSelect');
@@ -4126,8 +4185,13 @@
       }
 
       let contentToSend;
-      if (fileKey === 'skeen' && currentEditorMode === 'form') {
-        contentToSend = collectFormData();
+      if (fileKey === 'skeen' && editorState.editorMode === 'form') {
+        try {
+          contentToSend = collectFormData();
+        } catch (error) {
+          showStatus('jsonStatus', `${t('errorPrefix')}${error.message}`, true);
+          return;
+        }
       } else {
         try {
           contentToSend = isTextFile ? editorText : JSON.parse(editorText);
@@ -4141,7 +4205,7 @@
       if (!baseUrl) return;
 
       try {
-        const res = await fetch(`${baseUrl}/api/file`, {
+        const res = await fetchWithTimeout(`${baseUrl}/api/file`, {
           method: 'POST',
           headers: getHeaders(),
           body: JSON.stringify({ name: fileKey, content: contentToSend })
@@ -4151,13 +4215,13 @@
           throw new Error(err.error || `Error ${res.status}`);
         }
 
-        if (fileKey === 'skeen' && currentEditorMode === 'form') {
+        if (fileKey === 'skeen' && editorState.editorMode === 'form') {
           editor.value = JSON.stringify(contentToSend, null, 2);
         }
-        originalFileContent = editorFolds.size > 0 ? editorText : editor.value;
+        editorState.originalFileContent = editorFolds.size > 0 ? editorText : editor.value;
 
         if (fileKey === 'skeen') {
-          baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), contentToSend);
+          editorState.baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), contentToSend);
         }
 
         showStatus('jsonStatus', t('statusSaved'));
@@ -4165,7 +4229,7 @@
         if (fileKey === 'skeen') {
           await loadFileList(false);
           fileSelect.value = 'skeen';
-          currentSelectedFile = 'skeen';
+          editorState.currentSelectedFile = 'skeen';
         }
       } catch (e) {
         showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
@@ -4185,7 +4249,7 @@
         const expandedText = expandFoldedJson(editor.value);
         editor.value = JSON.stringify(JSON.parse(expandedText), null, 2);
         editorFolds.clear();
-        cachedLines = editor.value.split('\n');
+        editorState.cachedLines = editor.value.split('\n');
         updateLineNumbers();
         updateEditorVisuals();
         showStatus('jsonStatus', t('statusFormatted'));
@@ -4220,25 +4284,26 @@
       if (!baseUrl) return;
 
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const res = await fetch(`${baseUrl}/api/status`, { method: 'GET', headers: getHeaders(), signal: controller.signal });
-        clearTimeout(timeoutId);
+        const res = await fetchWithTimeout(
+          `${baseUrl}/api/status`,
+          { method: 'GET', headers: getHeaders() },
+          6000
+        );
 
         if (res.ok) {
           const data = await res.json();
-          isServiceRunning = data.running;
-          isServerConnected = true;
+          serviceState.isServiceRunning = data.running;
+          serviceState.isServerConnected = true;
           document.getElementById('sysTelemetryBtn').disabled = false;
           updateStatusBadge(data, false);
           renderDynamicActions();
         } else {
-          isServerConnected = false;
+          serviceState.isServerConnected = false;
           document.getElementById('sysTelemetryBtn').disabled = true;
           updateStatusBadge(null, true);
         }
       } catch (e) {
-        isServerConnected = false;
+        serviceState.isServerConnected = false;
         document.getElementById('sysTelemetryBtn').disabled = true;
         updateStatusBadge(null, true);
       }
@@ -4276,7 +4341,7 @@
 
     function renderDynamicActions() {
       const container = document.getElementById('dynamicActions');
-      container.innerHTML = isServiceRunning ? `
+      container.innerHTML = serviceState.isServiceRunning ? `
         <button class="danger" onclick="executeCommandParam('stop')">
           <svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
           <span>${t('btnStop')}</span>
@@ -4398,9 +4463,9 @@
       const baseUrl = getBaseUrl();
       if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
 
-      if (pollingTimer) {
-        clearInterval(pollingTimer);
-        pollingTimer = null;
+      if (serviceState.pollingTimer) {
+        clearInterval(serviceState.pollingTimer);
+        serviceState.pollingTimer = null;
       }
 
       const outputEl = document.getElementById('cmdOutput');
@@ -4410,17 +4475,11 @@
       disabledElements.forEach(el => el.disabled = true);
 
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-        const res = await fetch(`${baseUrl}/api/exec`, {
+        const res = await fetchWithTimeout(`${baseUrl}/api/exec`, {
           method: 'POST',
           headers: getHeaders(),
-          body: JSON.stringify({ param }),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
+          body: JSON.stringify({ param })
+        }, 25000);
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: res.statusText }));
           throw new Error(err.error || `Error ${res.status}`);
@@ -4578,7 +4637,7 @@
           const closeSuffix = closeLine.slice(i - closeLineStart + 1).trim();
 
           if (openLineStart !== closeLineStart && (!openSuffix || openSuffix === ',') &&
-              !closePrefix && (!closeSuffix || closeSuffix === ',')) {
+            !closePrefix && (!closeSuffix || closeSuffix === ',')) {
             ranges.push({
               openPosition: open.position,
               closePosition: i,
@@ -4613,8 +4672,8 @@
       applyJsonFold(editor, block);
 
       refreshJsonEditorAfterFold(editor);
-      const cursorLine = Math.min(lineIndex, cachedLines.length - 1);
-      const cursorPosition = cachedLines.slice(0, cursorLine + 1).join('\n').length;
+      const cursorLine = Math.min(lineIndex, editorState.cachedLines.length - 1);
+      const cursorPosition = editorState.cachedLines.slice(0, cursorLine + 1).join('\n').length;
       editor.focus();
       editor.setSelectionRange(cursorPosition, cursorPosition);
       updateActiveEditorLine();
@@ -4643,7 +4702,7 @@
     }
 
     function refreshJsonEditorAfterFold(editor) {
-      cachedLines = editor.value.split('\n');
+      editorState.cachedLines = editor.value.split('\n');
       updateLineNumbers();
       updateEditorVisuals();
       syncScroll();
@@ -4678,8 +4737,8 @@
         if (selectionStart <= tokenEnd && selectionEnd >= tokenPosition) {
           event.preventDefault();
           if (event.inputType === 'deleteContentBackward' ||
-              event.inputType === 'deleteContentForward' ||
-              event.inputType === 'deleteByCut') {
+            event.inputType === 'deleteContentForward' ||
+            event.inputType === 'deleteByCut') {
             deleteFoldedJsonBlock(editor, token);
           } else {
             showStatus('jsonStatus', t('foldEditHint'), true);
@@ -4715,7 +4774,7 @@
 
       editor.value = nextText;
       editorFolds.delete(token);
-      cachedLines = editor.value.split('\n');
+      editorState.cachedLines = editor.value.split('\n');
       updateLineNumbers();
       updateEditorVisuals();
       editor.focus();
@@ -4759,7 +4818,7 @@
 
     function updateLineNumbers() {
       const lineNumbers = document.getElementById('lineNumbers');
-      const totalLines = cachedLines.length;
+      const totalLines = editorState.cachedLines.length;
       const fileSelect = document.getElementById('configFileSelect');
       const fileName = fileSelect?.options[fileSelect.selectedIndex]?.text || '';
       const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
@@ -4788,7 +4847,7 @@
       }
 
       if (lineNumbers.dataset.foldStructure === foldStructure &&
-          lineNumbers.children.length === totalLines) {
+        lineNumbers.children.length === totalLines) {
         let sourceLineNumber = 1;
         for (let i = 0; i < totalLines; i++) {
           const row = lineNumbers.children[i];
@@ -4858,7 +4917,7 @@
     let highlightFrame = null;
     function handleEditorInput(updateImmediately = false) {
       const textarea = document.getElementById('jsonEditor');
-      cachedLines = textarea.value.split('\n');
+      editorState.cachedLines = textarea.value.split('\n');
       updateLineNumbers();
       updateActiveEditorLine();
       if (updateImmediately) {
