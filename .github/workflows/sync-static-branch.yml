@@ -52,14 +52,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Fetching static branch"
-          if git fetch origin static; then
-            echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Static branch fetch finished"
-            git checkout -f static
-          else
-            echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Static branch fetch failed; creating orphan branch"
-            git checkout --orphan static
-            git rm -rf .
+          if ! env GIT_TERMINAL_PROMPT=0 git fetch --no-tags --progress --depth=1 origin \
+            +refs/heads/static:refs/remotes/origin/static; then
+            echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Failed to fetch static branch; aborting to avoid replacing it"
+            exit 1
           fi
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Static branch fetch finished"
+          git checkout -B static refs/remotes/origin/static
 
           mv skeen_min skeen
           mv skeen_ru_min skeen_ru
