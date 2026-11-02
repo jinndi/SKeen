@@ -2207,6 +2207,35 @@
       statusNoConnection: { ru: "API-сервер остановлен / Нет связи", en: "API server stopped / No connection" },
       statusChecking: { ru: "Проверка состояния...", en: "Checking status..." },
       statusMode: { ru: "Режим", en: "Mode" },
+      statusSwitchedTo: { ru: "Переключено на: ", en: "Switched to: " },
+      statusFormatNotApplicable: { ru: "Форматирование неприменимо к текстовым спискам", en: "Format not applicable for text lists" },
+      errorPrefix: { ru: "Ошибка: ", en: "Error: " },
+      jsonErrorPrefix: { ru: "Ошибка JSON: ", en: "JSON Error: " },
+      requestTimeout: { ru: "Превышено время ожидания запроса (лимит 25 секунд)", en: "Request timeout (25s limit exceeded)" },
+      alertCorruptConnections: { ru: "Сохраненные подключения повреждены или имеют неверный формат. Они не загружены; добавьте их заново.", en: "Saved connections are corrupted or have an invalid format. They were not loaded; please add them again." },
+      alertInvalidJson: { ru: "Ошибка в формате JSON. Исправьте синтаксис в текстовом режиме.", en: "JSON syntax error. Fix it in text mode." },
+      alertInvalidForm: { ru: "Исправьте подсвеченные ошибки в форме перед сохранением!", en: "Fix highlighted form errors before saving!" },
+      titleRestore: { ru: "Восстановить", en: "Restore" },
+      titleFullscreen: { ru: "На весь экран", en: "Fullscreen" },
+      cmdReload: { ru: "reload - Перезагрузка sing-box", en: "reload - Reload sing-box" },
+      cmdSync: { ru: "sync - Синхронизировать конфиг", en: "sync - Synchronize config" },
+      cmdStatus: { ru: "status - Показать статус", en: "status - Show status" },
+      cmdKill: { ru: "kill - Принудительная остановка", en: "kill - Force stop" },
+      cmdVersion: { ru: "version - Показать версию", en: "version - Show version" },
+      cmdIface: { ru: "iface - Таблица сетевых интерфейсов", en: "iface - Interface table" },
+      cmdConnstat: { ru: "connstat - Диагностика соединений", en: "connstat - Diagnostics" },
+      cmdTest: { ru: "test - Тестировать правила фаервола", en: "test - Test firewall rules" },
+      cmdDeps: { ru: "deps - Проверить зависимости", en: "deps - Check dependencies" },
+      cmdCheck: { ru: "check - Проверить конфигурацию", en: "check - Check config" },
+      cmdFormat: { ru: "format - Отформатировать конфиг", en: "format - Format configuration" },
+      cmdBackup: { ru: "backup - Создать архив /opt/etc/skeen", en: "backup - Create archive" },
+      cmdBackups: { ru: "backups - Список архивов в /opt", en: "backups - List archives" },
+      cmdRestore: { ru: "restore - Восстановить из архива", en: "restore - Restore backup" },
+      cmdClean: { ru: "clean - Очистить кэш sing-box", en: "clean - Clear sing-box cache" },
+      cmdHeaders: { ru: "headers - Сгенерировать заголовки", en: "headers - Generate headers" },
+      cmdTun: { ru: "OpkgTun (KeeneticOS v5+)", en: "OpkgTun (KeeneticOS v5+)" },
+      cmdApiReload: { ru: "areload - Перезагрузка API", en: "areload - Reload API" },
+      cmdApiUpdate: { ru: "aupdate - Обновление API", en: "aupdate - Update API" },
       btnStart: { ru: "Запустить SKeen", en: "Start SKeen" },
       btnStop: { ru: "Остановить", en: "Stop" },
       btnRestart: { ru: "Перезапустить", en: "Restart" },
@@ -2513,7 +2542,8 @@
     let currentAlertCallback = null;
     let pollingTimer = null;
     let isServiceRunning = false;
-    let currentEditorMode = localStorage.getItem('keen_editor_mode') || 'form';
+    const storedEditorMode = localStorage.getItem('keen_editor_mode');
+    let currentEditorMode = storedEditorMode === 'text' ? 'text' : 'form';
     let activeAccordionIndex = -1;
 
     let currentEditingArrayRef = null;
@@ -2533,6 +2563,38 @@
     // Telemetry Polling State
     let telemetryPollingTimer = null;
     let isServerConnected = false;
+    let connectionStorageWarning = false;
+
+    function loadStoredConnections() {
+      const serialized = localStorage.getItem('keen_connections');
+      if (serialized === null) return [];
+
+      let storedConnections;
+      try {
+        storedConnections = JSON.parse(serialized);
+      } catch (error) {
+        connectionStorageWarning = true;
+        console.error('Saved connections contain invalid JSON and were not loaded.', error);
+        return [];
+      }
+
+      if (!Array.isArray(storedConnections) || storedConnections.some(conn =>
+        !conn || typeof conn !== 'object' || Array.isArray(conn) ||
+        typeof conn.url !== 'string' || !conn.url.trim() ||
+        (conn.name !== undefined && typeof conn.name !== 'string') ||
+        (conn.apiKey !== undefined && typeof conn.apiKey !== 'string')
+      )) {
+        connectionStorageWarning = true;
+        console.error('Saved connections have an invalid format and were not loaded.');
+        return [];
+      }
+
+      return storedConnections.map(conn => ({
+        name: conn.name || conn.url,
+        url: conn.url,
+        apiKey: conn.apiKey || ''
+      }));
+    }
 
     /* ==========================================================================
        Validators
@@ -2587,8 +2649,9 @@
     /* ==========================================================================
        Initialization & App Lifecycle
        ========================================================================== */
-    let connections = JSON.parse(localStorage.getItem('keen_connections') || '[]');
-    let activeIndex = parseInt(localStorage.getItem('keen_active_index') || '0');
+    let connections = loadStoredConnections();
+    let activeIndex = Number.parseInt(localStorage.getItem('keen_active_index') || '0', 10);
+    if (!Number.isInteger(activeIndex) || activeIndex < 0) activeIndex = 0;
 
     window.addEventListener('DOMContentLoaded', async () => {
       document.body.classList.add('preload');
@@ -2599,16 +2662,23 @@
         togglePreloader(true);
       }
 
-      applyTheme(localStorage.getItem('keen_theme_mode') || 'auto');
-      currentLang = resolveLanguage(localStorage.getItem('keen_lang_setting') || 'auto');
-      document.getElementById('langSelect').value = localStorage.getItem('keen_lang_setting') || 'auto';
+      const savedTheme = localStorage.getItem('keen_theme_mode') || 'auto';
+      applyTheme(['auto', 'light', 'dark'].includes(savedTheme) ? savedTheme : 'auto');
+      const savedLanguage = localStorage.getItem('keen_lang_setting') || 'auto';
+      const languageSetting = ['auto', 'ru', 'en'].includes(savedLanguage) ? savedLanguage : 'auto';
+      currentLang = resolveLanguage(languageSetting);
+      document.getElementById('langSelect').value = languageSetting;
 
       applyLanguage();
       initConnections();
+      if (connectionStorageWarning) {
+        showAlertModal(t('alertCorruptConnections'));
+      }
       renderExtraParamOptions();
 
-      const savedTab = localStorage.getItem('keen_active_tab') || 'skeenTab';
-      const tabBtn = document.querySelector(`.tab-btn[onclick*="${savedTab}"]`);
+      const storedTab = localStorage.getItem('keen_active_tab');
+      const savedTab = storedTab === 'configTab' ? 'configTab' : 'skeenTab';
+      const tabBtn = document.querySelectorAll('.tab-btn')[savedTab === 'configTab' ? 1 : 0];
       if (tabBtn) switchTab(savedTab, tabBtn, false);
 
       await fetchServiceStatus();
@@ -2693,7 +2763,7 @@
     function executeChangeConnection(indexStr) {
       activeIndex = parseInt(indexStr);
       localStorage.setItem('keen_active_index', activeIndex);
-      showStatus('jsonStatus', (currentLang === 'ru' ? 'Переключено на: ' : 'Switched to: ') + getActiveConnection().name);
+      showStatus('jsonStatus', t('statusSwitchedTo') + getActiveConnection().name);
       fetchServiceStatus();
       if (document.getElementById('configTab').classList.contains('active')) loadFileList();
     }
@@ -2767,16 +2837,30 @@
       connections.forEach((conn, index) => {
         const item = document.createElement('div');
         item.className = 'conn-item';
-        item.innerHTML = `
-          <div>
-            <h3 class="modal-h3-title">${conn.name || 'Router'}</h3>
-            <label>${conn.url}</label>
-          </div>
-          <div class="flex-row-center-6 flex-shrink-0">
-              <button class="icon-btn-sm secondary" onclick="editConnection(${index})" title="${t('btnEdit')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
-              <button class="icon-btn-sm danger" onclick="deleteConnection(${index})" title="${t('btnDelete')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
-          </div>
-        `;
+        const details = document.createElement('div');
+        const name = document.createElement('h3');
+        name.className = 'modal-h3-title';
+        name.textContent = conn.name || 'Router';
+        const url = document.createElement('label');
+        url.textContent = conn.url;
+        details.append(name, url);
+
+        const actions = document.createElement('div');
+        actions.className = 'flex-row-center-6 flex-shrink-0';
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.className = 'icon-btn-sm secondary';
+        editButton.title = t('btnEdit');
+        editButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+        editButton.addEventListener('click', () => editConnection(index));
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'icon-btn-sm danger';
+        deleteButton.title = t('btnDelete');
+        deleteButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+        deleteButton.addEventListener('click', () => deleteConnection(index));
+        actions.append(editButton, deleteButton);
+        item.append(details, actions);
         listEl.appendChild(item);
       });
     }
@@ -3111,7 +3195,7 @@
           data = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), data);
           renderFormFields(data);
         } catch (e) {
-          showAlertModal(currentLang === 'ru' ? 'Ошибка в формате JSON. Исправьте синтаксис в текстовом режиме.' : 'JSON syntax error. Fix it in text mode.');
+          showAlertModal(t('alertInvalidJson'));
           switchEditorMode('text');
           return;
         }
@@ -3178,6 +3262,7 @@
 
     function renderFormFields(data) {
       const container = document.getElementById('formEditorContainer');
+      const safeValue = value => escapeHtml(String(value ?? ''));
 
       networkCheckArray = Array.isArray(data.network?.check) ? [...data.network.check] : [];
       apiCorsArray = Array.isArray(data.services?.api?.cors_origin) ? [...data.services.api.cors_origin] : [];
@@ -3189,18 +3274,18 @@
       // Accordion 0: General
       const genSec1 = renderSection(t('secAutoStart'), [
         renderSettingRow(t('enabledLbl'), 'auto_start.enabled', `<input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secDelay'), 'auto_start.delay', `<input type="number" id="f_auto_start_delay" value="${data.auto_start?.delay ?? 0}" oninput="validateField(this, 'port'); syncFormToText()">`)
+        renderSettingRow(t('secDelay'), 'auto_start.delay', `<input type="number" id="f_auto_start_delay" value="${safeValue(data.auto_start?.delay ?? 0)}" oninput="validateField(this, 'port'); syncFormToText()">`)
       ].join(''));
 
       const genSec2 = renderSection(t('secPolicy'), [
         renderSettingRow(t('enabledLbl'), 'policy.enabled', `<input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secSegment'), 'policy.segment', `<input type="text" id="f_policy_segment" value="${data.policy?.segment ?? ''}" oninput="validateField(this, 'segment'); syncFormToText()">`)
+        renderSettingRow(t('secSegment'), 'policy.segment', `<input type="text" id="f_policy_segment" value="${safeValue(data.policy?.segment)}" oninput="validateField(this, 'segment'); syncFormToText()">`)
       ].join(''));
 
       const genSec3 = renderSection(t('secNetwork'), [
         renderSettingRow(t('secIpv6'), 'network.ipv6', `<input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secTuning'), 'network.tuning', `<input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secPingCheck'), 'network.check', `<input type="text" id="f_network_check_display" readonly value="${networkCheckArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_network_check_display', '${t('secPingCheck')}', networkCheckArray, 'host')">`)
+        renderSettingRow(t('secPingCheck'), 'network.check', `<input type="text" id="f_network_check_display" readonly value="${safeValue(networkCheckArray.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_network_check_display', '${t('secPingCheck')}', networkCheckArray, 'host')">`)
       ].join(''));
 
       const acc0 = renderAccordion(0, t('secGeneral'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`, genSec1 + genSec2 + genSec3);
@@ -3208,38 +3293,38 @@
       // Accordion 1: Sing-box
       const sbSec1 = renderSection(t('secSingbox'), [
         renderSettingRow(t('secUseDir'), 'singbox.config.use_dir', `<input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secConfigUrl'), 'singbox.config.url', `<input type="text" id="f_singbox_config_url" value="${data.singbox?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
+        renderSettingRow(t('secConfigUrl'), 'singbox.config.url', `<input type="text" id="f_singbox_config_url" value="${safeValue(data.singbox?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
         renderSettingRow(t('secSplit'), 'singbox.config.split', `<input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secApiUrl'), 'singbox.api.url', `<input type="text" id="f_singbox_api_url" value="${data.singbox?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
-        renderSettingRow(t('secApiSecret'), 'singbox.api.secret', `<input type="text" id="f_singbox_api_secret" value="${data.singbox?.api?.secret ?? ''}" oninput="syncFormToText()">`)
+        renderSettingRow(t('secApiUrl'), 'singbox.api.url', `<input type="text" id="f_singbox_api_url" value="${safeValue(data.singbox?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+        renderSettingRow(t('secApiSecret'), 'singbox.api.secret', `<input type="text" id="f_singbox_api_secret" value="${safeValue(data.singbox?.api?.secret)}" oninput="syncFormToText()">`)
       ].join(''));
 
       const sbSec2 = renderSection(t('secExtSingbox'), [
         renderSettingRow(t('enabledLbl'), 'singbox.external.enabled', `<input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" id="f_singbox_ext_path" value="${data.singbox?.external?.path ?? ''}" oninput="syncFormToText()">`),
+        renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" id="f_singbox_ext_path" value="${safeValue(data.singbox?.external?.path)}" oninput="syncFormToText()">`),
         renderSettingRow(t('secUseDir'), 'singbox.external.config.use_dir', `<input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" id="f_singbox_ext_cfg_url" value="${data.singbox?.external?.config?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
+        renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" id="f_singbox_ext_cfg_url" value="${safeValue(data.singbox?.external?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
         renderSettingRow(t('secSplit'), 'singbox.external.config.split', `<input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secApiUrl'), 'singbox.external.api.url', `<input type="text" id="f_singbox_ext_api_url" value="${data.singbox?.external?.api?.url ?? ''}" oninput="validateField(this, 'url'); syncFormToText()">`),
-        renderSettingRow(t('secApiSecret'), 'singbox.external.api.secret', `<input type="text" id="f_singbox_ext_api_secret" value="${data.singbox?.external?.api?.secret ?? ''}" oninput="syncFormToText()">`)
+        renderSettingRow(t('secApiUrl'), 'singbox.external.api.url', `<input type="text" id="f_singbox_ext_api_url" value="${safeValue(data.singbox?.external?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+        renderSettingRow(t('secApiSecret'), 'singbox.external.api.secret', `<input type="text" id="f_singbox_ext_api_secret" value="${safeValue(data.singbox?.external?.api?.secret)}" oninput="syncFormToText()">`)
       ].join(''));
 
       const acc1 = renderAccordion(1, t('secSingbox'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`, sbSec1 + sbSec2);
 
       // Accordion 2: Services
       const srvSec1 = renderSection('SKeen API', [
-        renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" id="f_services_api_port" value="${data.services?.api?.port ?? 5000}" oninput="validateField(this, 'port'); syncFormToText()">`),
-        renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" id="f_services_api_secret" value="${data.services?.api?.secret ?? ''}" oninput="syncFormToText()">`),
-        renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" id="f_services_api_cors_display" readonly value="${apiCorsArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', apiCorsArray, 'text')">`),
+        renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" id="f_services_api_port" value="${safeValue(data.services?.api?.port ?? 5000)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+        renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" id="f_services_api_secret" value="${safeValue(data.services?.api?.secret)}" oninput="syncFormToText()">`),
+        renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" id="f_services_api_cors_display" readonly value="${safeValue(apiCorsArray.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', apiCorsArray, 'text')">`),
         renderSettingRow(t('secDashboard'), 'services.api.dashboard', `<input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secAutoStart'), 'services.api.auto_start', `<input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()">`)
       ].join(''));
 
       const srvSec2 = renderSection(t('secLocalProxy'), [
         renderSettingRow(t('enabledLbl'), 'services.proxy.enabled', `<input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secProxyPort'), 'services.proxy.port', `<input type="text" id="f_services_proxy_port" value="${data.services?.proxy?.port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()">`),
-        renderSettingRow(t('secProxyUser'), 'services.proxy.user', `<input type="text" id="f_services_proxy_user" value="${data.services?.proxy?.user ?? ''}" oninput="syncFormToText()">`),
-        renderSettingRow(t('secProxyPass'), 'services.proxy.pass', `<input type="text" id="f_services_proxy_pass" value="${data.services?.proxy?.pass ?? ''}" oninput="syncFormToText()">`)
+        renderSettingRow(t('secProxyPort'), 'services.proxy.port', `<input type="text" id="f_services_proxy_port" value="${safeValue(data.services?.proxy?.port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+        renderSettingRow(t('secProxyUser'), 'services.proxy.user', `<input type="text" id="f_services_proxy_user" value="${safeValue(data.services?.proxy?.user)}" oninput="syncFormToText()">`),
+        renderSettingRow(t('secProxyPass'), 'services.proxy.pass', `<input type="text" id="f_services_proxy_pass" value="${safeValue(data.services?.proxy?.pass)}" oninput="syncFormToText()">`)
       ].join(''));
 
       const acc2 = renderAccordion(2, t('secServices'), `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>`, srvSec1 + srvSec2);
@@ -3248,18 +3333,18 @@
       const fwSec1 = renderSection(t('secIntercept'), [
         renderSettingRow(t('secInterceptDns'), 'firewall.intercept.dns', `<input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
         renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" id="f_firewall_fakeip_clients_display" readonly value="${fakeipClientsArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', fakeipClientsArray, 'ip')">`)
+        renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" id="f_firewall_fakeip_clients_display" readonly value="${safeValue(fakeipClientsArray.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', fakeipClientsArray, 'ip')">`)
       ].join(''));
 
       const fwSec2 = renderSection(t('secExclude'), [
-        renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" id="f_firewall_exclude_port_display" readonly value="${excludePortsArray.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', excludePortsArray, 'portRange')">`),
-        renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" id="f_firewall_exclude_v4_display" readonly value="${excludeV4Array.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', excludeV4Array, 'v4cidr')">`),
-        renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" id="f_firewall_exclude_v6_display" readonly value="${excludeV6Array.join(', ')}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', excludeV6Array, 'v6cidr')">`)
+        renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" id="f_firewall_exclude_port_display" readonly value="${safeValue(excludePortsArray.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', excludePortsArray, 'portRange')">`),
+        renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" id="f_firewall_exclude_v4_display" readonly value="${safeValue(excludeV4Array.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', excludeV4Array, 'v4cidr')">`),
+        renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" id="f_firewall_exclude_v6_display" readonly value="${safeValue(excludeV6Array.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', excludeV6Array, 'v6cidr')">`)
       ].join(''));
 
       const fwSec3 = renderSection(t('secRedirectDns'), [
         renderSettingRow(t('secRedirectDns'), 'firewall.redirect_dns.enabled', `<input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-        renderSettingRow(t('secDnsPort'), 'firewall.redirect_dns.to_port', `<input type="text" id="f_firewall_redirect_dns_port" value="${data.firewall?.redirect_dns?.to_port ?? ''}" oninput="validateField(this, 'port'); syncFormToText()">`),
+        renderSettingRow(t('secDnsPort'), 'firewall.redirect_dns.to_port', `<input type="text" id="f_firewall_redirect_dns_port" value="${safeValue(data.firewall?.redirect_dns?.to_port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
         renderSettingRow(t('secUsePolicyDns'), 'firewall.redirect_dns.use_policy', `<input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()">`)
       ].join(''));
 
@@ -3318,12 +3403,15 @@
       currentEditingArrayRef.forEach((item, idx) => {
         const row = document.createElement('div');
         row.className = 'array-item-row';
-        row.innerHTML = `
-          <span>${item}</span>
-          <button type="button" class="icon-btn-sm danger" onclick="removeArrayModalItem(${idx})" title="${t('btnDelete')}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          </button>
-        `;
+        const value = document.createElement('span');
+        value.textContent = String(item);
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'icon-btn-sm danger';
+        removeButton.title = t('btnDelete');
+        removeButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+        removeButton.addEventListener('click', () => removeArrayModalItem(idx));
+        row.append(value, removeButton);
         listEl.appendChild(row);
       });
     }
@@ -3451,7 +3539,7 @@
       if (currentEditorMode !== 'form') return true;
       const invalidFields = document.querySelectorAll('#formEditorContainer .invalid-input');
       if (invalidFields.length > 0) {
-        showAlertModal(currentLang === 'ru' ? 'Исправьте подсвеченные ошибки в форме перед сохранением!' : 'Fix highlighted form errors before saving!');
+        showAlertModal(t('alertInvalidForm'));
         return false;
       }
       return true;
@@ -3515,10 +3603,10 @@
 
       if (isFull) {
         svg.innerHTML = '<path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4v6m0 0h6m0-6l-7 7M10 4v6m0 0H4m0-6l7 7"></path>';
-        btn.title = currentLang === 'ru' ? "Свернуть" : "Restore";
+        btn.title = t('titleRestore');
       } else {
         svg.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
-        btn.title = currentLang === 'ru' ? "На весь экран" : "Fullscreen";
+        btn.title = t('titleFullscreen');
       }
 
       setTimeout(() => updateEditorVisuals(), 100);
@@ -3608,14 +3696,25 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let files = await res.json();
 
-        if (!Array.isArray(files) || files.length === 0) {
+        if (!Array.isArray(files)) {
+          throw new Error('Invalid file list response');
+        }
+        if (files.length === 0) {
           select.innerHTML = `<option value="">${t('noFilesAvailable')}</option>`;
           togglePreloader(false);
           return;
         }
 
+        if (files.some(file => !file || typeof file.id !== 'string' || typeof file.name !== 'string')) {
+          throw new Error('Invalid file list response');
+        }
         files.sort((a, b) => (a.id === 'skeen' ? -1 : b.id === 'skeen' ? 1 : a.id.localeCompare(b.id)));
-        select.innerHTML = files.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        select.replaceChildren(...files.map(file => {
+          const option = document.createElement('option');
+          option.value = file.id;
+          option.textContent = file.name;
+          return option;
+        }));
 
         select.value = Array.from(select.options).some(opt => opt.value === prevSelected) ? prevSelected : select.options[0].value;
         currentSelectedFile = select.value;
@@ -3624,7 +3723,7 @@
         else togglePreloader(false);
       } catch (e) {
         select.innerHTML = `<option value="">${t('errorLoadList')}</option>`;
-        showStatus('jsonStatus', `Error: ${e.message}`, true);
+        showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
         togglePreloader(false);
       }
     }
@@ -3671,7 +3770,7 @@
       togglePreloader(true);
 
       try {
-        const res = await fetch(`${baseUrl}/api/file?name=${fileKey}`, { method: 'GET', headers: getHeaders() });
+        const res = await fetch(`${baseUrl}/api/file?name=${encodeURIComponent(fileKey)}`, { method: 'GET', headers: getHeaders() });
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: res.statusText }));
           throw new Error(err.error || `Error ${res.status}`);
@@ -3706,7 +3805,7 @@
 
         showStatus('jsonStatus', t('statusLoaded'));
       } catch (e) {
-        showStatus('jsonStatus', `Error: ${e.message}`, true);
+        showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
       } finally {
         togglePreloader(false);
       }
@@ -3733,7 +3832,7 @@
         try {
           contentToSend = isTextFile ? editor.value : JSON.parse(editor.value);
         } catch (e) {
-          showStatus('jsonStatus', `JSON Error: ${e.message}`, true);
+          showStatus('jsonStatus', `${t('jsonErrorPrefix')}${e.message}`, true);
           return;
         }
       }
@@ -3771,7 +3870,7 @@
           currentSelectedFile = 'skeen';
         }
       } catch (e) {
-        showStatus('jsonStatus', `Error: ${e.message}`, true);
+        showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
       }
     }
 
@@ -3779,7 +3878,7 @@
       const fileSelect = document.getElementById('configFileSelect');
       const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
       if (fileName.endsWith('.list') || fileName.endsWith('.txt')) {
-        showStatus('jsonStatus', 'Format not applicable for text lists', true);
+        showStatus('jsonStatus', t('statusFormatNotApplicable'), true);
         return;
       }
       try {
@@ -3791,7 +3890,7 @@
         updateEditorVisuals();
         showStatus('jsonStatus', t('statusFormatted'));
       } catch (e) {
-        showStatus('jsonStatus', `Error: ${e.message}`, true);
+        showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
       }
     }
 
@@ -3903,25 +4002,25 @@
       const currentValue = select.value || 'reload';
 
       const options = [
-        { val: "reload", label: (currentLang === 'ru' ? "reload - Перезагрузка sing-box" : "reload - Reload sing-box") },
-        { val: "sync", label: (currentLang === 'ru' ? "sync - Синхронизировать конфиг" : "sync - Synchronize config") },
-        { val: "status", label: (currentLang === 'ru' ? "status - Показать статус" : "status - Show status") },
-        { val: "kill", label: (currentLang === 'ru' ? "kill - Принудительная остановка" : "kill - Force stop") },
-        { val: "version", label: (currentLang === 'ru' ? "version - Показать версию" : "version - Show version") },
-        { val: "iface", label: (currentLang === 'ru' ? "iface - Таблица сетевых интерфейсов" : "iface - Interface table") },
-        { val: "connstat", label: (currentLang === 'ru' ? "connstat - Диагностика соединений" : "connstat - Diagnostics") },
-        { val: "test", label: (currentLang === 'ru' ? "test - Тестировать правила фаервола" : "test - Test firewall rules") },
-        { val: "deps", label: (currentLang === 'ru' ? "deps - Проверить зависимости" : "deps - Check dependencies") },
-        { val: "check", label: (currentLang === 'ru' ? "check - Проверить конфигурацию" : "check - Check config") },
-        { val: "format", label: (currentLang === 'ru' ? "format - Отформатировать конфиг" : "format - Format configuration") },
-        { val: "backup", label: (currentLang === 'ru' ? "backup - Создать архив /opt/etc/skeen" : "backup - Create archive") },
-        { val: "backups", label: (currentLang === 'ru' ? "backups - Список архивов в /opt" : "backups - List archives") },
-        { val: "restore", label: (currentLang === 'ru' ? "restore - Восстановить из архива" : "restore - Restore backup") },
-        { val: "clean", label: (currentLang === 'ru' ? "clean - Очистить кэш sing-box" : "clean - Clear sing-box cache") },
-        { val: "headers", label: (currentLang === 'ru' ? "headers - Сгенерировать заголовки" : "headers - Generate headers") },
-        { val: "tun", label: "OpkgTun (KeeneticOS v5+)" },
-        { val: "areload", label: (currentLang === 'ru' ? "areload - Перезагрузка API" : "areload - Reload API") },
-        { val: "aupdate", label: (currentLang === 'ru' ? "aupdate - Обновление API" : "aupdate - Update API") },
+        { val: "reload", label: t('cmdReload') },
+        { val: "sync", label: t('cmdSync') },
+        { val: "status", label: t('cmdStatus') },
+        { val: "kill", label: t('cmdKill') },
+        { val: "version", label: t('cmdVersion') },
+        { val: "iface", label: t('cmdIface') },
+        { val: "connstat", label: t('cmdConnstat') },
+        { val: "test", label: t('cmdTest') },
+        { val: "deps", label: t('cmdDeps') },
+        { val: "check", label: t('cmdCheck') },
+        { val: "format", label: t('cmdFormat') },
+        { val: "backup", label: t('cmdBackup') },
+        { val: "backups", label: t('cmdBackups') },
+        { val: "restore", label: t('cmdRestore') },
+        { val: "clean", label: t('cmdClean') },
+        { val: "headers", label: t('cmdHeaders') },
+        { val: "tun", label: t('cmdTun') },
+        { val: "areload", label: t('cmdApiReload') },
+        { val: "aupdate", label: t('cmdApiUpdate') },
       ];
 
       select.innerHTML = options.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
@@ -4037,7 +4136,13 @@
           }, 3000);
         }
       } catch (e) {
-        outputEl.innerHTML = `<span class="ansi-red">Error: ${e.name === 'AbortError' ? 'Request timeout (25s limit exceeded)' : e.message}</span>`;
+        const errorOutput = document.createElement('span');
+        errorOutput.className = 'ansi-red';
+        const errorMessage = e instanceof Error
+          ? (e.name === 'AbortError' ? t('requestTimeout') : e.message)
+          : String(e);
+        errorOutput.textContent = `${t('errorPrefix')}${errorMessage}`;
+        outputEl.replaceChildren(errorOutput);
       } finally {
         if (param !== 'areload') {
           disabledElements.forEach(el => el.disabled = false);
@@ -4084,18 +4189,28 @@
        Editor Highlighting & Utilities
        ========================================================================== */
     function escapeHtml(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     }
 
     function highlightJson(text) {
       if (!text) return '';
-      return escapeHtml(text).replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+      const tokenPattern = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g;
+      let highlighted = '';
+      let lastIndex = 0;
+
+      for (const tokenMatch of text.matchAll(tokenPattern)) {
+        const match = tokenMatch[0];
+        highlighted += escapeHtml(text.slice(lastIndex, tokenMatch.index));
         let cls = 'token-number';
         if (/^"/.test(match)) cls = /:$/.test(match) ? 'token-key' : 'token-string';
         else if (/true|false/.test(match)) cls = 'token-boolean';
         else if (/null/.test(match)) cls = 'token-null';
-        return '<span class="' + cls + '">' + match + '</span>';
-      });
+        highlighted += `<span class="${cls}">${escapeHtml(match)}</span>`;
+        lastIndex = tokenMatch.index + match.length;
+      }
+
+      return highlighted + escapeHtml(text.slice(lastIndex));
     }
 
     function updateLineNumbers() {
