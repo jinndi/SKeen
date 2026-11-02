@@ -26,6 +26,10 @@
       --border-focus: rgba(137, 180, 250, 0.4);
       --code-bg: rgba(32, 32, 52, 0.6);
       --line-num-bg: rgba(10, 10, 14, 0.4);
+      --active-line-bg: rgba(137, 180, 250, 0.07);
+      --folded-line-bg: rgba(69, 92, 140, 0.2);
+      --fold-placeholder-fg: rgba(205, 214, 244, 0.4);
+      --editor-line-height: 18px;
       --modal-tab-bg: transparent;
     }
 
@@ -45,6 +49,9 @@
       --border-focus: rgba(25, 113, 194, 0.5);
       --code-bg: #ffffff;
       --line-num-bg: #f1f3f5;
+      --active-line-bg: rgba(25, 113, 194, 0.08);
+      --folded-line-bg: rgba(25, 71, 120, 0.14);
+      --fold-placeholder-fg: rgba(94, 98, 125, 0.55);
       --modal-tab-bg: transparent;
     }
 
@@ -284,6 +291,10 @@
       backdrop-filter: blur(6px);
     }
 
+    .fold-all-btn {
+      right: 44px;
+    }
+
     .fullscreen-icon-btn:hover {
       opacity: 1;
       border-color: var(--border-focus);
@@ -414,7 +425,7 @@
       -webkit-appearance: none;
       -moz-appearance: none;
       width: 18px;
-      height: 18px;
+      height: var(--editor-line-height);
       min-width: 18px;
       background-color: var(--code-bg);
       border: 1px solid var(--border-color);
@@ -1268,7 +1279,7 @@
     }
 
     .line-numbers {
-      padding: 10px 6px;
+      padding: 10px 4px;
       background-color: var(--line-num-bg);
       color: var(--text-muted);
       font-family: 'JetBrains Mono', monospace, ui-monospace;
@@ -1279,9 +1290,79 @@
       border-right: 1px solid var(--border-color);
       overflow: hidden;
       flex-shrink: 0;
-      min-width: 36px;
+      min-width: 48px;
       white-space: pre;
       box-sizing: border-box;
+    }
+
+    .line-number-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex: 0 0 var(--editor-line-height);
+      height: var(--editor-line-height);
+      line-height: var(--editor-line-height);
+    }
+
+    .line-number {
+      min-width: 2ch;
+    }
+
+    .fold-toggle {
+      width: 14px;
+      min-width: 14px;
+      height: 16px;
+      padding: 0;
+      margin-left: 2px;
+      border: 0;
+      border-radius: 3px;
+      background: transparent;
+      color: var(--text-muted);
+      font: inherit;
+      line-height: 1;
+    }
+
+    .fold-toggle:hover {
+      background: var(--card-hover);
+      color: var(--text-color);
+      opacity: 1;
+      transform: none;
+    }
+
+    .fold-toggle-placeholder {
+      width: 14px;
+      min-width: 14px;
+      margin-left: 2px;
+    }
+
+    .fold-placeholder {
+      position: relative;
+      z-index: 0;
+      user-select: none;
+    }
+
+    .fold-placeholder::after {
+      content: "\00a0…\00a0";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      color: var(--fold-placeholder-fg);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .fold-placeholder::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 50%;
+      height: var(--editor-line-height);
+      transform: translateY(-50%);
+      left: -100vw;
+      right: -100vw;
+      background-color: var(--folded-line-bg);
+      pointer-events: none;
     }
 
     .editor-container {
@@ -1303,7 +1384,7 @@
       padding: 10px;
       font-family: 'JetBrains Mono', monospace, ui-monospace;
       font-size: 12px;
-      line-height: 1.5;
+      line-height: var(--editor-line-height);
       white-space: pre;
       word-break: normal;
       box-sizing: border-box;
@@ -1325,6 +1406,17 @@
       pointer-events: none;
       overflow: hidden;
       color: var(--text-color);
+    }
+
+    #activeEditorLine {
+      position: absolute;
+      z-index: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--editor-line-height);
+      background-color: var(--active-line-bg);
+      pointer-events: none;
     }
 
     .editor-container pre code {
@@ -1861,6 +1953,13 @@
 
           <!-- Text Editor Wrapper -->
           <div id="editorWrapper" class="code-editor-wrapper">
+            <button id="foldAllBtn" class="fullscreen-icon-btn fold-all-btn" onclick="toggleAllJsonFolds()"
+              type="button" aria-label="Свернуть все блоки" title="Свернуть все блоки">
+              <svg id="foldAllSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+                <path d="M10 5h10M10 12h10M10 19h10M5 5v7m-2-2 2 2 2-2M5 19v-7m-2 2 2-2 2 2"></path>
+              </svg>
+            </button>
             <button id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран"
               data-i18n-title="fullscreenTitle">
               <svg id="fullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
@@ -1872,9 +1971,13 @@
             <div id="lineNumbers" class="line-numbers">1</div>
             <div class="editor-container">
               <pre id="highlighting" aria-hidden="true"><code id="highlightingContent"></code></pre>
+              <div id="activeEditorLine" aria-hidden="true"></div>
               <textarea id="jsonEditor" spellcheck="false" autocomplete="off" placeholder='Выберите файл...'
                 data-i18n-placeholder="jsonPlaceholder" oninput="handleEditorInput()" onscroll="syncScroll()"
-                onkeydown="handleEditorKeydown(event)"></textarea>
+                onkeydown="handleEditorKeydown(event)" onkeyup="updateActiveEditorLine()"
+                onclick="updateActiveEditorLine()" onmouseup="updateActiveEditorLine()"
+                onselect="updateActiveEditorLine()"
+                onbeforeinput="guardFoldPlaceholderEdit(event)"></textarea>
             </div>
           </div>
           <div id="jsonStatus" class="status"></div>
@@ -2212,6 +2315,12 @@
       errorPrefix: { ru: "Ошибка: ", en: "Error: " },
       jsonErrorPrefix: { ru: "Ошибка JSON: ", en: "JSON Error: " },
       requestTimeout: { ru: "Превышено время ожидания запроса (лимит 25 секунд)", en: "Request timeout (25s limit exceeded)" },
+      foldBlock: { ru: "Свернуть блок", en: "Fold block" },
+      unfoldBlock: { ru: "Развернуть блок", en: "Unfold block" },
+      foldAllBlocks: { ru: "Свернуть все блоки", en: "Fold all blocks" },
+      unfoldAllBlocks: { ru: "Развернуть все блоки", en: "Unfold all blocks" },
+      foldEditHint: { ru: "Сначала разверните этот блок, чтобы изменить его содержимое.", en: "Unfold this block before editing its contents." },
+      foldRestoreError: { ru: "Не удалось восстановить свёрнутый блок. Разверните все блоки и повторите действие.", en: "A folded block could not be restored. Unfold all blocks and try again." },
       alertCorruptConnections: { ru: "Сохраненные подключения повреждены или имеют неверный формат. Они не загружены; добавьте их заново.", en: "Saved connections are corrupted or have an invalid format. They were not loaded; please add them again." },
       alertInvalidJson: { ru: "Ошибка в формате JSON. Исправьте синтаксис в текстовом режиме.", en: "JSON syntax error. Fix it in text mode." },
       alertInvalidForm: { ru: "Исправьте подсвеченные ошибки в форме перед сохранением!", en: "Fix highlighted form errors before saving!" },
@@ -3178,9 +3287,7 @@
     function switchEditorMode(mode) {
       const fileSelect = document.getElementById('configFileSelect');
       if (fileSelect.value !== 'skeen') return;
-
-      currentEditorMode = mode;
-      localStorage.setItem('keen_editor_mode', mode);
+      if (mode === 'text' && currentEditorMode === 'text' && editorFolds.size > 0) return;
 
       const formContainer = document.getElementById('formEditorContainer');
       const editorWrapper = document.getElementById('editorWrapper');
@@ -3188,6 +3295,19 @@
       const btnText = document.getElementById('btnModeText');
       const textArea = document.getElementById('jsonEditor');
       const formatBtn = document.getElementById('formatBtn');
+
+      if (mode === 'form' && editorFolds.size > 0) {
+        try {
+          textArea.value = expandFoldedJson(textArea.value);
+          editorFolds.clear();
+        } catch (error) {
+          showAlertModal(error.message);
+          return;
+        }
+      }
+
+      currentEditorMode = mode;
+      localStorage.setItem('keen_editor_mode', mode);
 
       if (mode === 'form') {
         try {
@@ -3566,20 +3686,26 @@
       const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
 
       if (isTextFile) return editor && editor.value.trim() !== originalFileContent.trim();
+      let editorText = editor?.value || '';
+      try {
+        editorText = expandFoldedJson(editorText);
+      } catch (error) {
+        return true;
+      }
 
       if (fileKey === 'skeen' && baselineParsedJson) {
         try {
-          const currentObj = currentEditorMode === 'form' ? collectFormData() : JSON.parse(editor.value);
+          const currentObj = currentEditorMode === 'form' ? collectFormData() : JSON.parse(editorText);
           return JSON.stringify(currentObj) !== JSON.stringify(baselineParsedJson);
         } catch (e) {
-          return editor && editor.value.trim() !== originalFileContent.trim();
+          return editorText.trim() !== originalFileContent.trim();
         }
       }
 
       try {
-        return JSON.stringify(JSON.parse(editor.value)) !== JSON.stringify(JSON.parse(originalFileContent));
+        return JSON.stringify(JSON.parse(editorText)) !== JSON.stringify(JSON.parse(originalFileContent));
       } catch (e) {
-        return editor && editor.value.trim() !== originalFileContent.trim();
+        return editorText.trim() !== originalFileContent.trim();
       }
     }
 
@@ -3649,6 +3775,7 @@
       currentLang = resolveLanguage(langSetting);
       document.getElementById('langSelect').value = langSetting;
       applyLanguage();
+      updateLineNumbers();
       initConnections();
       renderConnList();
       renderDynamicActions();
@@ -3778,6 +3905,7 @@
         const data = await res.json();
         const editor = document.getElementById('jsonEditor');
 
+        editorFolds.clear();
         editor.value = typeof data.content === 'string' ? data.content : JSON.stringify(data.content, null, 2);
         originalFileContent = editor.value;
         cachedLines = editor.value.split('\n');
@@ -3825,12 +3953,22 @@
       const fileName = fileSelect.options[fileSelect.selectedIndex]?.text || '';
       const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
 
+      let editorText = editor.value;
+      if (!isTextFile) {
+        try {
+          editorText = expandFoldedJson(editorText);
+        } catch (error) {
+          showStatus('jsonStatus', error.message, true);
+          return;
+        }
+      }
+
       let contentToSend;
       if (fileKey === 'skeen' && currentEditorMode === 'form') {
         contentToSend = collectFormData();
       } else {
         try {
-          contentToSend = isTextFile ? editor.value : JSON.parse(editor.value);
+          contentToSend = isTextFile ? editorText : JSON.parse(editorText);
         } catch (e) {
           showStatus('jsonStatus', `${t('jsonErrorPrefix')}${e.message}`, true);
           return;
@@ -3854,12 +3992,10 @@
         if (fileKey === 'skeen' && currentEditorMode === 'form') {
           editor.value = JSON.stringify(contentToSend, null, 2);
         }
-        originalFileContent = editor.value;
+        originalFileContent = editorFolds.size > 0 ? editorText : editor.value;
 
         if (fileKey === 'skeen') {
-          try {
-            baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), JSON.parse(editor.value));
-          } catch (e) { }
+          baselineParsedJson = deepMerge(JSON.parse(JSON.stringify(SKEEN_DEFAULT_SCHEMA)), contentToSend);
         }
 
         showStatus('jsonStatus', t('statusSaved'));
@@ -3884,7 +4020,9 @@
       try {
         const editor = document.getElementById('jsonEditor');
         if (!editor.value.trim()) return;
-        editor.value = JSON.stringify(JSON.parse(editor.value), null, 2);
+        const expandedText = expandFoldedJson(editor.value);
+        editor.value = JSON.stringify(JSON.parse(expandedText), null, 2);
+        editorFolds.clear();
         cachedLines = editor.value.split('\n');
         updateLineNumbers();
         updateEditorVisuals();
@@ -3916,7 +4054,6 @@
       if (document.hidden || !document.getElementById('skeenTab').classList.contains('active')) {
         return;
       }
-
       const baseUrl = getBaseUrl();
       if (!baseUrl) return;
 
@@ -4189,23 +4326,268 @@
        Editor Highlighting & Utilities
        ========================================================================== */
     function escapeHtml(str) {
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      return String(str).replace(/[&<>"']/g, character => htmlEntities[character]);
+    }
+
+    const htmlEntities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    const editorFolds = new Map();
+    let editorFoldCounter = 0;
+    const jsonTokenPattern = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g;
+    const foldedMarkerPattern = /\u2060+/g;
+
+    function findJsonBlockRanges(text) {
+      const stack = [];
+      const ranges = [];
+      const foldedTokens = [...editorFolds.keys()].sort((a, b) => b.length - a.length);
+      let inString = false;
+      let escaped = false;
+      let line = 0;
+
+      for (let i = 0; i < text.length; i++) {
+        if (!inString && text.charCodeAt(i) === 0x2060) {
+          const foldedToken = foldedTokens.find(token => text.startsWith(token, i));
+          if (foldedToken) {
+            const open = stack.pop();
+            if (open?.isTopLevel) {
+              const markerEnd = i + foldedToken.length;
+              let closePosition = markerEnd;
+              while (/\s/.test(text[closePosition] || '')) {
+                if (text[closePosition] === '\n') line++;
+                closePosition++;
+              }
+              const closeChar = text[closePosition];
+              if ((open.char === '{' ? '}' : ']') !== closeChar) {
+                i += foldedToken.length - 1;
+                continue;
+              }
+              ranges.push({
+                openPosition: open.position,
+                closePosition,
+                markerEnd,
+                closeChar,
+                openLine: open.line,
+                closeLine: line,
+                inner: foldedToken,
+                isObject: open.char === '{',
+                foldedToken
+              });
+              i = closePosition;
+              if (text[i] === '\n') line++;
+              continue;
+            }
+            i += foldedToken.length - 1;
+            continue;
+          }
+        }
+
+        const char = text[i];
+        if (inString) {
+          if (escaped) escaped = false;
+          else if (char === '\\') escaped = true;
+          else if (char === '"') inString = false;
+          if (char === '\n') line++;
+          continue;
+        }
+        if (char === '"') {
+          inString = true;
+          continue;
+        }
+        if (char === '{' || char === '[') {
+          stack.push({ char, position: i, line, isTopLevel: stack.length === 1 });
+          continue;
+        }
+        if (char !== '}' && char !== ']') {
+          if (char === '\n') line++;
+          continue;
+        }
+
+        const open = stack.pop();
+        if (open?.isTopLevel && (open.char === '{' ? '}' : ']') === char) {
+          const openLineStart = text.lastIndexOf('\n', open.position - 1) + 1;
+          const closeLineStart = text.lastIndexOf('\n', i - 1) + 1;
+          const openLineEndIndex = text.indexOf('\n', open.position);
+          const closeLineEndIndex = text.indexOf('\n', i);
+          const openLineEnd = openLineEndIndex === -1 ? text.length : openLineEndIndex;
+          const closeLineEnd = closeLineEndIndex === -1 ? text.length : closeLineEndIndex;
+          const openLine = text.slice(openLineStart, openLineEnd);
+          const closeLine = text.slice(closeLineStart, closeLineEnd);
+          const openSuffix = openLine.slice(open.position - openLineStart + 1).trim();
+          const closePrefix = closeLine.slice(0, i - closeLineStart).trim();
+          const closeSuffix = closeLine.slice(i - closeLineStart + 1).trim();
+
+          if (openLineStart !== closeLineStart && (!openSuffix || openSuffix === ',') &&
+              !closePrefix && (!closeSuffix || closeSuffix === ',')) {
+            ranges.push({
+              openPosition: open.position,
+              closePosition: i,
+              openLine: open.line,
+              closeLine: line,
+              inner: text.slice(open.position + 1, closeLineStart - 1),
+              isObject: open.char === '{',
+              foldedToken: null
+            });
+          }
+        }
+
+        if (char === '\n') line++;
+      }
+
+      return ranges;
+    }
+
+    function expandFoldedJson(text) {
+      return text.replace(/\u2060+/g, marker => {
+        const fold = editorFolds.get(marker);
+        if (!fold) throw new Error(t('foldRestoreError'));
+        return fold.inner;
+      });
+    }
+
+    function toggleJsonFold(lineIndex) {
+      const editor = document.getElementById('jsonEditor');
+      const block = findJsonBlockRanges(editor.value).find(range => range.openLine === lineIndex);
+      if (!block) return;
+
+      applyJsonFold(editor, block);
+
+      refreshJsonEditorAfterFold(editor);
+      const cursorLine = Math.min(lineIndex, cachedLines.length - 1);
+      const cursorPosition = cachedLines.slice(0, cursorLine + 1).join('\n').length;
+      editor.focus();
+      editor.setSelectionRange(cursorPosition, cursorPosition);
+      updateActiveEditorLine();
+    }
+
+    function applyJsonFold(editor, block) {
+      if (block.foldedToken) {
+        editor.value = editor.value.slice(0, block.openPosition + 1) +
+          expandFoldedJson(block.foldedToken) +
+          editor.value.slice(block.markerEnd);
+        editorFolds.delete(block.foldedToken);
+        return;
+      }
+
+      const marker = '\u2060'.repeat(++editorFoldCounter);
+      const closeLineStart = editor.value.lastIndexOf('\n', block.closePosition - 1) + 1;
+      editorFolds.set(marker, {
+        inner: block.inner,
+        isObject: block.isObject,
+        closeChar: editor.value[block.closePosition],
+        hiddenLineCount: block.closeLine - block.openLine - 1
+      });
+      editor.value = editor.value.slice(0, block.openPosition + 1) + marker +
+        editor.value.slice(closeLineStart - 1, block.closePosition + 1) +
+        editor.value.slice(block.closePosition + 1);
+    }
+
+    function refreshJsonEditorAfterFold(editor) {
+      cachedLines = editor.value.split('\n');
+      updateLineNumbers();
+      updateEditorVisuals();
+      syncScroll();
+    }
+
+    function toggleAllJsonFolds() {
+      const editor = document.getElementById('jsonEditor');
+      const blocks = findJsonBlockRanges(editor.value);
+      if (!blocks.length) return;
+
+      const shouldFold = blocks.some(block => !block.foldedToken);
+      const targets = blocks
+        .filter(block => shouldFold ? !block.foldedToken : block.foldedToken)
+        .sort((a, b) => b.openPosition - a.openPosition);
+
+      for (const block of targets) applyJsonFold(editor, block);
+
+      refreshJsonEditorAfterFold(editor);
+    }
+
+    function guardFoldPlaceholderEdit(event) {
+      if (!event.inputType.startsWith('insert') && !event.inputType.startsWith('delete')) return;
+
+      const editor = event.currentTarget;
+      const selectionStart = editor.selectionStart;
+      const selectionEnd = editor.selectionEnd;
+      for (const token of editorFolds.keys()) {
+        const tokenPosition = editor.value.indexOf(token);
+        if (tokenPosition === -1) continue;
+
+        const tokenEnd = tokenPosition + token.length;
+        if (selectionStart <= tokenEnd && selectionEnd >= tokenPosition) {
+          event.preventDefault();
+          if (event.inputType === 'deleteContentBackward' ||
+              event.inputType === 'deleteContentForward' ||
+              event.inputType === 'deleteByCut') {
+            deleteFoldedJsonBlock(editor, token);
+          } else {
+            showStatus('jsonStatus', t('foldEditHint'), true);
+          }
+          return;
+        }
+      }
+    }
+
+    function deleteFoldedJsonBlock(editor, token) {
+      const block = findJsonBlockRanges(editor.value).find(range => range.foldedToken === token);
+      if (!block) return;
+
+      const lineStart = editor.value.lastIndexOf('\n', block.openPosition - 1) + 1;
+      const closeLineEndIndex = editor.value.indexOf('\n', block.closePosition);
+      const closeLineEnd = closeLineEndIndex === -1 ? editor.value.length : closeLineEndIndex;
+      const line = editor.value.slice(lineStart, closeLineEnd);
+      const lineEndsWithComma = /,\s*$/.test(line);
+      let deleteStart = lineStart;
+      let deleteEnd = closeLineEndIndex === -1 ? closeLineEnd : closeLineEndIndex + 1;
+      let nextText = editor.value.slice(0, deleteStart) + editor.value.slice(deleteEnd);
+
+      if (!lineEndsWithComma && lineStart > 0) {
+        const previousLineEnd = lineStart - 1;
+        const previousLineStart = editor.value.lastIndexOf('\n', previousLineEnd - 1) + 1;
+        const previousLine = editor.value.slice(previousLineStart, previousLineEnd);
+        const commaIndex = previousLineEnd - 1 - previousLine.match(/\s*$/)[0].length;
+        if (commaIndex >= previousLineStart && editor.value[commaIndex] === ',') {
+          nextText = nextText.slice(0, commaIndex) + nextText.slice(commaIndex + 1);
+          if (commaIndex < deleteStart) deleteStart--;
+        }
+      }
+
+      editor.value = nextText;
+      editorFolds.delete(token);
+      cachedLines = editor.value.split('\n');
+      updateLineNumbers();
+      updateEditorVisuals();
+      editor.focus();
+      editor.setSelectionRange(deleteStart, deleteStart);
+      updateActiveEditorLine();
     }
 
     function highlightJson(text) {
       if (!text) return '';
-      const tokenPattern = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g;
+      let highlighted = '';
+      let lastIndex = 0;
+      for (const match of text.matchAll(foldedMarkerPattern)) {
+        const token = match[0];
+        if (!editorFolds.has(token)) continue;
+
+        highlighted += highlightJsonTokens(text.slice(lastIndex, match.index));
+        highlighted += `<span class="fold-placeholder">${escapeHtml(token)}</span>`;
+        lastIndex = match.index + token.length;
+      }
+      return highlighted + highlightJsonTokens(text.slice(lastIndex));
+    }
+
+    function highlightJsonTokens(text) {
+      if (!text) return '';
       let highlighted = '';
       let lastIndex = 0;
 
-      for (const tokenMatch of text.matchAll(tokenPattern)) {
+      for (const tokenMatch of text.matchAll(jsonTokenPattern)) {
         const match = tokenMatch[0];
         highlighted += escapeHtml(text.slice(lastIndex, tokenMatch.index));
         let cls = 'token-number';
-        if (/^"/.test(match)) cls = /:$/.test(match) ? 'token-key' : 'token-string';
-        else if (/true|false/.test(match)) cls = 'token-boolean';
-        else if (/null/.test(match)) cls = 'token-null';
+        if (match.charCodeAt(0) === 34) cls = match.endsWith(':') ? 'token-key' : 'token-string';
+        else if (match === 'true' || match === 'false') cls = 'token-boolean';
+        else if (match === 'null') cls = 'token-null';
         highlighted += `<span class="${cls}">${escapeHtml(match)}</span>`;
         lastIndex = tokenMatch.index + match.length;
       }
@@ -4216,18 +4598,117 @@
     function updateLineNumbers() {
       const lineNumbers = document.getElementById('lineNumbers');
       const totalLines = cachedLines.length;
-      const linesArr = new Array(totalLines);
-      for (let i = 0; i < totalLines; i++) linesArr[i] = i + 1;
-      lineNumbers.textContent = linesArr.join('\n');
+      const fileSelect = document.getElementById('configFileSelect');
+      const fileName = fileSelect?.options[fileSelect.selectedIndex]?.text || '';
+      const isTextFile = fileName.endsWith('.list') || fileName.endsWith('.txt');
+      const foldableBlocks = isTextFile ? [] : findJsonBlockRanges(document.getElementById('jsonEditor').value);
+      const foldableBlocksByLine = new Map(foldableBlocks.map(block => [block.openLine, block]));
+      const foldStructure = `${isTextFile ? 'text' : 'json'}:${totalLines}:` +
+        foldableBlocks.map(block => `${block.openLine}:${block.foldedToken ? 1 : 0}`).join(',');
+      const foldAllButton = document.getElementById('foldAllBtn');
+      if (foldAllButton) {
+        const shouldFoldAll = foldableBlocks.some(block => !block.foldedToken);
+        const disabled = foldableBlocks.length === 0;
+        const title = t(shouldFoldAll ? 'foldAllBlocks' : 'unfoldAllBlocks');
+        if (foldAllButton.disabled !== disabled) foldAllButton.disabled = disabled;
+        if (foldAllButton.title !== title) {
+          foldAllButton.title = title;
+          foldAllButton.setAttribute('aria-label', title);
+        }
+        const foldAllIconPath = 'M10 5h10M10 12h10M10 19h10M5 5v7m-2-2 2 2 2-2M5 19v-7m-2 2 2-2 2 2';
+        const unfoldAllIconPath = 'M10 5h10M10 12h10M10 19h10M5 12V5M3 7l2-2 2 2M5 12v7m-2-2 2 2 2-2';
+        const iconPath = shouldFoldAll ? foldAllIconPath : unfoldAllIconPath;
+        const foldAllIcon = document.getElementById('foldAllSvg');
+        if (foldAllIcon.dataset.path !== iconPath) {
+          foldAllIcon.innerHTML = `<path d="${iconPath}"></path>`;
+          foldAllIcon.dataset.path = iconPath;
+        }
+      }
+
+      if (lineNumbers.dataset.foldStructure === foldStructure &&
+          lineNumbers.children.length === totalLines) {
+        let sourceLineNumber = 1;
+        for (let i = 0; i < totalLines; i++) {
+          const row = lineNumbers.children[i];
+          const number = row.children[0];
+          if (number.textContent !== String(sourceLineNumber)) {
+            number.textContent = String(sourceLineNumber);
+          }
+
+          const block = foldableBlocksByLine.get(i);
+          const button = row.children[1];
+          if (button.tagName === 'BUTTON') {
+            const title = t(block.foldedToken ? 'unfoldBlock' : 'foldBlock');
+            const icon = block.foldedToken ? '▸' : '▾';
+            if (button.textContent !== icon) button.textContent = icon;
+            if (button.title !== title) {
+              button.title = title;
+              button.setAttribute('aria-label', title);
+            }
+          }
+
+          sourceLineNumber += 1;
+          if (block?.foldedToken) {
+            sourceLineNumber += editorFolds.get(block.foldedToken)?.hiddenLineCount || 0;
+          }
+        }
+        return;
+      }
+
+      const rows = [];
+      let sourceLineNumber = 1;
+
+      for (let i = 0; i < totalLines; i++) {
+        const row = document.createElement('div');
+        row.className = 'line-number-row';
+        const number = document.createElement('span');
+        number.className = 'line-number';
+        number.textContent = String(sourceLineNumber);
+        row.appendChild(number);
+
+        const block = foldableBlocksByLine.get(i);
+        if (block) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'fold-toggle';
+          button.textContent = block.foldedToken ? '▸' : '▾';
+          button.title = t(block.foldedToken ? 'unfoldBlock' : 'foldBlock');
+          button.setAttribute('aria-label', button.title);
+          button.addEventListener('click', () => toggleJsonFold(i));
+          row.appendChild(button);
+        } else {
+          const spacer = document.createElement('span');
+          spacer.className = 'fold-toggle-placeholder';
+          row.appendChild(spacer);
+        }
+
+        rows.push(row);
+        sourceLineNumber += 1;
+        if (block?.foldedToken) {
+          sourceLineNumber += editorFolds.get(block.foldedToken)?.hiddenLineCount || 0;
+        }
+      }
+
+      lineNumbers.replaceChildren(...rows);
+      lineNumbers.dataset.foldStructure = foldStructure;
     }
 
-    let highlightTimeout = null;
-    function handleEditorInput() {
+    let highlightFrame = null;
+    function handleEditorInput(updateImmediately = false) {
       const textarea = document.getElementById('jsonEditor');
       cachedLines = textarea.value.split('\n');
       updateLineNumbers();
-      if (highlightTimeout) clearTimeout(highlightTimeout);
-      highlightTimeout = setTimeout(() => updateEditorVisuals(), 20);
+      updateActiveEditorLine();
+      if (updateImmediately) {
+        if (highlightFrame !== null) cancelAnimationFrame(highlightFrame);
+        highlightFrame = null;
+        updateEditorVisuals();
+      } else if (highlightFrame === null) {
+        highlightFrame = requestAnimationFrame(() => {
+          highlightFrame = null;
+          updateEditorVisuals();
+        });
+      }
     }
 
     function updateEditorVisuals() {
@@ -4240,6 +4721,22 @@
       content.innerHTML = (fileName.endsWith('.list') || fileName.endsWith('.txt')) ? escapeHtml(text) : highlightJson(text);
       content.style.paddingTop = '0px';
       content.style.paddingBottom = '0px';
+      updateActiveEditorLine();
+    }
+
+    function updateActiveEditorLine() {
+      const textarea = document.getElementById('jsonEditor');
+      const activeLine = document.getElementById('activeEditorLine');
+      if (!textarea || !activeLine) return;
+
+      activeLine.style.visibility = textarea.selectionStart === textarea.selectionEnd ? 'visible' : 'hidden';
+      if (textarea.selectionStart !== textarea.selectionEnd) return;
+
+      const lineIndex = textarea.value.slice(0, textarea.selectionStart).split('\n').length - 1;
+      const styles = getComputedStyle(textarea);
+      const lineHeight = Number.parseFloat(styles.lineHeight) || 18;
+      const paddingTop = Number.parseFloat(styles.paddingTop) || 10;
+      activeLine.style.transform = `translateY(${paddingTop + lineIndex * lineHeight - textarea.scrollTop}px)`;
     }
 
     let isScrolling = false;
@@ -4253,6 +4750,7 @@
         highlighting.scrollTop = textarea.scrollTop;
         highlighting.scrollLeft = textarea.scrollLeft;
         lineNumbers.scrollTop = textarea.scrollTop;
+        updateActiveEditorLine();
         isScrolling = false;
       });
     }
@@ -4327,7 +4825,7 @@
           textarea.selectionEnd = lineStart + newBlock.length;
         }
 
-        handleEditorInput();
+        handleEditorInput(true);
       }
     }
   </script>
