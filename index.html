@@ -1236,10 +1236,45 @@
       gap: 10px;
       transition: border-color 0.2s ease;
       min-width: 0;
+      cursor: pointer;
     }
 
     .conn-item:hover {
       border-color: var(--border-focus);
+    }
+
+    .conn-item.active {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .conn-status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--text-muted);
+      vertical-align: middle;
+      flex: 0 0 auto;
+    }
+
+    .conn-status-dot.available {
+      background-color: #22c55e;
+    }
+
+    .conn-status-dot.unavailable {
+      background-color: #ef4444;
+    }
+
+    .conn-item-select {
+      flex: 1;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .conn-item-select:focus-visible {
+      border-radius: 4px;
+      box-shadow: 0 0 0 2px var(--border-focus);
     }
 
     .conn-item div {
@@ -1826,14 +1861,13 @@
 <body>
 
   <div class="container">
-    <!-- Navbar & Connections Select -->
+    <!-- Navbar -->
     <div class="navbar">
       <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('skeenTab', this)" data-i18n="tabSKeen">SKeen</button>
         <button class="tab-btn" onclick="switchTab('configTab', this)" data-i18n="tabConfig">Конфиг</button>
       </div>
       <div class="nav-controls">
-        <select id="activeConnSelect" class="conn-select" onchange="changeActiveConnection(this.value)"></select>
         <!-- System Telemetry button -->
         <button id="sysTelemetryBtn" class="icon-btn" onclick="openSystemTelemetryModal()" title="Системная телеметрия"
           aria-label="System Telemetry" disabled>
@@ -2296,8 +2330,8 @@
       alertNoConn: { ru: "Необходимо добавить хотя бы одно подключение!", en: "You must add at least one connection!" },
       alertNeedSetup: { ru: "Сначала настройте подключение к роутеру!", en: "Configure the router connection first!" },
       confirmDelete: { ru: "Удалить это подключение?", en: "Delete this connection?" },
+      pingError: { ru: "❌ Не удалось подключиться к серверу. Подключение не сохранено.\n\nДетали: ", en: "❌ Could not connect to the server. The connection was not saved.\n\nDetails: " },
       confirmUnsaved: { ru: "Есть несохраненные изменения. Вы уверены, что хотите продолжить без сохранения?", en: "You have unsaved changes. Are you sure you want to proceed without saving?" },
-      pingError: { ru: "❌ Ошибка подключения: не удалось достучаться до эндпоинта.\n\nДетали: ", en: "❌ Connection error: failed to reach endpoint.\n\nDetails: " },
       alertDuplicateUrl: { ru: "Подключение с таким URL уже существует!", en: "Connection with this URL already exists!" },
       confirmModalTitle: { ru: "Подтверждение", en: "Confirmation" },
       btnYes: { ru: "Да", en: "Yes" },
@@ -2307,6 +2341,8 @@
       statusActive: { ru: "Работает", en: "Running" },
       statusInactive: { ru: "Остановлен", en: "Stopped" },
       statusServerUnavailable: { ru: "Сервер недоступен", en: "Server unavailable" },
+      connectionAvailable: { ru: "Подключение доступно", en: "Connection available" },
+      connectionUnavailable: { ru: "Подключение недоступно", en: "Connection unavailable" },
       statusNoConnection: { ru: "API-сервер остановлен / Нет связи", en: "API server stopped / No connection" },
       statusChecking: { ru: "Проверка состояния...", en: "Checking status..." },
       statusMode: { ru: "Режим", en: "Mode" },
@@ -2746,6 +2782,7 @@
       if (modal) {
         modal.classList.toggle('open', isOpen);
       }
+      if (modalId === 'connModal') updateConnectionPingPolling();
     }
 
     function togglePreloader(show) {
@@ -2761,6 +2798,12 @@
     let connections = loadStoredConnections();
     let activeIndex = Number.parseInt(localStorage.getItem('keen_active_index') || '0', 10);
     if (!Number.isInteger(activeIndex) || activeIndex < 0) activeIndex = 0;
+    const connectionPingStatus = new Map();
+    let connectionPingTimer = null;
+    let connectionPingController = null;
+    let connectionPingRunId = 0;
+    let connectionPingRunActive = false;
+    let connectionSaveInProgress = false;
 
     window.addEventListener('DOMContentLoaded', async () => {
       document.body.classList.add('preload');
@@ -2816,6 +2859,7 @@
             openSystemTelemetryModal();
           }
         }
+        updateConnectionPingPolling();
       });
     });
 
@@ -2833,21 +2877,94 @@
        Connections Management
        ========================================================================== */
     function initConnections() {
-      const select = document.getElementById('activeConnSelect');
-      select.innerHTML = '';
       if (connections.length === 0) {
-        select.innerHTML = `<option value="">${t('noConnections')}</option>`;
         openConnModal();
         return;
       }
       if (activeIndex >= connections.length) activeIndex = 0;
-      connections.forEach((conn, index) => {
-        const opt = document.createElement('option');
-        opt.value = index;
-        opt.textContent = conn.name || conn.url;
-        if (index === activeIndex) opt.selected = true;
-        select.appendChild(opt);
-      });
+    }
+
+    function updateConnectionPingPolling() {
+      const modal = document.getElementById('connModal');
+      const shouldPoll = connections.length > 0 && modal?.classList.contains('open') && !document.hidden;
+      if (!shouldPoll) {
+        if (connectionPingTimer !== null) {
+          clearTimeout(connectionPingTimer);
+          connectionPingTimer = null;
+        }
+        connectionPingRunId += 1;
+        connectionPingRunActive = false;
+        connectionPingController?.abort();
+        connectionPingController = null;
+        return;
+      }
+
+      if (connectionPingRunActive) return;
+      connectionPingRunActive = true;
+      const runId = ++connectionPingRunId;
+      void pingConnectionsSequentially(runId);
+    }
+
+    async function pingConnectionsSequentially(runId) {
+      try {
+        for (const conn of [...connections]) {
+          const modal = document.getElementById('connModal');
+          if (runId !== connectionPingRunId || document.hidden ||
+              !modal?.classList.contains('open')) return;
+
+          const controller = new AbortController();
+          connectionPingController = controller;
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          let isAvailable = false;
+          try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (conn.apiKey) headers['X-API-Key'] = conn.apiKey;
+            const response = await fetch(`${conn.url.replace(/\/$/, '')}/api/ping`, {
+              method: 'GET',
+              headers,
+              signal: controller.signal
+            });
+            isAvailable = response.ok;
+          } catch {
+            isAvailable = false;
+          } finally {
+            clearTimeout(timeoutId);
+            if (connectionPingController === controller) connectionPingController = null;
+          }
+
+          if (runId !== connectionPingRunId) return;
+          connectionPingStatus.set(conn.url, isAvailable);
+          const item = [...document.querySelectorAll('#connList .conn-item')]
+            .find(element => element.dataset.connectionUrl === conn.url);
+          const dot = item?.querySelector('.conn-status-dot');
+          if (dot) {
+            dot.classList.toggle('available', isAvailable);
+            dot.classList.toggle('unavailable', !isAvailable);
+            dot.title = isAvailable ? t('connectionAvailable') : t('connectionUnavailable');
+            dot.setAttribute('aria-label', dot.title);
+          }
+        }
+      } finally {
+        if (runId === connectionPingRunId) {
+          connectionPingRunActive = false;
+          connectionPingTimer = setTimeout(() => {
+            connectionPingTimer = null;
+            updateConnectionPingPolling();
+          }, 5000);
+        }
+      }
+    }
+
+    function restartConnectionPingPolling() {
+      if (connectionPingTimer !== null) {
+        clearTimeout(connectionPingTimer);
+        connectionPingTimer = null;
+      }
+      connectionPingRunId += 1;
+      connectionPingRunActive = false;
+      connectionPingController?.abort();
+      connectionPingController = null;
+      updateConnectionPingPolling();
     }
 
     function getActiveConnection() {
@@ -2856,23 +2973,24 @@
     }
 
     function changeActiveConnection(indexStr) {
-      if (indexStr === "") return;
+      const nextIndex = Number.parseInt(indexStr, 10);
+      if (!Number.isInteger(nextIndex) || nextIndex < 0 ||
+          nextIndex >= connections.length || nextIndex === activeIndex) return;
       if (hasUnsavedChanges()) {
         showConfirmModal(t('confirmUnsaved'), () => {
           originalFileContent = '';
-          executeChangeConnection(indexStr);
-        }, () => {
-          document.getElementById('activeConnSelect').value = activeIndex;
+          executeChangeConnection(nextIndex);
         });
         return;
       }
-      executeChangeConnection(indexStr);
+      executeChangeConnection(nextIndex);
     }
 
-    function executeChangeConnection(indexStr) {
-      activeIndex = parseInt(indexStr);
+    function executeChangeConnection(nextIndex) {
+      activeIndex = nextIndex;
       localStorage.setItem('keen_active_index', activeIndex);
-      showStatus('jsonStatus', t('statusSwitchedTo') + getActiveConnection().name);
+      renderConnList();
+      showStatus('jsonStatus', t('statusSwitchedTo') + (getActiveConnection().name || getActiveConnection().url));
       fetchServiceStatus();
       if (document.getElementById('configTab').classList.contains('active')) loadFileList();
     }
@@ -2945,17 +3063,42 @@
       }
       connections.forEach((conn, index) => {
         const item = document.createElement('div');
-        item.className = 'conn-item';
+        const isActive = index === activeIndex;
+        item.className = `conn-item${isActive ? ' active' : ''}`;
         const details = document.createElement('div');
+        details.className = 'conn-item-select';
+        details.tabIndex = 0;
+        details.setAttribute('role', 'button');
+        details.setAttribute('aria-pressed', String(isActive));
+        details.setAttribute('aria-label', conn.name || conn.url);
+        details.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            changeActiveConnection(String(index));
+          }
+        });
         const name = document.createElement('h3');
         name.className = 'modal-h3-title';
+        const statusDot = document.createElement('span');
+        statusDot.className = 'conn-status-dot';
+        statusDot.setAttribute('aria-hidden', 'true');
+        const knownStatus = connectionPingStatus.get(conn.url);
+        if (knownStatus !== undefined) {
+          statusDot.classList.add(knownStatus ? 'available' : 'unavailable');
+          statusDot.title = knownStatus ? t('connectionAvailable') : t('connectionUnavailable');
+          statusDot.setAttribute('aria-label', statusDot.title);
+          statusDot.removeAttribute('aria-hidden');
+        }
         name.textContent = conn.name || 'Router';
+        name.prepend(statusDot);
+        item.dataset.connectionUrl = conn.url;
         const url = document.createElement('label');
         url.textContent = conn.url;
         details.append(name, url);
 
         const actions = document.createElement('div');
         actions.className = 'flex-row-center-6 flex-shrink-0';
+        actions.addEventListener('click', event => event.stopPropagation());
         const editButton = document.createElement('button');
         editButton.type = 'button';
         editButton.className = 'icon-btn-sm secondary';
@@ -2970,11 +3113,15 @@
         deleteButton.addEventListener('click', () => deleteConnection(index));
         actions.append(editButton, deleteButton);
         item.append(details, actions);
+        item.addEventListener('click', event => {
+          if (!actions.contains(event.target)) changeActiveConnection(String(index));
+        });
         listEl.appendChild(item);
       });
     }
 
     async function saveConnection() {
+      if (connectionSaveInProgress) return;
       const name = document.getElementById('connName').value.trim();
       const url = document.getElementById('connUrl').value.trim().replace(/\/$/, '');
       const apiKey = document.getElementById('connKey').value.trim();
@@ -2986,20 +3133,31 @@
         return;
       }
 
+      connectionSaveInProgress = true;
+      const saveButton = document.querySelector('#connectionsPane button[data-i18n="btnSaveConn"]');
+      if (saveButton) saveButton.disabled = true;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       try {
         const headers = { 'Content-Type': 'application/json' };
         if (apiKey) headers['X-API-Key'] = apiKey;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
-        const res = await fetch(`${url}/api/ping`, { method: 'GET', headers, signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-      } catch (e) {
-        showAlertModal(t('pingError') + e.message);
+        const response = await fetch(`${url}/api/ping`, {
+          method: 'GET',
+          headers,
+          signal: controller.signal
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      } catch (error) {
+        showAlertModal(t('pingError') + (error instanceof Error ? error.message : String(error)));
         return;
+      } finally {
+        clearTimeout(timeoutId);
+        connectionSaveInProgress = false;
+        if (saveButton) saveButton.disabled = false;
       }
 
       const newConn = { name: name || url, url, apiKey };
+      const previousUrl = editIndex >= 0 ? connections[editIndex]?.url : null;
       if (editIndex === -1) {
         connections.push(newConn);
         activeIndex = connections.length - 1;
@@ -3009,10 +3167,12 @@
 
       localStorage.setItem('keen_connections', JSON.stringify(connections));
       localStorage.setItem('keen_active_index', activeIndex);
+      if (previousUrl && previousUrl !== url) connectionPingStatus.delete(previousUrl);
+      connectionPingStatus.set(url, true);
       renderConnList();
       clearConnForm();
       initConnections();
-      setModalState('connModal', false);
+      restartConnectionPingPolling();
       fetchServiceStatus();
     }
 
@@ -3031,9 +3191,11 @@
         if (activeIndex >= connections.length) activeIndex = Math.max(0, connections.length - 1);
         localStorage.setItem('keen_connections', JSON.stringify(connections));
         localStorage.setItem('keen_active_index', activeIndex);
+        connectionPingStatus.clear();
         renderConnList();
         clearConnForm();
         initConnections();
+        restartConnectionPingPolling();
       });
     }
 
