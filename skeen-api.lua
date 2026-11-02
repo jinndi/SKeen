@@ -1119,6 +1119,157 @@ end
 local server = assert(socket.bind("0.0.0.0", PORT))
 print("API server started on port " .. PORT)
 
+local function json_response(data, status)
+  return json.encode(data), status or "200 OK", "application/json"
+end
+
+local function handle_file_request(method, path, body)
+  if method == "GET" then
+    local file_key = path:match("[?&]name=([^&]+)") or "skeen"
+    local target = get_allowed_files_map()[file_key]
+    if not target then
+      return json_response({ error = "Invalid file target" }, "400 Bad Request")
+    end
+
+    local content = read_file(target.path) or ""
+    if target.type == "json" then
+      if file_key == "skeen" then
+        content = strip_json_comments(content)
+        local success, data = pcall(json.decode, content)
+        return json_response({ success = true, content = success and data or {} })
+      end
+      return '{"success":true,"content":' .. content .. '}', "200 OK", "application/json"
+    end
+
+    local escaped_content = content:gsub('\\', '\\\\'):gsub('"', '\\"'):gsub('\n', '\\n'):gsub(
+      '\r', '\\r')
+    return '{"success":true,"content":"' .. escaped_content .. '"}', "200 OK", "application/json"
+  end
+
+  local success, req_json = pcall(json.decode, body)
+  local file_key = req_json and req_json.name
+  local target = get_allowed_files_map()[file_key]
+  if not success or not target then
+    return json_response({ error = "Invalid request or file target" }, "400 Bad Request")
+  end
+
+  local write_success = false
+  if target.type == "json" then
+    local ok_enc, encoded_json = pcall(json.encode, req_json.content, true)
+    if ok_enc then
+      write_success = write_raw_file(target.path, encoded_json)
+    end
+  else
+    write_success = write_raw_file(target.path, tostring(req_json.content))
+  end
+
+  if write_success then
+    return json_response({ success = true, message = "File updated" })
+  end
+  return json_response({ error = "Failed to write file" }, "500 Internal Server Error")
+end
+
+local function handle_exec_request(body)
+  local success, req_json = pcall(json.decode, body)
+  local param = ""
+  if success and type(req_json) == "table" and req_json.param then
+    param = tostring(req_json.param)
+  end
+
+  if not success or type(req_json) ~= "table" or not is_allowed_param(param) then
+    return json_response({ error = "Invalid or unauthorized parameter" }, "400 Bad Request")
+  end
+
+  local response_data
+  if param == "areload" then
+    -- Restart in the background so the current request can return first.
+    os.execute('(sleep 2 && "' .. SCRIPT .. '" restart) >/dev/null 2>&1 &')
+    response_data = {
+      success = true,
+      stdout = "API reload initiated, restarting in 2 seconds..."
+    }
+  elseif param == "aupdate" then
+    local log_buffer = {}
+    local old_print = _G.print
+    _G.print = function(...)
+      table.insert(log_buffer, table.concat({ ... }, "\t"))
+    end
+
+    local success_pcall, did_update = pcall(update_script)
+    _G.print = old_print
+
+    local result = table.concat(log_buffer, "\n")
+    if not success_pcall then
+      result = result .. "\nError: " .. tostring(did_update)
+    end
+    if success_pcall and did_update == true then
+      os.execute('(sleep 2 && "' .. SCRIPT .. '" restart) >/dev/null 2>&1 &')
+    end
+
+    response_data = {
+      success = success_pcall,
+      stdout = result ~= "" and result or ""
+    }
+  else
+    local command_args = param
+    local sync_url = param:match("^sync%s+(https?://.+)$")
+    if sync_url then
+      command_args = "sync " .. shell_quote(sync_url)
+    end
+    local cmd = "FORCE_COLOR=1 " .. get_skeen_cmd(command_args)
+
+    local actions = { start = true, stop = true, restart = true, reload = true, kill = true }
+    if actions[param] then
+      skeen_status_cache.expire = 0
+    end
+
+    local handle = io.popen(cmd .. " 2>&1")
+    local stdout = ""
+    if handle then
+      stdout = handle:read("*a")
+      handle:close()
+    else
+      stdout = "Error: failed to open process"
+    end
+    response_data = { success = true, stdout = stdout }
+  end
+
+  return json_response(response_data)
+end
+
+local function route_request(method, path, body)
+  if path == "/" then
+    if DASHBOARD then
+      return get_dashboard_html(), "200 OK", "text/html; charset=utf-8"
+    end
+    return json_response({ error = "Not found" }, "404 Not Found")
+  elseif path == "/api/ping" and method == "GET" then
+    return json_response({ status = "ok", message = "pong" })
+  elseif path:find("^/api/status") and method == "GET" then
+    local status = get_cached_skeen_status()
+    status.success = true
+    return json_response(status)
+  elseif path:find("^/api/system/status") and method == "GET" then
+    local status = get_cached_system_status()
+    status.success = true
+    return json_response(status)
+  elseif path == "/api/files-list" and method == "GET" then
+    local files_list = {}
+    for id, target in pairs(get_allowed_files_map()) do
+      table.insert(files_list, { id = id, name = target.name })
+    end
+    table.sort(files_list, function(a, b) return a.id < b.id end)
+    return json_response(files_list)
+  elseif (path:find("^/api/file") and method == "GET") or
+      (path == "/api/file" and method == "POST") then
+    return handle_file_request(method, path, body)
+  elseif path == "/api/exec" and method == "POST" then
+    return handle_exec_request(body)
+  end
+
+  return json_response({ error = "Not found" }, "404 Not Found")
+end
+
 -- Function for safely processing an individual client connection
 local function handle_client(client)
   client:settimeout(30) -- Set a 30-second timeout on socket operations
@@ -1189,203 +1340,16 @@ local function handle_client(client)
   local response_body, status, content_type
   local authorized = true
 
-  -- Check for the presence and validity of the secret API key for paths starting with /api/
+  -- Keep the configured optional-auth behavior for API routes.
   if SECRET ~= "" and path:find("^/api/") then
-    local client_key = headers["x-api-key"]
-    if client_key ~= SECRET then authorized = false end
+    authorized = headers["x-api-key"] == SECRET
   end
 
-  if not authorized then
-    response_body = json.encode({ error = "Unauthorized: Invalid or missing API key" })
-    status = "401 Unauthorized"
-    content_type = "application/json"
+  if authorized then
+    response_body, status, content_type = route_request(method, path, body)
   else
-    -- API request routing
-    if path == "/" then
-      if DASHBOARD then
-        response_body = get_dashboard_html()
-        status = "200 OK"
-        content_type = "text/html; charset=utf-8"
-      else
-        response_body = json.encode({ error = "Not found" })
-        status = "404 Not Found"
-        content_type = "application/json"
-      end
-    elseif path == "/api/ping" and method == "GET" then
-      response_body = json.encode({ status = "ok", message = "pong" })
-      status = "200 OK"
-      content_type = "application/json"
-    elseif path:find("^/api/status") and method == "GET" then
-      local st = get_cached_skeen_status()
-      st.success = true
-      response_body = json.encode(st)
-      status = "200 OK"
-      content_type = "application/json"
-    elseif path:find("^/api/system/status") and method == "GET" then
-      local st = get_cached_system_status()
-      st.success = true
-      response_body = json.encode(st)
-      status = "200 OK"
-      content_type = "application/json"
-    elseif path == "/api/files-list" and method == "GET" then
-      local map = get_allowed_files_map()
-      local files_list = {}
-
-      for id, target in pairs(map) do
-        table.insert(files_list, { id = id, name = target.name })
-      end
-
-      table.sort(files_list, function(a, b) return a.id < b.id end)
-      response_body = json.encode(files_list)
-      status = "200 OK"
-      content_type = "application/json"
-    elseif path:find("^/api/file") and method == "GET" then
-      local file_key = path:match("[?&]name=([^&]+)") or "skeen"
-      local ALLOWED_FILES = get_allowed_files_map()
-      local target = ALLOWED_FILES[file_key]
-
-      if not target then
-        response_body = json.encode({ error = "Invalid file target" })
-        status = "400 Bad Request"
-        content_type = "application/json"
-      else
-        local f = io.open(target.path, "r")
-        local content = ""
-        if f then
-          content = f:read("*a")
-          f:close()
-        end
-
-        if target.type == "json" then
-          if file_key == "skeen" then
-            content = strip_json_comments(content)
-            local success, data = pcall(json.decode, content)
-            response_body = json.encode({ success = true, content = success and data or {} })
-          else
-            response_body = '{"success":true,"content":' .. content .. '}'
-          end
-        else
-          local escaped_content = content:gsub('\\', '\\\\'):gsub('"', '\\"'):gsub('\n', '\\n'):gsub(
-            '\r', '\\r')
-          response_body = '{"success":true,"content":"' .. escaped_content .. '"}'
-        end
-        status = "200 OK"
-        content_type = "application/json"
-      end
-    elseif path == "/api/file" and method == "POST" then
-      local success, req_json = pcall(json.decode, body)
-      local file_key = req_json and req_json.name
-      local ALLOWED_FILES = get_allowed_files_map()
-      local target = ALLOWED_FILES[file_key]
-
-      if not success or not target then
-        response_body = json.encode({ error = "Invalid request or file target" })
-        status = "400 Bad Request"
-        content_type = "application/json"
-      else
-        local raw_content = req_json.content
-        local write_success = false
-
-        if target.type == "json" then
-          local ok_enc, encoded_json = pcall(json.encode, raw_content, true)
-          if ok_enc then
-            write_success = write_raw_file(target.path, encoded_json)
-          end
-        else
-          write_success = write_raw_file(target.path, tostring(raw_content))
-        end
-
-        if write_success then
-          response_body = json.encode({ success = true, message = "File updated" })
-          status = "200 OK"
-        else
-          response_body = json.encode({ error = "Failed to write file" })
-          status = "500 Internal Server Error"
-        end
-        content_type = "application/json"
-      end
-    elseif path == "/api/exec" and method == "POST" then
-      local success, req_json = pcall(json.decode, body)
-      local param = ""
-      if success and type(req_json) == "table" and req_json.param then
-        param = tostring(req_json.param)
-      end
-
-      local response_data
-      if success and type(req_json) == "table" and is_allowed_param(param) then
-        if param == "areload" then
-          -- Restart is executed in the background with a 2-second delay
-          -- so that the current HTTP request has time to return a 200 OK status to the browser
-          os.execute('(sleep 2 && "' .. SCRIPT .. '" restart) >/dev/null 2>&1 &')
-          response_data = {
-            success = true,
-            stdout = "API reload initiated, restarting in 2 seconds..."
-          }
-        elseif param == "aupdate" then
-          local log_buffer = {}
-
-          -- Intercept print to collect all function output into an array
-          local old_print = _G.print
-          _G.print = function(...)
-            table.insert(log_buffer, table.concat({ ... }, "\t"))
-          end
-
-          -- Safely call the update function via pcall (to prevent crashing the server on error)
-          local success_pcall, did_update = pcall(update_script)
-
-          -- Restore the standard print
-          _G.print = old_print
-
-          local result = table.concat(log_buffer, "\n")
-          if not success_pcall then
-            result = result .. "\nError: " .. tostring(did_update)
-          end
-
-          -- If everything succeeded, schedule a restart
-          if success_pcall and did_update == true then
-            os.execute('(sleep 2 && "' .. SCRIPT .. '" restart) >/dev/null 2>&1 &')
-          end
-
-          response_data = {
-            success = success_pcall,
-            stdout = result ~= "" and result or ""
-          }
-        else
-          local command_args = param
-          local sync_url = param:match("^sync%s+(https?://.+)$")
-          if sync_url then
-            command_args = "sync " .. shell_quote(sync_url)
-          end
-          local cmd = "FORCE_COLOR=1 " .. get_skeen_cmd(command_args)
-
-          -- Invalidate status cache for service control commands
-          local actions = { start = true, stop = true, restart = true, reload = true, kill = true }
-          if actions[param] then
-            skeen_status_cache.expire = 0
-          end
-
-          local handle = io.popen(cmd .. " 2>&1")
-          local stdout = ""
-          if handle then
-            stdout = handle:read("*a")
-            handle:close()
-          else
-            stdout = "Error: failed to open process"
-          end
-          response_data = { success = true, stdout = stdout }
-        end
-        status = "200 OK"
-      else
-        response_data = { error = "Invalid or unauthorized parameter" }
-        status = "400 Bad Request"
-      end
-      response_body = json.encode(response_data)
-      content_type = "application/json"
-    else
-      response_body = json.encode({ error = "Not found" })
-      status = "404 Not Found"
-      content_type = "application/json"
-    end
+    response_body, status, content_type =
+      json_response({ error = "Unauthorized: Invalid or missing API key" }, "401 Unauthorized")
   end
 
   -- Form and send the HTTP response to the client
