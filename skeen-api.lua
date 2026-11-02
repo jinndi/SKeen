@@ -1237,6 +1237,7 @@ local function handle_exec_request(body)
 
     response_data = {
       success = success_pcall,
+      updated = success_pcall and did_update == true,
       stdout = result ~= "" and result or ""
     }
   else

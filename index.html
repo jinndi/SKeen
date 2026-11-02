@@ -4473,6 +4473,7 @@
 
       const disabledElements = document.querySelectorAll('button, select, input');
       disabledElements.forEach(el => el.disabled = true);
+      let shouldReload = false;
 
       try {
         const res = await fetchWithTimeout(`${baseUrl}/api/exec`, {
@@ -4488,7 +4489,8 @@
         const data = await res.json();
         outputEl.innerHTML = renderAnsiOutput(data.stdout || t('emptyOutput'));
 
-        if (param === 'areload') {
+        shouldReload = param === 'areload' || (param === 'aupdate' && data.updated === true);
+        if (shouldReload) {
           setTimeout(() => {
             window.location.reload();
           }, 3000);
@@ -4502,7 +4504,7 @@
         errorOutput.textContent = `${t('errorPrefix')}${errorMessage}`;
         outputEl.replaceChildren(errorOutput);
       } finally {
-        if (param !== 'areload') {
+        if (param !== 'areload' && !shouldReload) {
           disabledElements.forEach(el => el.disabled = false);
           await fetchServiceStatus();
           startPolling();

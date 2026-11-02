@@ -449,7 +449,17 @@ Executes allowed CLI commands (`skeen <param>`).
 
 `start`, `stop`, `restart`, `reload`, `kill`, `status`, `version`, `help`, `iface`, `connstat`, `test`, `deps`, `check`, `format`, `backup`, `backups`, `clean`, `sync`, `headers`, `restore <file>`, `sync <url>`, `tun list`, `tun create <ip> <dev>`, `tun delete <dev>`, `areload`, `aupdate`.
 
-> **Note:** The `areload` and `aupdate` commands are executed directly via the API server's internal functions (without spawning the external `skeen` CLI tool). The update check and download process (`aupdate`) runs synchronously to capture and return the full output log in `stdout`, while the service restart (`areload` / `restart`) on successful update is scheduled asynchronously with a 2-second delay to ensure the current HTTP request responds with `200 OK` to the browser.
+> **Note:** The `areload` and `aupdate` commands are executed directly via the API server's internal functions (without spawning the external `skeen` CLI tool). The `aupdate` check and download run synchronously. When a new version is installed successfully, the API returns `"updated": true` and schedules a service restart after 2 seconds so the current HTTP request can complete. The built-in web interface then automatically reloads the page. If no update was installed (for example, the API is already up to date or an error occurred), `"updated": false`; the service is not restarted and the page is not automatically reloaded.
+
+#### Response after a successful API update:
+
+```json
+{
+  "success": true,
+  "updated": true,
+  "stdout": "[OK] API script updated to v1.2.1"
+}
+```
 
 #### Request Body (JSON):
 
