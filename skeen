@@ -15,7 +15,7 @@ readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.10.0"
+readonly SKEEN_VERSION="5.11.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="$RUN_DIR/$SKEEN_PROC.sh"
@@ -145,8 +145,7 @@ cat <<EOF >"$SKEEN_CONFIG"
 // https://github.com/jinndi/SKeen/blob/main/docs/CONFIGURATION.md
 {
   "auto_start": {
-    "enabled": 1,
-    "delay": 0
+    "enabled": 1
   },
   "policy": {
     "enabled": 0,
@@ -154,8 +153,7 @@ cat <<EOF >"$SKEEN_CONFIG"
   },
   "network": {
     "ipv6": 1,
-    "tuning": 0,
-    "check": ["1.1.1.1", "ya.ru", "77.88.8.8"]
+    "tuning": 0
   },
   "singbox": {
     "config": {
@@ -290,11 +288,8 @@ fi
 get_auto_start_config(){
 local config_path
 config_path="$(get_skeen_config_path)"
-[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
--e AUTO_START_ENABLED='@.auto_start.enabled' \
--e AUTO_START_DELAY='@.auto_start.delay')"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" -e AUTO_START_ENABLED='@.auto_start.enabled')"
 : "${AUTO_START_ENABLED:=1}"
-: "${AUTO_START_DELAY:=0}"
 }
 get_network_config(){
 local config_path
@@ -984,51 +979,6 @@ esac
 done
 show_menu
 }
-get_net_check_hosts(){
-local ipv="${1:-}"
-local hosts sys_hosts count result
-local max="3"
-if [ "$ipv" = "4" ];then
-sys_hosts="1.1.1.1 77.88.8.8 223.5.5.5"
-hosts="$(json_get_array '@.network.check') $sys_hosts"
-else
-sys_hosts="2606:4700:4700::1111 2a02:6b8::feed:0ff 2400:3200::1"
-fi
-if [ -z "$hosts" ];then
-echo "$sys_hosts"
-else
-hosts="$(echo "$hosts"|tr ',\t\n' ' '|sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
-set -- $hosts
-count=0
-result=""
-while [ $# -gt 0 ]&&[ "$count" -lt "$max" ];do
-result="${result:+$result }$1"
-count=$((count+1))
-shift
-done
-echo "$result"
-fi
-}
-check_internet(){
-local hosts host attempt
-local max_attempts=3
-hosts="$(get_net_check_hosts "4")"
-max_attempts=3
-for host in $hosts;do
-attempt=1
-while [ $attempt -le $max_attempts ];do
-if ping -c 1 "$host" >/dev/null 2>&1;then
-logger_notice "Internet is available via $host"
-return 0
-else
-logger_warning "Internet is not available ($host), attempt $attempt/$max_attempts..."
-fi
-attempt=$((attempt+1))
-sleep 10
-done
-done
-logger_error "Internet is not available via any of the checked hosts"
-}
 get_fw_mode_data(){
 local type="${1:-}"
 local has_opkgtun port network
@@ -1130,6 +1080,25 @@ fi
 fi
 echo "$ipt_list"
 }
+wait_for_hotspot_prerouting_mangl_chain(){
+local chain="_NDM_HOTSPOT_PREROUTING_MANGL" attempt=1 max_attempts=30
+if iptables -w -t mangle -S "$chain" >/dev/null 2>&1;then
+return 0
+fi
+while [ "$attempt" -le "$max_attempts" ];do
+logger_notice "Waiting for HOTSPOT chain: $attempt of $max_attempts..."
+if iptables -w -t mangle -S "$chain" >/dev/null 2>&1;then
+logger_notice "Chain $chain found"
+return 0
+fi
+[ "$attempt" -eq "$max_attempts" ]&&break
+sleep 1
+attempt=$((attempt+1))
+done
+local err_msg="Chain $chain did not appear within 30 checks"
+logger_error "$err_msg"
+exiterr "$err_msg"
+}
 get_mark_policy(){
 local mark="" seg=""
 if [ "$POLICY_ENABLED" = "1" ]&&[ -n "$POLICY_SEGMENT" ];then
@@ -1137,7 +1106,9 @@ seg="$(echo "$POLICY_SEGMENT"|tr '[:upper:]' '[:lower:]')"
 case "$seg" in
 br[0-9]|br[0-9][0-9])mark=$(iptables -t mangle -L -v -n|awk -v iface="$seg" '$0 ~ iface && /MARK set/ {print $NF}')
 ;;
-*)echowarn "Segment name must start with 'br' followed by 1 or 2 digits" >&2
+*)local err_msg="Segment name must start with 'br' followed by 1 or 2 digits"
+logger_error "$err_msg"
+echowarn "$err_msg" >&2
 esac
 fi
 echo "$mark"
@@ -1158,7 +1129,6 @@ if ! check_default_route;then
 local msg="Check your internet connection"
 [ -n "$SKEEN_MARK_POLICY" ]&&msg="$msg for segment ${SKEEN_POLICY_SEGMENT:-unknown}"
 echoerr "$msg"
-logger_warning "$msg"
 [ "$CALLER" = "netfilter" ]&&exit 0
 press_any_key_to_menu "" 1
 return 1
@@ -1664,6 +1634,7 @@ SKEEN_FIREWALL_MODE="tun"
 else
 SKEEN_FIREWALL_MODE="none"
 fi
+[ "$SKEEN_FIREWALL_MODE" != "none" ]&&wait_for_hotspot_prerouting_mangl_chain
 cyan " - Detected firewall mode: $SKEEN_FIREWALL_MODE $has_opkgtun"
 get_firewall_config
 SKEEN_INTERCEPT_DNS_ENABLED="0"
@@ -1860,7 +1831,6 @@ ipset destroy "${FAKEIP_INTERCEPT_SET}6" -exist 2>/dev/null
 echowarn "$SINGBOX_NAME DNS не настроен, опция intercept.fakeip не будет работать!"
 fi
 fi
-[ -f "$FIREWALL_HOOK_FILE" ]&&rm -f "$FIREWALL_HOOK_FILE"
 {
 echo "#!/bin/sh"
 echo "# $SKEEN_NAME v$SKEEN_VERSION firewall hook"
@@ -2161,37 +2131,32 @@ return 0
 }
 start(){
 get_singbox_config
-if [ "$CALLER" = "init" ]&&get_service_api_config;then
-[ "$SERVICE_API_AUTO_START" = "1" ]&&[ -f "$SERVICE_API_SCRIPT" ]&&"$SERVICE_API_SCRIPT" start||true
-fi
-if [ ! -f "$SINGBOX_BIN" ];then
-echoerr "$SINGBOX_NAME binary not found, please install it first"
-press_any_key_to_menu "" 1
-fi
+local no_sb_found_msg="$SINGBOX_NAME binary not found, please install it first"
 if [ "$CALLER" = "init" ];then
+if get_service_api_config&&[ "$SERVICE_API_AUTO_START" = "1" ];then
+[ -f "$SERVICE_API_SCRIPT" ]&&"$SERVICE_API_SCRIPT" start||true
+fi
 get_auto_start_config
-if [ "$AUTO_START_ENABLED" = "0" ];then
+if [ "$AUTO_START_ENABLED" != "1" ];then
 return 0
-else
-if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null;then
-sleep "$AUTO_START_DELAY"
-check_internet
-else
-sleep 5
-check_internet
 fi
-fi
-fi
-if is_running;then
-echook "Already started"
+elif [ ! -f "$SINGBOX_BIN" ];then
+echoerr "$no_sb_found_msg"
+press_any_key_to_menu "" 1
+elif is_running;then
+echook "$SINGBOX_NAME already started"
 return 0
 fi
 check_config&&echo "$DELIMETER"
 create_skeen_group
 [ $? -eq 2 ]&&echo "$DELIMETER"
-apply_sysctl_network_tuning
-prepare_firewall&&echo "$DELIMETER"
+if [ ! -f "$SINGBOX_BIN" ];then
+logger_error "$no_sb_found_msg"
+else
 start_singbox||press_any_key_to_menu "" 1
+fi
+apply_sysctl_network_tuning
+echo "$DELIMETER"&&prepare_firewall
 [ "$SKEEN_FIREWALL_MODE" != "none" ]&&echo "$DELIMETER"&&apply_firewall
 return 0
 }
@@ -2321,19 +2286,28 @@ printf '\n\033[1m%s\033[0m\n' "$SKEEN_NAME API"
 fi
 }
 status_json(){
-local running="false" mode="unknown" sb_version="unknown" pid
+local running="false" mode="unknown" sb_version="unknown" pid line version_data
 if [ -f "$SINGBOX_PID_FILE" ];then
-pid="$(cat "$SINGBOX_PID_FILE" 2>/dev/null)"
+IFS= read -r pid <"$SINGBOX_PID_FILE" 2>/dev/null
 [ -n "$pid" ]&&kill -0 "$pid" 2>/dev/null&&running="true"
 fi
 if [ -f "$FIREWALL_HOOK_FILE" ];then
-mode="$(grep -m1 '^export SKEEN_FIREWALL_MODE=' "$FIREWALL_HOOK_FILE"|cut -d'=' -f2-|tr -d '"'|tr -d "'")"
+while IFS='=' read -r line mode;do
+[ "$line" = "export SKEEN_FIREWALL_MODE" ]||continue
+mode="${mode#\"}"
+mode="${mode%\"}"
+break
+done <"$FIREWALL_HOOK_FILE"
 [ -z "$mode" ]&&mode="unknown"
 fi
-if [ -f "$SINGBOX_RUN_VERSION" ];then
-sb_version="$(awk -F '|' '{print $NF}' "$SINGBOX_RUN_VERSION" 2>/dev/null)"
-[ -z "$sb_version" ]&&sb_version="unknown"
+if [ ! -f "$SINGBOX_RUN_VERSION" ];then
+get_singbox_config
+sb_version="$(get_current_version "sing")"
+else
+IFS= read -r version_data <"$SINGBOX_RUN_VERSION" 2>/dev/null
+sb_version="${version_data##*|}"
 fi
+[ -z "$sb_version" ]&&sb_version="unknown"
 printf '{"running":%s,"version":"%s","mode":"%s","sb_version":"%s"}\n' \
 "$running" "${SKEEN_VERSION:-unknown}" "$mode" "${sb_version:-unknown}"
 }
@@ -2893,8 +2867,7 @@ echook "$SKEEN_NAME JSON is valid"
 else
 local err_msg="$SKEEN_NAME configuration is invalid"
 echoerr "$err_msg"
-[ "$CALLER" != "menu" ]&&logger_error "$err_msg"
-exit 0
+logger_error "$err_msg"
 fi
 }
 check_singbox_config(){
@@ -2906,9 +2879,11 @@ if $SINGBOX_BIN check $config;then
 echook "$SINGBOX_NAME configuration is valid"
 else
 local err_msg="$SINGBOX_NAME configuration is invalid"
+logger_error "$err_msg"
+if [ "$CALLER" != "init" ];then
 echoerr "$err_msg"
-[ "$CALLER" != "menu" ]&&logger_error "$err_msg"
 press_any_key_to_menu "" "1"
+fi
 fi
 fi
 }
