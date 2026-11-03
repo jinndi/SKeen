@@ -1,5 +1,27 @@
 # Changelog
 
+## [5.11.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.10.0...SKeen-v5.11.0) (2026-11-03)
+
+
+### 🚀 Feat
+
+* simplify startup sync with NDM firewall chains ([2966f3a](https://github.com/jinndi/SKeen/commit/2966f3aa6e0c3e43a6bd555ab5413c5d06bfe2e4))
+
+
+### 🐛 Fix
+
+* improve sing-box version detection in status_json (api) reporting ([030449e](https://github.com/jinndi/SKeen/commit/030449ec72f5a34dc87307bca886a46088df6ebf))
+
+
+### 🛠 Refactor
+
+* **shell:** optimize status_json parsing logic ([38f622b](https://github.com/jinndi/SKeen/commit/38f622b9124488705a9bf2a6e659b730e0845aa1))
+
+
+### 📊 Dashboard
+
+* remove obsolete startup settings ([f41d6c0](https://github.com/jinndi/SKeen/commit/f41d6c02fbb8165aa5a2010bd09d80b0f9e7c13f))
+
 ## [5.10.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.9.2...SKeen-v5.10.0) (2026-11-01)
 
 
