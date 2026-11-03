@@ -2843,15 +2843,20 @@ status() {
 }
 
 status_json() {
-  local running="false" mode="unknown" sb_version="unknown" pid
+  local running="false" mode="unknown" sb_version="unknown" pid line version_data
 
   if [ -f "$SINGBOX_PID_FILE" ]; then
-    pid="$(cat "$SINGBOX_PID_FILE" 2>/dev/null)"
+    IFS= read -r pid < "$SINGBOX_PID_FILE" 2>/dev/null
     [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && running="true"
   fi
 
   if [ -f "$FIREWALL_HOOK_FILE" ]; then
-    mode="$(grep -m1 '^export SKEEN_FIREWALL_MODE=' "$FIREWALL_HOOK_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")"
+    while IFS='=' read -r line mode; do
+      [ "$line" = "export SKEEN_FIREWALL_MODE" ] || continue
+      mode="${mode#\"}"
+      mode="${mode%\"}"
+      break
+    done < "$FIREWALL_HOOK_FILE"
     [ -z "$mode" ] && mode="unknown"
   fi
 
@@ -2859,7 +2864,8 @@ status_json() {
     get_singbox_config
     sb_version="$(get_current_version "sing")"
   else
-    sb_version="$(awk -F '|' '{print $NF}' "$SINGBOX_RUN_VERSION" 2>/dev/null)"
+    IFS= read -r version_data < "$SINGBOX_RUN_VERSION" 2>/dev/null
+    sb_version="${version_data##*|}"
   fi
   [ -z "$sb_version" ] && sb_version="unknown"
 
