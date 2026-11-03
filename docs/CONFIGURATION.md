@@ -10,8 +10,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 ```jsonc
 {
   "auto_start": {      //// Automatic startup configuration for SKeen including Sing-box.
-    "enabled": 1,      // SKeen autostart on router reboot (0 = disabled)
-    "delay": 0         // Auto-start delay in seconds (default: 0)
+    "enabled": 1       // SKeen autostart on router reboot (0 = disabled)
   },
   "policy": {          //// Access policy configuration for the specified network segment.
     "enabled": 0,      // Enable routing based on segment policy (1 - enable, 0 - disable)
@@ -23,13 +22,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
   },
   "network": {         //// Network configuration
     "ipv6": 1,         // Enable IPv6 support (0 = disabled)
-    "tuning": 0,       // Enable sysctl network optimization (1 = on).
+    "tuning": 0        // Enable sysctl network optimization (1 = on).
                        // If disabled, sysctl settings reset after reboot.
-    "check": [
-      "1.1.1.1",
-      "77.88.8.8",
-      "223.5.5.5"
-    ]                  // Domains or IPs V4 for connectivity tests (max 3)
   },
   "singbox": {         //// Sing-box configuration
     "config": {        // + Configuration file path: /opt/etc/skeen/config.json
@@ -159,8 +153,6 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 </details>
 
 To reset the settings to their defaults, simply set `network.tuning` to `0` and reboot your router.
-
-**`network.check`** - specify only those IP addresses or domain names that are guaranteed to be reachable (pingable) in your network to ensure the script can verify the connection and start services successfully after a router reboot.
 
 **`firewall.intercept.fakeip`** - this feature relies on the sing-box DNS module, meaning it must be engaged via `firewall.intercept.dns` or `firewall.redirect_dns` and configured correctly (see examples in the `examples` folder). Everything flagged as FakeIP will always be routed through sing-box via Redirect and/or TProxy, while everything else will bypass it at the Linux kernel level. This can be highly beneficial if you primarily use domestic services and want to offload your aging mips(el) router, as FakeIP is meant to be used mainly for the foreign segment.
 

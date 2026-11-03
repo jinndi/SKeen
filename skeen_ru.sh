@@ -176,8 +176,7 @@ create_skeen_config() {
 // https://github.com/jinndi/SKeen/blob/main/docs/CONFIGURATION-RU.md
 {
   "auto_start": {
-    "enabled": 1,
-    "delay": 0
+    "enabled": 1
   },
   "policy": {
     "enabled": 0,
@@ -185,8 +184,7 @@ create_skeen_config() {
   },
   "network": {
     "ipv6": 1,
-    "tuning": 0,
-    "check": ["vk.com", "77.88.8.8", "223.5.5.5"]
+    "tuning": 0
   },
   "singbox": {
     "config": {
@@ -338,12 +336,9 @@ get_auto_start_config() {
   config_path="$(get_skeen_config_path)"
 
   [ -n "$config_path" ] && eval "$(
-    jsonfilter -i "$config_path" \
-      -e AUTO_START_ENABLED='@.auto_start.enabled' \
-      -e AUTO_START_DELAY='@.auto_start.delay'
+    jsonfilter -i "$config_path" -e AUTO_START_ENABLED='@.auto_start.enabled'
   )"
   : "${AUTO_START_ENABLED:=1}"
-  : "${AUTO_START_DELAY:=0}"
 }
 
 get_network_config() {
@@ -1188,64 +1183,6 @@ accept_uninstall() {
   show_menu
 }
 
-get_net_check_hosts() {
-  local ipv="${1:-}"
-  local hosts sys_hosts count result
-  local max="3"
-
-  if [ "$ipv" = "4" ]; then
-    sys_hosts="1.1.1.1 77.88.8.8 223.5.5.5"
-    hosts="$(json_get_array '@.network.check') $sys_hosts"
-  else
-    sys_hosts="2606:4700:4700::1111 2a02:6b8::feed:0ff 2400:3200::1"
-  fi
-
-  if [ -z "$hosts" ]; then
-    echo "$sys_hosts"
-  else
-    hosts="$(echo "$hosts" |
-      tr ',\t\n' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[[:space:]]\+/ /g')"
-
-    # shellcheck disable=SC2086
-    set -- $hosts
-
-    count=0
-    result=""
-
-    while [ $# -gt 0 ] && [ "$count" -lt "$max" ]; do
-      result="${result:+$result }$1"
-      count=$((count + 1))
-      shift
-    done
-
-    echo "$result"
-  fi
-}
-
-check_internet() {
-  local hosts host attempt
-  local max_attempts=3
-
-  hosts="$(get_net_check_hosts "4")"
-  max_attempts=3
-
-  for host in $hosts; do
-    attempt=1
-    while [ $attempt -le $max_attempts ]; do
-      if ping -c 1 "$host" >/dev/null 2>&1; then
-        logger_notice "Интернет доступен через ${host}"
-        return 0
-      else
-        logger_warning "Интернет недоступен (${host}), попытка ${attempt}/${max_attempts}..."
-      fi
-      attempt=$((attempt + 1))
-      sleep 10
-    done
-  done
-
-  logger_error "Интернет недоступен ни через один из проверенных хостов"
-}
-
 get_fw_mode_data() {
   local type="${1:-}"
   local has_opkgtun port network
@@ -1379,6 +1316,30 @@ get_iptables_list() {
   echo "$ipt_list"
 }
 
+wait_for_hotspot_prerouting_mangl_chain() {
+  local chain="_NDM_HOTSPOT_PREROUTING_MANGL" attempt=1 max_attempts=30
+
+  if iptables -w -t mangle -S "$chain" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  while [ "$attempt" -le "$max_attempts" ]; do
+    logger_notice "Ожидание HOTSPOT цепочки: $attempt из ${max_attempts}..."
+
+    if iptables -w -t mangle -S "$chain" >/dev/null 2>&1; then
+      logger_notice "Цепочка $chain найдена"
+      return 0
+    fi
+
+    [ "$attempt" -eq "$max_attempts" ] && break
+    sleep 1
+    attempt=$((attempt + 1))
+  done
+
+  local err_msg="Цепочка $chain не появилась за 30 проверок"
+  logger_error "$err_msg"; exiterr "$err_msg"
+}
+
 get_mark_policy() {
   local mark="" seg=""
 
@@ -1387,8 +1348,11 @@ get_mark_policy() {
     case "$seg" in
       br[0-9]|br[0-9][0-9])
         mark=$(iptables -t mangle -L -v -n | awk -v iface="$seg" '$0 ~ iface && /MARK set/ {print $NF}')
-        ;;
-      *) echowarn "Название сегмента должно начинаться с br + после до 2х цифр" >&2 ;;
+      ;;
+      *)
+        local err_msg="Название сегмента должно начинаться с br + после до 2х цифр"
+        logger_error "$err_msg"; echowarn "$err_msg" >&2;
+      ;;
     esac
   fi
 
@@ -1416,7 +1380,7 @@ check_and_set_route_rules() {
     local msg="Проверьте подключение к интернету"
     [ -n "$SKEEN_MARK_POLICY" ] && msg="$msg для сегмента ${SKEEN_POLICY_SEGMENT:-unknown}"
 
-    echoerr "$msg"; logger_warning "$msg"
+    echoerr "$msg"
 
     [ "$CALLER" = "netfilter" ] && exit 0
 
@@ -2046,6 +2010,8 @@ prepare_firewall() {
     SKEEN_FIREWALL_MODE="none"
   fi
 
+  [ "$SKEEN_FIREWALL_MODE" != "none" ] && wait_for_hotspot_prerouting_mangl_chain
+
   cyan " - Обнаружен режим фаервола: $SKEEN_FIREWALL_MODE $has_opkgtun"
 
   get_firewall_config
@@ -2284,8 +2250,6 @@ prepare_firewall() {
       echowarn "$SINGBOX_NAME DNS не настроен, опция intercept.fakeip не будет работать!"
     fi
   fi
-
-  [ -f "$FIREWALL_HOOK_FILE" ] && rm -f "$FIREWALL_HOOK_FILE"
 
   {
     echo "#!/bin/sh"
@@ -2691,33 +2655,20 @@ start_singbox() {
 start() {
   get_singbox_config
 
-  if [ "$CALLER" = "init" ] && get_service_api_config; then
-    [ "$SERVICE_API_AUTO_START" = "1" ] && [ -f "$SERVICE_API_SCRIPT" ] && "$SERVICE_API_SCRIPT" start || true
-  fi
-
-  if [ ! -f "$SINGBOX_BIN" ]; then
-    echoerr "$SINGBOX_NAME не найден, сначала установите его"
-    press_any_key_to_menu "" 1
-  fi
+  local no_sb_found_msg="$SINGBOX_NAME не найден, сначала установите его"
 
   if [ "$CALLER" = "init" ]; then
-    get_auto_start_config
-    if [ "$AUTO_START_ENABLED" = "0" ]; then
-      return 0
-    else
-      if [ "$AUTO_START_DELAY" -eq "$AUTO_START_DELAY" ] 2>/dev/null; then
-        sleep "$AUTO_START_DELAY"
-        check_internet
-      else
-        sleep 5
-        check_internet
-      fi
+    if get_service_api_config && [ "$SERVICE_API_AUTO_START" = "1" ]; then
+      [ -f "$SERVICE_API_SCRIPT" ] && "$SERVICE_API_SCRIPT" start || true
     fi
-  fi
-
-  if is_running; then
-    echook "$SINGBOX_NAME уже запущен"
-    return 0
+    get_auto_start_config
+    if [ "$AUTO_START_ENABLED" != "1" ]; then
+      return 0
+    fi
+  elif [ ! -f "$SINGBOX_BIN" ]; then
+    echoerr "$no_sb_found_msg";  press_any_key_to_menu "" 1
+  elif is_running; then
+    echook "$SINGBOX_NAME уже запущен"; return 0
   fi
 
   check_config && echo "$DELIMETER"
@@ -2725,11 +2676,15 @@ start() {
   create_skeen_group
   [ $? -eq 2 ] && echo "$DELIMETER"
 
+  if [ ! -f "$SINGBOX_BIN" ]; then
+    logger_error "$no_sb_found_msg";
+  else
+    start_singbox || press_any_key_to_menu "" 1
+  fi
+
   apply_sysctl_network_tuning
 
-  prepare_firewall && echo "$DELIMETER"
-
-  start_singbox || press_any_key_to_menu "" 1
+  echo "$DELIMETER" && prepare_firewall
 
   [ "$SKEEN_FIREWALL_MODE" != "none" ] && echo "$DELIMETER" && apply_firewall
 
@@ -3575,9 +3530,7 @@ check_skeen_config() {
     echook "$SKEEN_NAME JSON корректен"
   else
     local err_msg="$SKEEN_NAME конфигурация не корректна"
-    echoerr "$err_msg"
-    [ "$CALLER" != "menu" ] && logger_error "$err_msg"
-    exit 0
+    echoerr "$err_msg"; logger_error "$err_msg"
   fi
 }
 
@@ -3591,9 +3544,10 @@ check_singbox_config() {
       echook "Конфигурация $SINGBOX_NAME корректна"
     else
       local err_msg="$SINGBOX_NAME конфигурация не корректна"
-      echoerr "$err_msg"
-      [ "$CALLER" != "menu" ] && logger_error "$err_msg"
-      press_any_key_to_menu "" "1"
+      logger_error "$err_msg"
+      if [ "$CALLER" != "init" ]; then
+        echoerr "$err_msg"; press_any_key_to_menu "" "1"
+      fi
     fi
   fi
 }
