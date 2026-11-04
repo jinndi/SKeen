@@ -235,7 +235,7 @@ For personal use, if you don't need traffic usage monitoring, it's better to ski
 
 If you need a web interface, consider [S-UI](https://github.com/alireza0/s-ui).
 
-For commercial use, consider [Nexora](https://docs.nexora-panel.org/use/).
+For commercial use, consider [NX](https://docs.nx-panel.org/start/).
 
 Xray-based panels are not the best choice, especially if you need a modern, flexible stack with broad client compatibility. Mihomo-based panels are even less suitable for server-side use: Mihomo is primarily designed for proxy clients, not for managing server infrastructure.
 </details>
@@ -268,4 +268,11 @@ Change your IP address or proxy provider, or use [edgetunnel](../examples/server
 Starting with version 5.11.0, the `auto_start.delay` setting is no longer configurable, and the ping-based connectivity check (`network.check`) is no longer performed. At startup, SKeen starts sing-box first, then waits for Keenetic's system chain `_NDM_HOTSPOT_PREROUTING_MANGL` to appear (up to 30 checks, about one second apart) and applies the redirect rules. Once the system chain is ready, the SKeen rules are created or restored by the hook in just a few milliseconds. If sing-box crashes, the redirect rules remain active and continue sending traffic to its port. With the process stopped, however, those connections cannot be handled and fail; they do not automatically fall back to a direct internet route. If Keenetic (NDM) recreates its system chains, it invokes the SKeen firewall hook, which reapplies the redirect rules.
 
 An additional kill switch does not solve the NDM chain-recreation issue: its rules would also need to be reinstalled through a hook, or NDM could flush them. The SKeen hook already restores redirection as soon as the system chain is ready. A separate blocking rule would complicate the code without removing the NDM wait. Avoiding unnecessary logic helps keep SKeen lightweight and stable.
+</details>
+
+<details>
+  <summary>19. Keenetic wireless network access control?</summary>
+<br>
+
+SKeen is not intended to impose access restrictions; its purpose is not to limit users or devices. In addition, Keenetic's access control relies on MAC addresses, which can be spoofed, for example by using the address of a device on the allowlist. Integrating this feature would therefore make the project more complex without providing reliable protection.
 </details>
