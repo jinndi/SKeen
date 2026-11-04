@@ -133,6 +133,7 @@ The server incorporates strict system-level limits to protect router memory and 
 1. **Maximum Request Body Size (`Content-Length`)**: **1 MB** (`1024 * 1024` bytes). Any attempt to transmit a payload exceeding this size causes the server to immediately reject the request with HTTP status `413 Payload Too Large`.
 
 2. **Header Slowloris Protection**: A limit of **50 header lines** per connection is enforced. Exceeding this limit immediately closes the request with status `431 Request Header Fields Too Large`.
+3. **Request rate limiting**: The limit depends on authorization. Authorized clients (valid `X-API-Key`) get **100 requests in any rolling minute** (a 60-second sliding window, counter updated per request); unauthorized clients get **5 requests in any rolling minute**. Applies to all `/api/*` paths. Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header. CORS `OPTIONS` preflight requests are excluded.
 
 ### API Key (X-API-Key)
 
@@ -497,5 +498,6 @@ curl -X POST http://192.168.1.1:3000/api/exec \
 | `401` | **Unauthorized** | Missing or invalid `X-API-Key` header. |
 | `404` | **Not Found** | Route does not exist or Dashboard is disabled. |
 | `413` | **Payload Too Large** | Request body size exceeds the **1 MB** limit. |
+| `429` | **Too Many Requests** | Rate limit exceeded. See the `Retry-After` header. |
 | `431` | **Request Header Fields Too Large** | Number of header lines exceeds the **50 line** limit (Slowloris mitigation). |
 | `500` | **Internal Server Error** | Disk write error. |

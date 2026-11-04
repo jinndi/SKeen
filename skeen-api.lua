@@ -5,7 +5,7 @@ local socket = require("socket")
 -------------------------------------------------------------------------------
 -- 0. VERSION AND COMMAND LINE ARGUMENT (CLI) HANDLING
 -------------------------------------------------------------------------------
-local VERSION = "1.2.2"
+local VERSION = "1.2.3"
 local SCRIPT = "/opt/bin/skeen-api"
 local LUA_BIN = "/opt/bin/lua"
 local PID_FILE = "/tmp/run/skeen-api.pid"
@@ -343,6 +343,7 @@ local EMBEDDED_HTML = [==[__HTML_PLACEHOLDER__]==]
 local SCRIPT_PATH = arg[0]
 local SCRIPT_DIR = SCRIPT_PATH:match("^(.*)/[^/]+$") or "."
 
+-- Return the dashboard HTML, reading from disk in dev mode or using the embedded template
 local function get_dashboard_html()
   local f = io.open(SCRIPT_DIR .. "/index.html", "r")
   if f then
@@ -383,6 +384,7 @@ local function is_valid_sync_url(value)
   return true
 end
 
+-- Validate that a CLI parameter is on the allowlist and contains no shell metacharacters
 local function is_allowed_param(param)
   if not param or type(param) ~= "string" then return false end
   local exact_allowed = {
@@ -835,6 +837,7 @@ end
 -- Cache for CPU delta calculation
 local cpu_cache = { total = 0, idle = 0 }
 
+-- Read the current CPU load from /proc/loadavg
 local function get_cpuload()
   local f = io.open("/proc/stat", "r")
   if not f then return 0 end
@@ -885,6 +888,7 @@ end
 -- Cache for network RX/TX speed calculation
 local net_cache = { time = 0, rx = 0, tx = 0 }
 
+-- Read RX/TX byte counters for a network interface
 local function get_rtx_speed(iface)
   iface = iface or "br0"
 
@@ -1026,6 +1030,7 @@ end
 -- Cache for SKeen status to reduce router CPU load during frequent requests
 local skeen_status_cache = { data = nil, expire = 0 }
 
+-- Return cached SKeen service status, refreshing when stale
 local function get_cached_skeen_status()
   local now = os.time()
   if skeen_status_cache.data and now < skeen_status_cache.expire then
@@ -1045,6 +1050,7 @@ end
 -- Cache for System status to reduce router CPU load during frequent requests
 local system_status_cache = { data = nil, expire = 0 }
 
+-- Return cached system status, refreshing when stale
 local function get_cached_system_status()
   local now = os.time()
   if system_status_cache.data and now < system_status_cache.expire then
@@ -1078,7 +1084,7 @@ local function get_cached_system_status()
   return sys_st
 end
 
--- Load the configuration of the API server itself (port, secret key, CORS)
+-- Load the configuration of the API server itself (port, secret key, CORS, and rate limit)
 local function load_api_config()
   local cmd = get_skeen_cmd("get_api_config 2>&1")
   local handle = io.popen(cmd)
@@ -1136,6 +1142,18 @@ local DASHBOARD = (api_config.dashboard == 1)
 
 local MAX_BODY_SIZE = 1024 * 1024 -- Hard limit for incoming HTTP request body size: 1 MB
 local MAX_HEADERS_COUNT = 50      -- Maximum allowed number of header lines
+-- Rate limits: 100 req/min for authorized clients, 5 req/min for unauthorized ones
+local RATE_LIMIT_AUTH = 100
+local RATE_LIMIT_UNAUTH = 5
+local RATE_LIMIT_WINDOW = 60
+
+-- Create a new rate limiter bucket with the given per-minute limit
+local function new_limiter(limit)
+  return { limit = limit, window = RATE_LIMIT_WINDOW, reqs = {}, head = 1, tail = 0 }
+end
+
+local rate_limit_auth = new_limiter(RATE_LIMIT_AUTH)
+local rate_limit_unauth = new_limiter(RATE_LIMIT_UNAUTH)
 
 -- Preliminary check: whether the port is already occupied by another process
 local check_cmd = string.format("netstat -tuln 2>/dev/null | grep -q ':%d'", PORT)
@@ -1148,10 +1166,64 @@ end
 local server = assert(socket.bind("0.0.0.0", PORT))
 print("API server started on port " .. PORT)
 
+-- Encode data as JSON and return body, status and content type
 local function json_response(data, status)
   return json.encode(data), status or "200 OK", "application/json"
 end
 
+-- Send a fully formed HTTP response, optionally including Retry-After header
+local function send_http_response(client, response_body, status, content_type, current_cors, retry_after)
+  client:send("HTTP/1.1 " .. status .. "\r\n")
+  if current_cors ~= "" then
+    client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
+    client:send("Vary: Origin\r\n")
+  end
+  client:send("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
+  client:send("Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n")
+  client:send("X-Content-Type-Options: nosniff\r\n")
+  client:send("X-Frame-Options: SAMEORIGIN\r\n")
+  client:send("Content-Type: " .. content_type .. "\r\n")
+  client:send("Cache-Control: no-store, no-cache, must-revalidate\r\n")
+  client:send("Content-Length: " .. string.len(response_body) .. "\r\n")
+  if retry_after then
+    client:send("Retry-After: " .. retry_after .. "\r\n")
+    client:send("Access-Control-Expose-Headers: Retry-After\r\n")
+  end
+  client:send("Connection: close\r\n\r\n")
+  client:send(response_body)
+end
+
+-- Consume one request from the given limiter bucket; returns false and retry-after when exceeded
+local function consume_rate_limit(limiter, now)
+  local reqs = limiter.reqs
+  while limiter.head <= limiter.tail and
+      reqs[limiter.head] <= now - limiter.window do
+    reqs[limiter.head] = nil
+    limiter.head = limiter.head + 1
+  end
+
+  local request_count = limiter.tail - limiter.head + 1
+  if request_count >= limiter.limit then
+    return false, math.max(1, reqs[limiter.head] + limiter.window - now)
+  end
+
+  limiter.tail = limiter.tail + 1
+  reqs[limiter.tail] = now
+
+  if limiter.head > limiter.limit then
+    local active_requests = {}
+    for index = limiter.head, limiter.tail do
+      active_requests[#active_requests + 1] = reqs[index]
+    end
+    limiter.reqs = active_requests
+    limiter.head = 1
+    limiter.tail = #active_requests
+  end
+
+  return true
+end
+
+-- Handle file read/write API requests
 local function handle_file_request(method, path, body)
   if method == "GET" then
     local file_key = path:match("[?&]name=([^&]+)") or "skeen"
@@ -1198,6 +1270,7 @@ local function handle_file_request(method, path, body)
   return json_response({ error = "Failed to write file" }, "500 Internal Server Error")
 end
 
+-- Handle command execution API requests
 local function handle_exec_request(body)
   local success, req_json = pcall(json.decode, body)
   local param = ""
@@ -1267,6 +1340,7 @@ local function handle_exec_request(body)
   return json_response(response_data)
 end
 
+-- Route an incoming HTTP request to the appropriate handler
 local function route_request(method, path, body)
   if path == "/" then
     if DASHBOARD then
@@ -1332,22 +1406,6 @@ local function handle_client(client)
     if key then headers[key:lower()] = value end
   end
 
-  -- Read the request body (if present) with a preliminary hard size limit check
-  local body = ""
-  local content_length = tonumber(headers["content-length"] or 0)
-  if content_length > 0 then
-    if content_length > MAX_BODY_SIZE then
-      client:send("HTTP/1.1 413 Payload Too Large\r\nConnection: close\r\n\r\n")
-      return
-    end
-
-    body = client:receive(content_length)
-    if not body or #body < content_length then
-      client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
-      return
-    end
-  end
-
   -- Handle CORS policies based on the Origin header
   local req_origin = headers["origin"]
   local current_cors = get_matched_cors(req_origin, api_config.cors_origin)
@@ -1367,6 +1425,38 @@ local function handle_client(client)
     return
   end
 
+  -- Apply a separate rolling rate limit depending on authorization status
+  if path:find("^/api/") then
+    local is_authorized = true
+    if SECRET ~= "" then
+      is_authorized = headers["x-api-key"] == SECRET
+    end
+    local limiter = is_authorized and rate_limit_auth or rate_limit_unauth
+    local allowed, retry_after = consume_rate_limit(limiter, os.time())
+    if not allowed then
+      local response_body, status, content_type =
+        json_response({ error = "Too many requests" }, "429 Too Many Requests")
+      send_http_response(client, response_body, status, content_type, current_cors, retry_after)
+      return
+    end
+  end
+
+  -- Read the request body (if present) with a preliminary hard size limit check
+  local body = ""
+  local content_length = tonumber(headers["content-length"] or 0)
+  if content_length > 0 then
+    if content_length > MAX_BODY_SIZE then
+      client:send("HTTP/1.1 413 Payload Too Large\r\nConnection: close\r\n\r\n")
+      return
+    end
+
+    body = client:receive(content_length)
+    if not body or #body < content_length then
+      client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
+      return
+    end
+  end
+
   local response_body, status, content_type
   local authorized = true
 
@@ -1382,21 +1472,7 @@ local function handle_client(client)
       json_response({ error = "Unauthorized: Invalid or missing API key" }, "401 Unauthorized")
   end
 
-  -- Form and send the HTTP response to the client
-  client:send("HTTP/1.1 " .. status .. "\r\n")
-  if current_cors ~= "" then
-    client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
-    client:send("Vary: Origin\r\n")
-  end
-  client:send("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
-  client:send("Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n")
-  client:send("X-Content-Type-Options: nosniff\r\n")
-  client:send("X-Frame-Options: SAMEORIGIN\r\n")
-  client:send("Content-Type: " .. content_type .. "\r\n")
-  client:send("Cache-Control: no-store, no-cache, must-revalidate\r\n")
-  client:send("Content-Length: " .. string.len(response_body) .. "\r\n")
-  client:send("Connection: close\r\n\r\n")
-  client:send(response_body)
+  send_http_response(client, response_body, status, content_type, current_cors)
 end
 
 -- Infinite main server loop to accept incoming connections
