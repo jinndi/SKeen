@@ -2409,6 +2409,7 @@ clean_firewall() {
     return 0
   fi
 
+  echo "$DELIMETER"
   echomsg "Очистка правил фаервола..."
 
   clean_chain() {
@@ -2671,20 +2672,25 @@ start() {
 
   check_config && echo "$DELIMETER"
 
+  apply_sysctl_network_tuning
+
+  prepare_firewall
+
+  [ "$SKEEN_FIREWALL_MODE" != "none" ] && echo "$DELIMETER" && apply_firewall
+
   create_skeen_group
   [ $? -eq 2 ] && echo "$DELIMETER"
 
   if [ ! -f "$SINGBOX_BIN" ]; then
     logger_error "$no_sb_found_msg";
   else
-    start_singbox || { [ "$CALLER" != "init" ] && press_any_key_to_menu 1; }
+    echo "$DELIMETER"
+    start_singbox || {
+      if [ "$CALLER" != "init" ]; then
+        clean_firewall; press_any_key_to_menu 1
+      fi
+    }
   fi
-
-  apply_sysctl_network_tuning
-
-  echo "$DELIMETER" && prepare_firewall
-
-  [ "$SKEEN_FIREWALL_MODE" != "none" ] && echo "$DELIMETER" && apply_firewall
 
   return 0
 }
