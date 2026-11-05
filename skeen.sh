@@ -1050,10 +1050,14 @@ download_skeen_script() {
 }
 
 press_any_key_to_menu() {
-  local action="${1:-}"
-  local exit_code="${2:-0}"
+  local exit_code="${1:-0}"
+  local action="${2:-}"
 
-  [ "$CALLER" != "menu" ] && exit "$exit_code"
+  if [ "$CALLER" = "init" ] || [ "$CALLER" = "netfilter" ]; then
+    exit 0
+  elif [ "$CALLER" != "menu" ]; then
+    exit "$exit_code"
+  fi
 
   echo "$DELIMETER"
 
@@ -1229,9 +1233,8 @@ check_port() {
   if [ -n "$port" ]; then
     if netstat -lnt 2>/dev/null | grep -q ":$port\s"; then
       msg_err="Port $port is in use. Free it and try running again"
-      echoerr "$msg_err"
-      logger_error "$msg_err"
-      press_any_key_to_menu "" 1
+      echoerr "$msg_err"; logger_error "$msg_err"
+      press_any_key_to_menu 1
     fi
   fi
 
@@ -1279,10 +1282,8 @@ loading_modules() {
 
   for module in $modules; do
     if ! load_module "$module"; then
-      echoerr "$err_msg"
-      logger_error "$err_msg"
-      press_any_key_to_menu "" 1
-      return 1
+      echoerr "$err_msg"; logger_error "$err_msg"
+      press_any_key_to_menu 1
     fi
   done
 }
@@ -1382,9 +1383,7 @@ check_and_set_route_rules() {
 
     echoerr "$msg"
 
-    [ "$CALLER" = "netfilter" ] && exit 0
-
-    press_any_key_to_menu "" 1; return 1
+    press_any_key_to_menu 1
   fi
 
   case "$SKEEN_FIREWALL_MODE" in
@@ -1395,12 +1394,12 @@ check_and_set_route_rules() {
   ip -"$IP_VERSION" rule add fwmark "$TABLE_MARK" lookup "$TABLE_ID" pref "$TABLE_ID" || {
     msg="Failed to add IP rule for family $IP_VERSION"
     echoerr "$msg"; logger_error "$msg"
-    press_any_key_to_menu "" 1; return 1
+    press_any_key_to_menu 1
   }
   ip -"$IP_VERSION" route replace local default dev lo table "$TABLE_ID" || {
     msg="Failed to replace local route in table $TABLE_ID"
     echoerr "$msg"; logger_error "$msg"
-    press_any_key_to_menu "" 1; return 1
+    press_any_key_to_menu 1
   }
 }
 
@@ -1481,8 +1480,7 @@ get_validate_ports() {
 
   if [ -n "$invalid_ports" ]; then
     local msg="Invalid $label port(s): $invalid_ports"
-    logger_warning "$msg"
-    is_tty && echowarn "$msg" >&2
+    logger_warning "$msg"; is_tty && echowarn "$msg" >&2
   fi
 
   printf '%s' "$valid_ports"
@@ -2024,8 +2022,9 @@ prepare_firewall() {
     local msg_dns_detect=" - Detected DNS configuration:"
     if [ "$FIREWALL_REDIRECT_DNS_ENABLED" = "1" ]; then
       if [ -z "$FIREWALL_REDIRECT_DNS_PORT" ]; then
-        echoerr "DNS redirect enabled, but port is missing in $SKEEN_NAME config"
-        press_any_key_to_menu "" 1
+        local msg_err="DNS redirect enabled, but port is missing in $SKEEN_NAME config"
+        echoerr "$msg_err"; logger_error "$msg_err"
+        press_any_key_to_menu 1
       fi
       check_port "$FIREWALL_REDIRECT_DNS_PORT"
       SKEEN_REDIRECT_DNS_ENABLED="1"
@@ -2125,8 +2124,9 @@ prepare_firewall() {
   SKEEN_IPTABLES_LIST="$(get_iptables_list)"
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
-    echoerr "No supported iptables found for the firewall mode?"
-    press_any_key_to_menu "" 1
+    local msg_err="No supported iptables found"
+    echoerr "$msg_err"; logger_error "$msg_err"
+    press_any_key_to_menu 1
   fi
 
   setup_port_set() {
@@ -2315,10 +2315,9 @@ apply_firewall() {
 
   check=$(echo "$SKEEN_IPTABLES_LIST" | sed 's/iptables//g; s/ip6tables//g; s/ //g')
   if [ -n "$check" ] || [ -z "$SKEEN_IPTABLES_LIST" ]; then
-    local msg_err="Неизвестный iptables: ${iptables:-unknown}"
-    logger_error "$msg_err"
-    echoerr "$msg_err"
-    press_any_key_to_menu "" 1
+    local msg_err="Unknown iptables: ${iptables:-unknown}"
+    logger_error "$msg_err"; echoerr "$msg_err"
+    press_any_key_to_menu 1
   fi
 
   if [ "$SKEEN_FIREWALL_MODE" != "none" ] || [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
@@ -2647,8 +2646,7 @@ start_singbox() {
 
   [ -s "$SINGBOX_PID_FILE" ] && renice -3 -p "$(cat "$SINGBOX_PID_FILE")" >/dev/null 2>&1
 
-  echook "$SINGBOX_NAME started"
-  logger_notice "$SINGBOX_NAME started"
+  echook "$SINGBOX_NAME started"; logger_notice "$SINGBOX_NAME started"
   return 0
 }
 
@@ -2666,7 +2664,7 @@ start() {
       return 0
     fi
   elif [ ! -f "$SINGBOX_BIN" ]; then
-    echoerr "$no_sb_found_msg"; press_any_key_to_menu "" 1
+    echoerr "$no_sb_found_msg"; press_any_key_to_menu 1
   elif is_running; then
     echook "$SINGBOX_NAME already started"; return 0
   fi
@@ -2679,7 +2677,7 @@ start() {
   if [ ! -f "$SINGBOX_BIN" ]; then
     logger_error "$no_sb_found_msg";
   else
-    start_singbox || press_any_key_to_menu "" 1
+    start_singbox || { [ "$CALLER" != "init" ] && press_any_key_to_menu 1; }
   fi
 
   apply_sysctl_network_tuning
@@ -2780,8 +2778,8 @@ switch_state() {
 
 restart() {
   on_restart=1
-  stop || press_any_key_to_menu "" 1
-  start || press_any_key_to_menu "" 1
+  stop || press_any_key_to_menu 1
+  start || press_any_key_to_menu 1
   on_restart=0
   press_any_key_to_menu
 }
@@ -3128,10 +3126,10 @@ check_should_run(){
   fi
   if [ "$should_run" = "1" ]; then
     if ! is_running; then
-      start || press_any_key_to_menu "" 1
+      start || press_any_key_to_menu 1
       sleep 2
     fi
-  elif is_running; then stop || press_any_key_to_menu "" 1; fi
+  elif is_running; then stop || press_any_key_to_menu 1; fi
 }
 
 ask_and_update() {
@@ -3188,7 +3186,7 @@ check_updates() {
   get_update_config
   if [ "$UPDATE_SINGBOX_ENABLED" != "1" ] && [ "$UPDATE_SKEEN_ENABLED" != "1" ]; then
     echowarn "Updates are disabled in the ${SKEEN_NAME} configuration!"
-    press_any_key_to_menu "" 1
+    press_any_key_to_menu 1
   fi
 
   # sing-box
@@ -3218,8 +3216,7 @@ check_updates() {
   if [ "$is_update_skeen" -eq 1 ]; then
     exec sh "$SKEEN_SCRIPT" deps menu
   else
-    [ "$CALLER" != "menu" ] && exit 0
-    press_any_key_to_menu reload
+    press_any_key_to_menu "" reload
   fi
 }
 
@@ -3327,12 +3324,12 @@ test_firewall() {
 
   if ! is_running; then
     echoerr "Testing are available only when $SKEEN_NAME is started"
-    press_any_key_to_menu "" 1
+    press_any_key_to_menu 1
   else
     if [ ! -f "$FIREWALL_HOOK_FILE" ]; then
       echoerr "The file at path $FIREWALL_HOOK_FILE is missing!"
       echomsg "Please reboot $SINGBOX_NAME"
-      press_any_key_to_menu "" 1
+      press_any_key_to_menu 1
     fi
 
     import_firewall_vars
@@ -3349,12 +3346,12 @@ test_firewall() {
   elif [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]; then
     echowarn "Testing is available in tun, redirect, tproxy, and hybrid modes"
     echowarn "Also, with the specified DNS redirect parameters"
-    press_any_key_to_menu "" 1
+    press_any_key_to_menu 1
   fi
 
   if [ -z "$SKEEN_IPTABLES_LIST" ]; then
     echoerr "iptables utility is not installed"
-    press_any_key_to_menu "" 1
+    press_any_key_to_menu 1
   fi
 
   if [ "$SKEEN_FIREWALL_MODE" = "tun" ]; then
@@ -3555,7 +3552,7 @@ check_singbox_config() {
       local err_msg="$SINGBOX_NAME configuration is invalid"
       logger_error "$err_msg"
       if [ "$CALLER" != "init" ]; then
-        echoerr "$err_msg"; press_any_key_to_menu "" "1"
+        echoerr "$err_msg"; press_any_key_to_menu 1
       fi
     fi
   fi
