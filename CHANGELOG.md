@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.11.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.11.0...SKeen-v5.11.1) (2026-11-05)
+
+
+### 🐛 Fix
+
+* standardize error handling and parameter order ([9203db0](https://github.com/jinndi/SKeen/commit/9203db0c71696efe4c336a08624f0b9b480baef0))
+
+
+### 🛠 Refactor
+
+* **shell:** reorder startup sequence and improve error cleanup ([ff3dffb](https://github.com/jinndi/SKeen/commit/ff3dffb8a3763840c0889fe9ed9d3adae6311c51))
+
 ## [5.11.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.10.0...SKeen-v5.11.0) (2026-11-03)
 
 
