@@ -124,7 +124,7 @@
       { "network": "icmp", "action": "resolve" },
       { "network": "icmp", "action": "bypass", "outbound": "🔌 DIRECT" },
       { "action": "sniff", "timeout": "500ms" },
-      { "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
       { "ip_version": 6, "action": "reject" },
       { "port": [ 853, 5353 ], "action": "reject" },
       { "rule_set": "ipdetect", "action": "reject" },
