@@ -32,7 +32,7 @@ readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:18
 readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.11.1"
+readonly SKEEN_VERSION="5.11.2"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="${RUN_DIR}/${SKEEN_PROC}.sh"
@@ -2676,7 +2676,9 @@ start() {
 
   prepare_firewall
 
-  [ "$SKEEN_FIREWALL_MODE" != "none" ] && echo "$DELIMETER" && apply_firewall
+  if [ "$SKEEN_FIREWALL_MODE" != "none" ] && [ "$CALLER" != "init" ]; then
+    echo "$DELIMETER" && apply_firewall
+  fi
 
   create_skeen_group
   [ $? -eq 2 ] && echo "$DELIMETER"
