@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.11.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.11.1...SKeen-v5.11.2) (2026-11-06)
+
+
+### 🐛 Fix
+
+* **autostart:** skip firewall application during initialization ([87d396d](https://github.com/jinndi/SKeen/commit/87d396d78869ed717486cabc19c1ada5dc8475bb))
+
 ## [5.11.1](https://github.com/jinndi/SKeen/compare/SKeen-v5.11.0...SKeen-v5.11.1) (2026-11-05)
 
 
