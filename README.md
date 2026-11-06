@@ -101,6 +101,8 @@ Manage SKeen using the `skeen` command.
     └── skeen-api.pid          # PID file of the skeen-api process
 ```
 
+It is **recommended** to set up a router [reboot schedule](https://support.keenetic.com/peak/kn-2710/en/22354-rebooting-a-router-on-schedule.html) at least once a day.
+
 ### Web Panels
 
 **To manage SKeen** locally or remotely starting with version 5.9.0, you can use the web dashboard at https://skeen.indevs.in or the built-in one; for detailed configuration instructions, read [docs/SKEEN-API.md](./docs/SKEEN-API.md).

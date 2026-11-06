@@ -99,6 +99,8 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
     └── skeen-api.pid           # PID-файл skeen-api процесса
 ```
 
+**Рекомендуется** настроить [расписание перезагрузки](https://support.netcraze.ru/4g/nc-1213/ru/22354-rebooting-a-router-on-schedule.html) роутера минимум один раз в день.
+
 ### Веб-панели
 
 **Для управления SKeen** в локальной сети и удаленно начиная с версии 5.9.0  можно использовать веб-панель https://skeen.indevs.in либо встроенную, подробнее читайте настройку в [docs/SKEEN-API-RU.md](./docs/SKEEN-API-RU.md).
