@@ -1,0 +1,1 @@
+If this project doesn't reach at least **100 stars** by December 1st, the repository will go private and continue development solely for personal use. For me, this is the main indicator that the project is actually providing value to people.
