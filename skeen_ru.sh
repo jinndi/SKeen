@@ -2486,117 +2486,88 @@ clean_firewall() {
 }
 
 apply_sysctl_network_tuning() {
-  get_connection_tracking() {
-    local is_tuning="${1:-}"
-    local mem_mb ct_max
+  _get_ct_max() {
+    local mem_mb
     mem_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
-
-    if [ "$mem_mb" -le 128 ]; then
-      ct_max=8192
-    elif [ "$mem_mb" -le 256 ]; then
-      ct_max=16384
-    elif [ "$mem_mb" -le 512 ]; then
-      ct_max=32768
-    else
-      ct_max=65536
-    fi
-
-    if [ -n "$is_tuning" ] && [ "$is_tuning" != "0" ]; then
-      ct_max=$(( (ct_max * 15) / 10 ))
-    fi
-
-    echo "$ct_max"
+    local ct=65536
+    [ "$mem_mb" -le 128 ] && ct=8192 || \
+    [ "$mem_mb" -le 256 ] && ct=16384 || \
+    [ "$mem_mb" -le 512 ] && ct=32768
+    [ "${1:-}" ] && ct=$((ct * 15 / 10))
+    echo "$ct"
   }
 
-  {
-    local ct_max
+  get_network_config
+  local ct_max_base ct_max_tuned
+  ct_max_base="$(_get_ct_max)"
+  ct_max_tuned="$([ "$NETWORK_TUNING" = "1" ] && _get_ct_max "1" || echo "$ct_max_base")"
 
-    # TProxy/TUN (needed for TUN/TProxy)
-    sysctl -w net.ipv4.ip_forward=1               # Enable IPv4 routing
-    sysctl -w net.ipv4.conf.all.src_valid_mark=0  # Accept TProxy marked packets
-    sysctl -w net.ipv4.conf.all.rp_filter=0       # Disable reverse path filtering
-    sysctl -w net.ipv4.conf.default.rp_filter=0   # same for new interfaces
-    sysctl -w net.ipv4.conf.all.route_localnet=1  # Allow TPROXY to route packets via 127.0.0.1
-    sysctl -w net.ipv4.conf.lo.route_localnet=1   # Allow lo local routing (TProxy)
-    sysctl -w net.ipv4.ip_nonlocal_bind=1         # Allow processes to bind to any IP
+  # TProxy/TUN (needed for TUN/TProxy)
+  sysctl -q -w \
+    net.ipv4.ip_forward=1 \
+    net.ipv4.conf.all.src_valid_mark=0 \
+    net.ipv4.conf.all.rp_filter=0 \
+    net.ipv4.conf.default.rp_filter=0 \
+    net.ipv4.conf.all.route_localnet=1 \
+    net.ipv4.conf.lo.route_localnet=1 \
+    net.ipv4.ip_nonlocal_bind=1 \
+    net.netfilter.nf_conntrack_max="$ct_max_base"
 
-    # Max tracked connections
-    ct_max="$(get_connection_tracking)"
-    sysctl -w net.netfilter.nf_conntrack_max="$ct_max"
-
-    get_network_config
-
-    # IPv6 support
-    if [ -f /proc/net/if_inet6 ]; then
-      if [ "$NETWORK_IPV6" = "0" ]; then
-        sysctl -w net.ipv6.conf.all.disable_ipv6=1
-        sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-        for iface_path in /sys/class/net/lo /sys/class/net/t2s* /sys/class/net/ezcfg0; do
-          [ -e "$iface_path" ] || continue
-          sysctl -w net.ipv6.conf."${iface_path##*/}".disable_ipv6=0
-        done
-      else
-        sysctl -w net.ipv6.conf.all.disable_ipv6=0
-        sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-        # Forwarding
-        sysctl -w net.ipv6.conf.all.forwarding=1
-        sysctl -w net.ipv6.conf.default.forwarding=1
-      fi
+  # IPv6 support
+  if [ -f /proc/net/if_inet6 ]; then
+    if [ "$NETWORK_IPV6" = "0" ]; then
+      sysctl -q -w net.ipv6.conf.all.disable_ipv6=1 net.ipv6.conf.default.disable_ipv6=1
+      for iface in /sys/class/net/lo /sys/class/net/t2s* /sys/class/net/ezcfg0; do
+        [ -e "$iface" ] && sysctl -q -w "net.ipv6.conf.${iface##*/}.disable_ipv6=0"
+      done
+    else
+      sysctl -q -w net.ipv6.conf.all.disable_ipv6=0 net.ipv6.conf.default.disable_ipv6=0 \
+        net.ipv6.conf.all.forwarding=1 net.ipv6.conf.default.forwarding=1
     fi
+  fi
 
-    [ "$NETWORK_TUNING" != "1" ] && return 0
+  [ "$NETWORK_TUNING" = "1" ] || return 0
 
-    # Interface Queues
-    sysctl -w net.core.netdev_max_backlog=2000 # Max packets queued on interface
-    sysctl -w net.core.somaxconn=512           # Max pending TCP connections
+  # Interface Queues & Keep Alive & Latency / TCP Behavior
+  sysctl -q -w \
+    net.core.netdev_max_backlog=2000 \
+    net.core.somaxconn=512 \
+    net.ipv4.tcp_keepalive_time=60 \
+    net.ipv4.tcp_keepalive_probes=6 \
+    net.ipv4.tcp_keepalive_intvl=10 \
+    net.netfilter.nf_conntrack_max="$ct_max_tuned" \
+    net.netfilter.nf_conntrack_tcp_timeout_established=1800 \
+    net.netfilter.nf_conntrack_udp_timeout=60 \
+    net.netfilter.nf_conntrack_udp_timeout_stream=180 \
+    net.netfilter.nf_conntrack_checksum=0 \
+    net.ipv4.tcp_fastopen=3 \
+    net.ipv4.tcp_mtu_probing=1 \
+    net.ipv4.tcp_slow_start_after_idle=0 \
+    net.ipv4.tcp_sack=1 \
+    net.ipv4.tcp_syncookies=1 \
+    net.ipv4.tcp_tw_reuse=1 \
+    net.ipv4.tcp_fin_timeout=15 \
+    net.ipv4.tcp_timestamps=1 \
+    net.ipv4.tcp_max_syn_backlog=512 \
+    net.ipv4.tcp_max_tw_buckets=8192 \
+    net.ipv4.ip_local_port_range="10000 60001"
 
-    # Keep Alive
-    sysctl -w net.ipv4.tcp_keepalive_time=60   # TCP keepalive interval
-    sysctl -w net.ipv4.tcp_keepalive_probes=6  # Keepalive probes count
-    sysctl -w net.ipv4.tcp_keepalive_intvl=10  # Keepalive interval between probes
-
-    ct_max="$(get_connection_tracking "1")"
-
-    sysctl -w net.netfilter.nf_conntrack_max="$ct_max"                # Max tracked connections
-    sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=1800 # TCP established timeout
-    sysctl -w net.netfilter.nf_conntrack_udp_timeout=60               # UDP timeout without data
-    sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=180       # UDP timeout with data
-    sysctl -w net.netfilter.nf_conntrack_checksum=0                   # Disable checksum validation
-
-    # Latency / TCP Behavior
-    sysctl -w net.ipv4.tcp_fastopen=3      # Enable TCP Fast Open
-    sysctl -w net.ipv4.tcp_mtu_probing=1   # Enable TCP MTU probing
-    sysctl -w net.ipv4.tcp_slow_start_after_idle=0  # keep TCP speed after idle
-    sysctl -w net.ipv4.tcp_sack=1          # Enable selective ACKs
-    sysctl -w net.ipv4.tcp_syncookies=1    # Enable SYN cookies (SYN flood protection)
-    sysctl -w net.ipv4.tcp_tw_reuse=1      # Allow reuse of TIME_WAIT sockets
-    sysctl -w net.ipv4.tcp_fin_timeout=15  # Shorten FIN timeout
-    sysctl -w net.ipv4.tcp_timestamps=1    # Enable TCP timestamps for performance
-    sysctl -w net.ipv4.tcp_max_syn_backlog=512 # Max SYN backlog
-    sysctl -w net.ipv4.tcp_max_tw_buckets=8192 # Max TIME_WAIT sockets
-    sysctl -w net.ipv4.ip_local_port_range="10000 60001" # Set ephemeral port range
-
-    case "$(uname -m)" in
-      aarch64|arm*) ;;
-      *) return 0 ;;
-    esac
-
-    ## Only for ARM
-
-    # Network Buffers
-    sysctl -w net.core.rmem_max=4194304    # Max TCP/UDP receive buffer
-    sysctl -w net.core.wmem_max=4194304    # Max TCP/UDP send buffer
-    sysctl -w net.core.rmem_default=229376 # Default receive buffer
-    sysctl -w net.core.wmem_default=229376 # Default send buffer
-    sysctl -w net.ipv4.tcp_moderate_rcvbuf=1         # autotuning
-    sysctl -w net.ipv4.tcp_rmem="4096 87380 4194304" # TCP per-socket read buffer min/def/max
-    sysctl -w net.ipv4.tcp_wmem="4096 65536 4194304" # TCP per-socket write buffer min/def/max
-    sysctl -w net.ipv4.udp_rmem_min=8192             # Min UDP receive buffer
-    sysctl -w net.ipv4.udp_wmem_min=8192             # Min UDP send buffer
-    sysctl -w net.ipv4.tcp_limit_output_bytes=262144 # Limit per-socket output burst
-  } >/dev/null 2>&1
+  # Only for ARM
+  case "$(uname -m)" in
+    aarch64|arm*)
+      sysctl -q -w \
+        net.core.rmem_max=4194304 \
+        net.core.wmem_max=4194304 \
+        net.core.rmem_default=229376 \
+        net.core.wmem_default=229376 \
+        net.ipv4.tcp_moderate_rcvbuf=1 \
+        net.ipv4.tcp_rmem="4096 87380 4194304" \
+        net.ipv4.tcp_wmem="4096 65536 4194304" \
+        net.ipv4.udp_rmem_min=8192 \
+        net.ipv4.udp_wmem_min=8192 \
+        net.ipv4.tcp_limit_output_bytes=262144
+      ;;
+  esac
 }
 
 get_ulimit_n() {
