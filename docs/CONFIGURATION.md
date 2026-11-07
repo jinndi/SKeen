@@ -148,7 +148,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
 | **Data Throughput** | Enabled MTU Probing (`tcp_mtu_probing=1`) | Automatically detects optimal packet size, preventing sites from hanging or "freezing". |
 | **Packet Queues** | Increased system queues (`backlog`, `somaxconn`) | Prevents packet loss during sudden traffic spikes or heavy loads. |
 | **Security** | Enabled SYN Cookies and port reuse | Enhances network security and improves ephemeral port allocation. |
-| **ARM Buffers** | Optimized `rmem`/`wmem` buffers (ARM Only) | Boosts peak throughput for high-end models like Giga, Ultra, and Hero. |
+| **ARM Buffers** | Optimized `rmem`/`wmem` buffers (ARM only and if memory >= 512MB) | Boosts peak throughput for high-end models like Giga, Ultra... |
 
 </details>
 

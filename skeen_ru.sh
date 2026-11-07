@@ -2552,7 +2552,8 @@ apply_sysctl_network_tuning() {
     net.ipv4.tcp_max_tw_buckets=8192 \
     net.ipv4.ip_local_port_range="10000 60001"
 
-  # Only for ARM
+  # Only for ARM & RAM >= 512MB
+  [ "$ct_max_base" -gt 32768 ] || return 0
   case "$(uname -m)" in
     aarch64|arm*)
       sysctl -q -w \
