@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.11.3](https://github.com/jinndi/SKeen/compare/SKeen-v5.11.2...SKeen-v5.11.3) (2026-11-07)
+
+
+### 🛠 Refactor
+
+* add memory requirement for ARM buffer tuning ([43cc370](https://github.com/jinndi/SKeen/commit/43cc3708f844edc87040126e035c9c519cc608d2))
+* simplify apply_sysctl_network_tuning logic ([6906cf7](https://github.com/jinndi/SKeen/commit/6906cf704af4afa788509122c7957b96665e5e8d))
+
 ## [5.11.2](https://github.com/jinndi/SKeen/compare/SKeen-v5.11.1...SKeen-v5.11.2) (2026-11-06)
 
 
