@@ -837,22 +837,27 @@ end
 -- Cache for CPU delta calculation
 local cpu_cache = { total = 0, idle = 0 }
 
--- Read the current CPU load from /proc/loadavg
+-- Read and calculate CPU load percentage from /proc/stat
 local function get_cpuload()
   local f = io.open("/proc/stat", "r")
   if not f then return 0 end
   local line = f:read("*line")
   f:close()
 
-  if not line then return 0 end
+  if not line or not line:match("^cpu%s") then return 0 end
 
-  local user, nice, system, idle, iowait, irq, softirq = line:match(
-    "^cpu%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)")
-  if not user then return 0 end
+  local fields = {}
+  for val in line:gmatch("%d+") do
+    table.insert(fields, tonumber(val))
+  end
 
-  local total = tonumber(user) + tonumber(nice) + tonumber(system) + tonumber(idle) +
-      tonumber(iowait) + tonumber(irq) + tonumber(softirq)
-  local current_idle = tonumber(idle) + tonumber(iowait)
+  if #fields < 4 then return 0 end
+
+  local total = 0
+  for i = 1, #fields do
+    total = total + fields[i]
+  end
+  local current_idle = fields[4] + fields[5]
 
   local cpuload = 0
   if cpu_cache.total > 0 then
@@ -866,7 +871,7 @@ local function get_cpuload()
   cpu_cache.total = total
   cpu_cache.idle = current_idle
 
-  return cpuload
+  return math.max(0, math.min(100, cpuload))
 end
 
 -- Get CPU temperature in Celsius (if available)
