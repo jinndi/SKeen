@@ -869,6 +869,22 @@ local function get_cpuload()
   return cpuload
 end
 
+-- Get CPU temperature in Celsius (if available)
+local function get_cpu_temp()
+  local f = io.open("/sys/class/thermal/thermal_zone0/temp", "r")
+  if not f then return nil end
+
+  local temp_str = f:read("*all")
+  f:close()
+
+  local temp_c = tonumber(temp_str) or nil
+  if temp_c then
+    temp_c = math.floor(temp_c / 1000 + 0.5)
+  end
+
+  return temp_c
+end
+
 -- Resolve default network interface
 local function get_default_interface()
   local handle = io.popen("ip route show default 2>/dev/null")
@@ -1066,6 +1082,7 @@ local function get_cached_system_status()
 
   local sys_st = {
     cpu_load   = get_cpuload() or 0,
+    cpu_temp   = get_cpu_temp() or 0,
     def_iface  = def_iface,
     rx_speed   = rx_sp or 0,
     tx_speed   = tx_sp or 0,

@@ -2,11 +2,11 @@ name: Deploy Pages
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "dashboard/**"
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - "dashboard/**"
 
 permissions:
   contents: write

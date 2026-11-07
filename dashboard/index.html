@@ -2077,7 +2077,11 @@ body.preload * {
         <div class="telemetry-metric-item">
           <div class="telemetry-metric-header">
             <span data-i18n="metricCpu">ЦП</span>
-            <span id="telCpuVal">0%</span>
+            <span style="display: flex; gap: 10px;">
+              <span id="telCpuVal">0%</span>
+              <span>/</span>
+              <span id="telCpuTemp">0°C</span>
+            </span>
           </div>
           <div class="telemetry-progress-track">
             <div id="telCpuBar" class="telemetry-progress-fill"></div>
@@ -3334,7 +3338,7 @@ function updateProgressBar(barId, valId, used, total, isPercentage = false, unit
   let pct = 0;
   if (isPercentage) {
     pct = Math.max(0, Math.min(100, used));
-    val.textContent = pct.toFixed(1) + "%";
+    val.textContent = Math.round(pct) + "%";
   } else {
     if (total > 0) {
       pct = Math.max(0, Math.min(100, (used / total) * 100));
@@ -3419,6 +3423,7 @@ async function fetchSystemTelemetryData() {
     updateProgressBar('telMemBar', 'telMemVal', memUsedMb, memTotalMb, false, "MB");
     updateProgressBar('telOptBar', 'telOptVal', optUsedMb, optTotalMb, false, "MB");
 
+    document.getElementById('telCpuTemp').textContent = (data.cpu_temp || 0) + "°C";
     document.getElementById('telNetIface').textContent = data.def_iface || "br0";
     document.getElementById('telRxSpeed').textContent = formatBytesOrSpeed(data.rx_speed);
     document.getElementById('telTxSpeed').textContent = formatBytesOrSpeed(data.tx_speed);

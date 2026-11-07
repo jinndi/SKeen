@@ -20,6 +20,7 @@ jobs:
         id: release
         with:
           token: ${{ secrets.GH_PAT }}
+          target-branch: ${{ github.ref_name }}
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
 
