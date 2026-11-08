@@ -253,17 +253,21 @@ Retrieves hardware metrics and system resource load (CPU, RAM, SWAP, Entware `/o
 
 | Field | Type | Description |
 | ----- | ----- | ----- |
+| `device` | *string* | Router model name. |
 | `cpu_load` | *number* | CPU load percentage (0 to 100). |
-| `def_iface` | *string* | Primary network interface name (e.g., `br0` or `eth3`). |
-| `rx_speed` | *number* | Inbound network traffic speed (in bits per second, bps). |
-| `tx_speed` | *number* | Outbound network traffic speed (in bits per second, bps). |
-| `conn_cnt` | *number* | Total tracked active connections count from `/proc/net/nf_conntrack`. |
+| `cpu_temp` | *number* | CPU temperature in degrees Celsius (°C). |
 | `mem_used` | *number* | Used RAM memory size (in kilobytes, KB). |
 | `mem_total` | *number* | Total RAM memory size (in kilobytes, KB). |
 | `swap_used` | *number* | Used SWAP space (in kilobytes, KB). |
 | `swap_total` | *number* | Total SWAP space (in kilobytes, KB; `0` if not configured). |
 | `opt_used` | *number* | Used Entware `/opt` partition space (in kilobytes, KB). |
 | `opt_total` | *number* | Total Entware `/opt` partition space (in kilobytes, KB). |
+| `uptime` | *number* | System uptime in seconds. |
+| `loadavg` | *array* | System load average percentage for 1, 5, and 15 minutes `[1m, 5m, 15m]`. |
+| `def_iface` | *string* | Primary network interface name (e.g., `br0` or `eth3`). |
+| `rx_speed` | *number* | Inbound network traffic speed (in bytes per second, B/s). |
+| `tx_speed` | *number* | Outbound network traffic speed (in bytes per second, B/s). |
+| `conn_cnt` | *number* | Total tracked active connections count from `/proc/net/nf_conntrack`. |
 
 #### Request Example:
 
