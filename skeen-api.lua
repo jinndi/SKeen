@@ -834,6 +834,21 @@ local function get_allowed_files_map()
   return map
 end
 
+-- Get the device model from /proc/device-tree/model, or return "Unknown" if unavailable
+local function get_device_model()
+  local f = io.open("/proc/device-tree/model", "r")
+  if not f then return "Unknown" end
+  local model = f:read("*all")
+  f:close()
+
+  if model then
+    -- Remove null bytes and trim whitespace from the model strings
+    model = model:gsub("%z", ""):match("^%s*(.-)%s*$")
+  end
+
+  return (model and model ~= "") and model or "Unknown"
+end
+
 -- Cache for CPU delta calculation
 local cpu_cache = { total = 0, idle = 0 }
 
@@ -955,6 +970,56 @@ local function get_connections_count()
   end
   f:close()
   return count
+end
+
+-- Get system uptime in seconds
+local function get_sys_uptime()
+  local f = io.open("/proc/uptime", "r")
+  if not f then return 0 end
+  local line = f:read("*line")
+  f:close()
+
+  if not line then return 0 end
+
+  local uptime_sec = math.floor(tonumber(line:match("^(%S+)")) or 0)
+  return uptime_sec or 0
+end
+
+
+-- Get the number of CPU cores from /proc/cpuinfo
+local function get_cpu_cores()
+  local count = 0
+  local f = io.open("/proc/cpuinfo", "r")
+  if f then
+    for line in f:lines() do
+      if line:match("^processor") then
+        count = count + 1
+      end
+    end
+    f:close()
+  end
+  return count > 0 and count or 1
+end
+
+local cpu_cores = get_cpu_cores()
+
+-- Get system load averages (1, 5, 15 minutes in percentage of CPU cores)
+local function get_loadavg_pct()
+  local f = io.open("/proc/loadavg", "r")
+  if not f then return 0, 0, 0 end
+  local line = f:read("*line")
+  f:close()
+
+  if not line then return 0, 0, 0 end
+
+  local l1, l2, l3 = line:match("^(%S+)%s+(%S+)%s+(%S+)")
+  if not l1 then return 0, 0, 0 end
+
+  local pct1 = math.floor(((tonumber(l1) or 0) / cpu_cores) * 100 + 0.5)
+  local pct2 = math.floor(((tonumber(l2) or 0) / cpu_cores) * 100 + 0.5)
+  local pct3 = math.floor(((tonumber(l3) or 0) / cpu_cores) * 100 + 0.5)
+
+  return pct1, pct2, pct3
 end
 
 -- Get system RAM usage (in kB)
@@ -1086,18 +1151,21 @@ local function get_cached_system_status()
   local opt_used, opt_total = get_opt_disk_info()
 
   local sys_st = {
+    device     = get_device_model() or "Unknown",
     cpu_load   = get_cpuload() or 0,
     cpu_temp   = get_cpu_temp() or 0,
-    def_iface  = def_iface,
-    rx_speed   = rx_sp or 0,
-    tx_speed   = tx_sp or 0,
-    conn_cnt   = get_connections_count() or 0,
     mem_used   = mem_used or 0,
     mem_total  = mem_total or 0,
     swap_used  = swap_used or 0,
     swap_total = swap_total or 0,
     opt_used   = opt_used or 0,
-    opt_total  = opt_total or 0
+    opt_total  = opt_total or 0,
+    uptime     = get_sys_uptime() or 0,
+    loadavg    = { get_loadavg_pct() },
+    def_iface  = def_iface,
+    rx_speed   = rx_sp or 0,
+    tx_speed   = tx_sp or 0,
+    conn_cnt   = get_connections_count() or 0
   }
 
   -- Cache the enriched result for 2 seconds to reduce CPU overhead

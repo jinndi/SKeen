@@ -1810,7 +1810,10 @@ body.preload * {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 12px;
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
 }
 
 .telemetry-metric-item {
@@ -2071,6 +2074,22 @@ body.preload * {
   <div id="sysTelemetryModal" class="modal">
     <div class="modal-content modal-content--md">
       <h2 data-i18n="telemetryModalTitle" class="modal-title-margin-4">Системная телеметрия</h2>
+
+      <!-- Device Uptime and Load Average Panel -->
+      <div class="telemetry-network-panel">
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="deviceLabel">Устройство:</span>
+          <span id="telDeviceModel" class="telemetry-net-val">-</span>
+        </div>
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netUptime">Аптайм:</span>
+          <span id="telUptimeVal" class="telemetry-net-val">-</span>
+        </div>
+        <div class="telemetry-net-row">
+          <span class="telemetry-net-label" data-i18n="netLoadAvg">LoadAvg (1/5/15m):</span>
+          <span id="telLoadAvgVal" class="telemetry-net-val">-</span>
+        </div>
+      </div>
 
       <div class="telemetry-metrics-grid">
         <!-- CPU Load -->
@@ -2477,6 +2496,9 @@ const translations = {
   secUpdateSkeenApi: { ru: "Обновления SKeen API", en: "SKeen API updates" },
   enabledLbl: { ru: "Включить", en: "Enable" },
   telemetryModalTitle: { ru: "Системная телеметрия", en: "System Telemetry" },
+  deviceLabel: { ru: "Устройство:", en: "Device:" },
+  netUptime: { ru: "Аптайм:", en: "Uptime:" },
+  netLoadAvg: { ru: "LoadAvg (1/5/15m):", en: "LoadAvg (1/5/15m):" },
   metricCpu: { ru: "ЦП", en: "CPU" },
   metricMem: { ru: "ОЗУ", en: "RAM" },
   metricSwap: { ru: "Подкачка", en: "SWAP" },
@@ -3316,6 +3338,18 @@ function kbToMb(kb) {
   return Math.round(kb / 1024);
 }
 
+function formatUptime(uptimeSec) {
+  if (!uptimeSec || isNaN(uptimeSec)) return "0s";
+  const days = Math.floor(uptimeSec / 86400);
+  const hours = Math.floor((uptimeSec % 86400) / 3600);
+  const minutes = Math.floor((uptimeSec % 3600) / 60);
+  let res = "";
+  if (days > 0) res += `${days}d `;
+  if (hours > 0 || days > 0) res += `${hours}h `;
+  res += `${minutes}m`;
+  return res.trim();
+}
+
 function getGradientColor(percent) {
   let r, g, b = 0;
   if (percent < 50) {
@@ -3401,6 +3435,12 @@ async function fetchSystemTelemetryData() {
     serviceState.isServerConnected = true;
     const telBtn = document.getElementById('sysTelemetryBtn');
     if (telBtn) telBtn.disabled = false;
+
+    // Device model, uptime and LoadAvg update
+    document.getElementById('telDeviceModel').textContent = data.device || "Unknown";
+    document.getElementById('telUptimeVal').textContent = formatUptime(data.uptime);
+    const loadArr = Array.isArray(data.loadavg) ? data.loadavg : [0, 0, 0];
+    document.getElementById('telLoadAvgVal').textContent = `${loadArr[0] || 0}% / ${loadArr[1] || 0}% / ${loadArr[2] || 0}%`;
 
     const memUsedMb = kbToMb(data.mem_used);
     const memTotalMb = kbToMb(data.mem_total);
