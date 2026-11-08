@@ -1,0 +1,189 @@
+//// Конфигурация sing-box используемая SKeen в тестовой версии sing-box.
+// ВАРИАНТ: Lite (облегчённая версия конфигурации без Fake-IP, для слабых устройств (mips?le)).
+// ПРИМЕЧАНИЕ: В Lite версии отсутствует fakeip DNS, рекомендуется только в режимах tproxy или hybrid.
+// АКТУАЛЬНОСТЬ: Поддерживается последняя alpha/beta/rc версия sing-box.
+
+{
+  "$schema": "https://sing-box.sagernet.org/schema.json",
+
+  "log": { "level": "warn", "output": "", "timestamp": false },
+
+  "dns": {
+    "servers": [
+      {
+        "tag": "hosts", "type": "hosts",
+        "predefined": {
+          "cloudflare-dns.com": [ "1.1.1.1", "1.0.0.1" ],
+          "dns.google": [ "8.8.8.8", "8.8.4.4" ],
+          "common.dot.dns.yandex.net": [ "77.88.8.8", "77.88.8.1" ]
+        }
+      },
+      { "tag": "dns_local",    "type": "local" },
+      { "tag": "dns_direct",   "type": "https",  "server": "common.dot.dns.yandex.net", "domain_resolver": "hosts" },
+      { "tag": "dns_proxy_cf", "type": "https",  "server": "cloudflare-dns.com", "domain_resolver": "hosts", "detour": "🌍 Proxy" },
+      { "tag": "dns_proxy_gg", "type": "https",  "server": "dns.google", "domain_resolver": "hosts", "detour": "🌍 Proxy" }
+    ],
+    "rules": [
+      { "preferred_by": "hosts", "server": "hosts" },
+      { "query_type": "A", "invert": true, "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
+      { "domain_keyword": [ "keenetic", "netcraze" ], "server": "dns_local" },
+      { "rule_set": "private", "server": "dns_local" },
+      { "rule_set": "cheburnet", "server": "dns_direct" },
+      { "clash_mode": "Direct", "server": "dns_direct" },
+      { "clash_mode": "Global", "server": "dns_proxy_cf" },
+      { "action": "evaluate", "server": "dns_proxy_cf", "tag": "final-cf" },
+      { "action": "evaluate", "server": "dns_proxy_gg", "tag": "final-gg" },
+      { "match_response": "final-cf", "action": "respond", "race": true },
+      { "match_response": "final-gg", "action": "respond", "race": true },
+      { "action": "reject" }
+    ],
+    "final": "dns_proxy_cf",
+    "strategy": "ipv4_only",
+    "timeout": "10s",
+    "cache_capacity": 4096,
+    "optimistic": {
+      "enabled": true,
+      "timeout": "5m0s"
+    }
+  },
+
+  "ntp": {
+    "enabled": true,
+    "interval": "30m0s",
+    "server": "ntp.msk-ix.ru",
+    "server_port": 123,
+    "detour": "🇷🇺 RU"
+  },
+
+  "http_clients": [
+    {
+      "tag": "default",
+      "version": 2,
+      "detour": "🌍 Proxy",
+      "stream_receive_window": 0,
+      "connection_receive_window": 0
+    }
+  ],
+
+  "inbounds": [
+    {
+      "tag": "tproxy-in",
+      "type": "tproxy",
+      "listen": "::",
+      "listen_port": 65082
+    }
+  ],
+
+  "outbounds": [
+    { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [ "🌍 Auto", "🔒 TROYAN" ], "default": "🔒 TROYAN", "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🧲 Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🌍 Auto",    "type": "urltest",  "outbounds": [ "🔒 TROYAN" ], "interval": "10m", "tolerance": 100, "idle_timeout": "30m0s" },
+    { "tag": "🇷🇺 Auto",    "type": "urltest",  "outbounds": [ "🇷🇺 TROYAN" ], "interval": "5m",  "tolerance": 100, "idle_timeout": "30m0s" },
+    { "tag": "🔌 DIRECT",  "type": "direct",   "domain_resolver": "dns_direct" },
+    { "tag": "❌ REJECT",  "type": "block" },
+    { "tag": "🚦 FINAL",   "type": "selector", "outbounds": [ "🌍 Proxy", "🔌 DIRECT", "❌ REJECT" ], "interrupt_exist_connections": true },
+    {
+      "tag": "🔒 TROYAN",
+      "type": "trojan",
+      "password": "password",
+      "server": "example.com",
+      "server_port": 443,
+      "tls": { "enabled": true, "server_name": "example.com" },
+      "multiplex": { "enabled": true }
+    },
+    {
+      "tag": "🇷🇺 TROYAN",
+      "type": "trojan",
+      "password": "password",
+      "server": "example.ru",
+      "server_port": 443,
+      "tls": { "enabled": true, "server_name": "example.ru" },
+      "multiplex": { "enabled": true }
+    }
+  ],
+
+  "route": {
+    "rules": [
+      { "action": "sniff" },
+      { "action": "hijack-dns", "type": "logical", "mode": "or", "rules": [ { "protocol": "dns" }, { "port": 53 } ] },
+      { "ip_version": 6, "action": "reject" },
+      { "port": [ 853, 5353 ], "action": "reject" },
+      { "rule_set": "ipdetect", "action": "reject" },
+      { "action": "route-options", "udp_disable_domain_unmapping": true, "udp_connect": true },
+      { "ip_is_private": true, "outbound": "🔌 DIRECT" },
+      { "rule_set": "private", "outbound": "🔌 DIRECT" },
+      { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
+      { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
+      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
+      { "protocol": "bittorrent", "outbound": "🧲 Torrent" },
+      { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
+      { "rule_set": "games", "outbound": "🕹️ Games" },
+      { "rule_set": "ai", "outbound": "🤖 AI" },
+      { "rule_set": "telegramip", "outbound": "🌍 Proxy" },
+      { "rule_set": "proxy", "outbound": "🌍 Proxy" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
+      { "clash_mode": "Global", "outbound": "🌍 Proxy" }
+    ],
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": [
+          "ipdetect", "private", "cheburnet",  "games", "ai", "proxy", "ru", "ruip", "telegramip"
+        ],
+        "url": "https://cdn.jsdelivr.net/gh/jinndi/singbox_ruleset@main/{tag}.srs",
+        "initial_path": "ruleset/{tag}.srs",
+        "update_interval": "48h0m0s"
+      }
+    ],
+    "final": "🚦 FINAL",
+    "auto_detect_interface": true,
+    "default_domain_resolver": "dns_direct",
+    "default_http_client": "default"
+  },
+
+  "services": [
+    {
+      "type": "api",
+      "tag": "api",
+      "listen": "::",
+      "listen_port": 9999,
+      "secret": "",
+      "access_control_allow_origin": [
+        "http://sing-box-dashboard.sagernet.org", "https://sing-box-dashboard.sagernet.org",
+        "http://sdash.u1.pw", "https://sdash.u1.pw"
+      ],
+      "access_control_allow_private_network": true,
+      "dashboard": {
+        "enabled": true,
+        "path": "duakboard",
+        "download_url": "https://github.com/imduaky/duakboard/releases/latest/download/duakboard.zip"
+      }
+    }
+  ],
+
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "path": "cache.db",
+      "cache_id": "v1_15_lite",
+      "store_dns": true,
+      "buffer_size": "2MB"
+    },
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "access_control_allow_origin": [
+        "http://board.zash.run.place", "https://board.zash.run.place",
+        "https://d.metacubex.one", "https://metacubexd.pages.dev"
+      ],
+      "access_control_allow_private_network": true
+    },
+    "debug": {
+      "gc_percent": 100,
+      "memory_limit": "120MB"
+    }
+  }
+}
