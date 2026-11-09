@@ -1,5 +1,46 @@
 # Changelog
 
+## [5.13.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.12.0...SKeen-v5.13.0) (2026-11-09)
+
+
+### 🚀 Feat
+
+* implement architecture-based lite configuration ([7dce3ab](https://github.com/jinndi/SKeen/commit/7dce3ab049d17c304ea5d88f0ed297a5c91ec3e0))
+
+
+### 🐛 Fix
+
+* **api:** prevent duplicate daemon processes ([5c0b62d](https://github.com/jinndi/SKeen/commit/5c0b62de01dd8102a97cce181ffc860d5aa427ff))
+* fallback to external sing-box config if directory is empty ([6bff01f](https://github.com/jinndi/SKeen/commit/6bff01f742f252b447c873d6d9c57c96b952515e))
+* reorder configuration creation in install sequence ([991535d](https://github.com/jinndi/SKeen/commit/991535d6987c7ef04f6d38e05db951f42ed2a378))
+
+
+### 🛠 Refactor
+
+* add memory requirement for ARM buffer tuning ([43cc370](https://github.com/jinndi/SKeen/commit/43cc3708f844edc87040126e035c9c519cc608d2))
+
+
+### 🤖 CI/CD
+
+* **build:** update entware build workflow ([2c0034b](https://github.com/jinndi/SKeen/commit/2c0034bfab607ee94650e63ee1c3495157874040))
+
+
+### 🔌 API
+
+* add cpu temperature display to dashboard ([74da793](https://github.com/jinndi/SKeen/commit/74da79315afbec50549d01cb8726c58011831360))
+* add device model, uptime, and load average to telemetry ([3537cf4](https://github.com/jinndi/SKeen/commit/3537cf4c81577976c68c374265d59f41cb337ff9))
+* improve cpu load calculation logic ([e69fcc3](https://github.com/jinndi/SKeen/commit/e69fcc3124e806f5886e0c77f352f186fd02ba31))
+
+
+### 🧰 Chore
+
+* bump version to 1.2.4 and 5.12.0 ([555f72c](https://github.com/jinndi/SKeen/commit/555f72ccd1db2a68dbb5b176a45fb2fcdefb4116))
+* **docs:** update telemetry field documentation ([2a5922e](https://github.com/jinndi/SKeen/commit/2a5922ec6918311bc3634e43015d787b6a42b7e7))
+* **main:** release SKeen 5.11.3 ([d8603e6](https://github.com/jinndi/SKeen/commit/d8603e64121b94f9108db48b5833c15fd06bd051))
+* **main:** release SKeen 5.11.3 ([063f3f3](https://github.com/jinndi/SKeen/commit/063f3f39efee705c60babf0fe9a5b93f232be351))
+* **main:** release SKeen 5.12.0 ([177b02d](https://github.com/jinndi/SKeen/commit/177b02d5b5e5f09352967574e65f26d08404f0fb))
+* **main:** release SKeen 5.12.0 ([17a5a84](https://github.com/jinndi/SKeen/commit/17a5a845ffe1be79d71c85075e3d21e116ad98e8))
+
 ## [5.12.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.11.3...SKeen-v5.12.0) (2026-11-09)
 
 
