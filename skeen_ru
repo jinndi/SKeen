@@ -762,7 +762,7 @@ download_singbox_config(){
 local beta="${1:-}" action="${2:-}"
 get_singbox_config
 local backup_config="$SINGBOX_CONFIG.bak"
-if [ "$action" != "force" ]&&[ -f "$SINGBOX_CONFIG" ];then
+if [ "$action" != "force" ]&&[ -f "$SINGBOX_CONFIG" ]&&[ "$(wc -c <"$SINGBOX_CONFIG")" -gt 3 ];then
 echomsg "Конгифурация $SINGBOX_NAME найдена, пропускаем загрузку"
 return
 fi
