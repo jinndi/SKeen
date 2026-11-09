@@ -1103,12 +1103,12 @@ install() {
     install_singbox
   fi
   install_dependencies
+  create_skeen_config
   download_singbox_config "$BETA_ENABLED"
   download_initial_ruleset
   create_autostart_script
   create_skeen_group
   download_skeen_script
-  create_skeen_config
 
   if [ "$EXTERNAL_ENABLED" != "1" ]; then
     "$SINGBOX_BIN_PATH" version
