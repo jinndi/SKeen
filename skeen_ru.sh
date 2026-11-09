@@ -389,7 +389,7 @@ get_singbox_config() {
   : "${sing_external_api_secret:=$sing_api_secret}"
 
   _init_box_target() {
-    local use_dir="${1:-0}" dir_path="${2:-}" file_path="${3:-}"
+    local use_dir="${1:-0}" dir_path="${2:-}" file_path="${3:-}" src
     if [ "$use_dir" = "1" ]; then
       mkdir -p "$dir_path"
       if [ -z "$(ls -A "$dir_path")" ]; then
@@ -408,8 +408,10 @@ get_singbox_config() {
       SINGBOX_CONFIG_DIR="$dir_path"
     else
       if [ ! -f "$file_path" ]; then
-       if [ -d "$dir_path" ] && [ -n "$(ls -A "$dir_path")" ]; then
+        if [ -d "$dir_path" ] && [ -n "$(ls -A "$dir_path")" ]; then
           "$SINGBOX_BIN" merge "$file_path" -C "$dir_path" >/dev/null 2>&1 || echo '{}' > "$file_path"
+        elif src="${SINGBOX_CONFIG_PATH}"; [ -f "$src" ] || { src="${SINGBOX_CONFIG_EXT_PATH}"; [ -f "$src" ]; }; then
+          cp -f "$src" "$file_path"
         else
           echo '{}' > "$file_path"
         fi
