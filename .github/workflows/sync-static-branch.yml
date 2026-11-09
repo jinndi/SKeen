@@ -67,7 +67,7 @@ jobs:
           mv skeen-api_tmp skeen-api
           mv api-version_tmp api-version
 
-          FILES="skeen skeen_ru config.json config_beta.json skeen-api api-version"
+          FILES="skeen skeen_ru config.json config_beta.json config_lite.json config_beta_lite.json skeen-api api-version"
 
           if [ -n "$(git status --porcelain $FILES)" ]; then
             git add $FILES

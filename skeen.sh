@@ -917,8 +917,14 @@ download_singbox_config() {
 
   [ -f "$SINGBOX_CONFIG" ] && mv -f "$SINGBOX_CONFIG" "$backup_config"
 
-  local config_name="config.json" config_url=""
-  [ "$beta" = "1" ] && config_name="config_beta.json"
+  local arch beta_part config_name config_url
+
+  case "$(uname -m)" in
+    aarch64|arm*) arch="" ;;
+    *)            arch="_lite" ;;
+  esac
+  beta_part="$([ "$beta" = "1" ] && echo "_beta" || echo "")"
+  config_name="config${beta_part}${arch}.json"
 
   if [ -n "$MIRROR" ]; then
     config_url="${MIRROR}${config_name}"
