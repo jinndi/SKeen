@@ -15,7 +15,7 @@ readonly MODULES_ENTWARE_DIR="$ENTWARE_DIR/lib/modules"
 readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
 readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.11.3"
+readonly SKEEN_VERSION="5.12.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="$ENTWARE_DIR/bin/$SKEEN_PROC"
 readonly SKEEN_RUN_SCRIPT="$RUN_DIR/$SKEEN_PROC.sh"
@@ -349,6 +349,14 @@ else
 if [ ! -f "$file_path" ];then
 if [ -d "$dir_path" ]&&[ -n "$(ls -A "$dir_path")" ];then
 "$SINGBOX_BIN" merge "$file_path" -C "$dir_path" >/dev/null 2>&1||echo '{}' >"$file_path"
+elif
+src="$SINGBOX_CONFIG_PATH"
+[ -f "$src" ]||{
+src="$SINGBOX_CONFIG_EXT_PATH"
+[ -f "$src" ]
+}
+then
+cp -f "$src" "$file_path"
 else
 echo '{}' >"$file_path"
 fi
@@ -761,8 +769,13 @@ fi
 echomsg "Downloading $SINGBOX_NAME configuration..."
 mkdir -p "$(dirname "$SINGBOX_CONFIG")"
 [ -f "$SINGBOX_CONFIG" ]&&mv -f "$SINGBOX_CONFIG" "$backup_config"
-local config_name="config.json" config_url=""
-[ "$beta" = "1" ]&&config_name="config_beta.json"
+local arch beta_part config_name config_url
+case "$(uname -m)" in
+aarch64|arm*)arch="";;
+*)arch="_lite"
+esac
+beta_part="$([ "$beta" = "1" ]&&echo "_beta"||echo "")"
+config_name="config$beta_part$arch.json"
 if [ -n "$MIRROR" ];then
 config_url="$MIRROR$config_name"
 else
@@ -906,12 +919,12 @@ download_singbox "$BETA_ENABLED"
 install_singbox
 fi
 install_dependencies
+create_skeen_config
 download_singbox_config "$BETA_ENABLED"
 download_initial_ruleset
 create_autostart_script
 create_skeen_group
 download_skeen_script
-create_skeen_config
 if [ "$EXTERNAL_ENABLED" != "1" ];then
 "$SINGBOX_BIN_PATH" version
 elif [ ! -f /opt/bin/sing-box ];then
