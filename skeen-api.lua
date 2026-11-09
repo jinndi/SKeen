@@ -56,6 +56,14 @@ end
 
 -- Start the daemon (background process of the API server)
 local function daemon_start()
+  local pid = tonumber((read_file(PID_FILE) or ""):match("^%s*(%d+)"))
+  if pid and read_file("/proc/" .. pid .. "/stat") then
+    print("[OK] Already running")
+    return
+  end
+
+  os.remove(PID_FILE)
+
   local command = table.concat({
     "start-stop-daemon -S -b -m",
     "-p", shell_quote(PID_FILE),
