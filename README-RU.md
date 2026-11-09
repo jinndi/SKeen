@@ -1,3 +1,8 @@
+> [!WARNING]
+> <img width="460" height="460" alt="56506714" src="https://github.com/user-attachments/assets/05475c1a-f1f0-46ad-919b-2e30d82bd883" />
+>
+> Если этот проект не наберёт хотя бы **100 звёзд** до 1 декабря, репозиторий станет приватным, и его разработка продолжится исключительно для личного использования. Для меня это главный показатель того, что проект действительно приносит пользу людям.
+
 <p align="center">
   <img src="/assets/logo_ru.png" alt="SKeen" width="512" style="max-width: 100%; height: auto; display: block; margin: 0 auto; padding: 20px 0;" />
 </p>

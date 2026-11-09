@@ -1,3 +1,9 @@
+> [!WARNING]
+> <img width="460" height="460" alt="56506714" src="https://github.com/user-attachments/assets/05475c1a-f1f0-46ad-919b-2e30d82bd883" />
+>
+> If this project doesn't reach at least **100 stars** by December 1st, the repository will go private and continue development solely for personal use. For me, this is the main indicator that the project is actually providing value to people.
+
+
 <p align="center">
   <img src="/assets/logo.png" alt="SKeen" width="512" style="max-width: 100%; height: auto; display: block; margin: 0 auto; padding: 20px 0;" />
 </p>
