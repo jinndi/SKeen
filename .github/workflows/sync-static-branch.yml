@@ -47,6 +47,8 @@ jobs:
 
           cp config.json config.json_tmp
           cp config_beta.json config_beta.json_tmp
+          cp config_lite.json config_lite.json_tmp
+          cp config_beta_lite.json config_beta_lite.json_tmp
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -64,6 +66,8 @@ jobs:
           mv skeen_ru_min skeen_ru
           mv config.json_tmp config.json
           mv config_beta.json_tmp config_beta.json
+          mv config_lite.json_tmp config_lite.json
+          mv config_beta_lite.json_tmp config_beta_lite.json
           mv skeen-api_tmp skeen-api
           mv api-version_tmp api-version
 

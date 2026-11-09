@@ -32,7 +32,7 @@ readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:18
 readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.11.3"
+readonly SKEEN_VERSION="5.12.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="${RUN_DIR}/${SKEEN_PROC}.sh"
@@ -908,7 +908,7 @@ download_singbox_config() {
   get_singbox_config
   local backup_config="${SINGBOX_CONFIG}.bak"
 
-  if [ "$action" != "force" ] && [ -f "$SINGBOX_CONFIG" ]; then
+  if [ "$action" != "force" ] && [ -f "$SINGBOX_CONFIG" ] && [ "$(wc -c < "$SINGBOX_CONFIG")" -gt 3 ]; then
     echomsg "Конгифурация $SINGBOX_NAME найдена, пропускаем загрузку"
     return
   fi
