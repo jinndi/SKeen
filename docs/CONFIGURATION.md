@@ -109,7 +109,7 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
       "to_port": "",   // The port to which DNS requests will be redirected
       "use_policy": 1  // Use defined policy if configured (0 = disabled)
     },
-    "proxy_router": 0, // If set to 1, all router services will be proxied.
+    "proxy_router": 1, // If set to 1, all router services will be proxied.
                        // Available in redirect, tproxy, and hybrid modes;
                        // subnet exclusions, as well as port bypass and interception rules, are respected.
   },

@@ -243,7 +243,7 @@ create_skeen_config() {
       "to_port": "",
       "use_policy": 1
     },
-    "proxy_router": 0
+    "proxy_router": 1
   },
   "update": {
     "singbox": {
