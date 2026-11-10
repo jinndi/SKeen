@@ -940,6 +940,8 @@ download_singbox_config() {
     return 1
   fi
 
+  rm -f "$backup_config"
+
   echook "Конфигурация $SINGBOX_NAME загружена"
 }
 

@@ -48,14 +48,6 @@
     }
   },
 
-  "ntp": {
-    "enabled": true,
-    "interval": "30m0s",
-    "server": "ntp.msk-ix.ru",
-    "server_port": 123,
-    "detour": "🇷🇺 RU"
-  },
-
   "http_clients": [
     {
       "tag": "default",
@@ -182,8 +174,8 @@
       "access_control_allow_private_network": true
     },
     "debug": {
-      "gc_percent": 70,
-      "memory_limit": "120MB"
+      "gc_percent": 50,
+      "memory_limit": "100MB"
     }
   }
 }
