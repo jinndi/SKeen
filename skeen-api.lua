@@ -412,6 +412,7 @@ local function is_allowed_param(param)
     ["check"]    = true,
     ["format"]   = true,
     ["api"]      = false,
+    ["dash"]     = true,
     ["backup"]   = true,
     ["backups"]  = true,
     ["reset"]    = false,
@@ -1447,6 +1448,16 @@ local function route_request(method, path, body)
     return json_response({ error = "Not found" }, "404 Not Found")
   elseif path == "/api/ping" and method == "GET" then
     return json_response({ status = "ok", message = "pong" })
+  elseif path == "/api/dash" and method == "GET" then
+    local cmd = get_skeen_cmd("dash --json 2>/dev/null")
+    local handle = io.popen(cmd)
+    local out = handle and handle:read("*a") or "[]"
+    if handle then handle:close() end
+    local success, data = pcall(json.decode, out)
+    if success and type(data) == "table" then
+      return json_response({ success = true, data = data })
+    end
+    return json_response({ success = false, data = {} })
   elseif path:find("^/api/status") and method == "GET" then
     local status = get_cached_skeen_status()
     status.success = true
