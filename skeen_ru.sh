@@ -3598,6 +3598,70 @@ run_api() {
   fi
 }
 
+get_api_links() {
+  get_singbox_config
+  local f="$SINGBOX_CONFIG" json=0 o="" fst=1
+  [ "${1:-}" = "--json" ] && json=1
+  [ "$json" -eq 1 ] && o="["
+
+  ip="$(ip -4 addr show dev br0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1)"
+  : "${ip:=192.168.1.1}"
+
+  fa() {
+    [ "$1" = "0.0.0.0" ] || [ "$1" = "::" ] && echo "$ip:$2" && return
+    [ "$1" != "127.0.0.1" ] && [ -n "$1" ] && echo "$1:$2"
+  }
+
+  local panels="" apis=""
+
+  emit() {
+    local type="$1" addr="$2" has_p="$3" base_name="$4" run_state="${5:-1}"
+    [ -n "$addr" ] || return
+
+    if [ "$json" -eq 1 ]; then
+      [ "$type" = "skeen_api" ] || [ "$has_p" -ne 1 ] || [ "$run_state" -eq 0 ] && return
+      [ "$fst" -eq 0 ] && o="$o,"
+      o="$o{\"type\":\"$type\",\"url\":\"http://$addr\"}"
+      fst=0
+    else
+      local label; label="$(cyan "$base_name API$( [ "$has_p" -eq 1 ] && echo "+UI" )$( [ "$run_state" -eq 0 ] && red " (off)" )")"
+      [ "$has_p" -eq 1 ] && panels="$panels\n$label: http://$addr" || apis="$apis\n$label: http://$addr"
+    fi
+  }
+
+  [ "$json" -eq 0 ] && {
+    get_service_api_config 2>/dev/null
+    [ -n "${SERVICE_API_PORT:-}" ] && {
+      local skeen_api_run=1
+      [ -n "${SERVICE_API_SCRIPT:-}" ] && "$SERVICE_API_SCRIPT" status >/dev/null 2>&1 || skeen_api_run=0
+      emit "skeen_api" "$(fa "$ip" "$SERVICE_API_PORT")" "${SERVICE_API_DASHBOARD:-0}" "SKeen" "$skeen_api_run"
+    }
+  }
+
+  local sb_run=1; is_running >/dev/null 2>&1 || sb_run=0
+
+  local s i=0 t l p d
+  s=$(jsonfilter -i "$f" -e '@.services' 2>/dev/null)
+  while t=$(jsonfilter -s "$s" -e "@[$i].type" 2>/dev/null) && [ -n "$t" ]; do
+    [ "$t" = "api" ] && {
+      l=$(jsonfilter -s "$s" -e "@[$i].listen"); p=$(jsonfilter -s "$s" -e "@[$i].listen_port"); d=$(jsonfilter -s "$s" -e "@[$i].dashboard")
+      local has_p=1
+      [ "$d" = "false" ] || [ "$(jsonfilter -s "$s" -e "@[$i].dashboard.enabled")" = "false" ] && has_p=0
+
+      emit "api" "$(fa "$l" "$p")" "$has_p" "Sing-box" "$sb_run"
+    }
+    i=$((i + 1))
+  done
+
+  eval "$(jsonfilter -i "$f" -e 'cc=@.experimental.clash_api.external_controller' -e 'ext_ui=@.experimental.clash_api.external_ui' 2>/dev/null)"
+  [ -n "$cc" ] && {
+    local has_p=0; [ -n "$ext_ui" ] && has_p=1
+    emit "clash_api" "$(fa "${cc%%:*}" "${cc##*:}")" "$has_p" "Clash" "$sb_run"
+  }
+
+  if [ "$json" -eq 1 ]; then printf "%s]\n" "$o"; else printf "%b\n" "$panels\n$apis" | sed '/^$/d'; fi
+}
+
 split_singbox_config() {
   local src_file="${1:-}"
   local target_dir="${2:-}"
@@ -3886,6 +3950,7 @@ show_help() {
   check   - Проверить конфигурацию
   format  - Отформатировать конфигурацию $SINGBOX_NAME
   api     - Команды API управления $SINGBOX_NAME
+  dash    - Получить ссылки на API панелей управления
   backup  - Создать архив $WORK_DIR
   backups - Список созданных архивов в $ENTWARE_DIR
   restore - Восстановить $WORK_DIR из архива в $ENTWARE_DIR
@@ -3929,6 +3994,7 @@ if [ -f "$SKEEN_SCRIPT" ]; then
   check) check_config ;;
   format) format_config ;;
   api) run_api "$@" ;;
+  dash) get_api_links "$2" ;;
   backup) backup_create ;;
   backups) backup_list ;;
   restore) backup_restore "$2" ;;
