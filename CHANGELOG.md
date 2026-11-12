@@ -1,5 +1,44 @@
 # Changelog
 
+## [5.13.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.12.0...SKeen-v5.13.0) (2026-11-12)
+
+
+### 🚀 Feat
+
+* **cli:** add dash command to retrieve API links ([3c6d4de](https://github.com/jinndi/SKeen/commit/3c6d4dec54a50c6035562f642c97307100491f08))
+
+
+### 🤖 CI/CD
+
+* **build:** remove redundant busybox and library symlink logic ([a175161](https://github.com/jinndi/SKeen/commit/a175161864f9b72b7016343373bea776e55eded6))
+
+
+### ⚙️ Config
+
+* update CORS allowed origins and format JSON files ([8a0009f](https://github.com/jinndi/SKeen/commit/8a0009f767000f58688911a3d02d25e5b93e3211))
+
+
+### 🔌 API
+
+* add dash endpoint to expose API links ([dd17365](https://github.com/jinndi/SKeen/commit/dd173655cbf8e5871e7537489af5426109737944))
+* implement gzip compression for embedded dashboard ([3ed54ad](https://github.com/jinndi/SKeen/commit/3ed54ad5f0748846314342b09081186cedc83484))
+
+
+### 📊 Dashboard
+
+* implement design tokens and mobile viewport optimizations ([cbc18cc](https://github.com/jinndi/SKeen/commit/cbc18cc7a86dc7c9e7a994d9f653694e58317688))
+* implement service drawer and responsive design and ([583b212](https://github.com/jinndi/SKeen/commit/583b212f1ab63f3f180bb67db5787952c0e30b65))
+* optimize service polling and initialization logic ([7c93a44](https://github.com/jinndi/SKeen/commit/7c93a44a3726a7bcaad3fca924051ae40e0acee5))
+
+
+### 🧰 Chore
+
+* **config:** update lite configurations and cleanup backup files ([90d39d4](https://github.com/jinndi/SKeen/commit/90d39d454ea5a5868c71677d793a9967bf4c5fcd))
+* **docs:** document gzip support and new dashboard endpoint ([ad0b7bc](https://github.com/jinndi/SKeen/commit/ad0b7bcd5f324c9b77dae448485e594c77aaecf3))
+* **docs:** update SKeen API disk space requirements ([c22b7c1](https://github.com/jinndi/SKeen/commit/c22b7c1464c4c27dd904b5e15a8db2658a85c677))
+* **release:** bump API version to v1.3.0 & SKeen to 5.13.0 ([7cc7315](https://github.com/jinndi/SKeen/commit/7cc731526df7723240b61b4fc80172557c6ce25e))
+* set proxy_router to enabled by default ([4201d4d](https://github.com/jinndi/SKeen/commit/4201d4dd064eacd72c00f9c3e392768b0a1dab71))
+
 ## [5.12.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.11.3...SKeen-v5.12.0) (2026-11-09)
 
 
