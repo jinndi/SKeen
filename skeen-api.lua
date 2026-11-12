@@ -14,6 +14,7 @@ local SKEEN_OPT_SCRIPT = "/opt/bin/skeen"
 local REPO_BASE_URL = "https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/static/"
 local VERSION_URL = REPO_BASE_URL .. "api-version"
 local SCRIPT_URL = REPO_BASE_URL .. "skeen-api"
+local DEVELOPMENT = false
 
 -- Function for safely escaping arguments to pass them into the command line
 local function shell_quote(value)
@@ -344,22 +345,140 @@ local DEFAULT_FILES = {
   pure_cidr = "pure_cidr.list"
 }
 
--- Embedded control panel HTML template (replaced during package build/packing)
-local EMBEDDED_HTML = [==[__HTML_PLACEHOLDER__]==]
+-- Embedded gzip-compressed dashboard (Base64-encoded).
+-- The build script replaces the placeholder with the compressed HTML during packaging.
+---@type string?
+local EMBEDDED_HTML_GZIP_BASE64 = "__HTML_GZIP_PLACEHOLDER__"
 
--- Determine the source of the panel HTML (in development mode, read from disk; in production, use the embedded template)
+-- Decode Base64 once during startup.
+local function base64_decode(data)
+  if type(data) ~= "string" then
+    return nil, "Invalid Base64 data"
+  end
+
+  if #data % 4 ~= 0 then
+    return nil, "Invalid Base64 length"
+  end
+
+  local alphabet =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+  local lookup = {}
+
+  for i = 1, #alphabet do
+    lookup[alphabet:sub(i, i)] = i - 1
+  end
+
+  local result = {}
+
+  for i = 1, #data, 4 do
+    local a = lookup[data:sub(i, i)]
+    local b = lookup[data:sub(i + 1, i + 1)]
+    local c_char = data:sub(i + 2, i + 2)
+    local d_char = data:sub(i + 3, i + 3)
+    local c = lookup[c_char]
+    local d = lookup[d_char]
+
+    local is_last = i + 3 == #data
+
+    if a == nil or b == nil then
+      return nil, "Invalid Base64 data"
+    end
+
+    local byte1 = a * 4 + math.floor(b / 16)
+
+    if c_char == "=" then
+      if not is_last or d_char ~= "=" then
+        return nil, "Invalid Base64 padding"
+      end
+
+      if b % 16 ~= 0 then
+        return nil, "Invalid Base64 padding bits"
+      end
+
+      result[#result + 1] = string.char(byte1)
+    elseif d_char == "=" then
+      if not is_last or c == nil then
+        return nil, "Invalid Base64 padding"
+      end
+
+      if c % 4 ~= 0 then
+        return nil, "Invalid Base64 padding bits"
+      end
+
+      result[#result + 1] = string.char(
+        byte1,
+        (b % 16) * 16 + math.floor(c / 4)
+      )
+    else
+      if c == nil or d == nil then
+        return nil, "Invalid Base64 data"
+      end
+
+      result[#result + 1] = string.char(
+        byte1,
+        (b % 16) * 16 + math.floor(c / 4),
+        (c % 4) * 64 + d
+      )
+    end
+  end
+
+  return table.concat(result)
+end
+
+-- Decode the embedded dashboard and release the Base64 string.
+local EMBEDDED_HTML_GZIP = assert(
+  base64_decode(EMBEDDED_HTML_GZIP_BASE64)
+)
+EMBEDDED_HTML_GZIP_BASE64 = nil
+
+-- Determine the source of the panel HTML (in development mode, read from disk).
 local SCRIPT_PATH = arg[0]
 local SCRIPT_DIR = SCRIPT_PATH:match("^(.*)/[^/]+$") or "."
 
--- Return the dashboard HTML, reading from disk in dev mode or using the embedded template
+-- Return the dashboard HTML from disk when running in development mode.
+-- In production, the pre-compressed HTML is served directly from EMBEDDED_HTML_GZIP.
 local function get_dashboard_html()
-  local f = io.open(SCRIPT_DIR .. "/index.html", "r")
-  if f then
-    local content = f:read("*all")
-    f:close()
-    return content
+  local f = io.open(SCRIPT_DIR .. "/index.html", "rb")
+  if not f then return nil end
+
+  local content = f:read("*a")
+  f:close()
+  return content
+end
+
+-- Check whether the client explicitly accepts gzip content encoding.
+local function accepts_gzip(accept_encoding)
+  if type(accept_encoding) ~= "string" then return false end
+
+  local gzip_quality, wildcard_quality
+
+  for item in accept_encoding:gmatch("[^,]+") do
+    local coding, params = item:match("^%s*([^;%s]+)%s*(.-)%s*$")
+    if coding then
+      local quality_text = params:match(";%s*q%s*=%s*([^;%s]+)")
+      local quality = 1
+
+      if quality_text then
+        local parsed = tonumber(quality_text)
+        if parsed and parsed >= 0 and parsed <= 1 then
+          quality = parsed
+        else
+          quality = 0
+        end
+      end
+
+      coding = coding:lower()
+      if coding == "gzip" then
+        gzip_quality = quality
+      elseif coding == "*" then
+        wildcard_quality = quality
+      end
+    end
   end
-  return EMBEDDED_HTML
+
+  if gzip_quality ~= nil then return gzip_quality > 0 end
+  return wildcard_quality ~= nil and wildcard_quality > 0 or false
 end
 
 -- Strict security check: validation of allowed SKeen CLI command line parameters.
@@ -379,8 +498,8 @@ local function is_valid_sync_url(value)
     end
 
     if c == '"' or c == "'" or c == '`' or c == '$' or c == '\\' or
-       c == ';' or c == '|' or c == '<' or c == '>' or c == '(' or c == ')' or
-       c == '{' or c == '}' or c == '[' or c == ']' then
+        c == ';' or c == '|' or c == '<' or c == '>' or c == '(' or c == ')' or
+        c == '{' or c == '}' or c == '[' or c == ']' then
       return false
     end
 
@@ -1271,7 +1390,9 @@ local function json_response(data, status)
 end
 
 -- Send a fully formed HTTP response, optionally including Retry-After header
-local function send_http_response(client, response_body, status, content_type, current_cors, retry_after)
+local function send_http_response(client, response_body, status, content_type, current_cors,
+                                  retry_after,
+                                  extra_headers)
   client:send("HTTP/1.1 " .. status .. "\r\n")
   if current_cors ~= "" then
     client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
@@ -1282,8 +1403,13 @@ local function send_http_response(client, response_body, status, content_type, c
   client:send("X-Content-Type-Options: nosniff\r\n")
   client:send("X-Frame-Options: SAMEORIGIN\r\n")
   client:send("Content-Type: " .. content_type .. "\r\n")
+  if extra_headers then
+    for name, value in pairs(extra_headers) do
+      client:send(name .. ": " .. value .. "\r\n")
+    end
+  end
   client:send("Cache-Control: no-store, no-cache, must-revalidate\r\n")
-  client:send("Content-Length: " .. string.len(response_body) .. "\r\n")
+  client:send("Content-Length: " .. #response_body .. "\r\n")
   if retry_after then
     client:send("Retry-After: " .. retry_after .. "\r\n")
     client:send("Access-Control-Expose-Headers: Retry-After\r\n")
@@ -1296,7 +1422,7 @@ end
 local function consume_rate_limit(limiter, now)
   local reqs = limiter.reqs
   while limiter.head <= limiter.tail and
-      reqs[limiter.head] <= now - limiter.window do
+    reqs[limiter.head] <= now - limiter.window do
     reqs[limiter.head] = nil
     limiter.head = limiter.head + 1
   end
@@ -1440,11 +1566,36 @@ local function handle_exec_request(body)
 end
 
 -- Route an incoming HTTP request to the appropriate handler
-local function route_request(method, path, body)
+local function route_request(method, path, body, request_headers)
+  -- DEBUG: Print incoming HTTP request headers.
+  -- for name, value in pairs(request_headers or {}) do
+  --   print("HTTP Header: " .. name .. " = " .. tostring(value))
+  -- end
+
   if path == "/" then
     if DASHBOARD then
-      return get_dashboard_html(), "200 OK", "text/html; charset=utf-8"
+      -- Development mode: prefer the local dashboard file.
+      if DEVELOPMENT then
+        local dashboard_html = get_dashboard_html()
+        if dashboard_html then
+          return dashboard_html, "200 OK", "text/html; charset=utf-8"
+        end
+      end
+
+      -- Production mode: serve the embedded gzip dashboard.
+      if accepts_gzip(request_headers and request_headers["accept-encoding"]) then
+        return EMBEDDED_HTML_GZIP, "200 OK", "text/html; charset=utf-8", {
+          ["Content-Encoding"] = "gzip",
+          ["Vary"] = "Accept-Encoding"
+        }
+      end
+
+      return "This dashboard requires a client that supports gzip content encoding.",
+          "406 Not Acceptable", "text/plain; charset=utf-8", {
+            ["Vary"] = "Accept-Encoding"
+          }
     end
+
     return json_response({ error = "Not found" }, "404 Not Found")
   elseif path == "/api/ping" and method == "GET" then
     return json_response({ status = "ok", message = "pong" })
@@ -1544,7 +1695,7 @@ local function handle_client(client)
     local allowed, retry_after = consume_rate_limit(limiter, os.time())
     if not allowed then
       local response_body, status, content_type =
-        json_response({ error = "Too many requests" }, "429 Too Many Requests")
+          json_response({ error = "Too many requests" }, "429 Too Many Requests")
       send_http_response(client, response_body, status, content_type, current_cors, retry_after)
       return
     end
@@ -1566,7 +1717,7 @@ local function handle_client(client)
     end
   end
 
-  local response_body, status, content_type
+  local response_body, status, content_type, extra_headers
   local authorized = true
 
   -- Keep the configured optional-auth behavior for API routes.
@@ -1575,13 +1726,13 @@ local function handle_client(client)
   end
 
   if authorized then
-    response_body, status, content_type = route_request(method, path, body)
+    response_body, status, content_type, extra_headers = route_request(method, path, body, headers)
   else
     response_body, status, content_type =
-      json_response({ error = "Unauthorized: Invalid or missing API key" }, "401 Unauthorized")
+        json_response({ error = "Unauthorized: Invalid or missing API key" }, "401 Unauthorized")
   end
 
-  send_http_response(client, response_body, status, content_type, current_cors)
+  send_http_response(client, response_body, status, content_type, current_cors, nil, extra_headers)
 end
 
 -- Infinite main server loop to accept incoming connections
