@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzFlMjkzYiIvPjx0ZXh0IHg9IjE2IiB5PSIyMyIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZGh0PSJib2xkIiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TPC90ZXh0Pjwvc3ZnPg==">
+  <meta name="description" content="SKeen dashboard — управление сервисом, конфигурациями и панелями sing-box.">
   <meta name="theme-color" content="#16161e">
   <title>SKeen dashboard</title>
   <style>
@@ -3161,6 +3162,7 @@ const editorState = {
 const serviceState = {
   pollingTimer: null,
   isServiceRunning: false,
+  statusRequestInProgress: false,
   telemetryPollingTimer: null,
   isServerConnected: false
 };
@@ -3327,7 +3329,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   applyLanguage();
   initConnections();
-  await initServicesSelector();
   if (appState.connectionStorageWarning) {
     showAlertModal(t('alertCorruptConnections'));
   }
@@ -3339,9 +3340,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const tabBtn = document.querySelectorAll('.tab-btn')[tabIndex];
   if (tabBtn) switchTab(savedTab, tabBtn, false);
 
-  await fetchServiceStatus();
-  startPolling();
-
+  // The status request and polling are started when the SKeen tab is activated.
+  // Other tabs do not need an idle polling interval.
   setTimeout(() => {
     const editorContainer = document.querySelector('.form-group-editor');
     if (preloader && editorContainer) {
@@ -3357,9 +3357,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     if (document.hidden) {
       stopTelemetryPolling();
+      if (serviceState.pollingTimer) {
+        clearInterval(serviceState.pollingTimer);
+        serviceState.pollingTimer = null;
+      }
     } else {
       if (document.getElementById('skeenTab').classList.contains('active')) {
-        fetchServiceStatus();
+        fetchServiceStatus().finally(startPolling);
       }
       if (isModalOpen && serviceState.isServerConnected) {
         openSystemTelemetryModal();
@@ -3370,6 +3374,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 function startPolling() {
+  if (document.hidden || !getBaseUrl() ||
+    !document.getElementById('skeenTab')?.classList.contains('active')) return;
   if (serviceState.pollingTimer) clearInterval(serviceState.pollingTimer);
   serviceState.pollingTimer = setInterval(() => {
     if (document.hidden || !document.getElementById('skeenTab').classList.contains('active')) {
@@ -3713,12 +3719,18 @@ function executeSwitchTab(tabId, btn, save) {
     closeServiceDrawer();
   }
 
+  if (tabId !== 'skeenTab' && serviceState.pollingTimer) {
+    clearInterval(serviceState.pollingTimer);
+    serviceState.pollingTimer = null;
+  }
+
   if (tabId === 'skeenTab') {
-    fetchServiceStatus();
+    fetchServiceStatus().finally(startPolling);
   } else if (tabId === 'servicesTab') {
     if (storageGet('keen_service_fullscreen') === '1') {
       toggleServiceFullscreen()
     }
+    ensureServicesSelectorInitialized();
     updateServiceFrameUrl(true);
   } else if (tabId === 'configsTab') {
     loadFileList();
@@ -3741,7 +3753,23 @@ const baseServices = [
   { host: "sub-store.vercel.app", label: "Sub-Store", code: 0, protocols: ["https"], allowHttps: true }
 ];
 
+let servicesSelectorInitialized = false;
+let servicesSelectorUserChanged = false;
+let servicesSelectorInitPromise = null;
+
+function ensureServicesSelectorInitialized() {
+  if (servicesSelectorInitialized) return Promise.resolve();
+  if (!servicesSelectorInitPromise) {
+    servicesSelectorInitPromise = initServicesSelector().catch(err => {
+      servicesSelectorInitPromise = null;
+      console.error('Failed to initialize service selector:', err);
+    });
+  }
+  return servicesSelectorInitPromise;
+}
+
 async function initServicesSelector() {
+  servicesSelectorUserChanged = false;
   const selectElement = document.getElementById("serviceSelect");
   if (!selectElement) return;
 
@@ -3774,12 +3802,27 @@ async function initServicesSelector() {
     return isHttps ? (isChromium || item.allowHttps) : !isChromium;
   });
 
+  const helpOption = document.createElement("option");
+  helpOption.value = "help";
+  helpOption.textContent = t('helpOption');
+  selectElement.appendChild(helpOption);
+
   availableServices.forEach(item => {
     const opt = document.createElement("option");
     opt.value = item.url;
     opt.textContent = item.label;
     selectElement.appendChild(opt);
   });
+
+  const savedUrl = storageGet("keen_service_url");
+  const initialValue = savedUrl && Array.from(selectElement.options).some(opt => opt.value === savedUrl)
+    ? savedUrl
+    : "help";
+
+  // Render the selected service immediately; local panels are loaded afterwards.
+  selectElement.value = initialValue;
+  servicesSelectorInitialized = true;
+  updateServiceFrameUrl();
 
   try {
     const baseUrl = getBaseUrl();
@@ -3794,36 +3837,29 @@ async function initServicesSelector() {
         if (json.success && Array.isArray(json.data)) {
           json.data.forEach(panel => {
             const opt = document.createElement("option");
-            let rawUrl = panel.url.trim();
+            const rawUrl = panel.url.trim();
             opt.value = rawUrl;
             opt.textContent = `${rawUrl} (local,http,${panel.type})`;
-            selectElement.prepend(opt);
+            // Keep the same reverse insertion order as the previous prepend() implementation.
+            selectElement.insertBefore(opt, helpOption.nextSibling);
           });
+
+          // Restore a saved local panel only when the user has not changed the selection.
+          const hasSavedOption = savedUrl && Array.from(selectElement.options)
+            .some(opt => opt.value === savedUrl);
+          if (hasSavedOption && !servicesSelectorUserChanged && selectElement.value === initialValue) {
+            selectElement.value = savedUrl;
+            updateServiceFrameUrl();
+          }
         }
       }
     }
   } catch (err) {
     console.error("Failed to load dynamic panels from /api/dash:", err);
   }
-
-  const helpOption = document.createElement("option");
-  helpOption.value = "help";
-  helpOption.textContent = t('helpOption');
-  selectElement.prepend(helpOption);
-
-  const savedUrl = storageGet("keen_service_url");
-  const optionsArray = Array.from(selectElement.options);
-
-  if (savedUrl && optionsArray.some(opt => opt.value === savedUrl)) {
-    selectElement.value = savedUrl;
-  } else {
-    selectElement.value = "help";
-  }
-
-  updateServiceFrameUrl();
 }
-
 function handleServiceSelectChange() {
+  servicesSelectorUserChanged = true;
   const selectElement = document.getElementById("serviceSelect");
   if (!selectElement) return;
   const selectedUrl = selectElement.value;
@@ -3832,6 +3868,8 @@ function handleServiceSelectChange() {
 }
 
 function updateServiceFrameUrl(isSwitchTab = false) {
+  if (!servicesSelectorInitialized) return;
+
   const iframe = document.getElementById('serviceFrame');
   const helpContainer = document.getElementById('helpContainer');
   if (!iframe || !helpContainer || isSwitchTab) return;
@@ -5031,8 +5069,9 @@ async function fetchServiceStatus() {
     return;
   }
   const baseUrl = getBaseUrl();
-  if (!baseUrl) return;
+  if (!baseUrl || serviceState.statusRequestInProgress) return;
 
+  serviceState.statusRequestInProgress = true;
   try {
     const res = await fetchWithTimeout(
       `${baseUrl}/api/status`,
@@ -5056,6 +5095,8 @@ async function fetchServiceStatus() {
     serviceState.isServerConnected = false;
     document.getElementById('sysTelemetryBtn').disabled = true;
     updateStatusBadge(null, true);
+  } finally {
+    serviceState.statusRequestInProgress = false;
   }
 }
 
@@ -5667,19 +5708,20 @@ function updateLineNumbers() {
   lineNumbers.dataset.foldStructure = foldStructure;
 }
 
-let highlightFrame = null;
+let editorUpdateFrame = null;
 function handleEditorInput(updateImmediately = false) {
   const textarea = document.getElementById('jsonEditor');
   editorState.cachedLines = textarea.value.split('\n');
-  updateLineNumbers();
-  updateActiveEditorLine();
+
   if (updateImmediately) {
-    if (highlightFrame !== null) cancelAnimationFrame(highlightFrame);
-    highlightFrame = null;
+    if (editorUpdateFrame !== null) cancelAnimationFrame(editorUpdateFrame);
+    editorUpdateFrame = null;
+    updateLineNumbers();
     updateEditorVisuals();
-  } else if (highlightFrame === null) {
-    highlightFrame = requestAnimationFrame(() => {
-      highlightFrame = null;
+  } else if (editorUpdateFrame === null) {
+    editorUpdateFrame = requestAnimationFrame(() => {
+      editorUpdateFrame = null;
+      updateLineNumbers();
       updateEditorVisuals();
     });
   }
