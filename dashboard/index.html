@@ -31,6 +31,7 @@
   --fold-placeholder-fg: rgba(205, 214, 244, 0.4);
   --editor-line-height: 18px;
   --modal-tab-bg: transparent;
+  --pre-bg: #11111b;
 }
 
 [data-theme="light"] {
@@ -53,6 +54,7 @@
   --folded-line-bg: rgba(25, 71, 120, 0.14);
   --fold-placeholder-fg: rgba(94, 98, 125, 0.55);
   --modal-tab-bg: transparent;
+  --pre-bg: #f4f5f7;
 }
 
 * {
@@ -72,6 +74,7 @@ body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-size: 16px;
   background-color: var(--bg-color);
   color: var(--text-color);
   padding: clamp(4px, min(2.5vh, 2vw), 40px);
@@ -82,7 +85,7 @@ body {
 }
 
 .container {
-  max-width: 900px;
+  max-width: 720px;
   height: 100%;
   margin: 0 auto;
   display: flex;
@@ -341,7 +344,7 @@ button.success-btn:hover {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 7px 12px;
+  padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
@@ -358,6 +361,13 @@ button.success-btn:hover {
   background-color: var(--accent-color);
   color: #ffffff;
   font-weight: 600;
+}
+
+.tab-btn svg {
+  display: none;
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.75;
 }
 
 /* Form Fields & Selects */
@@ -507,6 +517,14 @@ select:disabled:hover {
   min-width: 0;
 }
 
+#servicesTab .card {
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .tab-content {
   display: none;
   flex: 1;
@@ -517,6 +535,8 @@ select:disabled:hover {
 .tab-content.active {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 h2,
@@ -1312,7 +1332,8 @@ label {
   min-width: 0;
 }
 
-.code-editor-wrapper.fullscreen-mode {
+.code-editor-wrapper.fullscreen-mode,
+.card.fullscreen-mode {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -1731,11 +1752,11 @@ label {
    ========================================================================== */
 @media (max-width: 360px) {
   body {
-    padding: 4px;
+    padding: 2px;
   }
 
   .navbar {
-    padding: 8px;
+    padding: 6px;
   }
 
   select.conn-select {
@@ -1746,6 +1767,33 @@ label {
   button {
     padding: 7px 10px;
     font-size: 0.82rem;
+  }
+
+  .nav-tabs {
+    gap: 16px;
+  }
+
+  .tab-btn {
+    background-color: var(--card-hover);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tab-btn .tab-text {
+    display: none;
+  }
+
+  .tab-btn svg {
+    display: inline-block;
   }
 }
 
@@ -1879,6 +1927,196 @@ body.preload * {
   font-family: 'JetBrains Mono', monospace, ui-monospace;
 }
 
+
+/* ==========================================================================
+   13. Slide-out services panel
+   ========================================================================== */
+#serviceDrawerContainer {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#serviceDropdownPanel {
+  display: none;
+  background-color: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 6px 10px;
+  gap: 8px;
+  align-items: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  margin-bottom: -1px;
+}
+
+#serviceSelect {
+  min-width: 180px;
+  max-width: 260px;
+  height: 32px;
+  padding: 5px 10px;
+}
+
+#serviceFullscreenBtn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+#serviceFullscreenSvg {
+  width: 14px;
+  height: 14px;
+}
+
+#serviceDrawerToggleBtn {
+  background-color: var(--card-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 2px 14px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  transition: all 0.2s ease;
+}
+
+#serviceDrawerToggleBtn:hover {
+  color: var(--text-color);
+  border-color: var(--border-focus);
+}
+
+#serviceDrawerArrowSvg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.25s ease;
+}
+
+
+/* ==========================================================================
+   14. Services Help Template
+   ========================================================================== */
+.help-container-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.help-container-wrapper code:not(pre code) {
+  background-color: var(--code-bg);
+  color: var(--code-color);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+  border: 1px solid var(--border-color);
+  font-weight: 600;
+}
+
+.help-title {
+  color: var(--accent-color);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 8px;
+  margin-top: 0;
+}
+
+.help-subtitle {
+  color: var(--text-color);
+  margin-top: 20px;
+}
+
+.help-text {
+  color: var(--text-color);
+}
+
+.help-text-muted {
+  color: var(--text-muted);
+}
+
+.help-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  background: var(--card-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.help-table th,
+.help-table td {
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.help-table th {
+  background: var(--card-hover);
+  color: var(--text-color);
+  font-weight: 600;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.help-table td {
+  color: var(--text-color);
+}
+
+.help-td {
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  color: var(--text-color);
+}
+
+.help-td-muted {
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  color: var(--text-muted);
+}
+
+.help-url {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--accent-color);
+  word-break: break-all;
+}
+
+.help-warning-box {
+  background: var(--code-bg);
+  border-left: 4px solid var(--warning-color);
+  padding: 12px;
+  border-radius: 4px;
+  margin: 16px 0;
+  border-top: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.help-pre {
+  background: var(--pre-bg, #11111b);
+  color: var(--success-color, #a6e3a1);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  font-family: monospace;
+}
+
   </style>
 </head>
 
@@ -1888,13 +2126,36 @@ body.preload * {
     <!-- Navbar -->
     <div class="navbar">
       <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('skeenTab', this)" data-i18n="tabSKeen">SKeen</button>
-        <button class="tab-btn" onclick="switchTab('configTab', this)" data-i18n="tabConfig">Конфиг</button>
+        <button class="tab-btn" onclick="switchTab('skeenTab', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 7c0-2.21-1.79-4-4-4H9a4 4 0 0 0-4 4v1c0 2.21 1.79 4 4 4h6c2.21 0 4 1.79 4 4v1c0 2.21-1.79 4-4 4H9c-2.21 0-4-1.79-4-4"></path>
+          </svg>
+          <span class="tab-text" data-i18n="tabSKeen">SKeen</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('configsTab', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span class="tab-text" data-i18n="tabConfigs">Конфиги</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('servicesTab', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+          </svg>
+          <span class="tab-text" data-i18n="tabServices">Сервисы</span>
+        </button>
       </div>
       <div class="nav-controls">
         <!-- System Telemetry button -->
         <button id="sysTelemetryBtn" class="icon-btn" onclick="openSystemTelemetryModal()" title="Системная телеметрия"
-          aria-label="System Telemetry" disabled>
+          aria-label="System Telemetry">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
           </svg>
@@ -1966,7 +2227,7 @@ body.preload * {
     </div>
 
     <!-- Tab 2: Configuration Editor -->
-    <div id="configTab" class="tab-content">
+    <div id="configsTab" class="tab-content">
       <div class="card editor-card">
         <div class="flex-row-between">
           <h2 class="margin-0 border-none padding-0" data-i18n="jsonCardTitle">Конфигурация</h2>
@@ -2065,6 +2326,31 @@ body.preload * {
             </svg>
             <span data-i18n="btnSaveJson">Сохранить</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Services Content -->
+    <div id="servicesTab" class="tab-content">
+      <div class="card" id="serviceCard" style="padding: 0px; overflow: hidden; position: relative;">
+        <div id="serviceDrawerContainer">
+          <div id="serviceDropdownPanel">
+            <select id="serviceSelect" class="conn-select" onchange="handleServiceSelectChange()" title="Выбрать сервис" data-i18n-title="selectServiceTitle"></select>
+            <button id="serviceFullscreenBtn" class="icon-btn-sm secondary" onclick="toggleServiceFullscreen()" title="На весь экран" data-i18n-title="fullscreenTitle" aria-label="Fullscreen">
+              <svg id="serviceFullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+              </svg>
+            </button>
+          </div>
+          <button id="serviceDrawerToggleBtn" onclick="toggleServiceDrawer()" title="Панель управления" data-i18n-title="serviceToggleTitle"  aria-label="Toggle Services Panel">
+            <svg id="serviceDrawerArrowSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div id="serviceViewContainer" style="width: 100%; height: 100%; border-radius: 10px; overflow: hidden; background: var(--card-bg); display: flex; flex-direction: column;">
+          <iframe id="serviceFrame" src="" allow="local-network; loopback-network" style="width: 100%; height: 100%; border: none; background: var(--card-bg);" title="Dashboard"></iframe>
+          <div id="helpContainer" style="display: none; width: 100%; height: 100%; overflow-y: auto; padding: 20px;"></div>
         </div>
       </div>
     </div>
@@ -2333,7 +2619,8 @@ body.preload * {
    ========================================================================== */
 const translations = {
   tabSKeen: { ru: "SKeen", en: "SKeen" },
-  tabConfig: { ru: "Конфиг", en: "Config" },
+  tabServices: { ru: "Сервисы", en: "Services" },
+  tabConfigs: { ru: "Конфиги", en: "Configs" },
   skeenCardTitle: { ru: "Управление SKeen", en: "SKeen Management" },
   extraActionLabel: { ru: "Дополнительные сервисные команды", en: "Extra Service Commands" },
   btnExecute: { ru: "Выполнить", en: "Execute" },
@@ -2416,6 +2703,7 @@ const translations = {
   cmdDeps: { ru: "deps - Проверить зависимости", en: "deps - Check dependencies" },
   cmdCheck: { ru: "check - Проверить конфигурацию", en: "check - Check config" },
   cmdFormat: { ru: "format - Отформатировать конфиг", en: "format - Format configuration" },
+  cmdDash: { ru: "dash - Получить ссылки на API", en: "dash - Get API links" },
   cmdBackup: { ru: "backup - Создать архив /opt/etc/skeen", en: "backup - Create archive" },
   cmdBackups: { ru: "backups - Список архивов в /opt", en: "backups - List archives" },
   cmdRestore: { ru: "restore - Восстановить из архива", en: "restore - Restore backup" },
@@ -2506,7 +2794,79 @@ const translations = {
   netIface: { ru: "Интерфейс:", en: "Interface:" },
   netRx: { ru: "Загрузка:", en: "Download:" },
   netTx: { ru: "Отдача:", en: "Upload:" },
-  netConns: { ru: "Соединений:", en: "Connections:" }
+  netConns: { ru: "Соединений:", en: "Connections:" },
+  helpOption: { ru: "Справка / Help", en: "Help / Справка" },
+  selectServiceTitle: { ru: "Выбрать сервис", en: "Select service" },
+  serviceToggleTitle: { ru: "Панель управления", en: "Control Panel" },
+};
+
+const helpDict = {
+  ru: {
+    title: "💡 Справка по сервисам",
+    selectHint: "Выбор нужного сервиса для отображения во фрейме осуществляется через <strong>раскрывающийся список (селектор) вверху по центру</strong> панели управления. Также вам доступна кнопка увеличения интерфейса на весь экран.",
+    localStorageNote: "Обратите внимание: ваш выбор сервиса и все персональные настройки сохраняются локально в текущем браузере (через <code>localStorage</code>).",
+    tableTitle: "🌐 Полный список сервисов",
+    headers: ["Панель управления и URL", "Особенности и требования"],
+    localPanelName: "Локальные панели",
+    localPanelUrl: "Динамические локальные адреса роутера",
+    localPanelReq: "Доступны только в локальной сети (любой браузер).",
+    chromiumReq: "Chromium: только HTTPS / Остальные: HTTP.",
+    httpsOnlyReq: "<strong>Только HTTPS</strong> (требование Chromium).",
+    subStoreReq: "Без ограничений (все браузеры).",
+    noteTitle: "⚠️ ВАЖНОЕ ПРИМЕЧАНИЕ (Подключение к API и CORS):",
+    note1: "<strong>Адрес подключения:</strong> Подключение к локальным API осуществляется через адрес вашей локальной сети и порт API (например, <code>http://192.168.1.1:9090</code>). Однако крайне рекомендуется привязать этот адрес к домену через <strong>KeenDNS / CrazeDNS</strong>. Для удаленного доступа из внешней сети или работы в браузерах на базе Chromium — использование домена с HTTPS является <strong>строго обязательным</strong> (подробнее см. ниже).",
+    note2: "<strong>Настройки разрешений sing-box:</strong> Для отправки запросов к локальным HTTP-бэкендам потребуется разрешить доступ во всплывающем уведомлении браузера. При этом адрес панели должен быть внесен в параметр <code>access_control_allow_origin</code> конфигурации sing-box, а также включен параметр <code>\"access_control_allow_private_network\": true</code>. <em>В базовых конфигурациях SKeen все эти параметры уже настроены по умолчанию.</em>",
+    subStoreTitle: "📦 Панель управления подписками: Sub-Store",
+    subStoreDesc: "Для продвинутого управления подписками и конвертации конфигураций используется официальная панель <strong>Sub-Store</strong> (<a href=\"https://sub-store.vercel.app\" target=\"_blank\" class=\"help-url\" rel=\"noopener noreferrer\">sub-store.vercel.app</a>). Доступ к бэкенду осуществляется по ссылке вида:",
+    remoteTitle: "⚙️ Настройка для удаленного доступа и браузеров на базе Chromium",
+    browserBoxTitle: "Особенности работы браузеров (Google Chrome, Edge, Opera, Brave, Vivaldi):",
+    browserBoxDesc: "Браузеры на движке <strong>Chromium</strong> проверяют безопасность контекста родительской страницы. Поскольку внешние панели (remote) открываются <strong>во фрейме</strong>, браузер оценивает защищенность самого интерфейса SKeen Dashboard, а не адрес панели внутри.",
+    browserBoxLi: "Если SKeen Dashboard открыта по обычному <code>HTTP</code>, а внешняя панель загружается по <code>HTTPS</code> (или наоборот), браузер блокирует запросы к локальной сети из соображений безопасности. Поскольку <strong>Clash API работает по HTTP в 100% случаев</strong>, а настраивать HTTPS для локального <strong>sing-box API</strong> вручную на роутере никто не будет, для возможности подключения к ним из локальной сети в браузерах на основе Chromium требуется перевести SKeen Dashboard и/или sing-box API / Clash API на HTTPS через KeenDNS / CrazeDNS.",
+    httpsStepsTitle: "Инструкция по настройке HTTPS через KeenDNS / CrazeDNS:",
+    httpsStepsIntro: "Чтобы браузеры на основе Chromium пропускали запросы к локальной сети, либо для подключения из внешней сети, нужно опубликовать сервис в KeenDNS/CrazeDNS:",
+    steps: [
+      "Перейдите в веб-интерфейс Keenetic: <strong>Доменное имя -> Доступ к веб-приложениям в вашей сети</strong>.",
+      "Создайте доменное имя 4-го уровня и пробросьте API: <code>Протокол: HTTP</code>, <code>Устройство: Это устройство</code>, <code>Порт: порт вашего sing-box API / Clash API</code>.",
+      "<strong>Взамен проброса API</strong> (или как дополнение) вы можете опубликовать саму панель <strong>SKeen Dashboard</strong> по HTTPS. При этом <strong>для удаленного доступа из внешней сети</strong> публикация API-сервисов через HTTPS является <strong>обязательной в любом случае</strong>."
+    ],
+    cliTitle: "Обязательно для прошивки роутера 4.2 и выше:",
+    cliDesc: "Чтобы встроенный реверс-прокси (nginx роутера) не вырезал заголовок <code>Origin</code>, требуемый для CORS-валидации, пропишите в CLI роутера:",
+    cliCode: "ip http proxy myapi preserve-origin\nsystem configuration save",
+    cliFooter: "Где <code>myapi</code> — это имя вашего приложения из раздела KeenDNS/CrazeDNS."
+  },
+  en: {
+    title: "💡 Services Help",
+    selectHint: "You can select the desired service to display in the frame via the <strong>drop-down selector at the top center</strong> of the control panel. You also have a fullscreen interface button available.",
+    localStorageNote: "Please note: your service selection and all personal settings are stored locally in your current browser (via <code>localStorage</code>).",
+    tableTitle: "🌐 Full list of services",
+    headers: ["Control Panel & URL", "Features and Requirements"],
+    localPanelName: "Local Panels",
+    localPanelUrl: "Dynamic local router addresses",
+    localPanelReq: "Local network only (any browser).",
+    chromiumReq: "Chromium: HTTPS only / Others: HTTP.",
+    httpsOnlyReq: "<strong>HTTPS only</strong> (Chromium requirement).",
+    subStoreReq: "No restrictions (all browsers).",
+    noteTitle: "⚠️ IMPORTANT NOTE (API Connection & CORS):",
+    note1: "<strong>Connection Address:</strong> Connection to local APIs is carried out via your local network address and API port (for example, <code>http://192.168.1.1:9090</code>). However, it is strongly recommended to bind this address to a domain via <strong>KeenDNS / CrazeDNS</strong>. For remote access from an external network or use in Chromium-based browsers, using a domain with HTTPS is <strong>strictly mandatory</strong> (see details below).",
+    note2: "<strong>sing-box Permission Settings:</strong> To send requests to local HTTP backends, you will need to allow this access in the browser's pop-up prompt. Additionally, the panel address must be added to the <code>access_control_allow_origin</code> parameter in the sing-box configuration, and the <code>\"access_control_allow_private_network\": true</code> parameter must be enabled. <em>In SKeen base configurations, these parameters are already pre-configured by default.</em>",
+    subStoreTitle: "📦 Subscription Management Panel: Sub-Store",
+    subStoreDesc: "For advanced subscription management and configuration conversion, the official <strong>Sub-Store</strong> panel (<a href=\"https://sub-store.vercel.app\" target=\"_blank\" class=\"help-url\" rel=\"noopener noreferrer\">sub-store.vercel.app</a>) is used. Backend access is structured as follows:",
+    remoteTitle: "⚙️ Setup for Remote Access and Chromium-Based Browsers",
+    browserBoxTitle: "Browser Behavior (Google Chrome, Edge, Opera, Brave, Vivaldi):",
+    browserBoxDesc: "Chromium-engine browsers check the security context of the parent page. Since remote panels load <strong>inside an iframe</strong>, the browser evaluates the security of the SKeen Dashboard interface itself rather than the internal panel address.",
+    browserBoxLi: "If the SKeen Dashboard is opened via regular <code>HTTP</code> while the remote panel loads via <code>HTTPS</code> (or vice versa), the browser blocks requests to the local network for security reasons. Since <strong>Clash API operates over HTTP 100% of the time</strong>, and nobody configures HTTPS for a local <strong>sing-box API</strong> manually on a router, connecting to them from a local network in Chromium-based browsers requires switching SKeen Dashboard and/or sing-box API / Clash API to HTTPS via KeenDNS / CrazeDNS.",
+    httpsStepsTitle: "HTTPS Setup Instructions via KeenDNS / CrazeDNS:",
+    httpsStepsIntro: "To allow Chromium-based browsers to pass requests to the local network, or for external network access, you must publish the service in KeenDNS/CrazeDNS:",
+    steps: [
+      "Go to the Keenetic web interface: <strong>Domain Name -> Web Application Access in Your Network</strong>.",
+      "Create a 4th-level domain name and forward the API: <code>Protocol: HTTP</code>, <code>Device: This device</code>, <code>Port: your sing-box API / Clash API port</code>.",
+      "<strong>Instead of API port forwarding</strong> (or as an addition), you can publish the <strong>SKeen Dashboard</strong> panel itself via HTTPS. Note that <strong>for remote access from an external network</strong>, publishing API services via HTTPS is <strong>mandatory in any case</strong>."
+    ],
+    cliTitle: "Mandatory for Router Firmware 4.2 and Higher:",
+    cliDesc: "To prevent the built-in reverse proxy (router's nginx) from stripping the <code>Origin</code> header required for CORS validation, run the following in the router CLI:",
+    cliCode: "ip http proxy myapi preserve-origin\nsystem configuration save",
+    cliFooter: "Where <code>myapi</code> is your application name from the KeenDNS/CrazeDNS section."
+  }
 };
 
 /* ==========================================================================
@@ -2817,6 +3177,17 @@ function validateField(inputElement, type) {
 /* ==========================================================================
    Helper (DRY)
    ========================================================================== */
+function getSVG(type) {
+  switch (type) {
+    case 'restore':
+      return '<path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4v6m0 0h6m0-6l-7 7M10 4v6m0 0H4m0-6l7 7"></path>';
+    case 'fullscreen':
+      return '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
+    default:
+      return '';
+  }
+}
+
 function setModalState(modalId, isOpen) {
   const modal = document.getElementById(modalId);
   if (modal) {
@@ -2881,14 +3252,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   applyLanguage();
   initConnections();
+  await initServicesSelector();
   if (appState.connectionStorageWarning) {
     showAlertModal(t('alertCorruptConnections'));
   }
   renderExtraParamOptions();
 
   const storedTab = localStorage.getItem('keen_active_tab');
-  const savedTab = storedTab === 'configTab' ? 'configTab' : 'skeenTab';
-  const tabBtn = document.querySelectorAll('.tab-btn')[savedTab === 'configTab' ? 1 : 0];
+  const savedTab = ['skeenTab', 'configsTab', 'servicesTab'].includes(storedTab) ? storedTab : 'skeenTab';
+  const tabIndex = savedTab === 'servicesTab' ? 2 : savedTab === 'configsTab' ? 1 : 0;
+  const tabBtn = document.querySelectorAll('.tab-btn')[tabIndex];
   if (tabBtn) switchTab(savedTab, tabBtn, false);
 
   await fetchServiceStatus();
@@ -3081,6 +3454,7 @@ async function saveConnection() {
   initConnections();
   restartConnectionPingPolling();
   fetchServiceStatus();
+  updateServiceFrameUrl();
 }
 
 function editConnection(index) {
@@ -3105,6 +3479,7 @@ function deleteConnection(index) {
     clearConnForm();
     initConnections();
     restartConnectionPingPolling();
+    updateServiceFrameUrl();
   });
 }
 
@@ -3222,7 +3597,8 @@ function executeChangeConnection(nextIndex) {
   renderConnList();
   showStatus('jsonStatus', t('statusSwitchedTo') + (getActiveConnection().name || getActiveConnection().url));
   fetchServiceStatus();
-  if (document.getElementById('configTab').classList.contains('active')) loadFileList();
+  updateServiceFrameUrl();
+  if (document.getElementById('configsTab').classList.contains('active')) loadFileList();
 }
 
 function getHeaders() {
@@ -3241,7 +3617,7 @@ function getBaseUrl() {
    UI Navigation & Tabs
    ========================================================================== */
 function switchTab(tabId, btn, save = true) {
-  if (tabId !== 'configTab' && hasUnsavedChanges()) {
+  if (tabId !== 'configsTab' && hasUnsavedChanges()) {
     showConfirmModal(t('confirmUnsaved'), () => {
       editorState.originalFileContent = '';
       executeSwitchTab(tabId, btn, save);
@@ -3258,8 +3634,245 @@ function executeSwitchTab(tabId, btn, save) {
   btn.classList.add('active');
   if (save) localStorage.setItem('keen_active_tab', tabId);
 
-  if (tabId === 'skeenTab') fetchServiceStatus();
-  else if (tabId === 'configTab') loadFileList();
+  if (tabId !== 'servicesTab') {
+    closeServiceDrawer();
+  }
+
+  if (tabId === 'skeenTab') {
+    fetchServiceStatus();
+  } else if (tabId === 'servicesTab') {
+    if (localStorage.getItem('keen_service_fullscreen') === '1') {
+      toggleServiceFullscreen()
+    }
+    updateServiceFrameUrl(true);
+  } else if (tabId === 'configsTab') {
+    loadFileList();
+  }
+}
+
+/* ==========================================================================
+   Sevices Selector & Dynamic Loading
+   ========================================================================== */
+const baseServices = [
+  { host: "sing-box-dashboard.sagernet.org", label: "SagerNet", code: 1 },
+  { host: "sdash.u1.pw", label: "SDash", code: 3 },
+  { host: "board.zash.run.place", label: "Zashboard", code: 2 },
+  { host: "clash.razord.top", label: "Razord", code: 2 },
+  { host: "yacd.haishan.me", label: "YACD", code: 2 },
+  // Services with HTTPS only:
+  { host: "yacd.metacubex.one", label: "YACD Meta", code: 2, protocols: ["https"] },
+  { host: "d.metacubex.one", label: "MetaCubeXD One", code: 2, protocols: ["https"] },
+  { host: "metacubexd.pages.dev", label: "MetaCubeXD Dev", code: 2, protocols: ["https"] },
+  { host: "sub-store.vercel.app", label: "Sub-Store", code: 0, protocols: ["https"], allowHttps: true }
+];
+
+async function initServicesSelector() {
+  const selectElement = document.getElementById("serviceSelect");
+  if (!selectElement) return;
+
+  selectElement.innerHTML = "";
+
+  const allServices = baseServices.flatMap(service => {
+    const protocols = service.protocols || ["http", "https"];
+
+    const getTagsString = (code) => {
+      const parts = [];
+      if (code & 1) parts.push("api");
+      if (code & 2) parts.push("clash_api");
+
+      return parts.length ? `,${parts.join(",")}` : "";
+    };
+
+    return protocols.map(proto => ({
+      url: `${proto}://${service.host}`,
+      label: `${service.label} (remote,${proto}${getTagsString(service.code)})`,
+      ...(service.allowHttps && proto === 'https' ? { allowHttps: true } : {})
+    }));
+  });
+
+  const isChromium = navigator.userAgentData
+    ? navigator.userAgentData.brands.some(b => /Chromium|Chrome|Edge/.test(b.brand))
+    : /Chrome|CriOS|Edg/.test(navigator.userAgent);
+
+  const availableServices = allServices.filter(item => {
+    const isHttps = item.url.startsWith("https://");
+    return isHttps ? (isChromium || item.allowHttps) : !isChromium;
+  });
+
+  availableServices.forEach(item => {
+    const opt = document.createElement("option");
+    opt.value = item.url;
+    opt.textContent = item.label;
+    selectElement.appendChild(opt);
+  });
+
+  try {
+    const baseUrl = getBaseUrl();
+    if (baseUrl) {
+      const res = await fetchWithTimeout(`${baseUrl}/api/dash`, {
+        method: 'GET',
+        headers: getHeaders()
+      }, 5000);
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          json.data.forEach(panel => {
+            const opt = document.createElement("option");
+            let rawUrl = panel.url.trim();
+            opt.value = rawUrl;
+            opt.textContent = `${rawUrl} (local,http,${panel.type})`;
+            selectElement.prepend(opt);
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load dynamic panels from /api/dash:", err);
+  }
+
+  const helpOption = document.createElement("option");
+  helpOption.value = "help";
+  helpOption.textContent = t('helpOption');
+  selectElement.prepend(helpOption);
+
+  const savedUrl = localStorage.getItem("keen_service_url");
+  const optionsArray = Array.from(selectElement.options);
+
+  if (savedUrl && optionsArray.some(opt => opt.value === savedUrl)) {
+    selectElement.value = savedUrl;
+  } else {
+    selectElement.value = "help";
+  }
+
+  updateServiceFrameUrl();
+}
+
+function handleServiceSelectChange() {
+  const selectElement = document.getElementById("serviceSelect");
+  if (!selectElement) return;
+  const selectedUrl = selectElement.value;
+  localStorage.setItem("keen_service_url", selectedUrl);
+  updateServiceFrameUrl();
+}
+
+function updateServiceFrameUrl(isSwitchTab = false) {
+  const iframe = document.getElementById('serviceFrame');
+  const helpContainer = document.getElementById('helpContainer');
+  if (!iframe || !helpContainer || isSwitchTab) return;
+
+  const selectElement = document.getElementById('serviceSelect');
+  const targetUrl = selectElement && selectElement.value ? selectElement.value : "help";
+
+  if (targetUrl === "help") {
+    iframe.style.display = 'none';
+    helpContainer.style.display = 'block';
+    helpContainer.innerHTML = getHelpTemplate();
+  } else {
+    helpContainer.style.display = 'none';
+    iframe.style.display = 'block';
+
+    iframe.removeAttribute('srcdoc');
+    if (iframe.src !== targetUrl) {
+      iframe.src = targetUrl;
+    }
+  }
+}
+
+function toggleServiceFullscreen() {
+  const serviceCard = document.getElementById('serviceCard');
+  const svg = document.getElementById('serviceFullscreenSvg');
+  const btn = document.getElementById('serviceFullscreenBtn');
+
+  serviceCard.classList.toggle('fullscreen-mode');
+  const isFull = serviceCard.classList.contains('fullscreen-mode');
+
+  localStorage.setItem('keen_service_fullscreen', isFull ? '1' : '0');
+
+  if (isFull) {
+    svg.innerHTML = getSVG('restore');
+    btn.title = t('titleRestore');
+  } else {
+    svg.innerHTML = getSVG('fullscreen');
+    btn.title = t('titleFullscreen');
+  }
+}
+
+function toggleServiceDrawer() {
+  const panel = document.getElementById('serviceDropdownPanel');
+  const arrow = document.getElementById('serviceDrawerArrowSvg');
+  if (!panel || !arrow) return;
+
+  const isHidden = panel.style.display === 'none' || panel.style.display === '';
+
+  if (isHidden) {
+    panel.style.display = 'flex';
+    arrow.style.transform = 'rotate(180deg)';
+  } else {
+    closeServiceDrawer();
+  }
+}
+
+function closeServiceDrawer() {
+  const panel = document.getElementById('serviceDropdownPanel');
+  const arrow = document.getElementById('serviceDrawerArrowSvg');
+  if (panel) panel.style.display = 'none';
+  if (arrow) arrow.style.transform = 'rotate(0deg)';
+}
+
+const serviceContainer = document.getElementById('serviceDrawerContainer');
+if (serviceContainer) {
+  serviceContainer.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+  serviceContainer.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+  });
+}
+
+document.addEventListener('click', () => {
+  const servicesTab = document.getElementById('servicesTab');
+  if (!servicesTab || !servicesTab.classList.contains('active')) return;
+
+  const panel = document.getElementById('serviceDropdownPanel');
+  if (panel && panel.style.display === 'flex') {
+    closeServiceDrawer();
+  }
+});
+
+window.addEventListener('blur', () => {
+  const servicesTab = document.getElementById('servicesTab');
+  if (!servicesTab || !servicesTab.classList.contains('active')) return;
+
+  const panel = document.getElementById('serviceDropdownPanel');
+  if (panel && panel.style.display === 'flex') {
+    setTimeout(() => {
+      if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+        closeServiceDrawer();
+      }
+    }, 50);
+  }
+});
+
+function getHelpTemplate() {
+  const lang = languageState.currentLang || 'en';
+  const t = helpDict[lang] || helpDict.en;
+  let panelsHtml = `<tr><td><strong>${t.localPanelName}</strong><br><span class="help-url">${t.localPanelUrl}</span></td><td>${t.localPanelReq}</td></tr>`;
+
+  panelsHtml += baseServices.map(service => {
+    const isHttpsOnly = service.protocols && service.protocols.includes('https') && service.protocols.length === 1;
+    const protocol = isHttpsOnly ? 'https://' : 'http://';
+    const fullUrl = `${protocol}${service.host}`;
+    const linkContent = isHttpsOnly ? fullUrl : `http(s)://${service.host}`
+
+    let reqText = t.chromiumReq;
+    if (isHttpsOnly) reqText = t.httpsOnlyReq;
+    if (service.label === "Sub-Store") reqText = t.subStoreReq;
+
+    return `<tr><td><strong>${service.label}</strong><br><a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="help-url">${linkContent}</a></td><td>${reqText}</td></tr>`;
+  }).join('');
+
+  return `<div class="help-container-wrapper"><h2 class="help-title">${t.title}</h2><p class="help-text">${t.selectHint}</p><p class="help-text-muted">${t.localStorageNote}</p><h3 class="help-subtitle">${t.tableTitle}</h3><table class="help-table"><thead><tr><th>${t.headers[0]}</th><th>${t.headers[1]}</th></tr></thead><tbody>${panelsHtml}</tbody></table><div class="help-warning-box" style="margin-top: 15px;"><p class="help-text" style="margin: 0;"><strong>${t.noteTitle}</strong></p><ul class="help-text" style="margin-bottom: 0;"><li>${t.note1}</li><li>${t.note2}</li></ul></div><h3 class="help-subtitle">${t.subStoreTitle}</h3><p class="help-text">${t.subStoreDesc}</p><p class="help-text"><code>http(s)://host:port/path</code></p><h3 class="help-subtitle">${t.remoteTitle}</h3><div class="help-warning-box"><p class="help-text" style="margin: 0;"><strong>${t.browserBoxTitle}</strong><br>${t.browserBoxDesc}</p><ul class="help-text" style="margin-bottom: 0;"><li>${t.browserBoxLi}</li></ul></div><p class="help-text"><strong>${t.httpsStepsTitle}</strong></p><p class="help-text">${t.httpsStepsIntro}</p><ol class="help-text">${t.steps.map(step => `<li>${step}</li>`).join('')}</ol><p class="help-text"><strong>${t.cliTitle}</strong><br>${t.cliDesc}</p><pre class="help-pre"><code>${t.cliCode}</code></pre><p class="help-text">${t.cliFooter}</p></div>`;
 }
 
 function switchModalTab(paneId, btn) {
@@ -3389,7 +4002,6 @@ function updateProgressBar(barId, valId, used, total, isPercentage = false, unit
 }
 
 function openSystemTelemetryModal() {
-  if (!serviceState.isServerConnected) return;
   setModalState('sysTelemetryModal', true);
   fetchSystemTelemetryData();
   if (serviceState.telemetryPollingTimer) clearInterval(serviceState.telemetryPollingTimer);
@@ -3992,10 +4604,10 @@ function toggleFullscreen() {
   const isFull = editorWrapper.classList.contains('fullscreen-mode');
 
   if (isFull) {
-    svg.innerHTML = '<path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4v6m0 0h6m0-6l-7 7M10 4v6m0 0H4m0-6l7 7"></path>';
+    svg.innerHTML = getSVG('restore');
     btn.title = t('titleRestore');
   } else {
-    svg.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
+    svg.innerHTML = getSVG('fullscreen');
     btn.title = t('titleFullscreen');
   }
 
@@ -4044,6 +4656,7 @@ function changeLanguage(langSetting) {
   renderConnList();
   renderDynamicActions();
   renderExtraParamOptions();
+  updateServiceFrameUrl();
   if (editorState.editorMode === 'form') {
     try {
       renderFormFields(collectFormData());
@@ -4432,6 +5045,7 @@ function renderExtraParamOptions() {
     { val: "deps", label: t('cmdDeps') },
     { val: "check", label: t('cmdCheck') },
     { val: "format", label: t('cmdFormat') },
+    { val: "dash", label: t('cmdDash') },
     { val: "backup", label: t('cmdBackup') },
     { val: "backups", label: t('cmdBackups') },
     { val: "restore", label: t('cmdRestore') },
