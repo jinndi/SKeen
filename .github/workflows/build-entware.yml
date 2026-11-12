@@ -108,7 +108,7 @@ jobs:
             for pkg in libgcc libc libpthread librt \
               entware-release findutils grep ldconfig locales \
               opkg zoneinfo-asia zoneinfo-europe opt-ndmsv2 \
-              dropbear curl htop poorbox busybox; do
+              dropbear curl poorbox busybox; do
               echo "Installing $pkg..."
               if ! opkg install "$pkg" --force-overwrite; then
                 echo "=== Installation failed: $pkg ==="
@@ -119,53 +119,6 @@ jobs:
 
             # Update shared library cache
             ldconfig
-
-            # Create symlinks for busybox applets & lib symlinks (htop)
-            # (Fix busybox Update https://entware.net/2026/11/06/Changelog.html)
-
-            # 1. Run official Busybox post-installation script to handle all applet symlinks
-            if [ -x "/opt/lib/opkg/info/busybox.postinst-pkg" ]; then
-              echo "Running official busybox.postinst-pkg..."
-              /opt/lib/opkg/info/busybox.postinst-pkg && \
-                echo "Busybox applets successfully configured." || \
-                echo "Error: postinst-pkg failed" >&2
-            else
-              echo "Error: postinst script not found or not executable!" >&2
-              exit 1
-            fi
-
-            # 2. Initialization: cleanup broken symlinks in /opt/lib
-            for link in $(find /opt/lib -type l); do
-              if [ ! -e "$link" ]; then
-                rm -f "$link" && echo "Removed broken link: $link" || echo "Error: failed to remove $link" >&2
-              fi
-            done
-
-            # 3. Dynamically update ncurses, panel, menu, and form compatibility symlinks
-            LIB_DIR="/opt/lib"
-            for lib in ncurses panel menu form; do
-              # Find the newest Unicode-enabled library version (with 'w' character)
-              source_lib=$(ls -1 $LIB_DIR/lib${lib}w.so.[0-9]* 2>/dev/null | tail -n 1)
-
-              if [ -n "$source_lib" ]; then
-                base_source=$(basename "$source_lib")
-                # Generate the target version name without the 'w' character
-                target_version=$(echo "$base_source" | sed 's/w\.so/\.so/')
-
-                if [ ! -e "$LIB_DIR/$target_version" ] && [ ! -L "$LIB_DIR/$target_version" ]; then
-                  ln -s "$base_source" "$LIB_DIR/$target_version" && \
-                    echo "Created: $target_version -> $base_source" || \
-                    echo "Error: failed to create $target_version" >&2
-                fi
-
-                # Create an extra short compatibility link specifically for curses
-                if [ "$lib" = "ncurses" ] && [ ! -e "$LIB_DIR/libcurses.so" ] && [ ! -L "$LIB_DIR/libcurses.so" ]; then
-                  ln -s "$base_source" "$LIB_DIR/libcurses.so" && \
-                    echo "Created: libcurses.so -> $base_source" || \
-                    echo "Error: failed to create libcurses.so" >&2
-                fi
-              fi
-            done
 
             # Move init scripts to /opt/root/ to prevent them from running on first boot
             for f in rc.func rc.unslung S51dropbear; do
