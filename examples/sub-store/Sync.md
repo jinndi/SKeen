@@ -192,8 +192,10 @@
       "listen_port": 9999,
       "secret": "",
       "access_control_allow_origin": [
-        "http://sing-box-dashboard.sagernet.org", "https://sing-box-dashboard.sagernet.org",
-        "http://sdash.u1.pw", "https://sdash.u1.pw"
+        "http://sing-box-dashboard.sagernet.org",
+        "https://sing-box-dashboard.sagernet.org",
+        "http://sdash.u1.pw",
+        "https://sdash.u1.pw"
       ],
       "access_control_allow_private_network": true,
       "dashboard": true
@@ -211,8 +213,15 @@
     "clash_api": {
       "external_controller": "0.0.0.0:9090",
       "access_control_allow_origin": [
-        "http://board.zash.run.place", "https://board.zash.run.place",
-        "https://d.metacubex.one", "https://metacubexd.pages.dev"
+        "http://clash.razord.top",
+        "https://clash.razord.top",
+        "http://yacd.haishan.me",
+        "https://yacd.haishan.me",
+        "https://yacd.metacubex.one",
+        "http://board.zash.run.place",
+        "https://board.zash.run.place",
+        "https://d.metacubex.one",
+        "https://metacubexd.pages.dev"
       ],
       "access_control_allow_private_network": true
     },

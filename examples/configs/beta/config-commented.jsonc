@@ -633,8 +633,10 @@
       "listen_port": 9999,  // Адрес прослушивания API
       "secret": "",         // Задайте пароль доступа если порт 9999 и любой другой указанный выше открыт наружу!
       "access_control_allow_origin": [
-        "http://sing-box-dashboard.sagernet.org", "https://sing-box-dashboard.sagernet.org",
-        "http://sdash.u1.pw", "https://sdash.u1.pw"
+        "http://sing-box-dashboard.sagernet.org",
+        "https://sing-box-dashboard.sagernet.org",
+        "http://sdash.u1.pw",
+        "https://sdash.u1.pw"
       ], // Разрешить доступ только к этим доменным именам панелей (CORS)
          // В Chrome можно использовать HTTPS, но в других браузерах - нет.
       "access_control_allow_private_network": true, // Разрешить доступ к панели с локальной сети (LAN)
@@ -695,8 +697,15 @@
     "clash_api": {
       "external_controller": "0.0.0.0:9090",
       "access_control_allow_origin": [
-        "http://board.zash.run.place", "https://board.zash.run.place",
-        "https://d.metacubex.one", "https://metacubexd.pages.dev"
+        "http://clash.razord.top",
+        "https://clash.razord.top",
+        "http://yacd.haishan.me",
+        "https://yacd.haishan.me",
+        "https://yacd.metacubex.one",
+        "http://board.zash.run.place",
+        "https://board.zash.run.place",
+        "https://d.metacubex.one",
+        "https://metacubexd.pages.dev"
       ],
       "access_control_allow_private_network": true
     },
