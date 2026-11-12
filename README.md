@@ -114,11 +114,11 @@ It is **recommended** to set up a router [reboot schedule](https://support.keene
 **To manage SKeen** locally or remotely starting with version 5.9.0, you can use the web dashboard at https://skeen.indevs.in or the built-in one; for detailed configuration instructions, read [docs/SKEEN-API.md](./docs/SKEEN-API.md).
 
 > [!NOTE]
-> To access a local API (for example, at `http://192.168.1.1:3000`), all browsers except Chrome require using the HTTP version of the website - http://skeen.indevs.in (due to browser restrictions on connecting from HTTPS pages to local HTTP endpoints).
+> To access a local API (for example, at `http://192.168.1.1:3000`), all browsers except Chrome (Chromium-based) require using the HTTP version of the website - http://skeen.indevs.in (due to browser restrictions on connecting from HTTPS pages to local HTTP endpoints).
 
-By default, access is allowed from any domain. If you need to restrict it, specify the allowed origins in the `skeen.json` file (`services.api`), and be sure to set a strong key in the `secret` field if you plan to connect remotely via KeenDNS.
+By default, access is allowed from any domain. If you need to restrict it, specify the allowed origins in the `skeen.json` file (`services.api`).
 
-The following domains are pre-configured in the base `config.json` template for accessing the panels from the router's local network:
+In the base `config.json` template, the following domains are pre-configured for accessing sing-box panels:
 
 | Dashboard URL | Used API | Panel Connection Address | Brief Description |
 | :--- | :--- | :--- | :--- |
@@ -126,6 +126,8 @@ The following domains are pre-configured in the base `config.json` template for 
 | **[sdash.u1.pw](https://sdash.u1.pw)** *(in Chrome)*<br>[HTTP version](http://sdash.u1.pw) *(others)* | Native `sing-box` API (`9999`) | `http://192.168.1.1:9999` | Very lightweight web interface for `sing-box` management. |
 | **[board.zash.run.place](https://board.zash.run.place)** *(in Chrome)*<br>[HTTP version](http://board.zash.run.place) *(others)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Remote **Zashboard** frontend for managing proxy connections. |
 | **[d.metacubex.one](https://d.metacubex.one)** / **[metacubexd.pages.dev](https://metacubexd.pages.dev)** *(Chrome only)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Alternative **MetacubexD** (Yacd-meta) web interface for Clash API. |
+
+And others, they are easily accessible from the `SKeen dashboard` ("Services" tab)
 
 Instead of a local connection, you can specify your KeenDNS domain address (just don't forget to set an access key in the `secret` field as well).
 
@@ -157,6 +159,7 @@ When using the router’s Web CLI, add `exec` before the command. For example: `
 | `check` | Check configuration | ✓ | ✓ |
 | `format` | Format sing-box configuration | ✓ | ✓ |
 | `api` | sing-box API management commands | - | - |
+| `dash` | Get API links for management panels | ✓ | ✓ |
 | `backup` | Create archive of `/opt/etc/skeen` | ✓ | ✓ |
 | `backups` | List created archives in `/opt` | ✓ | ✓ |
 | `restore`¹ | Restore `/opt/etc/skeen` from archive in `/opt` | ✓ | ✓ |

@@ -32,6 +32,8 @@ REST API documentation for the **SKeen** system — a lightweight HTTP configura
 
    * [POST /api/exec](#8-post-apiexec)
 
+   * [GET /api/dash](#9-get-apidash)
+
 7. [HTTP Response Codes](#7-http-response-codes)
 
 ## 1. Installation & Dependencies
@@ -66,12 +68,13 @@ skeen deps
   - Strict socket timeout on client operations (`30 sec`).
   - Safe request execution wrapped in `pcall` to ensure socket cleanup and prevent file descriptor leaks during connection drops.
 
-- **Performance Optimization**:
+- **Performance Optimization & Compression**:
   - Built-in TTL caches for SKeen system status calls and hardware telemetry (refreshed every 2–3 seconds), significantly reducing router CPU load during frequent web dashboard polling.
+  - **Gzip Compression Support**: The server checks the client's `Accept-Encoding` header. If `gzip` is supported, text responses, JSON, and HTML pages are compressed "on the fly" with a `Content-Encoding: gzip` header to minimize network bandwidth consumption.
 
 - **Data Format**: JSON (custom parser with support for stripping `//`, `/* */`, and `#` comments while preserving key ordering via the `__order` field).
 
-- **SKeen CLI Integration**: System command execution via `io.popen`, dynamic fetching of Sing-box configurations via `skeen get_singbox_config --json`, and API settings retrieval via `skeen get_api_config`.
+- **SKeen CLI Integration**: System command execution via `io.popen`, dynamic fetching of Sing-box configurations via `skeen get_singbox_config --json`, API settings retrieval via `skeen get_api_config`, and dashboard parameters via `skeen dash --json`.
 
 - **Safe File Management**: Atomic writes using temporary `.tmp` files.
 
@@ -150,7 +153,7 @@ If missing or invalid, the server returns `401 Unauthorized`.
 Each server response is equipped with security and CORS policy headers:
 
 - `Access-Control-Allow-Origin` — Dynamically populated based on the `cors_origin` whitelist from the configuration. If the domain is allowed, the client's exact `Origin` is returned; if not, the header is omitted, and the browser blocks the request.
-- `Vary: Origin` — Informs caching proxies and browsers that the response depends on the `Origin` header value.
+- `Vary: Origin, Accept-Encoding` — Informs caching proxies and browsers that the response depends on the `Origin` and supported encoding headers.
 - `Access-Control-Allow-Methods: GET, POST, OPTIONS`
 - `Access-Control-Allow-Headers: X-API-Key, Content-Type`
 - `X-Content-Type-Options: nosniff`
@@ -175,7 +178,9 @@ Requests the main web interface page.
 
 - **Authentication**: Not required.
 
-- **Dependency**: Requires `dashboard: 1`.
+- **Details**: Behavior depends on the `dashboard` parameter in the configuration:
+  - If `dashboard: 1`, returns the interface HTML code (`text/html; charset=utf-8`) with optional gzip compression (when requested via `Accept-Encoding: gzip`). In production mode, if the client lacks gzip support, the server returns `406 Not Acceptable`.
+  - If `dashboard: 0`, the endpoint is disabled and returns status `404 Not Found`.
 
 #### Request Example:
 
@@ -492,6 +497,37 @@ curl -X POST http://192.168.1.1:3000/api/exec \
 }
 ```
 
+### 9. GET /api/dash
+
+Retrieves the configured list of external APIs and management dashboards (Sing-box API, Clash API, etc.).
+
+- **Method**: `GET`
+
+- **Authentication**: Required (if `secret` is set).
+
+- **Description**: Executes the system command `skeen dash --json` and returns an array of available dashboards along with their URLs.
+
+#### Request Example:
+
+```bash
+curl -X GET http://192.168.1.1:3000/api/dash \
+     -H "X-API-Key: your_secret_key"
+```
+
+#### Successful Response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "type": "api",
+      "url": "http://192.168.1.1:9090"
+    }
+  ]
+}
+```
+
 ## 7. HTTP Response Codes
 
 | Code | Status | Description |
@@ -501,6 +537,7 @@ curl -X POST http://192.168.1.1:3000/api/exec \
 | `400` | **Bad Request** | Malformed HTTP request, invalid JSON, or unregistered command in `/api/exec`. |
 | `401` | **Unauthorized** | Missing or invalid `X-API-Key` header. |
 | `404` | **Not Found** | Route does not exist or Dashboard is disabled. |
+| `406` | **Not Acceptable** | The client did not send the required `Accept-Encoding: gzip` header needed to serve the embedded dashboard at `/`. |
 | `413` | **Payload Too Large** | Request body size exceeds the **1 MB** limit. |
 | `429` | **Too Many Requests** | Rate limit exceeded. See the `Retry-After` header. |
 | `431` | **Request Header Fields Too Large** | Number of header lines exceeds the **50 line** limit (Slowloris mitigation). |
