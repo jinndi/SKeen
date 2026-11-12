@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzFlMjkzYiIvPjx0ZXh0IHg9IjE2IiB5PSIyMyIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZGh0PSJib2xkIiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TPC90ZXh0Pjwvc3ZnPg==">
+  <meta name="theme-color" content="#16161e">
   <title>SKeen dashboard</title>
   <style>
     /* ==========================================================================
@@ -32,6 +33,11 @@
   --editor-line-height: 18px;
   --modal-tab-bg: transparent;
   --pre-bg: #11111b;
+  --code-color: var(--text-color);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --transition-fast: all 0.2s ease;
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="light"] {
@@ -55,6 +61,7 @@
   --fold-placeholder-fg: rgba(94, 98, 125, 0.55);
   --modal-tab-bg: transparent;
   --pre-bg: #f4f5f7;
+  --code-color: var(--text-color);
 }
 
 * {
@@ -67,12 +74,15 @@
 html,
 body {
   height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
 }
 
 body {
+  min-height: 100vh;
+  min-height: 100dvh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
   font-size: 16px;
   background-color: var(--bg-color);
@@ -108,7 +118,7 @@ body {
   flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-soft);
   min-width: 0;
 }
 
@@ -149,10 +159,10 @@ button {
   color: #ffffff;
   border: none;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   font-size: 0.88rem;
   display: inline-flex;
   align-items: center;
@@ -216,7 +226,7 @@ button.success-btn:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
 }
 
 .icon-btn {
@@ -228,7 +238,7 @@ button.success-btn:hover {
   height: 32px;
   min-width: 32px;
   flex-shrink: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .icon-btn:hover {
@@ -247,7 +257,7 @@ button.success-btn:hover {
   width: 30px;
   height: 30px;
   min-width: 30px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   flex-shrink: 0;
 }
@@ -292,7 +302,7 @@ button.success-btn:hover {
   padding: 5px;
   width: 30px;
   height: 30px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   backdrop-filter: blur(6px);
 }
 
@@ -345,10 +355,10 @@ button.success-btn:hover {
   border: none;
   color: var(--text-muted);
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   font-size: 0.88rem;
 }
 
@@ -385,11 +395,11 @@ input[type="number"] {
   border: 1px solid var(--border-color);
   color: var(--text-color);
   padding: 8px 30px 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: 0.88rem;
   width: 100%;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   outline: none;
   cursor: pointer;
   min-width: 0;
@@ -446,7 +456,7 @@ input[type="checkbox"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   position: relative;
   outline: none;
   margin: 0 10px 0 0;
@@ -507,7 +517,7 @@ select:disabled:hover {
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-soft);
 }
 
 .editor-card {
@@ -565,7 +575,7 @@ h2::before {
 .status-badge-panel {
   background-color: var(--code-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 10px 14px;
   display: flex;
   align-items: center;
@@ -652,7 +662,7 @@ label {
 .status {
   font-size: 0.82rem;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   display: none;
   position: absolute;
   bottom: 10px;
@@ -691,7 +701,7 @@ label {
 .output-wrapper {
   background-color: var(--code-bg);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   flex: 1;
   overflow-x: auto;
   overflow-y: auto;
@@ -766,11 +776,11 @@ label {
   color: var(--text-muted);
   border: 1px solid var(--border-color);
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -799,7 +809,7 @@ label {
 #formEditorContainer {
   background-color: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   flex: 1;
   overflow-y: auto;
   padding: 0;
@@ -812,7 +822,7 @@ label {
 .accordion-item {
   background-color: var(--code-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   flex-shrink: 0;
@@ -979,10 +989,10 @@ label {
   border: 1px solid var(--border-color);
   color: var(--text-color);
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
   outline: none;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   min-width: 0;
 }
 
@@ -1013,7 +1023,7 @@ label {
   flex-shrink: 0;
   padding: 0;
   line-height: 1;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   box-sizing: border-box;
   margin: 0 6px 0 0;
   vertical-align: middle;
@@ -1054,7 +1064,7 @@ label {
   gap: 8px;
   background: var(--card-hover);
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   font-size: 0.85rem;
   min-width: 0;
@@ -1110,7 +1120,7 @@ label {
   gap: 6px;
   background-color: var(--modal-tab-bg);
   padding: 4px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
 }
 
@@ -1120,11 +1130,11 @@ label {
   border: none;
   color: var(--text-muted);
   padding: 7px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
   font-size: 0.85rem;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
 }
 
 .modal-tab-btn:hover {
@@ -1187,7 +1197,7 @@ label {
   display: flex;
   background-color: var(--modal-tab-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 3px;
   gap: 3px;
   flex-shrink: 0;
@@ -1199,12 +1209,12 @@ label {
   color: var(--text-muted);
   width: 32px;
   height: 30px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   padding: 0;
 }
 
@@ -1259,7 +1269,7 @@ label {
   background-color: var(--code-bg);
   border: 1px solid var(--border-color);
   padding: 2px 5px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1324,7 +1334,7 @@ label {
   display: flex;
   background-color: var(--code-bg);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   flex: 1;
   overflow: hidden;
   position: relative;
@@ -1782,7 +1792,7 @@ label {
     height: 32px;
     min-width: 32px;
     flex-shrink: 0;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1813,7 +1823,7 @@ label {
   justify-content: center;
   align-items: center;
   z-index: 50;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
@@ -1860,7 +1870,7 @@ body.preload * {
   gap: 12px;
   background-color: var(--code-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 10px 12px;
 }
 
@@ -1903,7 +1913,7 @@ body.preload * {
 .telemetry-network-panel {
   background-color: var(--code-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
@@ -1989,7 +1999,7 @@ body.preload * {
   align-items: center;
   justify-content: center;
   height: 16px;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
 }
 
 #serviceDrawerToggleBtn:hover {
@@ -2053,7 +2063,7 @@ body.preload * {
   margin-bottom: 15px;
   font-size: 13px;
   background: var(--card-bg);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
@@ -2111,10 +2121,31 @@ body.preload * {
   background: var(--pre-bg, #11111b);
   color: var(--success-color, #a6e3a1);
   padding: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   overflow-x: auto;
   border: 1px solid var(--border-color);
   font-family: monospace;
+}
+
+/* Accessible interaction states */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
   </style>
@@ -2126,13 +2157,13 @@ body.preload * {
     <!-- Navbar -->
     <div class="navbar">
       <div class="nav-tabs">
-        <button class="tab-btn" onclick="switchTab('skeenTab', this)">
+        <button type="button" class="tab-btn" onclick="switchTab('skeenTab', this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 7c0-2.21-1.79-4-4-4H9a4 4 0 0 0-4 4v1c0 2.21 1.79 4 4 4h6c2.21 0 4 1.79 4 4v1c0 2.21-1.79 4-4 4H9c-2.21 0-4-1.79-4-4"></path>
           </svg>
           <span class="tab-text" data-i18n="tabSKeen">SKeen</span>
         </button>
-        <button class="tab-btn" onclick="switchTab('configsTab', this)">
+        <button type="button" class="tab-btn" onclick="switchTab('configsTab', this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
@@ -2142,7 +2173,7 @@ body.preload * {
           </svg>
           <span class="tab-text" data-i18n="tabConfigs">Конфиги</span>
         </button>
-        <button class="tab-btn" onclick="switchTab('servicesTab', this)">
+        <button type="button" class="tab-btn" onclick="switchTab('servicesTab', this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
             <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
@@ -2154,13 +2185,13 @@ body.preload * {
       </div>
       <div class="nav-controls">
         <!-- System Telemetry button -->
-        <button id="sysTelemetryBtn" class="icon-btn" onclick="openSystemTelemetryModal()" title="Системная телеметрия"
+        <button type="button" id="sysTelemetryBtn" class="icon-btn" onclick="openSystemTelemetryModal()" title="Системная телеметрия"
           aria-label="System Telemetry">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
           </svg>
         </button>
-        <button class="icon-btn" onclick="openConnModal()" title="Настройки" data-i18n-title="modalTitle"
+        <button type="button" class="icon-btn" onclick="openConnModal()" title="Настройки" data-i18n-title="modalTitle"
           aria-label="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
@@ -2198,7 +2229,7 @@ body.preload * {
           <label for="extraParam" data-i18n="extraActionLabel">Дополнительные сервисные команды</label>
           <div class="form-row flex-row-gap-8">
             <select id="extraParam" class="flex-2" onchange="handleExtraParamChange()"></select>
-            <button class="secondary flex-1" onclick="executeExtraCommand()">
+            <button type="button" class="secondary flex-1" onclick="executeExtraCommand()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
               </svg>
@@ -2213,7 +2244,7 @@ body.preload * {
         <div class="form-group terminal-group">
           <label data-i18n="outputLabel" class="label-margin-4">Вывод (stdout / stderr):</label>
           <div class="terminal-container">
-            <button class="terminal-clear-btn" onclick="clearTerminalOutput()" title="Очистить"
+            <button type="button" class="terminal-clear-btn" onclick="clearTerminalOutput()" title="Очистить"
               data-i18n-title="btnClearOutput">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
@@ -2279,7 +2310,7 @@ body.preload * {
                 <path d="M10 5h10M10 12h10M10 19h10M5 5v7m-2-2 2 2 2-2M5 19v-7m-2 2 2-2 2 2"></path>
               </svg>
             </button>
-            <button id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран"
+            <button type="button" id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран"
               data-i18n-title="fullscreenTitle">
               <svg id="fullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
                 stroke-linejoin="round">
@@ -2302,14 +2333,14 @@ body.preload * {
         </div>
 
         <div class="form-row flex-shrink-0">
-          <button class="secondary" onclick="loadConfigFile()" title="Обновить" data-i18n-title="btnUpdateJson">
+          <button type="button" class="secondary" onclick="loadConfigFile()" title="Обновить" data-i18n-title="btnUpdateJson">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
             </svg>
             <span data-i18n="btnUpdateJson">Обновить</span>
           </button>
-          <button id="formatBtn" class="secondary" onclick="formatJsonEditor()">
+          <button type="button" id="formatBtn" class="secondary" onclick="formatJsonEditor()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <line x1="21" y1="10" x2="3" y2="10"></line>
               <line x1="21" y1="6" x2="3" y2="6"></line>
@@ -2318,7 +2349,7 @@ body.preload * {
             </svg>
             <span data-i18n="btnFormat">Формат</span>
           </button>
-          <button id="saveBtn" class="success-btn" onclick="saveConfigFile()">
+          <button type="button" id="saveBtn" class="success-btn" onclick="saveConfigFile()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
               <polyline points="17 21 17 13 7 13 7 21"></polyline>
@@ -2336,13 +2367,13 @@ body.preload * {
         <div id="serviceDrawerContainer">
           <div id="serviceDropdownPanel">
             <select id="serviceSelect" class="conn-select" onchange="handleServiceSelectChange()" title="Выбрать сервис" data-i18n-title="selectServiceTitle"></select>
-            <button id="serviceFullscreenBtn" class="icon-btn-sm secondary" onclick="toggleServiceFullscreen()" title="На весь экран" data-i18n-title="fullscreenTitle" aria-label="Fullscreen">
+            <button type="button" id="serviceFullscreenBtn" class="icon-btn-sm secondary" onclick="toggleServiceFullscreen()" title="На весь экран" data-i18n-title="fullscreenTitle" aria-label="Fullscreen">
               <svg id="serviceFullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
               </svg>
             </button>
           </div>
-          <button id="serviceDrawerToggleBtn" onclick="toggleServiceDrawer()" title="Панель управления" data-i18n-title="serviceToggleTitle"  aria-label="Toggle Services Panel">
+          <button type="button" id="serviceDrawerToggleBtn" onclick="toggleServiceDrawer()" title="Панель управления" data-i18n-title="serviceToggleTitle"  aria-label="Toggle Services Panel">
             <svg id="serviceDrawerArrowSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
@@ -2449,7 +2480,7 @@ body.preload * {
       </div>
 
       <div class="form-row modal-footer-row mt-8">
-        <button class="secondary width-100" onclick="closeSystemTelemetryModal()" data-i18n="btnClose">Закрыть</button>
+        <button type="button" class="secondary width-100" onclick="closeSystemTelemetryModal()" data-i18n="btnClose">Закрыть</button>
       </div>
     </div>
   </div>
@@ -2460,9 +2491,9 @@ body.preload * {
       <h2 data-i18n="modalTitle" class="modal-title-margin-4">Настройки</h2>
 
       <div class="modal-tabs">
-        <button class="modal-tab-btn active" onclick="switchModalTab('connectionsPane', this)"
+        <button type="button" class="modal-tab-btn active" onclick="switchModalTab('connectionsPane', this)"
           data-i18n="modalTabConnections">Подключения</button>
-        <button class="modal-tab-btn" onclick="switchModalTab('miscPane', this)"
+        <button type="button" class="modal-tab-btn" onclick="switchModalTab('miscPane', this)"
           data-i18n="modalTabMisc">Прочее</button>
       </div>
 
@@ -2485,8 +2516,8 @@ body.preload * {
           <input type="text" id="connKey" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
         </div>
         <div class="form-row">
-          <button onclick="saveConnection()" data-i18n="btnSaveConn">Сохранить</button>
-          <button class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
+          <button type="button" onclick="saveConnection()" data-i18n="btnSaveConn">Сохранить</button>
+          <button type="button" class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
         </div>
       </div>
 
@@ -2508,14 +2539,14 @@ body.preload * {
             <span data-i18n="labelThemeAppearance">Оформление</span>
           </div>
           <div class="theme-segmented-control">
-            <button class="theme-segment-btn" id="themeBtnAuto" onclick="setThemeMode('auto')" title="Как в системе"
+            <button type="button" class="theme-segment-btn" id="themeBtnAuto" onclick="setThemeMode('auto')" title="Как в системе"
               data-i18n-title="themeAutoTitle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="9"></circle>
                 <path d="M12 3v18"></path>
               </svg>
             </button>
-            <button class="theme-segment-btn" id="themeBtnLight" onclick="setThemeMode('light')" title="Светлая"
+            <button type="button" class="theme-segment-btn" id="themeBtnLight" onclick="setThemeMode('light')" title="Светлая"
               data-i18n-title="themeLightTitle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="4"></circle>
@@ -2524,7 +2555,7 @@ body.preload * {
                 </path>
               </svg>
             </button>
-            <button class="theme-segment-btn" id="themeBtnDark" onclick="setThemeMode('dark')" title="Темная"
+            <button type="button" class="theme-segment-btn" id="themeBtnDark" onclick="setThemeMode('dark')" title="Темная"
               data-i18n-title="themeDarkTitle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
@@ -2552,7 +2583,7 @@ body.preload * {
 
         <div class="spacer-v-10"></div>
         <div class="form-row modal-footer-row">
-          <button class="secondary width-100" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
+          <button type="button" class="secondary width-100" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
         </div>
       </div>
     </div>
@@ -2564,7 +2595,7 @@ body.preload * {
       <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="tooltipTitle">Справка по параметру</h2>
       <div id="tooltipModalText" class="tooltip-body"></div>
       <div class="form-row mt-4">
-        <button class="secondary width-100" onclick="closeTooltipModal()" data-i18n="btnClose">Закрыть</button>
+        <button type="button" class="secondary width-100" onclick="closeTooltipModal()" data-i18n="btnClose">Закрыть</button>
       </div>
     </div>
   </div>
@@ -2596,8 +2627,8 @@ body.preload * {
       <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="confirmModalTitle">Подтверждение</h2>
       <p id="confirmText" class="confirm-text"></p>
       <div class="form-row">
-        <button id="confirmYesBtn" onclick="resolveConfirm(true)" data-i18n="btnYes">Да</button>
-        <button class="secondary" onclick="resolveConfirm(false)" data-i18n="btnNo">Отмена</button>
+        <button type="button" id="confirmYesBtn" onclick="resolveConfirm(true)" data-i18n="btnYes">Да</button>
+        <button type="button" class="secondary" onclick="resolveConfirm(false)" data-i18n="btnNo">Отмена</button>
       </div>
     </div>
   </div>
@@ -2608,7 +2639,7 @@ body.preload * {
       <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="alertModalTitle">Внимание</h2>
       <p id="alertText" class="alert-text"></p>
       <div class="form-row">
-        <button id="alertOkBtn" onclick="closeAlertModal()" data-i18n="btnOk" class="flex-1">ОК</button>
+        <button type="button" id="alertOkBtn" onclick="closeAlertModal()" data-i18n="btnOk" class="flex-1">ОК</button>
       </div>
     </div>
   </div>
@@ -3073,6 +3104,50 @@ const helpTexts = {
 };
 
 /* ==========================================================================
+   Safe Browser Storage
+   ========================================================================== */
+let storageWarningShown = false;
+
+function storageGet(key, fallback = null) {
+  try {
+    const value = window.localStorage.getItem(key);
+    return value === null ? fallback : value;
+  } catch (error) {
+    if (!storageWarningShown) {
+      storageWarningShown = true;
+      console.warn('Browser storage is unavailable; settings will not persist.', error);
+    }
+    return fallback;
+  }
+}
+
+function storageSet(key, value) {
+  try {
+    window.localStorage.setItem(key, String(value));
+    return true;
+  } catch (error) {
+    if (!storageWarningShown) {
+      storageWarningShown = true;
+      console.warn('Browser storage is unavailable; settings will not persist.', error);
+    }
+    return false;
+  }
+}
+
+function storageRemove(key) {
+  try {
+    window.localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    if (!storageWarningShown) {
+      storageWarningShown = true;
+      console.warn('Browser storage is unavailable; settings will not persist.', error);
+    }
+    return false;
+  }
+}
+
+/* ==========================================================================
    State Management
    ========================================================================== */
 const appState = { connectionStorageWarning: false };
@@ -3081,7 +3156,7 @@ const editorState = {
   baselineParsedJson: null,
   currentSelectedFile: '',
   cachedLines: [],
-  editorMode: localStorage.getItem('keen_editor_mode') === 'text' ? 'text' : 'form'
+  editorMode: storageGet('keen_editor_mode') === 'text' ? 'text' : 'form'
 };
 const serviceState = {
   pollingTimer: null,
@@ -3113,7 +3188,7 @@ const formState = {
 };
 
 function loadStoredConnections() {
-  const serialized = localStorage.getItem('keen_connections');
+  const serialized = storageGet('keen_connections');
   if (serialized === null) return [];
 
   let storedConnections;
@@ -3222,7 +3297,7 @@ function togglePreloader(show) {
 /* ==========================================================================
    Initialization & App Lifecycle
    ========================================================================== */
-const storedActiveIndex = Number.parseInt(localStorage.getItem('keen_active_index') || '0', 10);
+const storedActiveIndex = Number.parseInt(storageGet('keen_active_index') || '0', 10);
 const connectionState = {
   connections: loadStoredConnections(),
   activeIndex: Number.isInteger(storedActiveIndex) && storedActiveIndex >= 0 ? storedActiveIndex : 0,
@@ -3243,9 +3318,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     togglePreloader(true);
   }
 
-  const savedTheme = localStorage.getItem('keen_theme_mode') || 'auto';
+  const savedTheme = storageGet('keen_theme_mode') || 'auto';
   applyTheme(['auto', 'light', 'dark'].includes(savedTheme) ? savedTheme : 'auto');
-  const savedLanguage = localStorage.getItem('keen_lang_setting') || 'auto';
+  const savedLanguage = storageGet('keen_lang_setting') || 'auto';
   const languageSetting = ['auto', 'ru', 'en'].includes(savedLanguage) ? savedLanguage : 'auto';
   languageState.currentLang = resolveLanguage(languageSetting);
   document.getElementById('langSelect').value = languageSetting;
@@ -3258,7 +3333,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   renderExtraParamOptions();
 
-  const storedTab = localStorage.getItem('keen_active_tab');
+  const storedTab = storageGet('keen_active_tab');
   const savedTab = ['skeenTab', 'configsTab', 'servicesTab'].includes(storedTab) ? storedTab : 'skeenTab';
   const tabIndex = savedTab === 'servicesTab' ? 2 : savedTab === 'configsTab' ? 1 : 0;
   const tabBtn = document.querySelectorAll('.tab-btn')[tabIndex];
@@ -3445,8 +3520,8 @@ async function saveConnection() {
     connectionState.connections[editIndex] = newConn;
   }
 
-  localStorage.setItem('keen_connections', JSON.stringify(connectionState.connections));
-  localStorage.setItem('keen_active_index', connectionState.activeIndex);
+  storageSet('keen_connections', JSON.stringify(connectionState.connections));
+  storageSet('keen_active_index', connectionState.activeIndex);
   if (previousUrl && previousUrl !== url) connectionState.pingStatus.delete(previousUrl);
   connectionState.pingStatus.set(url, true);
   renderConnList();
@@ -3472,8 +3547,8 @@ function deleteConnection(index) {
     if (connectionState.activeIndex >= connectionState.connections.length) {
       connectionState.activeIndex = Math.max(0, connectionState.connections.length - 1);
     }
-    localStorage.setItem('keen_connections', JSON.stringify(connectionState.connections));
-    localStorage.setItem('keen_active_index', connectionState.activeIndex);
+    storageSet('keen_connections', JSON.stringify(connectionState.connections));
+    storageSet('keen_active_index', connectionState.activeIndex);
     connectionState.pingStatus.clear();
     renderConnList();
     clearConnForm();
@@ -3593,7 +3668,7 @@ function changeActiveConnection(indexStr) {
 
 function executeChangeConnection(nextIndex) {
   connectionState.activeIndex = nextIndex;
-  localStorage.setItem('keen_active_index', connectionState.activeIndex);
+  storageSet('keen_active_index', connectionState.activeIndex);
   renderConnList();
   showStatus('jsonStatus', t('statusSwitchedTo') + (getActiveConnection().name || getActiveConnection().url));
   fetchServiceStatus();
@@ -3632,7 +3707,7 @@ function executeSwitchTab(tabId, btn, save) {
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
   btn.classList.add('active');
-  if (save) localStorage.setItem('keen_active_tab', tabId);
+  if (save) storageSet('keen_active_tab', tabId);
 
   if (tabId !== 'servicesTab') {
     closeServiceDrawer();
@@ -3641,7 +3716,7 @@ function executeSwitchTab(tabId, btn, save) {
   if (tabId === 'skeenTab') {
     fetchServiceStatus();
   } else if (tabId === 'servicesTab') {
-    if (localStorage.getItem('keen_service_fullscreen') === '1') {
+    if (storageGet('keen_service_fullscreen') === '1') {
       toggleServiceFullscreen()
     }
     updateServiceFrameUrl(true);
@@ -3736,7 +3811,7 @@ async function initServicesSelector() {
   helpOption.textContent = t('helpOption');
   selectElement.prepend(helpOption);
 
-  const savedUrl = localStorage.getItem("keen_service_url");
+  const savedUrl = storageGet("keen_service_url");
   const optionsArray = Array.from(selectElement.options);
 
   if (savedUrl && optionsArray.some(opt => opt.value === savedUrl)) {
@@ -3752,7 +3827,7 @@ function handleServiceSelectChange() {
   const selectElement = document.getElementById("serviceSelect");
   if (!selectElement) return;
   const selectedUrl = selectElement.value;
-  localStorage.setItem("keen_service_url", selectedUrl);
+  storageSet("keen_service_url", selectedUrl);
   updateServiceFrameUrl();
 }
 
@@ -3787,7 +3862,7 @@ function toggleServiceFullscreen() {
   serviceCard.classList.toggle('fullscreen-mode');
   const isFull = serviceCard.classList.contains('fullscreen-mode');
 
-  localStorage.setItem('keen_service_fullscreen', isFull ? '1' : '0');
+  storageSet('keen_service_fullscreen', isFull ? '1' : '0');
 
   if (isFull) {
     svg.innerHTML = getSVG('restore');
@@ -4169,7 +4244,7 @@ function switchEditorMode(mode) {
   }
 
   editorState.editorMode = mode;
-  localStorage.setItem('keen_editor_mode', mode);
+  storageSet('keen_editor_mode', mode);
 
   if (mode === 'form') {
     try {
@@ -4615,7 +4690,7 @@ function toggleFullscreen() {
 }
 
 function getSystemTheme() {
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  return window.matchMedia?.('(prefers-color-scheme: light)')?.matches ? 'light' : 'dark';
 }
 
 function applyTheme(mode) {
@@ -4631,13 +4706,20 @@ function applyTheme(mode) {
 }
 
 function setThemeMode(mode) {
-  localStorage.setItem('keen_theme_mode', mode);
+  storageSet('keen_theme_mode', mode);
   applyTheme(mode);
 }
 
-window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-  if ((localStorage.getItem('keen_theme_mode') || 'auto') === 'auto') applyTheme('auto');
-});
+const colorSchemeQuery = window.matchMedia?.('(prefers-color-scheme: light)');
+const handleSystemThemeChange = () => {
+  if ((storageGet('keen_theme_mode') || 'auto') === 'auto') applyTheme('auto');
+};
+
+if (colorSchemeQuery?.addEventListener) {
+  colorSchemeQuery.addEventListener('change', handleSystemThemeChange);
+} else {
+  colorSchemeQuery?.addListener?.(handleSystemThemeChange);
+}
 
 /* ==========================================================================
    Localization Execution
@@ -4647,7 +4729,7 @@ function resolveLanguage(langSetting) {
 }
 
 function changeLanguage(langSetting) {
-  localStorage.setItem('keen_lang_setting', langSetting);
+  storageSet('keen_lang_setting', langSetting);
   languageState.currentLang = resolveLanguage(langSetting);
   document.getElementById('langSelect').value = langSetting;
   applyLanguage();
@@ -4931,7 +5013,7 @@ function formatJsonEditor() {
    ========================================================================== */
 function renderAnsiOutput(text) {
   if (!text) return '';
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  return escapeHtml(text)
     .replace(/\033\[1;38;5;30m(.*?)\033\[0m/g, '<span class="ansi-cyan-bold">$1</span>')
     .replace(/\033\[36m(.*?)\033\[0m/g, '<span class="ansi-cyan">$1</span>')
     .replace(/\033\[31m(.*?)\033\[0m/g, '<span class="ansi-red">$1</span>')
@@ -5010,11 +5092,11 @@ function updateStatusBadge(data, isOffline = false) {
 function renderDynamicActions() {
   const container = document.getElementById('dynamicActions');
   container.innerHTML = serviceState.isServiceRunning ? `
-    <button class="danger" onclick="executeCommandParam('stop')">
+    <button type="button" class="danger" onclick="executeCommandParam('stop')">
       <svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
       <span>${t('btnStop')}</span>
     </button>
-    <button class="secondary" onclick="executeCommandParam('restart')">
+    <button type="button" class="secondary" onclick="executeCommandParam('restart')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="23 4 23 10 17 10"></polyline>
         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -5022,7 +5104,7 @@ function renderDynamicActions() {
       <span>${t('btnRestart')}</span>
     </button>
   ` : `
-    <button class="success-btn width-100 btn-start-action" onclick="executeCommandParam('start')">
+    <button type="button" class="success-btn width-100 btn-start-action" onclick="executeCommandParam('start')">
       <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
       <span>${t('btnStart')}</span>
     </button>
@@ -5113,7 +5195,7 @@ function handleTunSubChange() {
         </div>
         <div class="form-group flex-1 margin-0">
           <label>${t('lblIfaceName')}</label>
-          <input type="text" id="paramTunIface" placeholder="${t('placeholderIfaceName')}">
+          <input type="text" id="paramTunCreateIface" placeholder="${t('placeholderIfaceName')}">
         </div>
       </div>`;
   } else if (subVal === 'delete') {
@@ -5121,7 +5203,7 @@ function handleTunSubChange() {
     subContainer.innerHTML = `
       <div class="form-group margin-0">
         <label>${t('lblIfaceName')}</label>
-        <input type="text" id="paramTunIface" placeholder="${t('placeholderIfaceName')}">
+        <input type="text" id="paramTunDeleteIface" placeholder="${t('placeholderIfaceName')}">
       </div>`;
   } else {
     subContainer.style.display = 'none';
@@ -5201,11 +5283,11 @@ async function executeExtraCommand() {
     } else if (subCmd === 'create') {
       const ipInput = document.getElementById('paramTunIp');
       const ip = (ipInput?.value || '').trim();
-      const iface = (document.getElementById('paramTunIface')?.value || '').trim();
+      const iface = (document.getElementById('paramTunCreateIface')?.value || '').trim();
       if (!ip || !iface || ipInput.classList.contains('invalid-input')) { showAlertModal(t('alertEmptyParam')); return; }
       finalParam = `tun create ${ip} ${iface}`;
     } else if (subCmd === 'delete') {
-      const iface = (document.getElementById('paramTunIface')?.value || '').trim();
+      const iface = (document.getElementById('paramTunDeleteIface')?.value || '').trim();
       if (!iface) { showAlertModal(t('alertEmptyParam')); return; }
       finalParam = `tun delete ${iface}`;
     }
