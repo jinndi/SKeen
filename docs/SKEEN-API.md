@@ -41,7 +41,7 @@ Starting with SKeen version 5.9.0, `skeen-api` is automatically installed as a r
 ### Disk Space Requirements
 
 The total installation footprint is **less than 500 KB**:
-- **SKeen API (Backend + Frontend)**: < 150 KB
+- **SKeen API (Backend + Frontend)**: < 90 KB
 - **Lua package (`opkg package: lua`)**: ~20 KB
 - **LuaSocket package (`opkg package: luasocket`)**: ~250 KB
 
