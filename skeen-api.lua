@@ -345,11 +345,6 @@ local DEFAULT_FILES = {
   pure_cidr = "pure_cidr.list"
 }
 
--- Embedded gzip-compressed dashboard (Base64-encoded).
--- The build script replaces the placeholder with the compressed HTML during packaging.
----@type string?
-local EMBEDDED_HTML_GZIP_BASE64 = "__HTML_GZIP_PLACEHOLDER__"
-
 -- Decode Base64 once during startup.
 local function base64_decode(data)
   if type(data) ~= "string" then
@@ -425,12 +420,6 @@ local function base64_decode(data)
 
   return table.concat(result)
 end
-
--- Decode the embedded dashboard and release the Base64 string.
-local EMBEDDED_HTML_GZIP = assert(
-  base64_decode(EMBEDDED_HTML_GZIP_BASE64)
-)
-EMBEDDED_HTML_GZIP_BASE64 = nil
 
 -- Determine the source of the panel HTML (in development mode, read from disk).
 local SCRIPT_PATH = arg[0]
@@ -1364,6 +1353,21 @@ local MAX_HEADERS_COUNT = 50      -- Maximum allowed number of header lines
 local RATE_LIMIT_AUTH = 100
 local RATE_LIMIT_UNAUTH = 5
 local RATE_LIMIT_WINDOW = 60
+
+-- The build script replaces the placeholder during packaging.
+local EMBEDDED_HTML_GZIP
+
+if DASHBOARD then
+  -- The build script replaces the placeholder with the compressed HTML during packaging.
+  ---@type string?
+  local EMBEDDED_HTML_GZIP_BASE64 = "__HTML_GZIP_PLACEHOLDER__"
+
+  -- Decode the embedded dashboard and release the Base64 string.
+  EMBEDDED_HTML_GZIP = assert(
+    base64_decode(EMBEDDED_HTML_GZIP_BASE64)
+  )
+  EMBEDDED_HTML_GZIP_BASE64 = nil
+end
 
 -- Create a new rate limiter bucket with the given per-minute limit
 local function new_limiter(limit)
