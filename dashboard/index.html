@@ -2849,7 +2849,7 @@ const helpDict = {
     note1: "<strong>Адрес подключения:</strong> Подключение к локальным API осуществляется через адрес вашей локальной сети и порт API (например, <code>http://192.168.1.1:9090</code>). Однако крайне рекомендуется привязать этот адрес к домену через <strong>KeenDNS / CrazeDNS</strong>. Для удаленного доступа из внешней сети или работы в браузерах на базе Chromium — использование домена с HTTPS является <strong>строго обязательным</strong> (подробнее см. ниже).",
     note2: "<strong>Настройки разрешений sing-box:</strong> Для отправки запросов к локальным HTTP-бэкендам потребуется разрешить доступ во всплывающем уведомлении браузера. При этом адрес панели должен быть внесен в параметр <code>access_control_allow_origin</code> конфигурации sing-box, а также включен параметр <code>\"access_control_allow_private_network\": true</code>. <em>В базовых конфигурациях SKeen все эти параметры уже настроены по умолчанию.</em>",
     subStoreTitle: "📦 Панель управления подписками: Sub-Store",
-    subStoreDesc: "Для продвинутого управления подписками и конвертации конфигураций используется официальная панель <strong>Sub-Store</strong> (<a href=\"https://sub-store.vercel.app\" target=\"_blank\" class=\"help-url\" rel=\"noopener noreferrer\">sub-store.vercel.app</a>). Доступ к бэкенду осуществляется по ссылке вида:",
+    subStoreDesc: "Для продвинутого управления подписками и конвертации конфигураций используется официальная панель <strong>Sub-Store</strong> (<a href=\"https://sub.xream.eu.org\" target=\"_blank\" class=\"help-url\" rel=\"noopener noreferrer\">sub.xream.eu.org</a>). Доступ к бэкенду осуществляется по ссылке вида:",
     remoteTitle: "⚙️ Настройка для удаленного доступа и браузеров на базе Chromium",
     browserBoxTitle: "Особенности работы браузеров (Google Chrome, Edge, Opera, Brave, Vivaldi):",
     browserBoxDesc: "Браузеры на движке <strong>Chromium</strong> проверяют безопасность контекста родительской страницы. Поскольку внешние панели (remote) открываются <strong>во фрейме</strong>, браузер оценивает защищенность самого интерфейса SKeen Dashboard, а не адрес панели внутри.",
@@ -2882,7 +2882,7 @@ const helpDict = {
     note1: "<strong>Connection Address:</strong> Connection to local APIs is carried out via your local network address and API port (for example, <code>http://192.168.1.1:9090</code>). However, it is strongly recommended to bind this address to a domain via <strong>KeenDNS / CrazeDNS</strong>. For remote access from an external network or use in Chromium-based browsers, using a domain with HTTPS is <strong>strictly mandatory</strong> (see details below).",
     note2: "<strong>sing-box Permission Settings:</strong> To send requests to local HTTP backends, you will need to allow this access in the browser's pop-up prompt. Additionally, the panel address must be added to the <code>access_control_allow_origin</code> parameter in the sing-box configuration, and the <code>\"access_control_allow_private_network\": true</code> parameter must be enabled. <em>In SKeen base configurations, these parameters are already pre-configured by default.</em>",
     subStoreTitle: "📦 Subscription Management Panel: Sub-Store",
-    subStoreDesc: "For advanced subscription management and configuration conversion, the official <strong>Sub-Store</strong> panel (<a href=\"https://sub-store.vercel.app\" target=\"_blank\" class=\"help-url\" rel=\"noopener noreferrer\">sub-store.vercel.app</a>) is used. Backend access is structured as follows:",
+    subStoreDesc: "For advanced subscription management and configuration conversion, the official <strong>Sub-Store</strong> panel (<a href=\"https://sub.xream.eu.org\" target=\"_blank\" class=\"help-url\" rel=\"noopener noreferrer\">sub.xream.eu.org</a>) is used. Backend access is structured as follows:",
     remoteTitle: "⚙️ Setup for Remote Access and Chromium-Based Browsers",
     browserBoxTitle: "Browser Behavior (Google Chrome, Edge, Opera, Brave, Vivaldi):",
     browserBoxDesc: "Chromium-engine browsers check the security context of the parent page. Since remote panels load <strong>inside an iframe</strong>, the browser evaluates the security of the SKeen Dashboard interface itself rather than the internal panel address.",
@@ -3750,7 +3750,7 @@ const baseServices = [
   { host: "yacd.metacubex.one", label: "YACD Meta", code: 2, protocols: ["https"] },
   { host: "d.metacubex.one", label: "MetaCubeXD One", code: 2, protocols: ["https"] },
   { host: "metacubexd.pages.dev", label: "MetaCubeXD Dev", code: 2, protocols: ["https"] },
-  { host: "sub-store.vercel.app", label: "Sub-Store", code: 0, protocols: ["https"], allowHttps: true }
+  { host: "sub.xream.eu.org", label: "Sub-Store", code: 0, protocols: ["https"], allowHttps: true }
 ];
 
 let servicesSelectorInitialized = false;
