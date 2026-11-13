@@ -24,9 +24,9 @@
   --danger-color: #f38ba8;
   --warning-color: #f9e2af;
   --info-color: #89dceb;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(137, 180, 250, 0.4);
-  --code-bg: rgba(32, 32, 52, 0.6);
+  --border-color: rgba(255, 255, 255, 0.05);
+  --border-focus: rgba(52, 69, 97, 0.4);
+  --code-bg: rgb(30, 30, 45);
   --line-num-bg: rgba(10, 10, 14, 0.4);
   --active-line-bg: rgba(137, 180, 250, 0.07);
   --folded-line-bg: rgba(69, 92, 140, 0.2);
@@ -43,18 +43,18 @@
 
 [data-theme="light"] {
   --bg-color: #e9ecef;
-  --card-bg: #ffffff;
+  --card-bg: #fffffff0;
   --card-hover: #f1f3f5;
   --text-color: #212529;
-  --text-muted: #5e627d;
+  --text-muted: #44475d;
   --accent-color: #1971c2;
   --accent-glow: rgba(25, 113, 194, 0.15);
   --success-color: #2b8a3e;
   --danger-color: #c92a2a;
   --warning-color: #e67700;
   --info-color: #0b7285;
-  --border-color: rgba(0, 0, 0, 0.15);
-  --border-focus: rgba(25, 113, 194, 0.5);
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-focus: rgba(52, 69, 97, 0.4);
   --code-bg: #ffffff;
   --line-num-bg: #f1f3f5;
   --active-line-bg: rgba(25, 113, 194, 0.08);
@@ -212,7 +212,7 @@ button.danger:hover {
 button.success-btn {
   background-color: rgba(166, 227, 161, 0.15);
   color: var(--success-color);
-  border: 1px solid rgba(166, 227, 161, 0.3);
+  border: 1px solid rgb(166, 227, 161);
 }
 
 button.success-btn:hover {
@@ -645,6 +645,7 @@ h2::before {
   gap: 10px;
   flex-wrap: wrap;
   min-width: 0;
+  margin-top: auto;
 }
 
 .form-row>button,
@@ -1156,7 +1157,8 @@ label {
   gap: 10px;
   overflow-y: auto;
   max-height: calc(90vh - 120px);
-  padding-right: 2px;
+  min-height: 380px;
+  padding: 3px;
 }
 
 .modal-tab-content.active {
@@ -1167,7 +1169,7 @@ label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border-color);
   gap: 10px;
 }
@@ -1665,7 +1667,6 @@ label {
 
 .hr-custom {
   border-color: var(--border-color);
-  border-style: solid;
   width: 100%;
   margin: 4px 0;
 }
@@ -2035,13 +2036,6 @@ body.preload * {
   font-size: 13px;
   border: 1px solid var(--border-color);
   font-weight: 600;
-}
-
-.help-title {
-  color: var(--accent-color);
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: 8px;
-  margin-top: 0;
 }
 
 .help-subtitle {
@@ -2837,7 +2831,7 @@ const helpDict = {
     title: "💡 Справка по сервисам",
     selectHint: "Выбор нужного сервиса для отображения во фрейме осуществляется через <strong>раскрывающийся список (селектор) вверху по центру</strong> панели управления. Также вам доступна кнопка увеличения интерфейса на весь экран.",
     localStorageNote: "Обратите внимание: ваш выбор сервиса и все персональные настройки сохраняются локально в текущем браузере (через <code>localStorage</code>).",
-    tableTitle: "🌐 Полный список сервисов",
+    tableTitle: "Полный список сервисов",
     headers: ["Панель управления и URL", "Особенности и требования"],
     localPanelName: "Локальные панели",
     localPanelUrl: "Динамические локальные адреса роутера",
@@ -2848,9 +2842,9 @@ const helpDict = {
     noteTitle: "⚠️ ВАЖНОЕ ПРИМЕЧАНИЕ (Подключение к API и CORS):",
     note1: "<strong>Адрес подключения:</strong> Подключение к локальным API осуществляется через адрес вашей локальной сети и порт API (например, <code>http://192.168.1.1:9090</code>). Однако крайне рекомендуется привязать этот адрес к домену через <strong>KeenDNS / CrazeDNS</strong>. Для удаленного доступа из внешней сети или работы в браузерах на базе Chromium — использование домена с HTTPS является <strong>строго обязательным</strong> (подробнее см. ниже).",
     note2: "<strong>Настройки разрешений sing-box:</strong> Для отправки запросов к локальным HTTP-бэкендам потребуется разрешить доступ во всплывающем уведомлении браузера. При этом адрес панели должен быть внесен в параметр <code>access_control_allow_origin</code> конфигурации sing-box, а также включен параметр <code>\"access_control_allow_private_network\": true</code>. <em>В базовых конфигурациях SKeen все эти параметры уже настроены по умолчанию.</em>",
-    subStoreTitle: "📦 Панель управления подписками: Sub-Store",
+    subStoreTitle: "Панель управления подписками: Sub-Store",
     subStoreDesc: "Для продвинутого управления подписками и конвертации конфигураций используется официальная панель <strong>Sub-Store</strong> (<a href=\"https://sub.xream.eu.org\" target=\"_blank\" class=\"help-url\" rel=\"noopener noreferrer\">sub.xream.eu.org</a>). Доступ к бэкенду осуществляется по ссылке вида:",
-    remoteTitle: "⚙️ Настройка для удаленного доступа и браузеров на базе Chromium",
+    remoteTitle: "Настройка для удаленного доступа и браузеров на базе Chromium",
     browserBoxTitle: "Особенности работы браузеров (Google Chrome, Edge, Opera, Brave, Vivaldi):",
     browserBoxDesc: "Браузеры на движке <strong>Chromium</strong> проверяют безопасность контекста родительской страницы. Поскольку внешние панели (remote) открываются <strong>во фрейме</strong>, браузер оценивает защищенность самого интерфейса SKeen Dashboard, а не адрес панели внутри.",
     browserBoxLi: "Если SKeen Dashboard открыта по обычному <code>HTTP</code>, а внешняя панель загружается по <code>HTTPS</code> (или наоборот), браузер блокирует запросы к локальной сети из соображений безопасности. Поскольку <strong>Clash API работает по HTTP в 100% случаев</strong>, а настраивать HTTPS для локального <strong>sing-box API</strong> вручную на роутере никто не будет, для возможности подключения к ним из локальной сети в браузерах на основе Chromium требуется перевести SKeen Dashboard и/или sing-box API / Clash API на HTTPS через KeenDNS / CrazeDNS.",
@@ -2870,7 +2864,7 @@ const helpDict = {
     title: "💡 Services Help",
     selectHint: "You can select the desired service to display in the frame via the <strong>drop-down selector at the top center</strong> of the control panel. You also have a fullscreen interface button available.",
     localStorageNote: "Please note: your service selection and all personal settings are stored locally in your current browser (via <code>localStorage</code>).",
-    tableTitle: "🌐 Full list of services",
+    tableTitle: "Full list of services",
     headers: ["Control Panel & URL", "Features and Requirements"],
     localPanelName: "Local Panels",
     localPanelUrl: "Dynamic local router addresses",
@@ -2881,9 +2875,9 @@ const helpDict = {
     noteTitle: "⚠️ IMPORTANT NOTE (API Connection & CORS):",
     note1: "<strong>Connection Address:</strong> Connection to local APIs is carried out via your local network address and API port (for example, <code>http://192.168.1.1:9090</code>). However, it is strongly recommended to bind this address to a domain via <strong>KeenDNS / CrazeDNS</strong>. For remote access from an external network or use in Chromium-based browsers, using a domain with HTTPS is <strong>strictly mandatory</strong> (see details below).",
     note2: "<strong>sing-box Permission Settings:</strong> To send requests to local HTTP backends, you will need to allow this access in the browser's pop-up prompt. Additionally, the panel address must be added to the <code>access_control_allow_origin</code> parameter in the sing-box configuration, and the <code>\"access_control_allow_private_network\": true</code> parameter must be enabled. <em>In SKeen base configurations, these parameters are already pre-configured by default.</em>",
-    subStoreTitle: "📦 Subscription Management Panel: Sub-Store",
+    subStoreTitle: "Subscription Management Panel: Sub-Store",
     subStoreDesc: "For advanced subscription management and configuration conversion, the official <strong>Sub-Store</strong> panel (<a href=\"https://sub.xream.eu.org\" target=\"_blank\" class=\"help-url\" rel=\"noopener noreferrer\">sub.xream.eu.org</a>) is used. Backend access is structured as follows:",
-    remoteTitle: "⚙️ Setup for Remote Access and Chromium-Based Browsers",
+    remoteTitle: "Setup for Remote Access and Chromium-Based Browsers",
     browserBoxTitle: "Browser Behavior (Google Chrome, Edge, Opera, Brave, Vivaldi):",
     browserBoxDesc: "Chromium-engine browsers check the security context of the parent page. Since remote panels load <strong>inside an iframe</strong>, the browser evaluates the security of the SKeen Dashboard interface itself rather than the internal panel address.",
     browserBoxLi: "If the SKeen Dashboard is opened via regular <code>HTTP</code> while the remote panel loads via <code>HTTPS</code> (or vice versa), the browser blocks requests to the local network for security reasons. Since <strong>Clash API operates over HTTP 100% of the time</strong>, and nobody configures HTTPS for a local <strong>sing-box API</strong> manually on a router, connecting to them from a local network in Chromium-based browsers requires switching SKeen Dashboard and/or sing-box API / Clash API to HTTPS via KeenDNS / CrazeDNS.",
@@ -3985,7 +3979,7 @@ function getHelpTemplate() {
     return `<tr><td><strong>${service.label}</strong><br><a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="help-url">${linkContent}</a></td><td>${reqText}</td></tr>`;
   }).join('');
 
-  return `<div class="help-container-wrapper"><h2 class="help-title">${t.title}</h2><p class="help-text">${t.selectHint}</p><p class="help-text-muted">${t.localStorageNote}</p><h3 class="help-subtitle">${t.tableTitle}</h3><table class="help-table"><thead><tr><th>${t.headers[0]}</th><th>${t.headers[1]}</th></tr></thead><tbody>${panelsHtml}</tbody></table><div class="help-warning-box" style="margin-top: 15px;"><p class="help-text" style="margin: 0;"><strong>${t.noteTitle}</strong></p><ul class="help-text" style="margin-bottom: 0;"><li>${t.note1}</li><li>${t.note2}</li></ul></div><h3 class="help-subtitle">${t.subStoreTitle}</h3><p class="help-text">${t.subStoreDesc}</p><p class="help-text"><code>http(s)://host:port/path</code></p><h3 class="help-subtitle">${t.remoteTitle}</h3><div class="help-warning-box"><p class="help-text" style="margin: 0;"><strong>${t.browserBoxTitle}</strong><br>${t.browserBoxDesc}</p><ul class="help-text" style="margin-bottom: 0;"><li>${t.browserBoxLi}</li></ul></div><p class="help-text"><strong>${t.httpsStepsTitle}</strong></p><p class="help-text">${t.httpsStepsIntro}</p><ol class="help-text">${t.steps.map(step => `<li>${step}</li>`).join('')}</ol><p class="help-text"><strong>${t.cliTitle}</strong><br>${t.cliDesc}</p><pre class="help-pre"><code>${t.cliCode}</code></pre><p class="help-text">${t.cliFooter}</p></div>`;
+  return `<div class="help-container-wrapper"><h2 class="margin-0 border-none padding-0">${t.title}</h2><p class="help-text">${t.selectHint}</p><p class="help-text-muted">${t.localStorageNote}</p><h3 class="help-subtitle">${t.tableTitle}</h3><table class="help-table"><thead><tr><th>${t.headers[0]}</th><th>${t.headers[1]}</th></tr></thead><tbody>${panelsHtml}</tbody></table><div class="help-warning-box" style="margin-top: 15px;"><p class="help-text" style="margin: 0;"><strong>${t.noteTitle}</strong></p><ul class="help-text" style="margin-bottom: 0;"><li>${t.note1}</li><li>${t.note2}</li></ul></div><h3 class="help-subtitle">${t.subStoreTitle}</h3><p class="help-text">${t.subStoreDesc}</p><p class="help-text"><code>http(s)://host:port/path</code></p><h3 class="help-subtitle">${t.remoteTitle}</h3><div class="help-warning-box"><p class="help-text" style="margin: 0;"><strong>${t.browserBoxTitle}</strong><br>${t.browserBoxDesc}</p><ul class="help-text" style="margin-bottom: 0;"><li>${t.browserBoxLi}</li></ul></div><p class="help-text"><strong>${t.httpsStepsTitle}</strong></p><p class="help-text">${t.httpsStepsIntro}</p><ol class="help-text">${t.steps.map(step => `<li>${step}</li>`).join('')}</ol><p class="help-text"><strong>${t.cliTitle}</strong><br>${t.cliDesc}</p><pre class="help-pre"><code>${t.cliCode}</code></pre><p class="help-text">${t.cliFooter}</p></div>`;
 }
 
 function switchModalTab(paneId, btn) {
