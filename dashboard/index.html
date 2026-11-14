@@ -736,7 +736,8 @@ label {
 
 /* Chrome, Edge, Safari */
 .output-wrapper::-webkit-scrollbar,
-.code-editor-wrapper::-webkit-scrollbar {
+.code-editor-wrapper::-webkit-scrollbar,
+.custom-select-menu::-webkit-scrollbar {
   width: 14px;
   height: 14px;
 }
@@ -751,6 +752,11 @@ label {
   border-radius: 7px;
 }
 
+.custom-select-menu::-webkit-scrollbar-track {
+  background: var(--card-bg);
+  border-radius: 7px;
+}
+
 .output-wrapper::-webkit-scrollbar-thumb,
 .code-editor-wrapper::-webkit-scrollbar-thumb {
   background: var(--border-color);
@@ -758,13 +764,21 @@ label {
   border: 3px solid var(--code-bg);
 }
 
+.custom-select-menu::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 7px;
+  border: 3px solid var(--card-bg);
+}
+
 .output-wrapper::-webkit-scrollbar-thumb:hover,
-.code-editor-wrapper::-webkit-scrollbar-thumb:hover {
+.code-editor-wrapper::-webkit-scrollbar-thumb:hover,
+.custom-select-menu::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary, #888);
 }
 
 .output-wrapper::-webkit-scrollbar-corner,
-.code-editor-wrapper::-webkit-scrollbar-corner {
+.code-editor-wrapper::-webkit-scrollbar-corner,
+.custom-select-menu::-webkit-scrollbar-corner {
   background: var(--code-bg);
 }
 
@@ -2168,7 +2182,7 @@ select.custom-select-source {
 .custom-select.conn-select {
   height: 36px;
   min-width: 70px;
-  max-width: 180px;
+  max-width: 220px;
 }
 
 .custom-select.select-lang {
@@ -2187,13 +2201,13 @@ select.custom-select-source {
   gap: 8px;
 
   background: var(--code-bg);
-  color: var(--text-color);
+  color: var(--accent-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
 
   font: inherit;
   font-size: 0.88rem;
-  font-weight: 400;
+  font-weight: 600;
   text-align: left;
   white-space: nowrap;
 }
@@ -2237,19 +2251,16 @@ select.custom-select-source {
 .custom-select-menu {
   position: fixed;
   z-index: 10050;
-
   padding: 5px;
   overflow-x: hidden;
   overflow-y: auto;
-
   background: var(--card-bg);
   color: var(--text-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
-
-  scrollbar-width: thin;
+  scrollbar-width: auto;
+  scrollbar-color: var(--border-color) var(--card-bg);
 }
 
 .custom-select-menu[hidden] {
@@ -2286,7 +2297,8 @@ select.custom-select-source {
 }
 
 .custom-select-option:hover,
-.custom-select-option.active {
+.custom-select-option.active,
+.custom-select-option.selected {
   background: var(--card-hover);
   color: var(--accent-color);
   opacity: 1;
@@ -3510,6 +3522,7 @@ function setupCustomSelects(root = document) {
     menu.hidden = true;
 
     menu.id = `custom-select-menu-${++customSelectId}`;
+    menu.dataset.selectId = select.id;
     trigger.setAttribute('aria-controls', menu.id);
 
     const instance = {
@@ -3529,6 +3542,13 @@ function setupCustomSelects(root = document) {
 
     select.insertAdjacentElement('afterend', wrapper);
     document.body.appendChild(menu);
+
+    // Prevent service menu clicks from closing the service drawer.
+    if (select.id === 'serviceSelect') {
+      menu.addEventListener('click', event => {
+        event.stopPropagation();
+      });
+    }
 
     select.addEventListener('change', () => {
       refreshCustomSelectInstance(instance);
@@ -3922,6 +3942,15 @@ function closeCustomSelect(instance) {
   }
 }
 
+function closeCustomSelectById(selectId) {
+  const select = document.getElementById(selectId);
+  const instance = select && customSelectInstances.get(select);
+
+  if (instance) {
+    closeCustomSelect(instance);
+  }
+}
+
 
 function positionCustomSelect(instance) {
   const rect = instance.trigger.getBoundingClientRect();
@@ -3929,7 +3958,7 @@ function positionCustomSelect(instance) {
 
   const viewportWidth = document.documentElement.clientWidth;
   const viewportHeight = window.innerHeight;
-  const gap = 4;
+  const gap = 6;
   const margin = 8;
 
   const spaceBelow = viewportHeight - rect.bottom - gap - margin;
@@ -3954,9 +3983,15 @@ function positionCustomSelect(instance) {
 
   const menuWidth = menu.getBoundingClientRect().width;
 
+  const isServiceSelect = instance.select.id === 'serviceSelect';
+
+  const desiredLeft = isServiceSelect
+    ? rect.left + (rect.width - menuWidth) / 2 + 32
+    : rect.left;
+
   const left = Math.max(
     margin,
-    Math.min(rect.left, viewportWidth - menuWidth - margin)
+    Math.min(desiredLeft, viewportWidth - menuWidth - margin)
   );
 
   const top = openAbove
@@ -4616,6 +4651,7 @@ function closeServiceDrawer() {
   const arrow = document.getElementById('serviceDrawerArrowSvg');
   if (panel) panel.style.display = 'none';
   if (arrow) arrow.style.transform = 'rotate(0deg)';
+  closeCustomSelectById('serviceSelect');
 }
 
 const serviceContainer = document.getElementById('serviceDrawerContainer');
@@ -4628,14 +4664,17 @@ if (serviceContainer) {
   });
 }
 
-document.addEventListener('click', () => {
+document.addEventListener('click', (event) => {
   const servicesTab = document.getElementById('servicesTab');
   if (!servicesTab || !servicesTab.classList.contains('active')) return;
 
   const panel = document.getElementById('serviceDropdownPanel');
-  if (panel && panel.style.display === 'flex') {
-    closeServiceDrawer();
-  }
+  if (!panel || panel.style.display !== 'flex') return;
+
+  const customMenu = event.target.closest?.('.custom-select-menu');
+  if (customMenu?.dataset.selectId === 'serviceSelect') return;
+
+  closeServiceDrawer();
 });
 
 window.addEventListener('blur', () => {
