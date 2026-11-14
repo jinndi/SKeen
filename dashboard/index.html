@@ -386,13 +386,11 @@ button.success-btn:hover {
 /* Form Fields & Selects */
 select.conn-select,
 select,
-input[type="text"],
-input[type="number"] {
+input {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   background-color: var(--code-bg);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c7086' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   border: 1px solid var(--border-color);
@@ -414,8 +412,9 @@ select option {
 }
 
 input[type="text"],
-input[type="number"] {
-  background-image: none;
+input[type="number"],
+input[type="url"],
+input[type="password"] {
   padding-right: 10px;
   cursor: text;
 }
@@ -423,14 +422,18 @@ input[type="number"] {
 select.conn-select:hover,
 select:hover,
 input[type="text"]:hover,
-input[type="number"]:hover {
+input[type="number"]:hover,
+input[type="url"]:hover,
+input[type="password"]:hover {
   border-color: var(--border-focus);
 }
 
 select.conn-select:focus,
 select:focus,
 input[type="text"]:focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+input[type="url"]:focus,
+input[type="password"]:focus {
   border-color: var(--accent-color);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
@@ -497,7 +500,7 @@ input[type="checkbox"]:focus-visible {
 button:disabled,
 select:disabled,
 input:disabled {
-  opacity: 0.65;
+  opacity: 0.85;
   cursor: not-allowed;
   transform: none !important;
   box-shadow: none !important;
@@ -505,7 +508,7 @@ input:disabled {
 
 button:disabled:hover,
 select:disabled:hover {
-  opacity: 0.65;
+  opacity: 0.85;
   transform: none !important;
   border-color: var(--border-color) !important;
 }
@@ -2274,7 +2277,8 @@ select.sk-select-source {
   width: 100%;
   min-width: 0;
   min-height: 34px;
-  padding: 8px 10px;
+  padding: 10px;
+  margin: 2px 0;
 
   background: transparent;
   color: var(--text-color);
@@ -2297,8 +2301,7 @@ select.sk-select-source {
 }
 
 .sk-select-option:hover,
-.sk-select-option.active,
-.sk-select-option.selected {
+.sk-select-option.active{
   background: var(--card-hover);
   color: var(--accent-color);
   opacity: 1;
@@ -2422,15 +2425,8 @@ select.sk-select-source {
           </div>
           <!-- Editor Mode Bar -->
           <div id="editorModeBar" class="editor-mode-bar" style="display: none;">
-            <button type="button" class="mode-btn active" id="btnModeForm" onclick="switchEditorMode('form')"
-              data-i18n="modeForm">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path
-                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                </path>
-              </svg>
-              <span data-i18n="modeFormText">Форма</span>
+            <button type="button" class="mode-btn active" id="btnModeForm" onclick="switchEditorMode('form')">
+              <span data-i18n="modeForm">Форма</span>
             </button>
             <button type="button" class="mode-btn" id="btnModeText" onclick="switchEditorMode('text')"
               data-i18n="modeText">
@@ -2623,15 +2619,15 @@ select.sk-select-source {
         <input type="hidden" id="editIndex" value="-1">
         <div class="form-group">
           <label data-i18n="labelName">Имя роутера</label>
-          <input type="text" id="connName" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
+          <input type="text" id="connName" name="router-name" autocomplete="nickname" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
         </div>
         <div class="form-group">
           <label data-i18n="labelUrl">URL сервера</label>
-          <input type="text" id="connUrl" placeholder="http://192.168.1.1:3000">
+          <input type="url" id="connUrl" name="server-url" autocomplete="url" placeholder="http://192.168.1.1:3000">
         </div>
         <div class="form-group">
           <label data-i18n="labelKey">Секрет</label>
-          <input type="text" id="connKey" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+          <input type="password" id="connKey" name="server-secret" autocomplete="current-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
         </div>
         <div class="form-row">
           <button type="button" onclick="saveConnection()" data-i18n="btnSaveConn">Сохранить</button>
@@ -2934,7 +2930,6 @@ const translations = {
   alertEmptyParam: { ru: "Заполните все необходимые параметры!", en: "Please fill in all required parameters!" },
   btnClearOutput: { ru: "Очистить вывод", en: "Clear output" },
   modeForm: { ru: "Форма", en: "Form" },
-  modeFormText: { ru: "Форма", en: "Form" },
   modeText: { ru: "JSON", en: "JSON" },
   tooltipTitle: { ru: "Справка по параметру", en: "Parameter Help" },
   arrayModalTitle: { ru: "Редактирование списка", en: "Edit list" },
