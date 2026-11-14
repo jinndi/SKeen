@@ -2484,10 +2484,8 @@ select.custom-select-source {
             </button>
             <button type="button" id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран"
               data-i18n-title="fullscreenTitle">
-              <svg id="fullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
-                </path>
+              <svg id="fullscreenSvg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"></path>
               </svg>
             </button>
             <div id="lineNumbers" class="line-numbers">1</div>
@@ -2540,8 +2538,8 @@ select.custom-select-source {
           <div id="serviceDropdownPanel">
             <select id="serviceSelect" class="conn-select" onchange="handleServiceSelectChange()" title="Выбрать сервис" data-i18n-title="selectServiceTitle"></select>
             <button type="button" id="serviceFullscreenBtn" class="icon-btn-sm secondary" onclick="toggleServiceFullscreen()" title="На весь экран" data-i18n-title="fullscreenTitle" aria-label="Fullscreen">
-              <svg id="serviceFullscreenSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+              <svg id="serviceFullscreenSvg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"></path>
               </svg>
             </button>
           </div>
@@ -3429,9 +3427,9 @@ function validateField(inputElement, type) {
 function getSVG(type) {
   switch (type) {
     case 'restore':
-      return '<path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4v6m0 0h6m0-6l-7 7M10 4v6m0 0H4m0-6l7 7"></path>';
+      return '<path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25"></path>';
     case 'fullscreen':
-      return '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
+      return '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"></path>';
     default:
       return '';
   }
