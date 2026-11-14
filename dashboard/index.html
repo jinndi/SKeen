@@ -737,7 +737,7 @@ label {
 /* Chrome, Edge, Safari */
 .output-wrapper::-webkit-scrollbar,
 .code-editor-wrapper::-webkit-scrollbar,
-.custom-select-menu::-webkit-scrollbar {
+.sk-select-menu::-webkit-scrollbar {
   width: 14px;
   height: 14px;
 }
@@ -752,7 +752,7 @@ label {
   border-radius: 7px;
 }
 
-.custom-select-menu::-webkit-scrollbar-track {
+.sk-select-menu::-webkit-scrollbar-track {
   background: var(--card-bg);
   border-radius: 7px;
 }
@@ -764,7 +764,7 @@ label {
   border: 3px solid var(--code-bg);
 }
 
-.custom-select-menu::-webkit-scrollbar-thumb {
+.sk-select-menu::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 7px;
   border: 3px solid var(--card-bg);
@@ -772,13 +772,13 @@ label {
 
 .output-wrapper::-webkit-scrollbar-thumb:hover,
 .code-editor-wrapper::-webkit-scrollbar-thumb:hover,
-.custom-select-menu::-webkit-scrollbar-thumb:hover {
+.sk-select-menu::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary, #888);
 }
 
 .output-wrapper::-webkit-scrollbar-corner,
 .code-editor-wrapper::-webkit-scrollbar-corner,
-.custom-select-menu::-webkit-scrollbar-corner {
+.sk-select-menu::-webkit-scrollbar-corner {
   background: var(--code-bg);
 }
 
@@ -2168,29 +2168,29 @@ textarea:focus-visible,
    15. Custom Select Styles
    ========================================================================== */
 
-select.custom-select-source {
+select.sk-select-source {
   display: none !important;
 }
 
-.custom-select {
+.sk-select {
   position: relative;
   display: block;
   width: 100%;
   min-width: 0;
 }
 
-.custom-select.conn-select {
+.sk-select.conn-select {
   height: 36px;
   min-width: 70px;
   max-width: 220px;
 }
 
-.custom-select.select-lang {
+.sk-select.select-lang {
   height: 34px;
   max-width: 140px;
 }
 
-.custom-select-trigger {
+.sk-select-trigger {
   width: 100%;
   height: 100%;
   min-width: 0;
@@ -2212,43 +2212,43 @@ select.custom-select-source {
   white-space: nowrap;
 }
 
-.custom-select-trigger:hover {
+.sk-select-trigger:hover {
   border-color: var(--border-focus);
   opacity: 1;
   transform: none;
 }
 
-.custom-select-trigger:focus-visible {
+.sk-select-trigger:focus-visible {
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.custom-select-trigger:disabled {
+.sk-select-trigger:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
 
-.custom-select-label {
+.sk-select-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.custom-select-arrow {
+.sk-select-arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.custom-select-arrow svg {
+.sk-select-arrow svg {
   width: 14px;
   height: 14px;
 }
 
-.custom-select-menu {
+.sk-select-menu {
   position: fixed;
   z-index: 10050;
   padding: 5px;
@@ -2263,11 +2263,11 @@ select.custom-select-source {
   scrollbar-color: var(--border-color) var(--card-bg);
 }
 
-.custom-select-menu[hidden] {
+.sk-select-menu[hidden] {
   display: none !important;
 }
 
-.custom-select-option {
+.sk-select-option {
   display: flex;
   align-items: center;
 
@@ -2288,7 +2288,7 @@ select.custom-select-source {
   cursor: pointer;
 }
 
-.custom-select-option-label {
+.sk-select-option-label {
   display: block;
   min-width: 0;
   overflow: hidden;
@@ -2296,26 +2296,26 @@ select.custom-select-source {
   white-space: nowrap;
 }
 
-.custom-select-option:hover,
-.custom-select-option.active,
-.custom-select-option.selected {
+.sk-select-option:hover,
+.sk-select-option.active,
+.sk-select-option.selected {
   background: var(--card-hover);
   color: var(--accent-color);
   opacity: 1;
   transform: none;
 }
 
-.custom-select-option.selected {
+.sk-select-option.selected {
   color: var(--accent-color);
   font-weight: 600;
 }
 
-.custom-select-option.disabled {
+.sk-select-option.disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-.custom-select-option.disabled:hover {
+.sk-select-option.disabled:hover {
   background: transparent;
   color: var(--text-muted);
 }
@@ -3484,23 +3484,23 @@ function setupCustomSelects(root = document) {
     ) return;
 
     const inheritedClasses = Array.from(select.classList)
-      .filter(name => name !== 'custom-select-source');
+      .filter(name => name !== 'sk-select-source');
 
     const wrapper = document.createElement('div');
-    wrapper.className = `custom-select ${inheritedClasses.join(' ')}`;
+    wrapper.className = `sk-select ${inheritedClasses.join(' ')}`;
 
     const trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.className = 'custom-select-trigger';
+    trigger.className = 'sk-select-trigger';
     trigger.setAttribute('role', 'combobox');
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
 
     const label = document.createElement('span');
-    label.className = 'custom-select-label';
+    label.className = 'sk-select-label';
 
     const arrow = document.createElement('span');
-    arrow.className = 'custom-select-arrow';
+    arrow.className = 'sk-select-arrow';
     arrow.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2"
@@ -3514,11 +3514,11 @@ function setupCustomSelects(root = document) {
     wrapper.appendChild(trigger);
 
     const menu = document.createElement('div');
-    menu.className = 'custom-select-menu';
+    menu.className = 'sk-select-menu';
     menu.setAttribute('role', 'listbox');
     menu.hidden = true;
 
-    menu.id = `custom-select-menu-${++customSelectId}`;
+    menu.id = `sk-select-menu-${++customSelectId}`;
     menu.dataset.selectId = select.id;
     trigger.setAttribute('aria-controls', menu.id);
 
@@ -3533,7 +3533,7 @@ function setupCustomSelects(root = document) {
 
     customSelectInstances.set(select, instance);
 
-    select.classList.add('custom-select-source');
+    select.classList.add('sk-select-source');
     select.setAttribute('aria-hidden', 'true');
     select.tabIndex = -1;
 
@@ -3776,7 +3776,7 @@ function refreshCustomSelectInstance(instance) {
     if (option.hidden) return;
 
     const item = document.createElement('div');
-    item.className = 'custom-select-option';
+    item.className = 'sk-select-option';
     item.setAttribute('role', 'option');
     item.setAttribute('aria-selected', String(option.selected));
 
@@ -3791,7 +3791,7 @@ function refreshCustomSelectInstance(instance) {
     const optionText = option.textContent.trim();
 
     const optionLabel = document.createElement('span');
-    optionLabel.className = 'custom-select-option-label';
+    optionLabel.className = 'sk-select-option-label';
     optionLabel.textContent = optionText;
 
     item.title = optionText;
@@ -3834,7 +3834,7 @@ function refreshCustomSelectInstance(instance) {
 
 function getCustomSelectEnabledItems(instance) {
   return Array.from(
-    instance.menu.querySelectorAll('.custom-select-option')
+    instance.menu.querySelectorAll('.sk-select-option')
   ).filter(item => item.getAttribute('aria-disabled') !== 'true');
 }
 
@@ -3847,7 +3847,7 @@ function setCustomSelectActive(instance, index) {
 
   if (!item) return;
 
-  instance.menu.querySelectorAll('.custom-select-option')
+  instance.menu.querySelectorAll('.sk-select-option')
     .forEach(element => element.classList.remove('active'));
 
   item.classList.add('active');
@@ -4668,7 +4668,7 @@ document.addEventListener('click', (event) => {
   const panel = document.getElementById('serviceDropdownPanel');
   if (!panel || panel.style.display !== 'flex') return;
 
-  const customMenu = event.target.closest?.('.custom-select-menu');
+  const customMenu = event.target.closest?.('.sk-select-menu');
   if (customMenu?.dataset.selectId === 'serviceSelect') return;
 
   closeServiceDrawer();
