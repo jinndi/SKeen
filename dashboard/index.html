@@ -13,6 +13,7 @@
    1. Theme Variables (Catppuccin Mocha & High-Contrast Light Theme)
    ========================================================================== */
 :root {
+  color-scheme: dark;
   --bg-color: #16161e;
   --card-bg: #1e1e2e;
   --card-hover: #2a2a3c;
@@ -42,6 +43,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --bg-color: #e9ecef;
   --card-bg: #fffffff0;
   --card-hover: #f1f3f5;
@@ -404,6 +406,11 @@ input[type="number"] {
   outline: none;
   cursor: pointer;
   min-width: 0;
+}
+
+select option {
+  background-color: var(--code-bg);
+  color: var(--text-color);
 }
 
 input[type="text"],
@@ -2143,6 +2150,164 @@ textarea:focus-visible,
   }
 }
 
+/* ==========================================================================
+   15. Custom Select Styles
+   ========================================================================== */
+
+select.custom-select-source {
+  display: none !important;
+}
+
+.custom-select {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.custom-select.conn-select {
+  height: 36px;
+  min-width: 70px;
+  max-width: 180px;
+}
+
+.custom-select.select-lang {
+  height: 34px;
+  max-width: 140px;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  background: var(--code-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.custom-select-trigger:hover {
+  border-color: var(--border-focus);
+  opacity: 1;
+  transform: none;
+}
+
+.custom-select-trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.custom-select-trigger:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.custom-select-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.custom-select-arrow svg {
+  width: 14px;
+  height: 14px;
+}
+
+.custom-select-menu {
+  position: fixed;
+  z-index: 10050;
+
+  padding: 5px;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+
+  scrollbar-width: thin;
+}
+
+.custom-select-menu[hidden] {
+  display: none !important;
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding: 8px 10px;
+
+  background: transparent;
+  color: var(--text-color);
+  border: 0;
+  border-radius: 5px;
+
+  font-size: 0.85rem;
+  font-weight: 400;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.custom-select-option-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-option:hover,
+.custom-select-option.active {
+  background: var(--card-hover);
+  color: var(--accent-color);
+  opacity: 1;
+  transform: none;
+}
+
+.custom-select-option.selected {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.custom-select-option.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.custom-select-option.disabled:hover {
+  background: transparent;
+  color: var(--text-muted);
+}
+
   </style>
 </head>
 
@@ -2534,7 +2699,7 @@ textarea:focus-visible,
             <span data-i18n="labelThemeAppearance">Оформление</span>
           </div>
           <div class="theme-segmented-control">
-            <button type="button" class="theme-segment-btn" id="themeBtnAuto" onclick="setThemeMode('auto')" title="Как в системе"
+            <button type="button" class="theme-segment-btn" id="themeBtnAuto" onclick="setThemeMode('auto')" title="Системный"
               data-i18n-title="themeAutoTitle">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="9"></circle>
@@ -2570,7 +2735,7 @@ textarea:focus-visible,
             <span data-i18n="labelLanguage">Язык</span>
           </div>
           <select id="langSelect" class="conn-select select-lang" onchange="changeLanguage(this.value)">
-            <option value="auto" data-i18n="langAuto">Как в системе</option>
+            <option value="auto" data-i18n="langAuto">Системный</option>
             <option value="ru">Русский</option>
             <option value="en">English</option>
           </select>
@@ -2662,7 +2827,7 @@ const translations = {
   modalTabMisc: { ru: "Прочее", en: "Misc" },
   labelThemeAppearance: { ru: "Оформление", en: "Appearance" },
   labelLanguage: { ru: "Язык", en: "Language" },
-  langAuto: { ru: "Как в системе", en: "System default" },
+  langAuto: { ru: "Автоматически", en: "Automatic" },
   formTitleAdd: { ru: "Добавить новое подключение", en: "Add new connection" },
   formTitleEdit: { ru: "Редактировать подключение", en: "Edit connection" },
   labelName: { ru: "Имя роутера", en: "Router name" },
@@ -3292,6 +3457,520 @@ function togglePreloader(show) {
 }
 
 /* ==========================================================================
+   Custom Select
+   ========================================================================== */
+
+const customSelectInstances = new Map();
+let customSelectObserver = null;
+let activeCustomSelect = null;
+let customSelectId = 0;
+
+function setupCustomSelects(root = document) {
+  function initSelect(select) {
+    if (
+      select.tagName !== 'SELECT' ||
+      select.multiple ||
+      select.size > 1 ||
+      customSelectInstances.has(select)
+    ) return;
+
+    const inheritedClasses = Array.from(select.classList)
+      .filter(name => name !== 'custom-select-source');
+
+    const wrapper = document.createElement('div');
+    wrapper.className = `custom-select ${inheritedClasses.join(' ')}`;
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('role', 'combobox');
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    const label = document.createElement('span');
+    label.className = 'custom-select-label';
+
+    const arrow = document.createElement('span');
+    arrow.className = 'custom-select-arrow';
+    arrow.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    `;
+
+    trigger.append(label, arrow);
+    wrapper.appendChild(trigger);
+
+    const menu = document.createElement('div');
+    menu.className = 'custom-select-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+
+    menu.id = `custom-select-menu-${++customSelectId}`;
+    trigger.setAttribute('aria-controls', menu.id);
+
+    const instance = {
+      select,
+      wrapper,
+      trigger,
+      label,
+      menu,
+      activeIndex: -1
+    };
+
+    customSelectInstances.set(select, instance);
+
+    select.classList.add('custom-select-source');
+    select.setAttribute('aria-hidden', 'true');
+    select.tabIndex = -1;
+
+    select.insertAdjacentElement('afterend', wrapper);
+    document.body.appendChild(menu);
+
+    select.addEventListener('change', () => {
+      refreshCustomSelectInstance(instance);
+    });
+
+    trigger.addEventListener('click', () => {
+      if (select.disabled) return;
+
+      if (activeCustomSelect === instance) {
+        closeCustomSelect(instance);
+      } else {
+        openCustomSelect(instance);
+      }
+    });
+
+    trigger.addEventListener('keydown', event => {
+      if (select.disabled) return;
+
+      const isOpen = activeCustomSelect === instance;
+
+      if (event.key === 'Escape') {
+        if (isOpen) {
+          event.preventDefault();
+          closeCustomSelect(instance);
+        }
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        if (isOpen) closeCustomSelect(instance);
+        return;
+      }
+
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+
+        if (!isOpen) {
+          openCustomSelect(instance);
+        } else {
+          moveCustomSelectActive(
+            instance,
+            event.key === 'ArrowDown' ? 1 : -1
+          );
+        }
+        return;
+      }
+
+      if (event.key === 'Home' || event.key === 'End') {
+        if (!isOpen) return;
+
+        event.preventDefault();
+        const items = getCustomSelectEnabledItems(instance);
+
+        if (items.length) {
+          setCustomSelectActive(
+            instance,
+            Number(items[event.key === 'Home' ? 0 : items.length - 1].dataset.index)
+          );
+        }
+        return;
+      }
+
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+
+        if (!isOpen) {
+          openCustomSelect(instance);
+        } else {
+          selectCustomOption(instance, instance.activeIndex);
+        }
+      }
+    });
+
+    refreshCustomSelectInstance(instance);
+  }
+
+  function scan(node) {
+    if (!node) return;
+
+    if (node.nodeType === 1 && node.matches('select')) {
+      initSelect(node);
+    }
+
+    node.querySelectorAll?.('select').forEach(initSelect);
+  }
+
+  function cleanup(node) {
+    if (!node) return;
+
+    const selects = [];
+
+    if (node.nodeType === 1 && node.matches('select')) {
+      selects.push(node);
+    }
+
+    node.querySelectorAll?.('select').forEach(select => {
+      selects.push(select);
+    });
+
+    selects.forEach(select => {
+      const instance = customSelectInstances.get(select);
+      if (!instance) return;
+
+      closeCustomSelect(instance);
+      instance.menu.remove();
+      instance.wrapper.remove();
+      customSelectInstances.delete(select);
+    });
+  }
+
+  if (!customSelectObserver && document.body) {
+    customSelectObserver = new MutationObserver(records => {
+      const changedSelects = new Set();
+
+      records.forEach(record => {
+        if (record.type === 'childList') {
+          record.removedNodes.forEach(cleanup);
+          record.addedNodes.forEach(scan);
+        }
+
+        const target = record.target.nodeType === 1
+          ? record.target
+          : record.target.parentElement;
+
+        const select = target?.closest?.('select');
+
+        if (select && customSelectInstances.has(select)) {
+          changedSelects.add(select);
+        }
+      });
+
+      changedSelects.forEach(select => {
+        refreshCustomSelectInstance(
+          customSelectInstances.get(select)
+        );
+      });
+    });
+
+    customSelectObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: [
+        'disabled',
+        'selected',
+        'value',
+        'label',
+        'hidden',
+        'title'
+      ]
+    });
+
+    document.addEventListener('pointerdown', event => {
+      if (!activeCustomSelect) return;
+
+      const instance = activeCustomSelect;
+
+      if (
+        !instance.wrapper.contains(event.target) &&
+        !instance.menu.contains(event.target)
+      ) {
+        closeCustomSelect(instance);
+      }
+    }, true);
+
+    document.addEventListener('scroll', event => {
+      if (
+        activeCustomSelect &&
+        !activeCustomSelect.menu.contains(event.target)
+      ) {
+        closeCustomSelect(activeCustomSelect);
+      }
+    }, true);
+
+    window.addEventListener('resize', () => {
+      if (activeCustomSelect) {
+        positionCustomSelect(activeCustomSelect);
+      }
+    });
+  }
+
+  scan(root);
+}
+
+
+function refreshCustomSelects(root = document) {
+  const selects = root.tagName === 'SELECT'
+    ? [root]
+    : root.querySelectorAll?.('select') || [];
+
+  selects.forEach(select => {
+    const instance = customSelectInstances.get(select);
+
+    if (instance) {
+      refreshCustomSelectInstance(instance);
+    }
+  });
+}
+
+
+function refreshCustomSelectInstance(instance) {
+  if (!instance) return;
+
+  const { select, label, trigger, menu } = instance;
+
+  const selectedOption = select.options[select.selectedIndex];
+  const selectedText = selectedOption?.textContent.trim() || '';
+
+  label.textContent = selectedText || 'Выберите...';
+
+  const associatedLabel = select.labels?.[0]?.textContent.trim();
+
+  trigger.disabled = select.disabled;
+  trigger.title = select.title || selectedText;
+  trigger.setAttribute(
+    'aria-label',
+    select.getAttribute('aria-label') ||
+    associatedLabel ||
+    select.title ||
+    select.id ||
+    'Выбрать значение'
+  );
+
+  menu.replaceChildren();
+
+  Array.from(select.options).forEach(option => {
+    if (option.hidden) return;
+
+    const item = document.createElement('div');
+    item.className = 'custom-select-option';
+    item.setAttribute('role', 'option');
+    item.setAttribute('aria-selected', String(option.selected));
+
+    const optionDisabled =
+      option.disabled ||
+      (option.parentElement?.tagName === 'OPTGROUP' &&
+        option.parentElement.disabled);
+
+    item.setAttribute('aria-disabled', String(optionDisabled));
+    item.dataset.index = String(option.index);
+    item.id = `${menu.id}-option-${option.index}`;
+    const optionText = option.textContent.trim();
+
+    const optionLabel = document.createElement('span');
+    optionLabel.className = 'custom-select-option-label';
+    optionLabel.textContent = optionText;
+
+    item.title = optionText;
+    item.appendChild(optionLabel);
+
+    if (option.selected) {
+      item.classList.add('selected');
+    }
+
+    if (optionDisabled) {
+      item.classList.add('disabled');
+    }
+
+    item.addEventListener('pointermove', () => {
+      if (
+        !optionDisabled &&
+        activeCustomSelect === instance
+      ) {
+        setCustomSelectActive(instance, option.index);
+      }
+    });
+
+    item.addEventListener('click', () => {
+      if (!optionDisabled) {
+        selectCustomOption(instance, option.index);
+      }
+    });
+
+    menu.appendChild(item);
+  });
+
+  instance.activeIndex = select.selectedIndex;
+
+  if (activeCustomSelect === instance) {
+    setCustomSelectActive(instance, instance.activeIndex);
+    positionCustomSelect(instance);
+  }
+}
+
+
+function getCustomSelectEnabledItems(instance) {
+  return Array.from(
+    instance.menu.querySelectorAll('.custom-select-option')
+  ).filter(item => item.getAttribute('aria-disabled') !== 'true');
+}
+
+
+function setCustomSelectActive(instance, index) {
+  const items = getCustomSelectEnabledItems(instance);
+  const item = items.find(
+    element => Number(element.dataset.index) === index
+  );
+
+  if (!item) return;
+
+  instance.menu.querySelectorAll('.custom-select-option')
+    .forEach(element => element.classList.remove('active'));
+
+  item.classList.add('active');
+  instance.activeIndex = index;
+
+  instance.trigger.setAttribute('aria-activedescendant', item.id);
+  item.scrollIntoView?.({ block: 'nearest' });
+}
+
+
+function moveCustomSelectActive(instance, direction) {
+  const items = getCustomSelectEnabledItems(instance);
+  if (!items.length) return;
+
+  const currentIndex = items.findIndex(
+    item => Number(item.dataset.index) === instance.activeIndex
+  );
+
+  const nextIndex = currentIndex < 0
+    ? 0
+    : (currentIndex + direction + items.length) % items.length;
+
+  setCustomSelectActive(
+    instance,
+    Number(items[nextIndex].dataset.index)
+  );
+}
+
+
+function selectCustomOption(instance, index) {
+  const { select } = instance;
+  const option = select.options[index];
+
+  if (!option || option.disabled) return;
+
+  const previousIndex = select.selectedIndex;
+
+  select.selectedIndex = index;
+
+  closeCustomSelect(instance);
+  refreshCustomSelectInstance(instance);
+
+  if (previousIndex !== select.selectedIndex) {
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+
+function openCustomSelect(instance) {
+  if (instance.select.disabled) return;
+
+  if (activeCustomSelect) {
+    closeCustomSelect(activeCustomSelect);
+  }
+
+  refreshCustomSelectInstance(instance);
+
+  activeCustomSelect = instance;
+  instance.menu.hidden = false;
+  instance.trigger.setAttribute('aria-expanded', 'true');
+
+  const selectedIndex = instance.select.selectedIndex;
+  const enabledItems = getCustomSelectEnabledItems(instance);
+
+  const selectedItem = enabledItems.find(
+    item => Number(item.dataset.index) === selectedIndex
+  );
+
+  const firstItem = enabledItems[0];
+
+  setCustomSelectActive(
+    instance,
+    Number((selectedItem || firstItem)?.dataset.index)
+  );
+
+  positionCustomSelect(instance);
+}
+
+
+function closeCustomSelect(instance) {
+  if (!instance) return;
+
+  instance.menu.hidden = true;
+  instance.trigger.setAttribute('aria-expanded', 'false');
+  instance.trigger.removeAttribute('aria-activedescendant');
+
+  if (activeCustomSelect === instance) {
+    activeCustomSelect = null;
+  }
+}
+
+
+function positionCustomSelect(instance) {
+  const rect = instance.trigger.getBoundingClientRect();
+  const menu = instance.menu;
+
+  const viewportWidth = document.documentElement.clientWidth;
+  const viewportHeight = window.innerHeight;
+  const gap = 4;
+  const margin = 8;
+
+  const spaceBelow = viewportHeight - rect.bottom - gap - margin;
+  const spaceAbove = rect.top - gap - margin;
+
+  const naturalHeight = Math.min(menu.scrollHeight, 280);
+  const openAbove =
+    spaceBelow < naturalHeight &&
+    spaceAbove > spaceBelow;
+
+  const availableSpace = Math.max(
+    80,
+    Math.min(280, openAbove ? spaceAbove : spaceBelow)
+  );
+
+  menu.style.maxHeight = `${availableSpace}px`;
+  menu.style.width = 'max-content';
+  menu.style.minWidth = `${rect.width}px`;
+  menu.style.maxWidth = `${viewportWidth - margin * 2}px`;
+
+  const menuHeight = menu.getBoundingClientRect().height;
+
+  const menuWidth = menu.getBoundingClientRect().width;
+
+  const left = Math.max(
+    margin,
+    Math.min(rect.left, viewportWidth - menuWidth - margin)
+  );
+
+  const top = openAbove
+    ? rect.top - menuHeight - gap
+    : rect.bottom + gap;
+
+  menu.style.left = `${left}px`;
+  menu.style.top = `${Math.max(
+    margin,
+    Math.min(top, viewportHeight - menuHeight - margin)
+  )}px`;
+}
+
+/* ==========================================================================
    Initialization & App Lifecycle
    ========================================================================== */
 const storedActiveIndex = Number.parseInt(storageGet('keen_active_index') || '0', 10);
@@ -3328,6 +4007,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     showAlertModal(t('alertCorruptConnections'));
   }
   renderExtraParamOptions();
+  setupCustomSelects();
 
   const storedTab = storageGet('keen_active_tab');
   const savedTab = ['skeenTab', 'configsTab', 'servicesTab'].includes(storedTab) ? storedTab : 'skeenTab';
@@ -3824,6 +4504,7 @@ async function initServicesSelector() {
 
   // Render the selected service immediately; local panels are loaded afterwards.
   selectElement.value = initialValue;
+  refreshCustomSelects(selectElement);
   servicesSelectorInitialized = true;
   updateServiceFrameUrl();
 
@@ -3852,6 +4533,7 @@ async function initServicesSelector() {
             .some(opt => opt.value === savedUrl);
           if (hasSavedOption && !servicesSelectorUserChanged && selectElement.value === initialValue) {
             selectElement.value = savedUrl;
+            refreshCustomSelects(selectElement);
             updateServiceFrameUrl();
           }
         }
@@ -4773,6 +5455,9 @@ function changeLanguage(langSetting) {
   storageSet('keen_lang_setting', langSetting);
   languageState.currentLang = resolveLanguage(langSetting);
   document.getElementById('langSelect').value = langSetting;
+  refreshCustomSelects(
+    document.getElementById('langSelect')
+  );
   applyLanguage();
   updateLineNumbers();
   initConnections();
@@ -4853,6 +5538,7 @@ async function loadFileList(reloadConfig = true) {
     }));
 
     select.value = Array.from(select.options).some(opt => opt.value === prevSelected) ? prevSelected : select.options[0].value;
+    refreshCustomSelects(select);
     editorState.currentSelectedFile = select.value;
 
     if (reloadConfig) await loadConfigFile();
@@ -4875,6 +5561,7 @@ function handleFileSelectChange() {
       loadConfigFile();
     }, () => {
       select.value = editorState.currentSelectedFile;
+      refreshCustomSelects(select);
     });
     return;
   }
@@ -5021,6 +5708,7 @@ async function saveConfigFile() {
     if (fileKey === 'skeen') {
       await loadFileList(false);
       fileSelect.value = 'skeen';
+      refreshCustomSelects(fileSelect);
       editorState.currentSelectedFile = 'skeen';
     }
   } catch (e) {
@@ -5185,6 +5873,7 @@ function renderExtraParamOptions() {
 
   select.innerHTML = options.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
   select.value = currentValue;
+  refreshCustomSelects(select);
   handleExtraParamChange();
 }
 
