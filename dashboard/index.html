@@ -3151,6 +3151,7 @@ const editorState = {
   baselineParsedJson: null,
   currentSelectedFile: '',
   cachedLines: [],
+  loadedConnectionKey: '',
   editorMode: storageGet('keen_editor_mode') === 'text' ? 'text' : 'form'
 };
 const serviceState = {
@@ -3688,13 +3689,19 @@ function getBaseUrl() {
   return conn ? conn.url.replace(/\/$/, '') : '';
 }
 
+function getConfigConnectionKey() {
+  const conn = getActiveConnection();
+  return conn
+    ? JSON.stringify([connectionState.activeIndex, conn.url, conn.apiKey || ''])
+    : null;
+}
+
 /* ==========================================================================
    UI Navigation & Tabs
    ========================================================================== */
 function switchTab(tabId, btn, save = true) {
   if (tabId !== 'configsTab' && hasUnsavedChanges()) {
     showConfirmModal(t('confirmUnsaved'), () => {
-      editorState.originalFileContent = '';
       executeSwitchTab(tabId, btn, save);
     });
     return;
@@ -3727,7 +3734,9 @@ function executeSwitchTab(tabId, btn, save) {
     ensureServicesSelectorInitialized();
     updateServiceFrameUrl(true);
   } else if (tabId === 'configsTab') {
-    loadFileList();
+    if (editorState.loadedConnectionKey !== getConfigConnectionKey()) {
+      loadFileList();
+    }
   }
 }
 
@@ -4934,6 +4943,7 @@ async function executeLoadConfigFile() {
       document.getElementById('formatBtn').style.display = fileKey === 'pure_cidr' ? 'none' : '';
     }
 
+    editorState.loadedConnectionKey = getConfigConnectionKey();
     showStatus('jsonStatus', t('statusLoaded'));
   } catch (e) {
     showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
