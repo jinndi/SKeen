@@ -981,7 +981,7 @@ label {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 479px) {
   .form-setting-row:has(input[type="checkbox"]) {
     flex-direction: row !important;
     justify-content: space-between;
@@ -1783,7 +1783,7 @@ label {
 /* ==========================================================================
    10. Responsive Media Queries (< 360px)
    ========================================================================== */
-@media (max-width: 360px) {
+@media (max-width: 359px) {
   body {
     padding: 2px;
   }
@@ -2504,9 +2504,8 @@ select.custom-select-source {
 
         <div class="form-row flex-shrink-0">
           <button type="button" class="secondary" onclick="loadConfigFile()" title="Обновить" data-i18n-title="btnUpdateJson">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"></path>
             </svg>
             <span data-i18n="btnUpdateJson">Обновить</span>
           </button>
@@ -5867,9 +5866,8 @@ function renderDynamicActions() {
       <span>${t('btnStop')}</span>
     </button>
     <button type="button" class="secondary" onclick="executeCommandParam('restart')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="23 4 23 10 17 10"></polyline>
-        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"></path>
       </svg>
       <span>${t('btnRestart')}</span>
     </button>
