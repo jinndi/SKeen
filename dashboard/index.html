@@ -1953,12 +1953,12 @@ body.preload * {
   align-items: center;
 }
 
-.telemetry-net-label {
+.telemetry-label {
   color: var(--text-muted);
   font-size: 0.8rem;
 }
 
-.telemetry-net-val {
+.telemetry-val {
   font-weight: 600;
   font-family: 'JetBrains Mono', monospace, ui-monospace;
 }
@@ -2509,16 +2509,16 @@ select.sk-select-source {
       <!-- Device Uptime and Load Average Panel -->
       <div class="telemetry-network-panel">
         <div class="telemetry-net-row">
-          <span class="telemetry-net-label" data-i18n="deviceLabel">Устройство:</span>
-          <span id="telDeviceModel" class="telemetry-net-val">-</span>
+          <span class="telemetry-label" data-i18n="deviceLabel">Устройство:</span>
+          <span id="telDeviceModel" class="telemetry-val">-</span>
         </div>
         <div class="telemetry-net-row">
-          <span class="telemetry-net-label" data-i18n="netUptime">Аптайм:</span>
-          <span id="telUptimeVal" class="telemetry-net-val">-</span>
+          <span class="telemetry-label" data-i18n="netUptime">Аптайм:</span>
+          <span id="telUptimeVal" class="telemetry-val">-</span>
         </div>
         <div class="telemetry-net-row">
-          <span class="telemetry-net-label" data-i18n="netLoadAvg">LoadAvg (1/5/15m):</span>
-          <span id="telLoadAvgVal" class="telemetry-net-val">-</span>
+          <span class="telemetry-label" data-i18n="netLoadAvg">LoadAvg (1/5/15m):</span>
+          <span id="telLoadAvgVal" class="telemetry-val">-</span>
         </div>
       </div>
 
@@ -2526,8 +2526,8 @@ select.sk-select-source {
         <!-- CPU Load -->
         <div class="telemetry-metric-item">
           <div class="telemetry-metric-header">
-            <span data-i18n="metricCpu">ЦП</span>
-            <span style="display: flex; gap: 10px;">
+            <span class="telemetry-label" data-i18n="metricCpu">ЦП</span>
+            <span class="telemetry-val" style="display: flex; gap: 10px;">
               <span id="telCpuVal">0%</span>
               <span>/</span>
               <span id="telCpuTemp">0°C</span>
@@ -2541,8 +2541,8 @@ select.sk-select-source {
         <!-- RAM -->
         <div class="telemetry-metric-item">
           <div class="telemetry-metric-header">
-            <span data-i18n="metricMem">ОЗУ</span>
-            <span id="telMemVal">0 / 0 MB</span>
+            <span class="telemetry-label" data-i18n="metricMem">ОЗУ</span>
+            <span id="telMemVal" class="telemetry-val">0 / 0 MB</span>
           </div>
           <div class="telemetry-progress-track">
             <div id="telMemBar" class="telemetry-progress-fill"></div>
@@ -2552,8 +2552,8 @@ select.sk-select-source {
         <!-- SWAP -->
         <div id="swapMetricItem" class="telemetry-metric-item">
           <div class="telemetry-metric-header">
-            <span data-i18n="metricSwap">Подкачка</span>
-            <span id="telSwapVal">0 / 0 MB</span>
+            <span class="telemetry-label" data-i18n="metricSwap">Подкачка</span>
+            <span id="telSwapVal" class="telemetry-val">0 / 0 MB</span>
           </div>
           <div class="telemetry-progress-track">
             <div id="telSwapBar" class="telemetry-progress-fill"></div>
@@ -2563,8 +2563,8 @@ select.sk-select-source {
         <!-- Entware /opt -->
         <div class="telemetry-metric-item">
           <div class="telemetry-metric-header">
-            <span data-i18n="metricOpt">Entware</span>
-            <span id="telOptVal">0 / 0 KB</span>
+            <span class="telemetry-label" data-i18n="metricOpt">Entware</span>
+            <span id="telOptVal" class="telemetry-val">0 / 0 KB</span>
           </div>
           <div class="telemetry-progress-track">
             <div id="telOptBar" class="telemetry-progress-fill"></div>
@@ -2575,21 +2575,21 @@ select.sk-select-source {
       <!-- Network and Connections -->
       <div class="telemetry-network-panel">
         <div class="telemetry-net-row">
-          <span class="telemetry-net-label" data-i18n="netIface">Интерфейс:</span>
-          <span id="telNetIface" class="telemetry-net-val">-</span>
+          <span class="telemetry-label" data-i18n="netIface">Интерфейс:</span>
+          <span id="telNetIface" class="telemetry-val">-</span>
         </div>
         <div class="telemetry-net-row">
-          <span class="telemetry-net-label" data-i18n="netRx">Загрузка:</span>
-          <span id="telRxSpeed" class="telemetry-net-val">0 B/s</span>
+          <span class="telemetry-label" data-i18n="netRx">Загрузка:</span>
+          <span id="telRxSpeed" class="telemetry-val">0 B/s</span>
         </div>
         <div class="telemetry-net-row">
-          <span class="telemetry-net-label" data-i18n="netTx">Отдача:</span>
-          <span id="telTxSpeed" class="telemetry-net-val">0 B/s</span>
+          <span class="telemetry-label" data-i18n="netTx">Отдача:</span>
+          <span id="telTxSpeed" class="telemetry-val">0 B/s</span>
         </div>
         <hr class="hr-custom" style="margin: 4px 0;">
         <div class="telemetry-net-row">
-          <span class="telemetry-net-label" data-i18n="netConns">Соединений:</span>
-          <span id="telConnCount" class="telemetry-net-val">0</span>
+          <span class="telemetry-label" data-i18n="netConns">Соединений:</span>
+          <span id="telConnCount" class="telemetry-val">0</span>
         </div>
       </div>
 
