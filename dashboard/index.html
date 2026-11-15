@@ -2362,6 +2362,50 @@ input[type="password"].sk-input.invalid-input,
 }
 
 
+/* Password Input Toggle Wrapper */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-wrapper .sk-input {
+  padding-right: 36px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  z-index: 2;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-color);
+  background-color: var(--card-hover);
+  transform: none !important;
+}
+
+.password-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  stroke: none;
+  flex-shrink: 0;
+}
+
 /* ==========================================================================
    17. Custom Switch Checkboxes
    ========================================================================== */
@@ -2868,7 +2912,12 @@ input[type="checkbox"].sk-checkbox:disabled {
           </div>
           <div class="form-group">
             <label data-i18n="labelKey">Секрет</label>
-            <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="new-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+            <div class="password-wrapper">
+              <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="new-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('connKey', this)" title="Показать секрет" data-i18n-title="btnShowPassword" aria-label="Toggle password visibility">
+                <span data-icon="eye"></span>
+              </button>
+            </div>
           </div>
           <div class="form-row" style="margin-top:23px">
             <button type="submit" data-i18n="btnSaveConn">Сохранить</button>
@@ -3006,6 +3055,8 @@ const DEFAULT_ICON_CONFIG = {
 };
 
 const ICON_REGISTRY = {
+  eye: '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path>',
+  eyeOff: '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.804 11.804 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78 3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"></path>',
   palette: '<path d="M12 21a9 9 0 1 1 0-18c4.97 0 9 3.58 9 8 0 1.5-1.07 2.5-2.25 2.5-.58 0-1.12-.23-1.5-.62-.35-.36-.85-.58-1.38-.58-1.04 0-1.87.83-1.87 1.87 0 .5.2.97.54 1.32.38.39.61.92.61 1.51 0 2.21-1.79 4-4 4z"></path><circle cx="7.5" cy="10.5" r=".75" fill="currentColor"></circle><circle cx="12" cy="7.5" r=".75" fill="currentColor"></circle><circle cx="16.5" cy="10.5" r=".75" fill="currentColor"></circle>',
   skeen: '<path d="M18 7c0-2.21-1.79-4-4-4H9a4 4 0 0 0-4 4v1c0 2.21 1.79 4 4 4h6c2.21 0 4 1.79 4 4v1c0 2.21-1.79 4-4 4H9c-2.21 0-4-1.79-4-4"></path>',
   configs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path>',
@@ -3039,7 +3090,7 @@ function renderIcon(name, options = {}) {
   const body = ICON_REGISTRY[name];
   if (!body) return null;
 
-  const isFilled = name === 'playFill' || name === 'stopFill';
+  const isFilled = ['playFill', 'stopFill', 'eye', 'eyeOff'].includes(name);
   const customDefaults = isFilled ? { fill: 'currentColor', stroke: 'none' } : {};
 
   const cfg = { ...DEFAULT_ICON_CONFIG, ...customDefaults, ...options };
@@ -3116,6 +3167,8 @@ const translations = {
   labelKey: { ru: "Секрет", en: "Secret" },
   placeholderKey: { ru: "Секретный ключ", en: "Secret key" },
   btnSaveConn: { ru: "Сохранить", en: "Save" },
+  btnShowPassword: { ru: "Показать секрет", en: "Show secret" },
+  btnHidePassword: { ru: "Скрыть секрет", en: "Hide secret" },
   btnClose: { ru: "Закрыть", en: "Close" },
   noConnections: { ru: "-- Нет подключений --", en: "-- No connections --" },
   emptyList: { ru: "Список пуст.", en: "List is empty." },
@@ -4351,6 +4404,25 @@ function startPolling() {
   }, 3500);
 }
 
+function togglePasswordVisibility(inputId, btnElement) {
+  const input = document.getElementById(inputId);
+  if (!input || !btnElement) return;
+
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+
+  const iconName = isPassword ? 'eyeOff' : 'eye';
+  const iconNode = renderIcon(iconName);
+  const currentIcon = btnElement.querySelector('svg');
+  if (currentIcon && iconNode) {
+    currentIcon.replaceWith(iconNode);
+  }
+
+  const titleKey = isPassword ? 'btnHidePassword' : 'btnShowPassword';
+  btnElement.setAttribute('data-i18n-title', titleKey);
+  btnElement.title = typeof t === 'function' ? t(titleKey) : (isPassword ? 'Скрыть секрет' : 'Показать секрет');
+}
+
 /* ==========================================================================
    Connections Management
    ========================================================================== */
@@ -4547,6 +4619,11 @@ function clearConnForm() {
   }
   document.getElementById('connName').value = '';
   document.getElementById('connKey').value = '';
+  const connKeyInput = document.getElementById('connKey');
+  if (connKeyInput && connKeyInput.type !== 'password') {
+    const btn = connKeyInput.parentNode.querySelector('.password-toggle-btn');
+    if (btn) togglePasswordVisibility('connKey', btn);
+  }
   document.getElementById('editIndex').value = '-1';
   document.getElementById('formTitle').textContent = t('formTitleAdd');
 }
