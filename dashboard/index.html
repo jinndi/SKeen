@@ -3227,152 +3227,152 @@ const SKEEN_DEFAULT_SCHEMA = {
 
 const helpTexts = {
   "auto_start.enabled": {
-    ru: "Автозапуск SKeen при загрузке роутера.",
-    en: "SKeen autostart on router reboot."
+    ru: "Автозапуск SKeen при загрузке роутера включая Sing-box.",
+    en: "SKeen autostart on router reboot including Sing-box."
   },
   "policy.enabled": {
     ru: "Включить маршрутизацию на основе политики сетевого сегмента.",
     en: "Enable routing based on network segment policy."
   },
   "policy.segment": {
-    ru: "Имя интерфейса сегмента (Bridge), политика которой будет использоваться; начинается с \"br\", далее цифра от 0 и больше (например, br1).",
-    en: "Name of the segment interface (Bridge) whose policy will be used; starts with 'br', followed by a digit from 0 and above (e.g., br1)."
+    ru: "Имя интерфейса сегмента (Bridge), политика которой будет использоваться; начинается с \"br\", далее цифра от 0 и больше. Цифру можно узнать из URL в разделе «Сегменты», напр.: http://192.168.1.1/segments/Bridge1 - будет \"br1\". Или с помощью команды: skeen iface",
+    en: "Name of the segment interface (Bridge) whose policy will be used; starts with 'br', followed by a digit from 0 and above. You can find the digit from the URL in the 'Segments' section (e.g. http://192.168.1.1/segments/Bridge1 - will be 'br1') or using the command: skeen iface"
   },
   "network.ipv6": {
-    ru: "Включить поддержку IPv6.",
-    en: "Enable IPv6 support."
+    ru: "Включить поддержку IPv6. Рекомендуется отключать.",
+    en: "Enable IPv6 support. Recommended to disable."
   },
   "network.tuning": {
-    ru: "Включить оптимизацию сети через sysctl.",
-    en: "Enable network optimization via sysctl."
-  },
-  "services.api.port": {
-    ru: "Порт встроенного API-сервера SKeen (по умолчанию: 3000).",
-    en: "Port of the built-in SKeen API server (default: 3000)."
-  },
-  "services.api.secret": {
-    ru: "Секретный ключ для доступа к API SKeen.",
-    en: "Secret key for accessing the SKeen API."
-  },
-  "services.api.cors_origin": {
-    ru: "Разрешенные CORS-источники.",
-    en: "Allowed CORS origins."
-  },
-  "services.api.dashboard": {
-    ru: "Включить веб-панель управления.",
-    en: "Enable the web management dashboard."
-  },
-  "services.api.auto_start": {
-    ru: "Автозапуск API-сервера.",
-    en: "Auto-start the API server."
-  },
-  "services.proxy.enabled": {
-    ru: "Использовать локальный прокси (127.0.0.1) для команд update и sync.",
-    en: "Use local proxy (127.0.0.1) for update and sync commands."
-  },
-  "services.proxy.port": {
-    ru: "Порт локального прокси.",
-    en: "Local proxy port."
-  },
-  "services.proxy.user": {
-    ru: "Имя пользователя для подключения к прокси.",
-    en: "Username for proxy connection."
-  },
-  "services.proxy.pass": {
-    ru: "Пароль пользователя для подключения к прокси.",
-    en: "Password for proxy connection."
+    ru: "Включить оптимизацию сети через sysctl. Если выключено, настройки sysctl сбросятся после перезагрузки.",
+    en: "Enable network optimization via sysctl. If disabled, sysctl settings will reset after reboot."
   },
   "singbox.config.use_dir": {
-    ru: "Использовать папку в /opt/etc/skeen/config с конфигурациями sing-box вместо файла.",
-    en: "Use a folder in /opt/etc/skeen/config with sing-box configurations instead of a single file."
+    ru: "Использовать папка с конфигурациями вместо файла, путь: /opt/etc/skeen/config/",
+    en: "Use a folder with configurations instead of a file, path: /opt/etc/skeen/config/"
   },
   "singbox.config.url": {
-    ru: "URL-адрес для синхронизации конфигурации.",
-    en: "URL for configuration synchronization."
+    ru: "URL-адрес (http:// или https://), откуда будет синхронизироваться конфигурация командой `skeen sync` по умолчанию (необязательно).",
+    en: "URL (http:// or https://) from which the configuration will be synchronized by the `skeen sync` command by default (optional)."
   },
   "singbox.config.split": {
-    ru: "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
-    en: "The synchronized config will be split into separate files by key names if folder mode is used."
+    ru: "Синхронизируемый конфиг по ссылке (skeen sync) будет разбиваться на файлы по именам ключей верхнего уровня конфигурации Sing-box. Доступно только при использовании папки.",
+    en: "The synchronized config will be split into separate files by top-level key names of the Sing-box configuration. Available only when using a folder."
   },
   "singbox.api.url": {
-    ru: "URL к сервису sing-box API, необходимый для консольных команд skeen api",
-    en: "URL to the sing-box API service, required for skeen api console commands."
+    ru: "URL к сервису sing-box API, необходимый для консольных команд skeen api. Требуется sing-box версии 1.14.beta.15 и выше. Если не указан, будет http://127.0.0.1:9999",
+    en: "URL to the sing-box API service, required for skeen api console commands (requires sing-box version 1.14.beta.15 or higher). If not specified, defaults to http://127.0.0.1:9999"
   },
   "singbox.api.secret": {
-    ru: "Секретный ключ API sing-box.",
-    en: "Sing-box API secret key."
+    ru: "Секретный ключ API, укажите если задан в конфигурации sing-box.",
+    en: "API secret key, specify if set in the sing-box configuration."
   },
   "singbox.external.enabled": {
-    ru: "Использовать сторонний бинарный файл Sing-box.",
-    en: "Use an external Sing-box binary file."
+    ru: "Использовать сторонний бинарный файл Sing-box; его установка, обновление и удаление будут под вашим контролем.",
+    en: "Use an external Sing-box binary file; its installation, update and deletion will be under your control."
   },
   "singbox.external.path": {
-    ru: "Полный путь к стороннему файлу sing-box или его имя (если он доступен в PATH).",
-    en: "Full path to the external sing-box file or its name (if available in PATH)."
+    ru: "Полный путь к файлу или имя (по умолчанию: /opt/bin/sing-box), допускается и указание его имени если он находится в PATH.",
+    en: "Full path to the file or name (default: /opt/bin/sing-box), or just its name if located in PATH."
   },
   "singbox.external.config.use_dir": {
-    ru: "Использовать папку в /opt/etc/skeen/config_ext с конфигурациями sing-box вместо файла.",
-    en: "Use a folder in /opt/etc/skeen/config_ext with sing-box configurations instead of a file."
+    ru: "Аналогично конфигурации sing-box выше, будут использоваться его данные если ключи не прописаны.",
+    en: "Similar to the sing-box configuration above, its data will be used if keys are not specified."
   },
   "singbox.external.config.url": {
     ru: "URL конфигурации для стороннего Sing-box.",
     en: "Configuration URL for the external Sing-box."
   },
   "singbox.external.config.split": {
-    ru: "Синхронизируемый конфиг будет разбиваться на файлы по именам ключей если используется папка.",
-    en: "The synchronized config will be split into separate files by key names if folder mode is used."
+    ru: "Аналогично конфигурации sing-box выше, будут использоваться его данные если ключи не прописаны.",
+    en: "Similar to the sing-box configuration above, its data will be used if keys are not specified."
   },
   "singbox.external.api.url": {
-    ru: "URL к сервису sing-box API, необходимый для консольных команд skeen api",
-    en: "URL to the sing-box API service, required for skeen api console commands."
+    ru: "Параметры для обращения к sing-box API (необязательно), аналогично sing-box API настройкам выше.",
+    en: "Parameters for accessing the sing-box API (optional), similar to the sing-box API as described above."
   },
   "singbox.external.api.secret": {
     ru: "Секрет API стороннего sing-box.",
     en: "API secret for the external sing-box."
   },
+  "services.api.auto_start": {
+    ru: "Сервис API автоматически запускается после перезагрузки роутера.",
+    en: "The API service starts automatically after router reboot."
+  },
+  "services.api.port": {
+    ru: "Порт на котором будет запускаться сервис API, по умолчанию 3000.",
+    en: "Port on which the API service will run, default is 3000."
+  },
+  "services.api.secret": {
+    ru: "Секретный ключ авторизации (Header `X-API-Key`). Если пусто — авторизация отключена.",
+    en: "Authorization secret key (Header `X-API-Key`). If empty, authorization is disabled."
+  },
+  "services.api.cors_origin": {
+    ru: "Список адресов, которым разрешено делать запросы к API из браузера (* — разрешает доступ с любых доменов по умолчанию).",
+    en: "List of addresses allowed to make requests to the API from the browser (* allows access from any domains by default)."
+  },
+  "services.api.dashboard": {
+    ru: "Разрешает отдачу HTML-страницы Dashboard по маршруту `/`, иначе возвращает 404 Not Found.",
+    en: "Enables serving the Dashboard HTML page at `/`, otherwise returns 404 Not Found."
+  },
+  "services.proxy.enabled": {
+    ru: "Использовать локальный прокси (127.0.0.1) для команд update и sync.",
+    en: "Use a local proxy (127.0.0.1) for update and sync commands."
+  },
+  "services.proxy.port": {
+    ru: "Порт локального прокси (SOCKS5 или mixed).",
+    en: "Local proxy port (SOCKS5 or mixed)."
+  },
+  "services.proxy.user": {
+    ru: "Имя пользователя для подключения к прокси (не обязательно).",
+    en: "Username for proxy connection (optional)."
+  },
+  "services.proxy.pass": {
+    ru: "Пароль пользователя для подключения к прокси (обязательно если указан user).",
+    en: "Password for proxy connection (required if user is specified)."
+  },
   "firewall.intercept.dns": {
-    ru: "Перехватывать DNS-запросы в режимах TProxy/Hybrid.",
-    en: "Intercept DNS queries in TProxy/Hybrid modes."
+    ru: "Перехватывать DNS-запросы в режимах TProxy/Hybrid, будет игнорироваться, если настроен редирект DNS.",
+    en: "Intercept DNS queries in TProxy/Hybrid modes, will be ignored if redirect DNS is configured."
   },
   "firewall.intercept.fakeip.enabled": {
-    ru: "Включить FakeIP-пул адресов в перехват Redirect/TProxy. Для чистых IP-адресов, не имеющих доменов, настраивается в файле pure_cidr.list",
-    en: "Include FakeIP address pool in Redirect/TProxy interception. Pure IP addresses without domains are configured in pure_cidr.list"
+    ru: "Включить FakeIP-пул адресов в перехват Redirect/TProxy. Необходимо задействовать перехват или редирект DNS и настроить DNS-секцию в json конфигурации sing-box. Для чистых IP-адресов, не имеющих доменов, настраивается в файле pure_cidr.list.",
+    en: "Include FakeIP address pool in Redirect/TProxy interception. Requires enabling DNS interception or redirect DNS and setting up the DNS section in the sing-box json configuration. Pure IP addresses without domains are configured in pure_cidr.list."
   },
   "firewall.intercept.fakeip.clients": {
-    ru: "Клиенты (IP или CIDR) для FakeIP перехвата.",
-    en: "Clients (IP or CIDR) for FakeIP interception."
+    ru: "Клиенты (IP-адреса или CIDR), которым необходимо применить FakeIP перехват. Для стабильной работы необходимо назначить указанным постоянный IP-адрес в интерфейсе Keenetic/Netcraze — вкладка \"Списки клиентов\".",
+    en: "Clients (IP addresses or CIDR) to apply FakeIP interception to. For stable operation, you must assign a static IP address in the Keenetic/Netcraze interface — 'Client Lists' tab."
   },
   "firewall.exclude.port": {
-    ru: "Порты, исключенные из Redirect/TProxy.",
-    en: "Ports excluded from Redirect/TProxy interception."
+    ru: "Порты, исключенные из Redirect/TProxy (80 и 443 порты не добавятся, исключайте только необходимые служебные).",
+    en: "Ports excluded from Redirect/TProxy (ports 80 and 443 will not be added, exclude only necessary service ports)."
   },
   "firewall.exclude.ipv4_cidr": {
-    ru: "Исключенные подсети IPv4 или IP адреса.",
-    en: "Excluded IPv4 subnets or IP addresses."
+    ru: "Исключенные подсети IPv4 или IP-адреса из Redirect/TProxy.",
+    en: "Excluded IPv4 subnets or IP addresses from Redirect/TProxy."
   },
   "firewall.exclude.ipv6_cidr": {
-    ru: "Исключенные подсети IPv6 или IP адреса.",
-    en: "Excluded IPv6 subnets or IP addresses."
+    ru: "Исключенные подсети IPv6 или IP-адреса из Redirect/TProxy.",
+    en: "Excluded IPv6 subnets or IP addresses from Redirect/TProxy."
   },
   "firewall.redirect_dns.enabled": {
-    ru: "Включает редирект DNS-запросов.",
-    en: "Enables DNS query redirection."
+    ru: "Включает редирект DNS-запросов до системных правил.",
+    en: "Enables DNS query redirection before system rules."
   },
   "firewall.redirect_dns.to_port": {
-    ru: "Порт перенаправления DNS-запросов.",
-    en: "Port for redirecting DNS queries."
+    ru: "Порт, на который будут перенаправляться DNS-запросы.",
+    en: "Port to which DNS queries will be redirected."
   },
   "firewall.redirect_dns.use_policy": {
-    ru: "Использовать настроенную политику для редиректа DNS.",
-    en: "Use the configured policy for DNS redirection."
+    ru: "Настроенная политика сегмента будет использоваться для редиректа DNS.",
+    en: "Configured segment policy will be used for DNS redirection."
   },
   "firewall.proxy_router": {
-    ru: "Проксировать все сервисы роутера. Доступно в режимах redirect, tproxy и hybrid, исключения подсетей и порты исключения учитываются.",
-    en: "Proxy all router services. Available in redirect, tproxy, and hybrid modes; subnet and port exclusions are taken into account."
+    ru: "Проксировать все сервисы роутера. Доступно в режимах redirect, tproxy и hybrid; исключения подсетей и порты учитываются.",
+    en: "Proxy all router services. Available in redirect, tproxy and hybrid modes; subnet and port exclusions are taken into account."
   },
   "update.singbox.enabled": {
-    ru: "Включить проверку обновлений Sing-box (CLI).",
-    en: "Enable Sing-box update check (CLI)."
+    ru: "Включить проверку обновлений Sing-box (не работает для сторонних бинарников, только для CLI).",
+    en: "Enable Sing-box update check (does not work for external binaries, CLI only)."
   },
   "update.singbox.beta": {
     ru: "Включает проверку pre-release версий (CLI).",
