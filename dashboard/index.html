@@ -2730,23 +2730,25 @@ input[type="checkbox"].sk-checkbox:disabled {
         <div id="connList"></div>
         <hr class="hr-custom">
         <h3 id="formTitle" class="modal-h3-title" data-i18n="formTitleAdd">Добавить новое подключение</h3>
-        <input type="hidden" id="editIndex" value="-1">
-        <div class="form-group">
-          <label data-i18n="labelName">Имя роутера</label>
-          <input type="text" class="sk-input" id="connName" name="router-name" autocomplete="nickname" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
-        </div>
-        <div class="form-group">
-          <label data-i18n="labelUrl">URL сервера</label>
-          <input type="url" class="sk-input" id="connUrl" name="server-url" autocomplete="url" placeholder="http://192.168.1.1:3000">
-        </div>
-        <div class="form-group">
-          <label data-i18n="labelKey">Секрет</label>
-          <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="current-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
-        </div>
-        <div class="form-row">
-          <button type="button" onclick="saveConnection()" data-i18n="btnSaveConn">Сохранить</button>
-          <button type="button" class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
-        </div>
+        <form id="connectionForm" onsubmit="event.preventDefault(); saveConnection();">
+          <input type="hidden" id="editIndex" value="-1">
+          <div class="form-group">
+            <label data-i18n="labelName">Имя роутера</label>
+            <input type="text" class="sk-input" id="connName" name="router-name" autocomplete="nickname" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
+          </div>
+          <div class="form-group">
+            <label data-i18n="labelUrl">URL сервера</label>
+            <input type="url" class="sk-input" id="connUrl" name="server-url" autocomplete="username" placeholder="http://192.168.1.1:3000">
+          </div>
+          <div class="form-group">
+            <label data-i18n="labelKey">Секрет</label>
+            <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="current-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+          </div>
+          <div class="form-row" style="margin-top:39px">
+            <button type="submit" data-i18n="btnSaveConn">Сохранить</button>
+            <button type="button" class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
+          </div>
+        </form>
       </div>
 
       <!-- Misc Tab -->
@@ -4372,8 +4374,21 @@ function deleteConnection(index) {
 }
 
 function clearConnForm() {
+  const connUrl = document.getElementById('connUrl');
+  const hostname = window.location.hostname.toLowerCase();
+
+  const isLocal = /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(hostname);
+
+  const isKeenDomain = /\.(keenetic\.(net|com|pro|link)|netcraze\.(io|club|link|pro|ru))$/.test(hostname);
+
+  if (!connUrl.value.trim() && (isLocal || isKeenDomain)) {
+    connUrl.value = window.location.origin;
+  }else{
+    connUrl.value = ""
+  }
   document.getElementById('connName').value = '';
-  document.getElementById('connUrl').value = window.location.origin;
   document.getElementById('connKey').value = '';
   document.getElementById('editIndex').value = '-1';
   document.getElementById('formTitle').textContent = t('formTitleAdd');
@@ -4546,7 +4561,7 @@ function executeSwitchTab(tabId, btn, save) {
     ensureServicesSelectorInitialized();
     updateServiceFrameUrl(true);
   } else if (tabId === 'configsTab') {
-    if (editorState.loadedConnectionKey !== getConfigConnectionKey()) {
+    if (getBaseUrl() && editorState.loadedConnectionKey !== getConfigConnectionKey()) {
       loadFileList();
     }
   }
