@@ -13,6 +13,8 @@
    1. Theme Variables (Catppuccin Mocha & High-Contrast Light Theme)
    ========================================================================== */
 :root {
+  --font-sans: -apple-system, blinkmacsystemfont, "Segoe UI", Roboto, sans-serif;
+  --font-code: 'JetBrains Mono', monospace, ui-monospace;
   color-scheme: dark;
   --bg-color: #16161e;
   --card-bg: #1e1e2e;
@@ -86,7 +88,7 @@ body {
 body {
   min-height: 100vh;
   min-height: 100dvh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-family: var(--font-sans);
   font-size: 16px;
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -513,8 +515,6 @@ select:disabled:hover {
   border-color: var(--border-color) !important;
 }
 
-
-
 /* ==========================================================================
    5. Cards & Status Panels
    ========================================================================== */
@@ -721,7 +721,7 @@ label {
   padding-right: 36px;
   margin: 0;
   font-size: 0.82rem;
-  font-family: 'JetBrains Mono', monospace, ui-monospace;
+  font-family: var(--font-code);
   white-space: pre;
   word-break: normal;
 }
@@ -1164,7 +1164,7 @@ label {
   gap: 10px;
   overflow-y: auto;
   max-height: calc(90vh - 120px);
-  min-height: 380px;
+  min-height: 389px;
   padding: 3px;
 }
 
@@ -1192,7 +1192,6 @@ label {
   font-size: 0.88rem;
   font-weight: 500;
   color: var(--text-color);
-  min-width: 0;
 }
 
 .setting-label-group svg {
@@ -1204,20 +1203,24 @@ label {
 }
 
 .theme-segmented-control {
-  display: flex;
+  display: inline-flex;
   background-color: var(--modal-tab-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 3px;
   gap: 3px;
   flex-shrink: 0;
+  min-width: 110px;
+  max-width: 170px;
+  width: 140px;
+  justify-content: space-around;
 }
 
 .theme-segment-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  width: 32px;
+  width: 42px;
   height: 30px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -1370,7 +1373,7 @@ label {
   padding: 10px 4px;
   background-color: var(--line-num-bg);
   color: var(--text-muted);
-  font-family: 'JetBrains Mono', monospace, ui-monospace;
+  font-family: var(--font-code);
   font-size: 12px;
   line-height: 1.5;
   text-align: right;
@@ -1470,7 +1473,7 @@ label {
   grid-area: 1 / 1;
   margin: 0;
   padding: 10px;
-  font-family: 'JetBrains Mono', monospace, ui-monospace;
+  font-family: var(--font-code);
   font-size: 12px;
   line-height: var(--editor-line-height);
   white-space: pre;
@@ -1943,7 +1946,7 @@ body.preload * {
 
 .telemetry-val {
   font-weight: 600;
-  font-family: 'JetBrains Mono', monospace, ui-monospace;
+  font-family: var(--font-code);
 }
 
 
@@ -2160,8 +2163,7 @@ select.sk-select-source {
 
 .sk-select {
   position: relative;
-  display: block;
-  width: 100%;
+  display: inline-block;
   min-width: 0;
 }
 
@@ -2173,7 +2175,8 @@ select.sk-select-source {
 
 .sk-select.select-lang {
   height: 38px;
-  max-width: 140px;
+  width: 170px;
+  max-width: 170px;
 }
 
 .sk-select-trigger {
@@ -2269,7 +2272,7 @@ select.sk-select-source {
   border-radius: 5px;
 
   font-size: 0.85rem;
-  font-weight: 400;
+  font-weight: 500;
   text-align: left;
 
   cursor: pointer;
@@ -2293,7 +2296,6 @@ select.sk-select-source {
 
 .sk-select-option.selected {
   color: var(--accent-color);
-  font-weight: 600;
 }
 
 .sk-select-option.disabled {
@@ -2437,183 +2439,307 @@ input[type="checkbox"].sk-checkbox:disabled {
   cursor: not-allowed;
 }
 
+
+/* ==========================================================================
+   18. Theme Accent Color Selector Popup
+   ========================================================================== */
+.theme-picker-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 170px;
+  max-width: 170px;
+}
+
+.theme-picker-trigger {
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  min-width: 170px;
+  justify-content: space-between;
+  transition: var(--transition-fast);
+}
+
+.theme-picker-trigger:hover {
+  border-color: var(--border-focus);
+  opacity: 1;
+  transform: initial;
+}
+
+.theme-picker-trigger-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+}
+
+.theme-color-dot.dot-default {
+  background-color: var(--accent-color);
+  border: 1px solid var(--border-focus);
+}
+
+.theme-color-dot.dot-gradient {
+  background: conic-gradient(from 0deg, #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0000ff, #8000ff, #ff00ff, #ff0000);
+}
+
+.theme-color-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: -2px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  z-index: 1050;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.theme-color-dropdown-menu.open {
+  display: flex;
+}
+
+.theme-color-option {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: none;
+  outline: none;
+  padding: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-color-option:hover {
+  transform: scale(1.15);
+}
+
+.theme-color-option.active {
+  box-shadow: 0 0 0 2.5px var(--card-bg), 0 0 0 4px #ffffff;
+}
+
+.theme-color-option.color-picker-opt {
+  background: conic-gradient(from 0deg, #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0000ff, #8000ff, #ff00ff, #ff0000);
+  overflow: hidden;
+}
+
+.theme-color-option.color-picker-opt input[type="color"] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+}
+
 </style>
 </head>
 
 <body>
 
-  <div class="container">
-    <!-- Navbar -->
-    <div class="navbar">
-      <div class="nav-tabs">
-        <button type="button" class="tab-btn" onclick="switchTab('skeenTab', this)">
-          <span data-icon="skeen"></span>
-          <span class="tab-text" data-i18n="tabSKeen">SKeen</span>
-        </button>
-        <button type="button" class="tab-btn" onclick="switchTab('configsTab', this)">
-          <span data-icon="configs"></span>
-          <span class="tab-text" data-i18n="tabConfigs">Конфиги</span>
-        </button>
-        <button type="button" class="tab-btn" onclick="switchTab('servicesTab', this)">
-          <span data-icon="services"></span>
-          <span class="tab-text" data-i18n="tabServices">Сервисы</span>
-        </button>
-      </div>
-      <div class="nav-controls">
-        <!-- System Telemetry button -->
-        <button type="button" id="sysTelemetryBtn" class="icon-btn" onclick="openSystemTelemetryModal()" title="Системная телеметрия"
-          aria-label="System Telemetry">
-          <span data-icon="telemetry"></span>
-        </button>
-        <button type="button" class="icon-btn" onclick="openConnModal()" title="Настройки" data-i18n-title="modalTitle"
-          aria-label="Settings">
-          <span data-icon="settings"></span>
-        </button>
-      </div>
+<div class="container">
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="nav-tabs">
+      <button type="button" class="tab-btn" onclick="switchTab('skeenTab', this)">
+        <span data-icon="skeen"></span>
+        <span class="tab-text" data-i18n="tabSKeen">SKeen</span>
+      </button>
+      <button type="button" class="tab-btn" onclick="switchTab('configsTab', this)">
+        <span data-icon="configs"></span>
+        <span class="tab-text" data-i18n="tabConfigs">Конфиги</span>
+      </button>
+      <button type="button" class="tab-btn" onclick="switchTab('servicesTab', this)">
+        <span data-icon="services"></span>
+        <span class="tab-text" data-i18n="tabServices">Сервисы</span>
+      </button>
     </div>
+    <div class="nav-controls">
+      <!-- System Telemetry button -->
+      <button type="button" id="sysTelemetryBtn" class="icon-btn" onclick="openSystemTelemetryModal()" title="Системная телеметрия"
+        aria-label="System Telemetry">
+        <span data-icon="telemetry"></span>
+      </button>
+      <button type="button" class="icon-btn" onclick="openConnModal()" title="Настройки" data-i18n-title="modalTitle"
+        aria-label="Settings">
+        <span data-icon="settings"></span>
+      </button>
+    </div>
+  </div>
 
-    <!-- Tab 1: SKeen Management -->
-    <div id="skeenTab" class="tab-content active">
-      <div class="card flex-col-gap-10">
-        <div class="flex-row-between">
-          <h2 class="margin-0 border-none padding-0" data-i18n="skeenCardTitle">Управление SKeen</h2>
-          <div class="flex-row-center-6">
-            <span id="headerApiVersion" class="text-version">API v0.0.0</span>
-          </div>
-        </div>
-        <!-- Current Status Panel -->
-        <div class="status-badge-panel">
-          <div class="status-badge">
-            <div id="serviceDot" class="status-dot"></div>
-            <span id="serviceStatusText" data-i18n="statusChecking">Проверка состояния...</span>
-          </div>
-          <div class="text-version" id="serviceDetails"></div>
-        </div>
-
-        <!-- Dynamic Action Buttons -->
-        <div id="dynamicActions" class="action-buttons-group"></div>
-
-        <!-- Extra Service Commands -->
-        <div class="form-group form-group-extra">
-          <label for="extraParam" data-i18n="extraActionLabel">Дополнительные сервисные команды</label>
-          <div class="form-row flex-row-gap-8">
-            <select id="extraParam" class="flex-2" onchange="handleExtraParamChange()"></select>
-            <button type="button" class="secondary flex-1" onclick="executeExtraCommand()">
-              <span data-icon="play"></span>
-              <span data-i18n="btnExecute">Выполнить</span>
-            </button>
-          </div>
-          <div id="extraParamsContainer" class="flex-col-gap-8 mt-8" style="display: none;">
-          </div>
-        </div>
-
-        <!-- Terminal Output -->
-        <div class="form-group terminal-group">
-          <label data-i18n="outputLabel" class="label-margin-4">Вывод (stdout / stderr):</label>
-          <div class="terminal-container">
-            <button type="button" class="terminal-clear-btn" onclick="clearTerminalOutput()" title="Очистить"
-              data-i18n-title="btnClearOutput">
-              <span data-icon="trash"></span>
-            </button>
-            <pre id="cmdOutput" class="output-wrapper" data-i18n="waitingOutput">Ожидание выполнения команды...</pre>
-          </div>
+  <!-- Tab 1: SKeen Management -->
+  <div id="skeenTab" class="tab-content active">
+    <div class="card flex-col-gap-10">
+      <div class="flex-row-between">
+        <h2 class="margin-0 border-none padding-0" data-i18n="skeenCardTitle">Управление SKeen</h2>
+        <div class="flex-row-center-6">
+          <span id="headerApiVersion" class="text-version">API v0.0.0</span>
         </div>
       </div>
-    </div>
-
-    <!-- Tab 2: Configuration Editor -->
-    <div id="configsTab" class="tab-content">
-      <div class="card editor-card">
-        <div class="flex-row-between">
-          <h2 class="margin-0 border-none padding-0" data-i18n="jsonCardTitle">Конфигурация</h2>
-          <div class="flex-row-center-6">
-            <select id="configFileSelect" class="conn-select flex-1" onchange="handleFileSelectChange()">
-              <option value="" data-i18n="loadingList">Загрузка списка...</option>
-            </select>
-          </div>
+      <!-- Current Status Panel -->
+      <div class="status-badge-panel">
+        <div class="status-badge">
+          <div id="serviceDot" class="status-dot"></div>
+          <span id="serviceStatusText" data-i18n="statusChecking">Проверка состояния...</span>
         </div>
+        <div class="text-version" id="serviceDetails"></div>
+      </div>
 
-        <div class="form-group-editor" style="position: relative;">
-          <div id="pagePreloader" class="loaded">
-            <div class="preloader-spinner"></div>
-          </div>
-          <!-- Editor Mode Bar -->
-          <div id="editorModeBar" class="editor-mode-bar" style="display: none;">
-            <button type="button" class="mode-btn active" id="btnModeForm" onclick="switchEditorMode('form')">
-              <span data-i18n="modeForm">Форма</span>
-            </button>
-            <button type="button" class="mode-btn" id="btnModeText" onclick="switchEditorMode('text')"
-              data-i18n="modeText">
-              <span data-icon="configs"></span>
-              <span>JSON</span>
-            </button>
-          </div>
+      <!-- Dynamic Action Buttons -->
+      <div id="dynamicActions" class="action-buttons-group"></div>
 
-          <!-- Visual Form Container (Accordions) -->
-          <div id="formEditorContainer" style="display: none;"></div>
-
-          <!-- Text Editor Wrapper -->
-          <div id="editorWrapper" class="code-editor-wrapper">
-            <button id="foldAllBtn" class="fullscreen-icon-btn fold-all-btn" onclick="toggleAllJsonFolds()"
-              type="button" aria-label="Свернуть все блоки" title="Свернуть все блоки">
-              <span data-icon="foldAll" data-icon-id="foldAllSvg"></span>
-            </button>
-            <button type="button" id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран"
-              data-i18n-title="fullscreenTitle">
-              <span data-icon="fullscreen" data-icon-id="fullscreenSvg"></span>
-            </button>
-            <div id="lineNumbers" class="line-numbers">1</div>
-            <div class="editor-container">
-              <pre id="highlighting" aria-hidden="true"><code id="highlightingContent"></code></pre>
-              <div id="activeEditorLine" aria-hidden="true"></div>
-              <textarea id="jsonEditor" spellcheck="false" autocomplete="off" placeholder='Выберите файл...'
-                data-i18n-placeholder="jsonPlaceholder" oninput="handleEditorInput()" onscroll="syncScroll()"
-                onkeydown="handleEditorKeydown(event)" onkeyup="updateActiveEditorLine()"
-                onclick="updateActiveEditorLine()" onmouseup="updateActiveEditorLine()"
-                onselect="updateActiveEditorLine()" onbeforeinput="guardFoldPlaceholderEdit(event)"></textarea>
-            </div>
-          </div>
-          <div id="jsonStatus" class="status"></div>
+      <!-- Extra Service Commands -->
+      <div class="form-group form-group-extra">
+        <label for="extraParam" data-i18n="extraActionLabel">Дополнительные сервисные команды</label>
+        <div class="form-row flex-row-gap-8">
+          <select id="extraParam" class="flex-2" onchange="handleExtraParamChange()"></select>
+          <button type="button" class="secondary flex-1" onclick="executeExtraCommand()">
+            <span data-icon="play"></span>
+            <span data-i18n="btnExecute">Выполнить</span>
+          </button>
         </div>
-
-        <div class="form-row flex-shrink-0">
-          <button type="button" class="secondary" onclick="loadConfigFile()" title="Обновить" data-i18n-title="btnUpdateJson">
-            <span data-icon="refresh"></span>
-            <span data-i18n="btnUpdateJson">Обновить</span>
-          </button>
-          <button type="button" id="formatBtn" class="secondary" onclick="formatJsonEditor()">
-            <span data-icon="lines"></span>
-            <span data-i18n="btnFormat">Формат</span>
-          </button>
-          <button type="button" id="saveBtn" class="success-btn" onclick="saveConfigFile()">
-            <span data-icon="save"></span>
-            <span data-i18n="btnSaveJson">Сохранить</span>
-          </button>
+        <div id="extraParamsContainer" class="flex-col-gap-8 mt-8" style="display: none;">
         </div>
       </div>
-    </div>
 
-    <!-- Tab 3: Services Content -->
-    <div id="servicesTab" class="tab-content">
-      <div class="card" id="serviceCard" style="padding: 0px; overflow: hidden; position: relative;">
-        <div id="serviceDrawerContainer">
-          <div id="serviceDropdownPanel">
-            <select id="serviceSelect" class="conn-select" onchange="handleServiceSelectChange()" title="Выбрать сервис" data-i18n-title="selectServiceTitle"></select>
-            <button type="button" id="serviceFullscreenBtn" class="icon-btn-sm secondary" onclick="toggleServiceFullscreen()" title="На весь экран" data-i18n-title="fullscreenTitle" aria-label="Fullscreen">
-              <span data-icon="fullscreen" data-icon-id="serviceFullscreenSvg"></span>
-            </button>
-          </div>
-          <button type="button" id="serviceDrawerToggleBtn" onclick="toggleServiceDrawer()" title="Панель управления" data-i18n-title="serviceToggleTitle"  aria-label="Toggle Services Panel">
-            <span data-icon="chevronDown" data-icon-id="serviceDrawerArrowSvg"></span>
+      <!-- Terminal Output -->
+      <div class="form-group terminal-group">
+        <label data-i18n="outputLabel" class="label-margin-4">Вывод (stdout / stderr):</label>
+        <div class="terminal-container">
+          <button type="button" class="terminal-clear-btn" onclick="clearTerminalOutput()" title="Очистить"
+            data-i18n-title="btnClearOutput">
+            <span data-icon="trash"></span>
           </button>
-        </div>
-        <div id="serviceViewContainer" style="width: 100%; height: 100%; border-radius: 10px; overflow: hidden; background: var(--card-bg); display: flex; flex-direction: column;">
-          <iframe id="serviceFrame" src="" allow="local-network; loopback-network" style="width: 100%; height: 100%; border: none; background: var(--card-bg);" title="Dashboard"></iframe>
-          <div id="helpContainer" style="display: none; width: 100%; height: 100%; overflow-y: auto; padding: 20px;"></div>
+          <pre id="cmdOutput" class="output-wrapper" data-i18n="waitingOutput">Ожидание выполнения команды...</pre>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Tab 2: Configuration Editor -->
+  <div id="configsTab" class="tab-content">
+    <div class="card editor-card">
+      <div class="flex-row-between">
+        <h2 class="border-none padding-0" style="margin-bottom: auto;" data-i18n="jsonCardTitle">Конфигурация</h2>
+        <div class="flex-row-center-6">
+          <select id="configFileSelect" class="conn-select flex-1" onchange="handleFileSelectChange()">
+            <option value="" data-i18n="loadingList">Загрузка списка...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group-editor" style="position: relative;">
+        <div id="pagePreloader" class="loaded">
+          <div class="preloader-spinner"></div>
+        </div>
+        <!-- Editor Mode Bar -->
+        <div id="editorModeBar" class="editor-mode-bar" style="display: none;">
+          <button type="button" class="mode-btn active" id="btnModeForm" onclick="switchEditorMode('form')">
+            <span data-i18n="modeForm">Форма</span>
+          </button>
+          <button type="button" class="mode-btn" id="btnModeText" onclick="switchEditorMode('text')"
+            data-i18n="modeText">
+            <span data-icon="configs"></span>
+            <span>JSON</span>
+          </button>
+        </div>
+
+        <!-- Visual Form Container (Accordions) -->
+        <div id="formEditorContainer" style="display: none;"></div>
+
+        <!-- Text Editor Wrapper -->
+        <div id="editorWrapper" class="code-editor-wrapper">
+          <button id="foldAllBtn" class="fullscreen-icon-btn fold-all-btn" onclick="toggleAllJsonFolds()"
+            type="button" aria-label="Свернуть все блоки" title="Свернуть все блоки">
+            <span data-icon="foldAll" data-icon-id="foldAllSvg"></span>
+          </button>
+          <button type="button" id="fullscreenBtn" class="fullscreen-icon-btn" onclick="toggleFullscreen()" title="На весь экран"
+            data-i18n-title="fullscreenTitle">
+            <span data-icon="fullscreen" data-icon-id="fullscreenSvg"></span>
+          </button>
+          <div id="lineNumbers" class="line-numbers">1</div>
+          <div class="editor-container">
+            <pre id="highlighting" aria-hidden="true"><code id="highlightingContent"></code></pre>
+            <div id="activeEditorLine" aria-hidden="true"></div>
+            <textarea id="jsonEditor" spellcheck="false" autocomplete="off" placeholder='Выберите файл...'
+              data-i18n-placeholder="jsonPlaceholder" oninput="handleEditorInput()" onscroll="syncScroll()"
+              onkeydown="handleEditorKeydown(event)" onkeyup="updateActiveEditorLine()"
+              onclick="updateActiveEditorLine()" onmouseup="updateActiveEditorLine()"
+              onselect="updateActiveEditorLine()" onbeforeinput="guardFoldPlaceholderEdit(event)"></textarea>
+          </div>
+        </div>
+        <div id="jsonStatus" class="status"></div>
+      </div>
+
+      <div class="form-row flex-shrink-0">
+        <button type="button" class="secondary" onclick="loadConfigFile()" title="Обновить" data-i18n-title="btnUpdateJson">
+          <span data-icon="refresh"></span>
+          <span data-i18n="btnUpdateJson">Обновить</span>
+        </button>
+        <button type="button" id="formatBtn" class="secondary" onclick="formatJsonEditor()">
+          <span data-icon="lines"></span>
+          <span data-i18n="btnFormat">Формат</span>
+        </button>
+        <button type="button" id="saveBtn" class="success-btn" onclick="saveConfigFile()">
+          <span data-icon="save"></span>
+          <span data-i18n="btnSaveJson">Сохранить</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Services Content -->
+  <div id="servicesTab" class="tab-content">
+    <div class="card" id="serviceCard" style="padding: 0px; overflow: hidden; position: relative;">
+      <div id="serviceDrawerContainer">
+        <div id="serviceDropdownPanel">
+          <select id="serviceSelect" class="conn-select" onchange="handleServiceSelectChange()" title="Выбрать сервис" data-i18n-title="selectServiceTitle"></select>
+          <button type="button" id="serviceFullscreenBtn" class="icon-btn-sm secondary" onclick="toggleServiceFullscreen()" title="На весь экран" data-i18n-title="fullscreenTitle" aria-label="Fullscreen">
+            <span data-icon="fullscreen" data-icon-id="serviceFullscreenSvg"></span>
+          </button>
+        </div>
+        <button type="button" id="serviceDrawerToggleBtn" onclick="toggleServiceDrawer()" title="Панель управления" data-i18n-title="serviceToggleTitle"  aria-label="Toggle Services Panel">
+          <span data-icon="chevronDown" data-icon-id="serviceDrawerArrowSvg"></span>
+        </button>
+      </div>
+      <div id="serviceViewContainer" style="width: 100%; height: 100%; border-radius: 10px; overflow: hidden; background: var(--card-bg); display: flex; flex-direction: column;">
+        <iframe id="serviceFrame" src="" allow="local-network; loopback-network" style="width: 100%; height: 100%; border: none; background: var(--card-bg);" title="Dashboard"></iframe>
+        <div id="helpContainer" style="display: none; width: 100%; height: 100%; overflow-y: auto; padding: clamp(10px, 2vh, 20px);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Selector Wrapper-->
+  <div id="customSelectors"></div>
 
   <!-- System Telemetry Modal -->
   <div id="sysTelemetryModal" class="modal">
@@ -2742,9 +2868,9 @@ input[type="checkbox"].sk-checkbox:disabled {
           </div>
           <div class="form-group">
             <label data-i18n="labelKey">Секрет</label>
-            <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="current-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+            <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="new-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
           </div>
-          <div class="form-row" style="margin-top:39px">
+          <div class="form-row" style="margin-top:23px">
             <button type="submit" data-i18n="btnSaveConn">Сохранить</button>
             <button type="button" class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
           </div>
@@ -2773,7 +2899,22 @@ input[type="checkbox"].sk-checkbox:disabled {
             </button>
           </div>
         </div>
-
+        <div class="setting-item-row">
+          <div class="setting-label-group">
+            <span data-icon="palette"></span>
+            <span data-i18n="labelThemeColor">Тема</span>
+          </div>
+          <div class="theme-picker-wrapper">
+            <button type="button" class="theme-picker-trigger" id="themePickerTrigger" onclick="toggleThemeColorDropdown(event)">
+              <div class="theme-picker-trigger-content">
+                <span class="theme-color-dot" id="themeTriggerDot"></span>
+                <span id="themeTriggerLabel" data-i18n="themeDefault">По умолчанию</span>
+              </div>
+              <span data-icon="chevronDown"></span>
+            </button>
+            <div class="theme-color-dropdown-menu" id="themeColorDropdown"></div>
+          </div>
+        </div>
         <div class="setting-item-row">
           <div class="setting-label-group">
             <span data-icon="globe"></span>
@@ -2848,10 +2989,9 @@ input[type="checkbox"].sk-checkbox:disabled {
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-
-
+<script>
 /* ==========================================================================
    Standardized SVG Icons Registry & Renderer (Lucide / Tabler style)
    ========================================================================== */
@@ -2866,6 +3006,7 @@ const DEFAULT_ICON_CONFIG = {
 };
 
 const ICON_REGISTRY = {
+  palette: '<path d="M12 21a9 9 0 1 1 0-18c4.97 0 9 3.58 9 8 0 1.5-1.07 2.5-2.25 2.5-.58 0-1.12-.23-1.5-.62-.35-.36-.85-.58-1.38-.58-1.04 0-1.87.83-1.87 1.87 0 .5.2.97.54 1.32.38.39.61.92.61 1.51 0 2.21-1.79 4-4 4z"></path><circle cx="7.5" cy="10.5" r=".75" fill="currentColor"></circle><circle cx="12" cy="7.5" r=".75" fill="currentColor"></circle><circle cx="16.5" cy="10.5" r=".75" fill="currentColor"></circle>',
   skeen: '<path d="M18 7c0-2.21-1.79-4-4-4H9a4 4 0 0 0-4 4v1c0 2.21 1.79 4 4 4h6c2.21 0 4 1.79 4 4v1c0 2.21-1.79 4-4 4H9c-2.21 0-4-1.79-4-4"></path>',
   configs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path>',
   services: '<rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><path d="M6 6h.01"></path><path d="M6 18h.01"></path>',
@@ -2954,6 +3095,17 @@ const translations = {
   modalTabConnections: { ru: "Подключения", en: "Connections" },
   modalTabMisc: { ru: "Прочее", en: "Misc" },
   labelThemeAppearance: { ru: "Оформление", en: "Appearance" },
+  labelThemeColor: { ru: "Тема", en: "Theme" },
+  themeDefault: { ru: "По умолчанию", en: "Default" },
+  themeColorBlue: { ru: "Синий", en: "Blue" },
+  themeColorPurple: { ru: "Фиолетовый", en: "Purple" },
+  themeColorPink: { ru: "Розовый", en: "Pink" },
+  themeColorRed: { ru: "Красный", en: "Red" },
+  themeColorOrange: { ru: "Оранжевый", en: "Orange" },
+  themeColorYellow: { ru: "Желтый", en: "Yellow" },
+  themeColorGreen: { ru: "Зеленый", en: "Green" },
+  themeColorGray: { ru: "Серый", en: "Gray" },
+  themeColorPicker: { ru: "Выбор цвета", en: "Color picker" },
   labelLanguage: { ru: "Язык", en: "Language" },
   langAuto: { ru: "Автоматически", en: "Automatic" },
   formTitleAdd: { ru: "Добавить новое подключение", en: "Add new connection" },
@@ -3120,7 +3272,7 @@ const translations = {
 
 const helpDict = {
   ru: {
-    title: "💡 Справка по сервисам",
+    title: "Справка по сервисам",
     selectHint: "Выбор нужного сервиса для отображения во фрейме осуществляется через <strong>раскрывающийся список (селектор) вверху по центру</strong> панели управления. Также вам доступна кнопка увеличения интерфейса на весь экран.",
     localStorageNote: "Обратите внимание: ваш выбор сервиса и все персональные настройки сохраняются локально в текущем браузере (через <code>localStorage</code>).",
     tableTitle: "Полный список сервисов",
@@ -3153,7 +3305,7 @@ const helpDict = {
     cliFooter: "Где <code>myapi</code> — это имя вашего приложения из раздела KeenDNS/CrazeDNS."
   },
   en: {
-    title: "💡 Services Help",
+    title: "Services Help",
     selectHint: "You can select the desired service to display in the frame via the <strong>drop-down selector at the top center</strong> of the control panel. You also have a fullscreen interface button available.",
     localStorageNote: "Please note: your service selection and all personal settings are stored locally in your current browser (via <code>localStorage</code>).",
     tableTitle: "Full list of services",
@@ -3639,7 +3791,7 @@ function setupCustomSelects(root = document) {
     select.tabIndex = -1;
 
     select.insertAdjacentElement('afterend', wrapper);
-    document.body.appendChild(menu);
+    document.getElementById('customSelectors').appendChild(menu);
 
     // Prevent service menu clicks from closing the service drawer.
     if (select.id === 'serviceSelect') {
@@ -4129,13 +4281,18 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   const savedTheme = storageGet('keen_theme_mode') || 'auto';
-  applyTheme(['auto', 'light', 'dark'].includes(savedTheme) ? savedTheme : 'auto');
+  const savedAccent = storageGet('keen_theme_accent_color') || 'default';
   const savedLanguage = storageGet('keen_lang_setting') || 'auto';
   const languageSetting = ['auto', 'ru', 'en'].includes(savedLanguage) ? savedLanguage : 'auto';
+
   languageState.currentLang = resolveLanguage(languageSetting);
   document.getElementById('langSelect').value = languageSetting;
 
   applyLanguage();
+  applyTheme(['auto', 'light', 'dark'].includes(savedTheme) ? savedTheme : 'auto');
+  applyThemeAccent(savedAccent);
+  renderThemeDropdown(savedAccent);
+
   initConnections();
   if (appState.connectionStorageWarning) {
     showAlertModal(t('alertCorruptConnections'));
@@ -5584,6 +5741,162 @@ function setThemeMode(mode) {
   applyTheme(mode);
 }
 
+/* ==========================================================================
+   Accent Color Theme Logic
+   ========================================================================== */
+const THEME_PRESET_COLORS = {
+  'default': { hex: '#ffffff', nameKey: 'themeDefault' },
+  '#3b82f6': { hex: '#3b82f6', nameKey: 'themeColorBlue' },
+  '#a855f7': { hex: '#a855f7', nameKey: 'themeColorPurple' },
+  '#ec4899': { hex: '#ec4899', nameKey: 'themeColorPink' },
+  '#ef4444': { hex: '#ef4444', nameKey: 'themeColorRed' },
+  '#f97316': { hex: '#f97316', nameKey: 'themeColorOrange' },
+  '#eab308': { hex: '#eab308', nameKey: 'themeColorYellow' },
+  '#22c55e': { hex: '#22c55e', nameKey: 'themeColorGreen' },
+  '#9ca3af': { hex: '#9ca3af', nameKey: 'themeColorGray' }
+};
+
+function renderThemeDropdown(currentAccent = 'default') {
+  const container = document.getElementById('themeColorDropdown');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  Object.entries(THEME_PRESET_COLORS).forEach(([key, preset]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+
+    const isActive = (key === 'default' && (!currentAccent || currentAccent === 'default')) || (currentAccent === key);
+
+    btn.className = `theme-color-option ${isActive ? 'active' : ''}`;
+
+    if (key === 'default') {
+      btn.style.backgroundColor = '#5d8edc';
+      btn.style.border = '1px solid var(--border-focus)';
+    } else {
+      btn.style.backgroundColor = preset.hex;
+    }
+
+    btn.setAttribute('onclick', `setThemeAccent('${key}', this)`);
+
+    const translatedName = typeof t === 'function' ? t(preset.nameKey) : preset.nameKey;
+    btn.setAttribute('title', translatedName);
+    btn.setAttribute('data-i18n-title', preset.nameKey);
+
+    container.appendChild(btn);
+  });
+
+  const isCustomActive = currentAccent && currentAccent !== 'default' && !THEME_PRESET_COLORS[currentAccent];
+
+  const customOpt = document.createElement('button');
+  customOpt.type = 'button';
+  customOpt.className = `theme-color-option color-picker-opt ${isCustomActive ? 'active' : ''}`;
+  customOpt.id = 'customColorPickerOpt';
+  customOpt.setAttribute('data-i18n-title', 'themeColorPicker');
+  if (typeof t === 'function') {
+    customOpt.title = t('themeColorPicker');
+  }
+
+  const colorInput = document.createElement('input');
+  colorInput.type = 'color';
+  colorInput.id = 'themeCustomColorInput';
+  if (isCustomActive) {
+    colorInput.value = currentAccent;
+  }
+
+  colorInput.setAttribute('onchange', "setThemeAccent(this.value, document.getElementById('customColorPickerOpt'))");
+  colorInput.setAttribute('onclick', 'event.stopPropagation()');
+
+  customOpt.appendChild(colorInput);
+  container.appendChild(customOpt);
+}
+
+function hexToRgba(hex, alpha) {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const num = parseInt(c, 16);
+  return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+}
+
+function applyThemeAccent(color) {
+  const root = document.documentElement;
+  const dot = document.getElementById('themeTriggerDot');
+  const label = document.getElementById('themeTriggerLabel');
+
+  const preset = THEME_PRESET_COLORS[color];
+
+  if (!color || color === 'default') {
+    root.style.removeProperty('--accent-color');
+    root.style.removeProperty('--accent-glow');
+    root.style.removeProperty('--active-line-bg');
+    if (dot) {
+      dot.className = 'theme-color-dot dot-default';
+      dot.style.backgroundColor = '';
+    }
+    if (label) {
+      label.setAttribute('data-i18n', 'themeDefault');
+      label.textContent = t('themeDefault');
+    }
+  } else {
+    const hex = preset ? preset.hex : color;
+
+    root.style.setProperty('--accent-color', hex);
+    root.style.setProperty('--accent-glow', hexToRgba(hex, 0.2));
+    root.style.setProperty('--active-line-bg', hexToRgba(hex, 0.1));
+
+    if (dot) {
+      dot.className = 'theme-color-dot';
+      dot.style.backgroundColor = hex;
+    }
+
+    if (label) {
+      if (preset) {
+        label.setAttribute('data-i18n', preset.nameKey);
+        label.textContent = t(preset.nameKey);
+      } else {
+        label.removeAttribute('data-i18n');
+        label.textContent = color.toUpperCase();
+      }
+    }
+  }
+
+  const opts = document.querySelectorAll('#themeColorDropdown .theme-color-option');
+  opts.forEach(opt => opt.classList.remove('active'));
+
+  if (!color || color === 'default') {
+    opts[0]?.classList.add('active');
+  } else if (preset) {
+    const presetBtn = [...opts].find(opt => opt.getAttribute('onclick')?.includes(color));
+    if (presetBtn) presetBtn.classList.add('active');
+  } else {
+    document.getElementById('customColorPickerOpt')?.classList.add('active');
+  }
+}
+
+function setThemeAccent(color, element) {
+  storageSet('keen_theme_accent_color', color);
+  applyThemeAccent(color);
+  closeThemeColorDropdown();
+  renderThemeDropdown(color);
+}
+
+function toggleThemeColorDropdown(event) {
+  if (event) event.stopPropagation();
+  const dropdown = document.getElementById('themeColorDropdown');
+  if (dropdown) dropdown.classList.toggle('open');
+}
+
+function closeThemeColorDropdown() {
+  const dropdown = document.getElementById('themeColorDropdown');
+  if (dropdown) dropdown.classList.remove('open');
+}
+
+document.addEventListener('click', (e) => {
+  const wrapper = e.target.closest('.theme-picker-wrapper');
+  if (!wrapper) closeThemeColorDropdown();
+});
+
+
 const colorSchemeQuery = window.matchMedia?.('(prefers-color-scheme: light)');
 const handleSystemThemeChange = () => {
   if ((storageGet('keen_theme_mode') || 'auto') === 'auto') applyTheme('auto');
@@ -6686,7 +6999,7 @@ function handleEditorKeydown(e) {
   }
 }
 
-  </script>
+</script>
 </body>
 
 </html>
