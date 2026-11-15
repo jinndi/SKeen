@@ -1007,28 +1007,6 @@ label {
   max-height: 31px;
 }
 
-.form-setting-input input[type="text"],
-.form-setting-input input[type="number"],
-.form-setting-input select {
-  width: 100%;
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  outline: none;
-  transition: var(--transition-fast);
-  min-width: 0;
-}
-
-.form-setting-input input[type="text"]:focus,
-.form-setting-input input[type="number"]:focus,
-.form-setting-input select:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px var(--accent-glow);
-}
-
 .help-btn {
   background-color: var(--card-hover);
   color: var(--text-muted);
@@ -1776,9 +1754,9 @@ label {
 }
 
 .setting-label-text {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 
@@ -2189,7 +2167,7 @@ select.sk-select-source {
 }
 
 .sk-select.select-lang {
-  height: 34px;
+  height: 38px;
   max-width: 140px;
 }
 
@@ -2323,7 +2301,138 @@ select.sk-select-source {
   color: var(--text-muted);
 }
 
-  </style>
+
+/* ==========================================================================
+   16. Custom Inputs
+   ========================================================================== */
+input[type="text"].sk-input,
+input[type="number"].sk-input,
+input[type="url"].sk-input,
+input[type="password"].sk-input,
+.sk-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.88rem;
+  width: 100%;
+  transition: var(--transition-fast);
+  outline: none;
+  cursor: text;
+  min-width: 0;
+}
+
+input[type="text"].sk-input:hover,
+input[type="number"].sk-input:hover,
+input[type="url"].sk-input:hover,
+input[type="password"].sk-input:hover,
+.sk-input:hover {
+  border-color: var(--border-focus);
+}
+
+input[type="text"].sk-input:focus,
+input[type="number"].sk-input:focus,
+input[type="url"].sk-input:focus,
+input[type="password"].sk-input:focus,
+.sk-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+input[type="text"].sk-input.invalid-input,
+input[type="number"].sk-input.invalid-input,
+input[type="url"].sk-input.invalid-input,
+input[type="password"].sk-input.invalid-input,
+.sk-input.invalid-input {
+  border-color: var(--danger-color) !important;
+  box-shadow: 0 0 0 2px rgba(243, 139, 168, 0.3) !important;
+  background-color: rgba(243, 139, 168, 0.05) !important;
+}
+
+
+/* ==========================================================================
+   17. Custom Switch Checkboxes
+   ========================================================================== */
+.sk-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 10px;
+}
+
+.sk-switch input[type="checkbox"],
+input[type="checkbox"].sk-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 40px;
+  height: 22px;
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 11px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  outline: none;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.sk-switch input[type="checkbox"]::after,
+input[type="checkbox"].sk-checkbox::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: var(--text-muted);
+  border-radius: 50%;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease;
+}
+
+.sk-switch input[type="checkbox"]:hover,
+input[type="checkbox"].sk-checkbox:hover {
+  border-color: var(--border-focus);
+}
+
+.sk-switch input[type="checkbox"]:hover::after,
+input[type="checkbox"].sk-checkbox:hover::after {
+  background-color: var(--text-color);
+}
+
+.sk-switch input[type="checkbox"]:checked,
+input[type="checkbox"].sk-checkbox:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.sk-switch input[type="checkbox"]:checked::after,
+input[type="checkbox"].sk-checkbox:checked::after {
+  transform: translateX(20px);
+  background-color: #ffffff;
+  top: 1px;
+}
+
+.sk-switch input[type="checkbox"]:focus-visible,
+input[type="checkbox"].sk-checkbox:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.sk-switch input[type="checkbox"]:disabled,
+input[type="checkbox"].sk-checkbox:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+</style>
 </head>
 
 <body>
@@ -2619,15 +2728,15 @@ select.sk-select-source {
         <input type="hidden" id="editIndex" value="-1">
         <div class="form-group">
           <label data-i18n="labelName">Имя роутера</label>
-          <input type="text" id="connName" name="router-name" autocomplete="nickname" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
+          <input type="text" class="sk-input" id="connName" name="router-name" autocomplete="nickname" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
         </div>
         <div class="form-group">
           <label data-i18n="labelUrl">URL сервера</label>
-          <input type="url" id="connUrl" name="server-url" autocomplete="url" placeholder="http://192.168.1.1:3000">
+          <input type="url" class="sk-input" id="connUrl" name="server-url" autocomplete="url" placeholder="http://192.168.1.1:3000">
         </div>
         <div class="form-group">
           <label data-i18n="labelKey">Секрет</label>
-          <input type="password" id="connKey" name="server-secret" autocomplete="current-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+          <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="current-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
         </div>
         <div class="form-row">
           <button type="button" onclick="saveConnection()" data-i18n="btnSaveConn">Сохранить</button>
@@ -2697,7 +2806,7 @@ select.sk-select-source {
       <div id="arrayModalItemsList" class="array-items-list">
       </div>
       <div class="form-row flex-row-gap-8">
-        <input type="text" id="arrayModalNewItemInput" data-i18n-placeholder="arrayPlaceholder"
+        <input type="text" class="sk-input" id="arrayModalNewItemInput" data-i18n-placeholder="arrayPlaceholder"
           placeholder="Новый элемент..." class="flex-1"
           onkeydown="if(event.key==='Enter'){addArrayModalItem();event.preventDefault();}">
         <button type="button" onclick="addArrayModalItem()" class="secondary flex-shrink-0"
@@ -5075,15 +5184,15 @@ function safeFormValue(value) {
 function renderGeneralAccordion(data) {
   const generalSections = [
     renderSection(t('secAutoStart'), [
-      renderSettingRow(t('enabledLbl'), 'auto_start.enabled', `<input type="checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()">`)
+      renderSettingRow(t('enabledLbl'), 'auto_start.enabled', `<input type="checkbox" class="sk-checkbox" id="f_auto_start_enabled" ${data.auto_start?.enabled ? 'checked' : ''} onchange="syncFormToText()">`)
     ].join('')),
     renderSection(t('secPolicy'), [
-      renderSettingRow(t('enabledLbl'), 'policy.enabled', `<input type="checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secSegment'), 'policy.segment', `<input type="text" id="f_policy_segment" value="${safeFormValue(data.policy?.segment)}" oninput="validateField(this, 'segment'); syncFormToText()">`)
+      renderSettingRow(t('enabledLbl'), 'policy.enabled', `<input type="checkbox" class="sk-checkbox" id="f_policy_enabled" ${data.policy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secSegment'), 'policy.segment', `<input type="text" class="sk-input" id="f_policy_segment" value="${safeFormValue(data.policy?.segment)}" oninput="validateField(this, 'segment'); syncFormToText()">`)
     ].join('')),
     renderSection(t('secNetwork'), [
-      renderSettingRow(t('secIpv6'), 'network.ipv6', `<input type="checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secTuning'), 'network.tuning', `<input type="checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()">`)
+      renderSettingRow(t('secIpv6'), 'network.ipv6', `<input type="checkbox" class="sk-checkbox" id="f_network_ipv6" ${data.network?.ipv6 ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secTuning'), 'network.tuning', `<input type="checkbox" class="sk-checkbox" id="f_network_tuning" ${data.network?.tuning ? 'checked' : ''} onchange="syncFormToText()">`)
     ].join(''))
   ].join('');
   const icon = `${renderIcon("lightning").outerHTML}`;
@@ -5093,20 +5202,20 @@ function renderGeneralAccordion(data) {
 function renderSingboxAccordion(data) {
   const singboxSections = [
     renderSection(t('secSingbox'), [
-      renderSettingRow(t('secUseDir'), 'singbox.config.use_dir', `<input type="checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secConfigUrl'), 'singbox.config.url', `<input type="text" id="f_singbox_config_url" value="${safeFormValue(data.singbox?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
-      renderSettingRow(t('secSplit'), 'singbox.config.split', `<input type="checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secApiUrl'), 'singbox.api.url', `<input type="text" id="f_singbox_api_url" value="${safeFormValue(data.singbox?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
-      renderSettingRow(t('secApiSecret'), 'singbox.api.secret', `<input type="text" id="f_singbox_api_secret" value="${safeFormValue(data.singbox?.api?.secret)}" oninput="syncFormToText()">`)
+      renderSettingRow(t('secUseDir'), 'singbox.config.use_dir', `<input type="checkbox" class="sk-checkbox" id="f_singbox_config_use_dir" ${data.singbox?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secConfigUrl'), 'singbox.config.url', `<input type="text" class="sk-input" id="f_singbox_config_url" value="${safeFormValue(data.singbox?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+      renderSettingRow(t('secSplit'), 'singbox.config.split', `<input type="checkbox" class="sk-checkbox" id="f_singbox_config_split" ${data.singbox?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secApiUrl'), 'singbox.api.url', `<input type="text" class="sk-input" id="f_singbox_api_url" value="${safeFormValue(data.singbox?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+      renderSettingRow(t('secApiSecret'), 'singbox.api.secret', `<input type="text" class="sk-input" id="f_singbox_api_secret" value="${safeFormValue(data.singbox?.api?.secret)}" oninput="syncFormToText()">`)
     ].join('')),
     renderSection(t('secExtSingbox'), [
-      renderSettingRow(t('enabledLbl'), 'singbox.external.enabled', `<input type="checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" id="f_singbox_ext_path" value="${safeFormValue(data.singbox?.external?.path)}" oninput="syncFormToText()">`),
-      renderSettingRow(t('secUseDir'), 'singbox.external.config.use_dir', `<input type="checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" id="f_singbox_ext_cfg_url" value="${safeFormValue(data.singbox?.external?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
-      renderSettingRow(t('secSplit'), 'singbox.external.config.split', `<input type="checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secApiUrl'), 'singbox.external.api.url', `<input type="text" id="f_singbox_ext_api_url" value="${safeFormValue(data.singbox?.external?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
-      renderSettingRow(t('secApiSecret'), 'singbox.external.api.secret', `<input type="text" id="f_singbox_ext_api_secret" value="${safeFormValue(data.singbox?.external?.api?.secret)}" oninput="syncFormToText()">`)
+      renderSettingRow(t('enabledLbl'), 'singbox.external.enabled', `<input type="checkbox" class="sk-checkbox" id="f_singbox_ext_enabled" ${data.singbox?.external?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secExtPath'), 'singbox.external.path', `<input type="text" class="sk-input" id="f_singbox_ext_path" value="${safeFormValue(data.singbox?.external?.path)}" oninput="syncFormToText()">`),
+      renderSettingRow(t('secUseDir'), 'singbox.external.config.use_dir', `<input type="checkbox" class="sk-checkbox" id="f_singbox_ext_cfg_use_dir" ${data.singbox?.external?.config?.use_dir ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secConfigUrl'), 'singbox.external.config.url', `<input type="text" class="sk-input" id="f_singbox_ext_cfg_url" value="${safeFormValue(data.singbox?.external?.config?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+      renderSettingRow(t('secSplit'), 'singbox.external.config.split', `<input type="checkbox" class="sk-checkbox" id="f_singbox_ext_cfg_split" ${data.singbox?.external?.config?.split ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secApiUrl'), 'singbox.external.api.url', `<input type="text" class="sk-input" id="f_singbox_ext_api_url" value="${safeFormValue(data.singbox?.external?.api?.url)}" oninput="validateField(this, 'url'); syncFormToText()">`),
+      renderSettingRow(t('secApiSecret'), 'singbox.external.api.secret', `<input type="text" class="sk-input" id="f_singbox_ext_api_secret" value="${safeFormValue(data.singbox?.external?.api?.secret)}" oninput="syncFormToText()">`)
     ].join(''))
   ].join('');
   const icon = `${renderIcon("box").outerHTML}`;
@@ -5116,17 +5225,17 @@ function renderSingboxAccordion(data) {
 function renderServicesAccordion(data) {
   const serviceSections = [
     renderSection('SKeen API', [
-      renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" id="f_services_api_port" value="${safeFormValue(data.services?.api?.port ?? 5000)}" oninput="validateField(this, 'port'); syncFormToText()">`),
-      renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" id="f_services_api_secret" value="${safeFormValue(data.services?.api?.secret)}" oninput="syncFormToText()">`),
-      renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" id="f_services_api_cors_display" readonly value="${safeFormValue(formState.arrays.apiCors.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', formState.arrays.apiCors, 'text')">`),
-      renderSettingRow(t('secDashboard'), 'services.api.dashboard', `<input type="checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secAutoStart'), 'services.api.auto_start', `<input type="checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()">`)
+      renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" class="sk-input" id="f_services_api_port" value="${safeFormValue(data.services?.api?.port ?? 5000)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+      renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" class="sk-input" id="f_services_api_secret" value="${safeFormValue(data.services?.api?.secret)}" oninput="syncFormToText()">`),
+      renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" class="sk-input" id="f_services_api_cors_display" readonly value="${safeFormValue(formState.arrays.apiCors.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', formState.arrays.apiCors, 'text')">`),
+      renderSettingRow(t('secDashboard'), 'services.api.dashboard', `<input type="checkbox" class="sk-checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secAutoStart'), 'services.api.auto_start', `<input type="checkbox" class="sk-checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()">`)
     ].join('')),
     renderSection(t('secLocalProxy'), [
-      renderSettingRow(t('enabledLbl'), 'services.proxy.enabled', `<input type="checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secProxyPort'), 'services.proxy.port', `<input type="text" id="f_services_proxy_port" value="${safeFormValue(data.services?.proxy?.port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
-      renderSettingRow(t('secProxyUser'), 'services.proxy.user', `<input type="text" id="f_services_proxy_user" value="${safeFormValue(data.services?.proxy?.user)}" oninput="syncFormToText()">`),
-      renderSettingRow(t('secProxyPass'), 'services.proxy.pass', `<input type="text" id="f_services_proxy_pass" value="${safeFormValue(data.services?.proxy?.pass)}" oninput="syncFormToText()">`)
+      renderSettingRow(t('enabledLbl'), 'services.proxy.enabled', `<input type="checkbox" class="sk-checkbox" id="f_services_proxy_enabled" ${data.services?.proxy?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secProxyPort'), 'services.proxy.port', `<input type="text" class="sk-input" id="f_services_proxy_port" value="${safeFormValue(data.services?.proxy?.port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+      renderSettingRow(t('secProxyUser'), 'services.proxy.user', `<input type="text" class="sk-input" id="f_services_proxy_user" value="${safeFormValue(data.services?.proxy?.user)}" oninput="syncFormToText()">`),
+      renderSettingRow(t('secProxyPass'), 'services.proxy.pass', `<input type="text" class="sk-input" id="f_services_proxy_pass" value="${safeFormValue(data.services?.proxy?.pass)}" oninput="syncFormToText()">`)
     ].join(''))
   ].join('');
   const icon = `${renderIcon("services").outerHTML}`;
@@ -5136,22 +5245,22 @@ function renderServicesAccordion(data) {
 function renderFirewallAccordion(data) {
   const firewallSections = [
     renderSection(t('secIntercept'), [
-      renderSettingRow(t('secInterceptDns'), 'firewall.intercept.dns', `<input type="checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" id="f_firewall_fakeip_clients_display" readonly value="${safeFormValue(formState.arrays.fakeipClients.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', formState.arrays.fakeipClients, 'ip')">`)
+      renderSettingRow(t('secInterceptDns'), 'firewall.intercept.dns', `<input type="checkbox" class="sk-checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" class="sk-checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" class="sk-input" id="f_firewall_fakeip_clients_display" readonly value="${safeFormValue(formState.arrays.fakeipClients.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', formState.arrays.fakeipClients, 'ip')">`)
     ].join('')),
     renderSection(t('secExclude'), [
-      renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" id="f_firewall_exclude_port_display" readonly value="${safeFormValue(formState.arrays.excludePorts.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', formState.arrays.excludePorts, 'portRange')">`),
-      renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" id="f_firewall_exclude_v4_display" readonly value="${safeFormValue(formState.arrays.excludeV4.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', formState.arrays.excludeV4, 'v4cidr')">`),
-      renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" id="f_firewall_exclude_v6_display" readonly value="${safeFormValue(formState.arrays.excludeV6.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', formState.arrays.excludeV6, 'v6cidr')">`)
+      renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" class="sk-input" id="f_firewall_exclude_port_display" readonly value="${safeFormValue(formState.arrays.excludePorts.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', formState.arrays.excludePorts, 'portRange')">`),
+      renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" class="sk-input" id="f_firewall_exclude_v4_display" readonly value="${safeFormValue(formState.arrays.excludeV4.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', formState.arrays.excludeV4, 'v4cidr')">`),
+      renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" class="sk-input" id="f_firewall_exclude_v6_display" readonly value="${safeFormValue(formState.arrays.excludeV6.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', formState.arrays.excludeV6, 'v6cidr')">`)
     ].join('')),
     renderSection(t('secRedirectDns'), [
-      renderSettingRow(t('secRedirectDns'), 'firewall.redirect_dns.enabled', `<input type="checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secDnsPort'), 'firewall.redirect_dns.to_port', `<input type="text" id="f_firewall_redirect_dns_port" value="${safeFormValue(data.firewall?.redirect_dns?.to_port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
-      renderSettingRow(t('secUsePolicyDns'), 'firewall.redirect_dns.use_policy', `<input type="checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()">`)
+      renderSettingRow(t('secRedirectDns'), 'firewall.redirect_dns.enabled', `<input type="checkbox" class="sk-checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+      renderSettingRow(t('secDnsPort'), 'firewall.redirect_dns.to_port', `<input type="text" class="sk-input" id="f_firewall_redirect_dns_port" value="${safeFormValue(data.firewall?.redirect_dns?.to_port)}" oninput="validateField(this, 'port'); syncFormToText()">`),
+      renderSettingRow(t('secUsePolicyDns'), 'firewall.redirect_dns.use_policy', `<input type="checkbox" class="sk-checkbox" id="f_firewall_redirect_dns_policy" ${data.firewall?.redirect_dns?.use_policy ? 'checked' : ''} onchange="syncFormToText()">`)
     ].join('')),
     renderSection(t('secProxyRouter'), [
-      renderSettingRow(t('secProxyRouter'), 'firewall.proxy_router', `<input type="checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()">`)
+      renderSettingRow(t('secProxyRouter'), 'firewall.proxy_router', `<input type="checkbox" class="sk-checkbox" id="f_firewall_proxy_router" ${data.firewall?.proxy_router ? 'checked' : ''} onchange="syncFormToText()">`)
     ].join(''))
   ].join('');
   const icon = `${renderIcon("shield").outerHTML}`;
@@ -5160,10 +5269,10 @@ function renderFirewallAccordion(data) {
 
 function renderUpdatesAccordion(data) {
   const updateSection = renderSection(t('secUpdates'), [
-    renderSettingRow(t('secUpdateSingbox'), 'update.singbox.enabled', `<input type="checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-    renderSettingRow(t('secBetaSingbox'), 'update.singbox.beta', `<input type="checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()">`),
-    renderSettingRow(t('secUpdateSkeen'), 'update.skeen.enabled', `<input type="checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-    renderSettingRow(t('secUpdateSkeenApi'), 'update.skeen.api', `<input type="checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()">`)
+    renderSettingRow(t('secUpdateSingbox'), 'update.singbox.enabled', `<input type="checkbox" class="sk-checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+    renderSettingRow(t('secBetaSingbox'), 'update.singbox.beta', `<input type="checkbox" class="sk-checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()">`),
+    renderSettingRow(t('secUpdateSkeen'), 'update.skeen.enabled', `<input type="checkbox" class="sk-checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+    renderSettingRow(t('secUpdateSkeenApi'), 'update.skeen.api', `<input type="checkbox" class="sk-checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()">`)
   ].join(''));
   const icon = `${renderIcon("update").outerHTML}`;
   return renderAccordion(4, t('secUpdates'), icon, updateSection);
@@ -5906,14 +6015,14 @@ function handleExtraParamChange() {
     container.innerHTML = `
       <div class="form-group margin-0">
         <label>${t('lblBackupFile')}</label>
-        <input type="text" id="paramBackupFile" placeholder="${t('placeholderBackupFile')}">
+        <input type="text" class="sk-input" id="paramBackupFile" placeholder="${t('placeholderBackupFile')}">
       </div>`;
   } else if (val === 'sync') {
     container.style.display = 'flex';
     container.innerHTML = `
       <div class="form-group margin-0">
         <label>${t('lblSyncUrl')}</label>
-        <input type="text" id="paramSyncUrl" placeholder="${t('placeholderSyncUrl')}" oninput="validateField(this, 'url')">
+        <input type="text" class="sk-input" id="paramSyncUrl" placeholder="${t('placeholderSyncUrl')}" oninput="validateField(this, 'url')">
       </div>`;
   } else if (val === 'tun') {
     container.style.display = 'flex';
@@ -5944,11 +6053,11 @@ function handleTunSubChange() {
       <div class="form-row flex-row-gap-8">
         <div class="form-group flex-1 margin-0">
           <label>${t('lblIpAddress')}</label>
-          <input type="text" id="paramTunIp" placeholder="${t('placeholderIpAddress')}" oninput="validateField(this, 'ip')">
+          <input type="text" class="sk-input" id="paramTunIp" placeholder="${t('placeholderIpAddress')}" oninput="validateField(this, 'ip')">
         </div>
         <div class="form-group flex-1 margin-0">
           <label>${t('lblIfaceName')}</label>
-          <input type="text" id="paramTunCreateIface" placeholder="${t('placeholderIfaceName')}">
+          <input type="text" class="sk-input" id="paramTunCreateIface" placeholder="${t('placeholderIfaceName')}">
         </div>
       </div>`;
   } else if (subVal === 'delete') {
@@ -5956,7 +6065,7 @@ function handleTunSubChange() {
     subContainer.innerHTML = `
       <div class="form-group margin-0">
         <label>${t('lblIfaceName')}</label>
-        <input type="text" id="paramTunDeleteIface" placeholder="${t('placeholderIfaceName')}">
+        <input type="text" class="sk-input" id="paramTunDeleteIface" placeholder="${t('placeholderIfaceName')}">
       </div>`;
   } else {
     subContainer.style.display = 'none';
