@@ -39,7 +39,7 @@ services:
       SUB_STORE_BACKEND_API_PORT: 3001
       SUB_STORE_BACKEND_MERGE: true
       SUB_STORE_FRONTEND_BACKEND_PATH: /fKffdsfgMfdglmkf82LDfg0234fmD
-      SUB_STORE_CORS_ALLOWED_ORIGINS: https://ваш.домем-sub-store.com
+      SUB_STORE_CORS_ALLOWED_ORIGINS: "https://ваш.домем-sub-store.com,https://sub.xream.eu.org,http://localhost:8080"
     network_mode: host
     volumes:
       - sub_store:/opt/app/data
