@@ -443,12 +443,23 @@ const fileNameId = "myfile"  // Имя(ID) файла (если пусто, то
 
 Допустим, при настройке `Sub-Store` мы получили ссылку на синхронизацию нашей конфигурации для `sing-box` вида `https://mydomain.ydns.eu/share/file/router?token=22kiO29piehSe2105yYYR` (если используется удаленный VPS) либо вида `http://192.168.2.66:17890/share/file/router?token=22kiO29piehSe2105yYYR` (если локальный компьютер в сети роутера; она доступна в Entware при запущенном Sub-Store).
 
-1. Редактируем и сохраняем в `skeen.json` секцию `singbox.config` или/либо `singbox.external.config`:
+1. Редактируем и сохраняем в `skeen.json` секцию `singbox.config` или `singbox.external.config`:
 
 ```json
-  "config":{
-    "path": "/opt/etc/skeen/config.json",
-    "url": "https://mydomain.ydns.eu/share/file/router?token=22kiO29piehSe2105yYYR"
+  "config": {
+    "use_dir": 0,
+    "url": "https://mydomain.ydns.eu/share/file/router?token=22kiO29piehSe2105yYYR",
+    "split": 0
+  }
+```
+
+Либо если используете папку с конфигами sing-box вместо одиночного файла (не рекомендуется):
+
+```json
+  "config": {
+    "use_dir": 1,
+    "url": "https://mydomain.ydns.eu/share/file/router?token=22kiO29piehSe2105yYYR",
+    "split": 1
   }
 ```
 
@@ -462,6 +473,12 @@ skeen sync
 
 ```sh
 skeen restart
+```
+
+Или следующим образом если небыло изменений в `inbouns` и `services`:
+
+```sh
+skeen reload
 ```
 
 Поздравляем, вы стали продвинутым пользователем!
