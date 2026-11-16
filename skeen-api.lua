@@ -894,12 +894,19 @@ local function write_raw_file(filepath, content)
   local f = io.open(tmp_path, "w")
   if not f then return false end
 
-  f:write(content)
-  f:close()
+  local ok = f:write(content)
+  if ok then ok = f:flush() end
+  local close_ok = f:close()
+  if not ok or not close_ok then
+    os.remove(tmp_path)
+    return false
+  end
 
-  os.remove(filepath)
-  local ok = os.rename(tmp_path, filepath)
-  return ok ~= nil
+  -- POSIX rename replaces the destination atomically; removing it first can
+  -- leave a missing or truncated configuration if the rename then fails.
+  local renamed = os.rename(tmp_path, filepath)
+  if not renamed then os.remove(tmp_path) end
+  return renamed ~= nil
 end
 
 -- Build a map of configuration files available for reading/editing via the API
@@ -916,14 +923,15 @@ local function get_allowed_files_map()
   if handle then handle:close() end
 
   local ok, cfg_info = pcall(json.decode, result_str)
-  local path = (ok and cfg_info and cfg_info.path) or default_path
-  local is_dir = (ok and cfg_info and cfg_info.is_dir) or false
+  local path = ok and type(cfg_info) == "table" and cfg_info.path or default_path
+  if type(path) ~= "string" or path:find("[%c]") then path = default_path end
+  local is_dir = ok and type(cfg_info) == "table" and cfg_info.is_dir == true
 
   if is_dir then
     local files = {}
     local parent_dir = path:match("([^/]+)$") or "config"
 
-    local handle_ls = io.popen(string.format("ls -1 %s 2>/dev/null", path))
+    local handle_ls = io.popen("ls -1 " .. shell_quote(path) .. " 2>/dev/null")
     if handle_ls then
       for file in handle_ls:lines() do
         if file and file ~= "" and file:match("%.json$") then
@@ -1319,7 +1327,7 @@ local function get_matched_cors(request_origin, allowed_config)
   if not allowed_config then return "" end
 
   if type(allowed_config) == "string" then
-    return allowed_config
+    return not allowed_config:find("[%c]") and allowed_config or ""
   end
 
   if type(allowed_config) == "table" then
@@ -1327,7 +1335,8 @@ local function get_matched_cors(request_origin, allowed_config)
       if allowed == "*" then
         return "*"
       end
-      if request_origin and allowed == request_origin then
+      if request_origin and allowed == request_origin and
+          not request_origin:find("[%c]") then
         return request_origin
       end
     end
@@ -1343,15 +1352,18 @@ end
 
 local api_config = load_api_config()
 
-local PORT = tonumber(api_config.port) or 3000
-local SECRET = api_config.secret or ""
+local PORT = tonumber(api_config.port)
+if not PORT or PORT % 1 ~= 0 or PORT < 1 or PORT > 65535 then
+  PORT = 3000
+end
+local SECRET = type(api_config.secret) == "string" and api_config.secret or ""
 local DASHBOARD = (api_config.dashboard == 1)
 
 local MAX_BODY_SIZE = 1024 * 1024 -- Hard limit for incoming HTTP request body size: 1 MB
 local MAX_HEADERS_COUNT = 50      -- Maximum allowed number of header lines
 -- Rate limits: 100 req/min for authorized clients, 5 req/min for unauthorized ones
 local RATE_LIMIT_AUTH = 100
-local RATE_LIMIT_UNAUTH = 5
+local RATE_LIMIT_UNAUTH = 3
 local RATE_LIMIT_WINDOW = 60
 
 -- The build script replaces the placeholder during packaging.
@@ -1477,10 +1489,13 @@ local function handle_file_request(method, path, body)
   end
 
   local success, req_json = pcall(json.decode, body)
-  local file_key = req_json and req_json.name
+  local file_key = success and type(req_json) == "table" and req_json.name or nil
   local target = get_allowed_files_map()[file_key]
   if not success or not target then
     return json_response({ error = "Invalid request or file target" }, "400 Bad Request")
+  end
+  if req_json.content == nil then
+    return json_response({ error = "Missing file content" }, "400 Bad Request")
   end
 
   local write_success = false
@@ -1490,7 +1505,9 @@ local function handle_file_request(method, path, body)
       write_success = write_raw_file(target.path, encoded_json)
     end
   else
-    write_success = write_raw_file(target.path, tostring(req_json.content))
+    if type(req_json.content) == "string" then
+      write_success = write_raw_file(target.path, req_json.content)
+    end
   end
 
   if write_success then
@@ -1613,11 +1630,11 @@ local function route_request(method, path, body, request_headers)
       return json_response({ success = true, data = data })
     end
     return json_response({ success = false, data = {} })
-  elseif path:find("^/api/status") and method == "GET" then
+  elseif path == "/api/status" and method == "GET" then
     local status = get_cached_skeen_status()
     status.success = true
     return json_response(status)
-  elseif path:find("^/api/system/status") and method == "GET" then
+  elseif path == "/api/system/status" and method == "GET" then
     local status = get_cached_system_status()
     status.success = true
     return json_response(status)
@@ -1628,7 +1645,7 @@ local function route_request(method, path, body, request_headers)
     end
     table.sort(files_list, function(a, b) return a.id < b.id end)
     return json_response(files_list)
-  elseif (path:find("^/api/file") and method == "GET") or
+  elseif (path == "/api/file" or path:match("^/api/file%?")) and method == "GET" or
       (path == "/api/file" and method == "POST") then
     return handle_file_request(method, path, body)
   elseif path == "/api/exec" and method == "POST" then
@@ -1640,13 +1657,32 @@ end
 
 -- Function for safely processing an individual client connection
 local function handle_client(client)
-  client:settimeout(30) -- Set a 30-second timeout on socket operations
+  -- Keep a slow client from blocking the single-threaded server indefinitely.
+  local header_deadline = socket.gettime() + 10
+
+  local function receive_line(limit)
+    local chars = {}
+    while #chars < limit do
+      local remaining = header_deadline - socket.gettime()
+      if remaining <= 0 then return nil, "timeout" end
+      client:settimeout(remaining)
+      local char = client:receive(1)
+      if not char then return nil, "incomplete" end
+      if char == "\n" then
+        local line = table.concat(chars)
+        if line:sub(-1) == "\r" then line = line:sub(1, -2) end
+        return line
+      end
+      chars[#chars + 1] = char
+    end
+    return nil, "too_long"
+  end
 
   -- Read the first line of the HTTP request (request line: method and path)
-  local request = client:receive("*l")
+  local request = receive_line(4096)
   if not request then return end
 
-  local method, path = request:match("^(%a+)%s+(%S+)")
+  local method, path = request:match("^(%a+)%s+(%S+)%s+HTTP/1%.[01]$")
   if not method or not path then
     client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
     return
@@ -1654,11 +1690,23 @@ local function handle_client(client)
 
   local headers = {}
   local headers_count = 0
+  local headers_bytes = 0
 
-  -- Read headers line by line with protection against Slowloris attacks (line count limit)
+  -- Bound both header size and total read time, not just the number of lines.
   while true do
-    local line = client:receive("*l")
-    if not line or line == "" then break end
+    local line, line_error = receive_line(8192)
+    if not line then
+      local status = line_error == "too_long" and
+          "431 Request Header Fields Too Large" or "400 Bad Request"
+      client:send("HTTP/1.1 " .. status .. "\r\nConnection: close\r\n\r\n")
+      return
+    end
+    headers_bytes = headers_bytes + #line
+    if headers_bytes > 16384 then
+      client:send("HTTP/1.1 431 Request Header Fields Too Large\r\nConnection: close\r\n\r\n")
+      return
+    end
+    if line == "" then break end
 
     headers_count = headers_count + 1
     if headers_count > MAX_HEADERS_COUNT then
@@ -1667,7 +1715,25 @@ local function handle_client(client)
     end
 
     local key, value = line:match("^([^:]+):%s*(.*)$")
-    if key then headers[key:lower()] = value end
+    if not key or key:find("[%c]") or value:find("[%c]") then
+      client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
+      return
+    end
+    key = key:lower()
+    if headers[key] ~= nil then
+      -- Reject duplicate framing headers instead of accepting ambiguous values.
+      if key == "content-length" or key == "transfer-encoding" then
+        client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
+        return
+      end
+    else
+      headers[key] = value
+    end
+  end
+
+  if headers["transfer-encoding"] then
+    client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
+    return
   end
 
   -- Handle CORS policies based on the Origin header
@@ -1689,6 +1755,17 @@ local function handle_client(client)
     return
   end
 
+  local content_length_text = headers["content-length"] or "0"
+  if not content_length_text:match("^%d+$") then
+    client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
+    return
+  end
+  local content_length = tonumber(content_length_text)
+  if not content_length or content_length > MAX_BODY_SIZE then
+    client:send("HTTP/1.1 413 Payload Too Large\r\nConnection: close\r\n\r\n")
+    return
+  end
+
   -- Apply a separate rolling rate limit depending on authorization status
   if path:find("^/api/") then
     local is_authorized = true
@@ -1707,13 +1784,8 @@ local function handle_client(client)
 
   -- Read the request body (if present) with a preliminary hard size limit check
   local body = ""
-  local content_length = tonumber(headers["content-length"] or 0)
   if content_length > 0 then
-    if content_length > MAX_BODY_SIZE then
-      client:send("HTTP/1.1 413 Payload Too Large\r\nConnection: close\r\n\r\n")
-      return
-    end
-
+    client:settimeout(10)
     body = client:receive(content_length)
     if not body or #body < content_length then
       client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")

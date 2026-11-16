@@ -42,8 +42,8 @@ Starting with SKeen version 5.9.0, `skeen-api` is automatically installed as a r
 
 ### Disk Space Requirements
 
-The total installation footprint is **less than 500 KB**:
-- **SKeen API (Backend + Frontend)**: < 90 KB
+The total installation footprint is **less than 400 KB**:
+- **SKeen API (Backend + Frontend)**: < 100 KB
 - **Lua package (`opkg package: lua`)**: ~20 KB
 - **LuaSocket package (`opkg package: luasocket`)**: ~250 KB
 
@@ -65,7 +65,7 @@ skeen deps
 
 - **Architecture & Resilience**:
   - Synchronous HTTP/1.1 request handling.
-  - Strict socket timeout on client operations (`30 sec`).
+  - The request line and all headers have a **10-second combined deadline**; reading the request body has a separate **10-second timeout**.
   - Safe request execution wrapped in `pcall` to ensure socket cleanup and prevent file descriptor leaks during connection drops.
 
 - **Performance Optimization & Compression**:
@@ -133,10 +133,15 @@ Server settings are dynamically requested from the main CLI system by executing 
 
 The server incorporates strict system-level limits to protect router memory and execution resources:
 
-1. **Maximum Request Body Size (`Content-Length`)**: **1 MB** (`1024 * 1024` bytes). Any attempt to transmit a payload exceeding this size causes the server to immediately reject the request with HTTP status `413 Payload Too Large`.
+1. **Request read timeouts**: The request line and all headers must arrive within a **10-second combined deadline**. Reading the request body has a separate **10-second timeout**.
 
-2. **Header Slowloris Protection**: A limit of **50 header lines** per connection is enforced. Exceeding this limit immediately closes the request with status `431 Request Header Fields Too Large`.
-3. **Request rate limiting**: The limit depends on authorization. Authorized clients (valid `X-API-Key`) get **100 requests in any rolling minute** (a 60-second sliding window, counter updated per request); unauthorized clients get **5 requests in any rolling minute**. Applies to all `/api/*` paths. Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header. CORS `OPTIONS` preflight requests are excluded.
+2. **Request size limits**: The body is limited to **1 MB** (`1024 * 1024` bytes), the request line to **4096 bytes**, each header line to **8192 bytes**, and all headers combined to **16384 bytes**.
+
+3. **Header Slowloris Protection**: A limit of **50 header lines** per connection is enforced. Exceeding a header limit returns `431 Request Header Fields Too Large`; an oversized body is rejected with `413 Payload Too Large`.
+
+4. **Request rate limiting**: The limit depends on authorization. Authorized clients (valid `X-API-Key`) get **100 requests in any rolling minute** (a 60-second sliding window, counter updated per request); unauthorized clients get **3 requests in any rolling minute**. Applies to all `/api/*` paths. Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header. CORS `OPTIONS` preflight requests are excluded.
+
+Note: SKeen commands execute synchronously and are not limited by these socket timeouts. While a long-running command is executing, the single-threaded server cannot process other connections.
 
 ### API Key (X-API-Key)
 
@@ -150,14 +155,23 @@ If missing or invalid, the server returns `401 Unauthorized`.
 
 ### CORS & Security Headers
 
-Each server response is equipped with security and CORS policy headers:
+For successfully parsed requests, the server adds security and CORS headers. Malformed or oversized requests may receive only minimal HTTP headers; `OPTIONS` preflight requests use a separate response path.
 
 - `Access-Control-Allow-Origin` — Dynamically populated based on the `cors_origin` whitelist from the configuration. If the domain is allowed, the client's exact `Origin` is returned; if not, the header is omitted, and the browser blocks the request.
-- `Vary: Origin, Accept-Encoding` — Informs caching proxies and browsers that the response depends on the `Origin` and supported encoding headers.
-- `Access-Control-Allow-Methods: GET, POST, OPTIONS`
-- `Access-Control-Allow-Headers: X-API-Key, Content-Type`
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: SAMEORIGIN`
+- `Vary: Origin` — Added with an allowed `Access-Control-Allow-Origin` header.
+- `Vary: Accept-Encoding` — Added to responses from `/` because Dashboard delivery depends on gzip support. When both values apply, the server sends two `Vary` header lines; HTTP treats them as equivalent to one `Vary: Origin, Accept-Encoding`.
+- `Access-Control-Allow-Methods: GET, POST, OPTIONS` — Advertises methods allowed for browser CORS preflight; it does not block direct HTTP requests by itself.
+- `Access-Control-Allow-Headers: X-API-Key, Content-Type` — Allows browsers to send these headers in CORS requests.
+- `X-Content-Type-Options: nosniff` — Prevents browsers from guessing the response MIME type.
+- `X-Frame-Options: SAMEORIGIN` — Allows the page to be displayed in a frame only by the same origin.
+- `Content-Type` — Response media type, such as `application/json`, `text/html`, or `text/plain`; present on regular responses.
+- `Content-Length` — Response body size in bytes; present on regular responses.
+- `Content-Encoding: gzip` — Added to the gzip-compressed Dashboard when the client supports it.
+- `Connection: close` — The server closes the connection after the response; also sent for `OPTIONS` and some request-parsing errors.
+- `Retry-After` and `Access-Control-Expose-Headers: Retry-After` — Sent with `429`; the latter lets browser code read the `Retry-After` value.
+- `Cache-Control: no-store, no-cache, must-revalidate` — Added to regular responses; the separate `OPTIONS` response does not include it.
+
+The `OPTIONS` response includes CORS and security headers, but not `Content-Type`, `Content-Length`, or `Cache-Control`. Some early failures (such as a timeout or an overlong request line) close the connection without an HTTP response; other parsing errors return only the status and `Connection: close`.
 
 > **Important when deploying via KeenDNS/CrazeDNS (OS 4.2+):**
 > To prevent the router's built-in proxy server from stripping the `Origin` header (provided that specific allowed domain names are specified in `cors_origin`) for requests from the external network, make sure that the corresponding option is enabled in the router's CLI for your application:
