@@ -1215,8 +1215,8 @@ label {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
@@ -1353,10 +1353,37 @@ label {
   background-color: #ef4444;
 }
 
+.conn-ping-latency {
+  color: var(--text-color);
+  background-color: var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0 2px;
+  font-size: 0.68rem;
+  font-weight: 400;
+  flex: 0 0 auto;
+}
+
 .conn-item-select {
   flex: 1;
+  min-width: 0;
   cursor: pointer;
   outline: none;
+}
+
+.conn-item-select > .modal-h3-title {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.conn-item-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .conn-item-select:focus-visible {
@@ -1710,8 +1737,10 @@ label {
 }
 
 .modal-h3-title {
+  gap: 5px;
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
+  align-items: baseline;
   color: var(--text-color);
   border: none;
   padding: 0;
@@ -4449,13 +4478,24 @@ function renderConnList() {
     statusDot.setAttribute('aria-hidden', 'true');
     const knownStatus = connectionState.pingStatus.get(conn.url);
     if (knownStatus !== undefined) {
-      statusDot.classList.add(knownStatus ? 'available' : 'unavailable');
-      statusDot.title = knownStatus ? t('connectionAvailable') : t('connectionUnavailable');
+      statusDot.classList.add(knownStatus.available ? 'available' : 'unavailable');
+      statusDot.title = knownStatus.available ? t('connectionAvailable') : t('connectionUnavailable');
       statusDot.setAttribute('aria-label', statusDot.title);
       statusDot.removeAttribute('aria-hidden');
     }
-    name.textContent = conn.name || 'Router';
-    name.prepend(statusDot);
+    const connectionName = document.createElement('span');
+    connectionName.className = 'conn-item-name';
+    connectionName.textContent = conn.name || 'Router';
+    connectionName.title = conn.name || 'Router';
+    name.appendChild(statusDot);
+    name.appendChild(connectionName);
+    if (knownStatus?.available && knownStatus.latencyMs !== null) {
+      const latency = document.createElement('span');
+      latency.className = 'conn-ping-latency';
+      latency.textContent = `${knownStatus.latencyMs} ms`;
+      latency.setAttribute('aria-label', `${knownStatus.latencyMs} ms`);
+      name.appendChild(latency);
+    }
     item.dataset.connectionUrl = conn.url;
     const url = document.createElement('label');
     url.textContent = conn.url;
@@ -4511,11 +4551,16 @@ async function saveConnection() {
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (apiKey) headers['X-API-Key'] = apiKey;
+    const startedAt = performance.now();
     const response = await fetchWithTimeout(`${url}/api/ping`, {
       method: 'GET',
       headers
     }, 4000);
     if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+    connectionState.pingStatus.set(url, {
+      available: true,
+      latencyMs: Math.max(0, Math.round(performance.now() - startedAt))
+    });
   } catch (error) {
     showAlertModal(t('pingError') + (error instanceof Error ? error.message : String(error)));
     return;
@@ -4536,7 +4581,6 @@ async function saveConnection() {
   storageSet('keen_connections', JSON.stringify(connectionState.connections));
   storageSet('keen_active_index', connectionState.activeIndex);
   if (previousUrl && previousUrl !== url) connectionState.pingStatus.delete(previousUrl);
-  connectionState.pingStatus.set(url, true);
   renderConnList();
   clearConnForm();
   initConnections();
@@ -4628,15 +4672,18 @@ async function pingConnectionsSequentially(runId) {
       const controller = new AbortController();
       connectionState.pingController = controller;
       let isAvailable = false;
+      let latencyMs = null;
       try {
         const headers = { 'Content-Type': 'application/json' };
         if (conn.apiKey) headers['X-API-Key'] = conn.apiKey;
+        const startedAt = performance.now();
         const response = await fetchWithTimeout(`${conn.url.replace(/\/$/, '')}/api/ping`, {
           method: 'GET',
           headers,
           signal: controller.signal
         }, 3000);
         isAvailable = response.ok;
+        if (isAvailable) latencyMs = Math.max(0, Math.round(performance.now() - startedAt));
       } catch {
         isAvailable = false;
       } finally {
@@ -4644,15 +4691,27 @@ async function pingConnectionsSequentially(runId) {
       }
 
       if (runId !== connectionState.pingRunId) return;
-      connectionState.pingStatus.set(conn.url, isAvailable);
+      connectionState.pingStatus.set(conn.url, { available: isAvailable, latencyMs });
       const item = [...document.querySelectorAll('#connList .conn-item')]
         .find(element => element.dataset.connectionUrl === conn.url);
       const dot = item?.querySelector('.conn-status-dot');
+      const latency = item?.querySelector('.conn-ping-latency');
+      const connectionName = item?.querySelector('.conn-item-name');
       if (dot) {
         dot.classList.toggle('available', isAvailable);
         dot.classList.toggle('unavailable', !isAvailable);
         dot.title = isAvailable ? t('connectionAvailable') : t('connectionUnavailable');
         dot.setAttribute('aria-label', dot.title);
+      }
+      if (latency) {
+        latency.textContent = isAvailable ? `${latencyMs} ms` : '';
+        latency.hidden = !isAvailable;
+      } else if (isAvailable && item) {
+        const latencyLabel = document.createElement('span');
+        latencyLabel.className = 'conn-ping-latency';
+        latencyLabel.textContent = `${latencyMs} ms`;
+        latencyLabel.setAttribute('aria-label', `${latencyMs} ms`);
+        item?.querySelector('.modal-h3-title')?.appendChild(latencyLabel);
       }
     }
   } finally {
