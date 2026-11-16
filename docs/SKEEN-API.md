@@ -61,7 +61,7 @@ skeen deps
 
 ### Key Features:
 
-- **Stack**: Lua (verified for compatibility with `/opt/bin/lua`), `luasocket`.
+- **Stack**: Lua (verified for compatibility with `/opt/bin/lua`), `luasocket`; `jsonfilter` is used to read JSON files through the API.
 
 - **Architecture & Resilience**:
   - Synchronous HTTP/1.1 request handling.
@@ -72,7 +72,7 @@ skeen deps
   - Built-in TTL caches for SKeen system status calls and hardware telemetry (refreshed every 2–3 seconds), significantly reducing router CPU load during frequent web dashboard polling.
   - **Gzip Compression Support**: The server checks the client's `Accept-Encoding` header. If `gzip` is supported, text responses, JSON, and HTML pages are compressed "on the fly" with a `Content-Encoding: gzip` header to minimize network bandwidth consumption.
 
-- **Data Format**: JSON (custom parser with support for stripping `//`, `/* */`, and `#` comments while preserving key ordering via the `__order` field).
+- **Data Format**: JSON. JSON files read through `GET /api/file` are parsed and normalized with `jsonfilter`.
 
 - **SKeen CLI Integration**: System command execution via `io.popen`, dynamic fetching of Sing-box configurations via `skeen get_singbox_config --json`, API settings retrieval via `skeen get_api_config`, and dashboard parameters via `skeen dash --json`.
 
@@ -372,9 +372,9 @@ curl -X GET "http://192.168.1.1:3000/api/file?name=skeen" \
      -H "X-API-Key: your_secret_key"
 ```
 
-#### Successful Response for `skeen.json` (`200 OK`):
+#### Successful Response for JSON Files (`200 OK`):
 
-*Comments `//`, `/* */`, and `#` are automatically stripped before returning.*
+All JSON files, including `skeen.json` and Sing-box configurations, are processed with `jsonfilter` and returned as normalized JSON. The `jsonfilter` build used here accepts (deletes) `//` and `/* */` comments.
 
 ```json
 {
@@ -384,17 +384,6 @@ curl -X GET "http://192.168.1.1:3000/api/file?name=skeen" \
     "singbox": {
       "auto_start": true
     }
-  }
-}
-```
-
-#### Successful Response for Other JSON Files (`200 OK`):
-
-```json
-{
-  "success": true,
-  "content": {
-    "inbounds": []
   }
 }
 ```
@@ -555,4 +544,4 @@ curl -X GET http://192.168.1.1:3000/api/dash \
 | `413` | **Payload Too Large** | Request body size exceeds the **1 MB** limit. |
 | `429` | **Too Many Requests** | Rate limit exceeded. See the `Retry-After` header. |
 | `431` | **Request Header Fields Too Large** | Number of header lines exceeds the **50 line** limit (Slowloris mitigation). |
-| `500` | **Internal Server Error** | Disk write error. |
+| `500` | **Internal Server Error** | File write error, or `jsonfilter` could not be started / could not parse a JSON file for `GET /api/file`. |

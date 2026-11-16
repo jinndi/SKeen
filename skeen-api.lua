@@ -542,52 +542,8 @@ local function is_allowed_param(param)
 end
 
 -------------------------------------------------------------------------------
--- 2. JSON MODULE (KEY ORDERING, COMMENT REMOVAL, AND FORMATTING)
+-- 2. JSON MODULE (KEY ORDERING AND FORMATTING)
 -------------------------------------------------------------------------------
-
--- Function to remove comments (C++, JS, and # styles) from JSON configurations
-local function strip_json_comments(str)
-  local result = {}
-  local i = 1
-  local len = #str
-  local in_string = false
-  local escape = false
-
-  while i <= len do
-    local c = str:sub(i, i)
-    local c2 = str:sub(i, i + 1)
-
-    if in_string then
-      if escape then
-        escape = false
-      elseif c == '\\' then
-        escape = true
-      elseif c == '"' then
-        in_string = false
-      end
-      table.insert(result, c)
-      i = i + 1
-    else
-      if c == '"' then
-        in_string = true
-        table.insert(result, c)
-        i = i + 1
-      elseif c2 == '//' then
-        while i <= len and str:sub(i, i) ~= '\n' do i = i + 1 end
-      elseif c2 == '/*' then
-        i = i + 2
-        while i <= len and str:sub(i, i + 1) ~= '*/' do i = i + 1 end
-        i = i + 2
-      elseif c == '#' then
-        while i <= len and str:sub(i, i) ~= '\n' do i = i + 1 end
-      else
-        table.insert(result, c)
-        i = i + 1
-      end
-    end
-  end
-  return table.concat(result)
-end
 
 -- Self-contained JSON parser and encoder with support for preserving key order
 local json = (function()
@@ -751,31 +707,35 @@ local json = (function()
   end
 
   local function parse_string(str, i)
-    local res, j, k = "", i + 1, i + 1
+    local res, j, k = {}, i + 1, i + 1
     while j <= #str do
       local x = str:byte(j)
       if x < 32 then
         decode_error(str, j, "control character in string")
       elseif x == 92 then
-        res = res .. str:sub(k, j - 1)
+        if k < j then
+          res[#res + 1] = str:sub(k, j - 1)
+        end
         j = j + 1
         local c = str:sub(j, j)
         if c == "u" then
           local hex = str:match("^[dD][89aAbB]%x%x\\u%x%x%x%x", j + 1) or
               str:match("^%x%x%x%x", j + 1) or
               decode_error(str, j - 1, "invalid unicode escape in string")
-          res = res .. parse_unicode_escape(hex)
+          res[#res + 1] = parse_unicode_escape(hex)
           j = j + #hex
         else
           if not escape_chars[c] then
             decode_error(str, j - 1, "invalid escape char '" .. c .. "' in string")
           end
-          res = res .. escape_char_map_inv[c]
+          res[#res + 1] = escape_char_map_inv[c]
         end
         k = j + 1
       elseif x == 34 then
-        res = res .. str:sub(k, j - 1)
-        return res, j + 1
+        if k < j then
+          res[#res + 1] = str:sub(k, j - 1)
+        end
+        return table.concat(res), j + 1
       end
       j = j + 1
     end
@@ -1031,19 +991,28 @@ local function get_cpu_temp()
 end
 
 -- Resolve default network interface
+local default_interface_cache = { value = nil, expire = 0 }
+
 local function get_default_interface()
+  local now = os.time()
+  if default_interface_cache.value and now < default_interface_cache.expire then
+    return default_interface_cache.value
+  end
+
+  local iface
   local handle = io.popen("ip route show default 2>/dev/null")
   if handle then
     local result = handle:read("*line")
     handle:close()
     if result then
-      local iface = result:match("dev%s+(%S+)")
-      if iface and iface ~= "" then
-        return iface
-      end
+      iface = result:match("dev%s+(%S+)")
     end
   end
-  return "br0"
+
+  iface = (iface and iface ~= "") and iface or "br0"
+  default_interface_cache.value = iface
+  default_interface_cache.expire = now + 5
+  return iface
 end
 
 -- Cache for network RX/TX speed calculation
@@ -1086,6 +1055,12 @@ end
 
 -- Get active netfilter connection tracking count
 local function get_connections_count()
+  local count = tonumber(
+    (read_file("/proc/sys/net/netfilter/nf_conntrack_count") or ""):match("^%s*(%d+)")
+  )
+  if count then return count end
+
+  -- Fall back to counting entries on kernels without the sysctl counter.
   local f = io.open("/proc/net/nf_conntrack", "r")
   if not f then return 0 end
 
@@ -1185,30 +1160,41 @@ local function get_swap_info()
 end
 
 -- Retrieve /opt disk usage information in kilobytes (KB)
+local opt_disk_cache = { used = 0, total = 0, expire = 0 }
+
 local function get_opt_disk_info()
-  -- Execute df command for /opt with 1K blocks, suppressing errors
-  local handle = io.popen("df -k /opt 2>/dev/null")
-  if not handle then return 0, 0 end
-
-  local output = handle:read("*all")
-  handle:close()
-
-  -- Split the command output into lines
-  local lines = {}
-  for line in output:gmatch("[^\r\n]+") do
-    table.insert(lines, line)
+  local now = os.time()
+  if now < opt_disk_cache.expire then
+    return opt_disk_cache.used, opt_disk_cache.total
   end
 
-  -- Parse the data line (skipping the header)
-  if #lines >= 2 then
-    -- Extract total KB and used KB from the second line
-    local total_kb, used_kb = lines[2]:match("^%S+%s+(%d+)%s+(%d+)")
-    if total_kb and used_kb then
-      return tonumber(used_kb) or 0, tonumber(total_kb) or 0
+  local used_kb, total_kb = 0, 0
+  -- Refresh disk usage at a lower frequency; it changes much more slowly than
+  -- the other system metrics and requires starting an external command.
+  local handle = io.popen("df -k /opt 2>/dev/null")
+  if handle then
+    local output = handle:read("*all") or ""
+    handle:close()
+
+    -- Parse the data line (skipping the header).
+    local line_count = 0
+    for line in output:gmatch("[^\r\n]+") do
+      line_count = line_count + 1
+      if line_count == 2 then
+        local parsed_total, parsed_used = line:match("^%S+%s+(%d+)%s+(%d+)")
+        if parsed_total and parsed_used then
+          used_kb = tonumber(parsed_used) or 0
+          total_kb = tonumber(parsed_total) or 0
+        end
+        break
+      end
     end
   end
 
-  return 0, 0
+  opt_disk_cache.used = used_kb
+  opt_disk_cache.total = total_kb
+  opt_disk_cache.expire = now + 30
+  return used_kb, total_kb
 end
 
 -- Get the real working status of SKeen
@@ -1409,28 +1395,29 @@ end
 local function send_http_response(client, response_body, status, content_type, current_cors,
                                   retry_after,
                                   extra_headers)
-  client:send("HTTP/1.1 " .. status .. "\r\n")
+  local headers = { "HTTP/1.1 " .. status .. "\r\n" }
   if current_cors ~= "" then
-    client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
-    client:send("Vary: Origin\r\n")
+    headers[#headers + 1] = "Access-Control-Allow-Origin: " .. current_cors .. "\r\n"
+    headers[#headers + 1] = "Vary: Origin\r\n"
   end
-  client:send("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
-  client:send("Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n")
-  client:send("X-Content-Type-Options: nosniff\r\n")
-  client:send("X-Frame-Options: SAMEORIGIN\r\n")
-  client:send("Content-Type: " .. content_type .. "\r\n")
+  headers[#headers + 1] = "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+  headers[#headers + 1] = "Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n"
+  headers[#headers + 1] = "X-Content-Type-Options: nosniff\r\n"
+  headers[#headers + 1] = "X-Frame-Options: SAMEORIGIN\r\n"
+  headers[#headers + 1] = "Content-Type: " .. content_type .. "\r\n"
   if extra_headers then
     for name, value in pairs(extra_headers) do
-      client:send(name .. ": " .. value .. "\r\n")
+      headers[#headers + 1] = name .. ": " .. value .. "\r\n"
     end
   end
-  client:send("Cache-Control: no-store, no-cache, must-revalidate\r\n")
-  client:send("Content-Length: " .. #response_body .. "\r\n")
+  headers[#headers + 1] = "Cache-Control: no-store, no-cache, must-revalidate\r\n"
+  headers[#headers + 1] = "Content-Length: " .. #response_body .. "\r\n"
   if retry_after then
-    client:send("Retry-After: " .. retry_after .. "\r\n")
-    client:send("Access-Control-Expose-Headers: Retry-After\r\n")
+    headers[#headers + 1] = "Retry-After: " .. retry_after .. "\r\n"
+    headers[#headers + 1] = "Access-Control-Expose-Headers: Retry-After\r\n"
   end
-  client:send("Connection: close\r\n\r\n")
+  headers[#headers + 1] = "Connection: close\r\n\r\n"
+  client:send(table.concat(headers))
   client:send(response_body)
 end
 
@@ -1473,19 +1460,33 @@ local function handle_file_request(method, path, body)
       return json_response({ error = "Invalid file target" }, "400 Bad Request")
     end
 
-    local content = read_file(target.path) or ""
     if target.type == "json" then
-      if file_key == "skeen" then
-        content = strip_json_comments(content)
-        local success, data = pcall(json.decode, content)
-        return json_response({ success = true, content = success and data or {} })
+      local jsonfilter_command = "jsonfilter -i " .. shell_quote(target.path) ..
+          " -e '@' 2>/dev/null"
+      local handle = io.popen(jsonfilter_command, "r")
+      if not handle then
+        return json_response({ error = "Failed to open JSON parser" },
+          "500 Internal Server Error")
       end
-      return '{"success":true,"content":' .. content .. '}', "200 OK", "application/json"
+
+      local normalized_json = handle:read("*a") or ""
+      handle:close()
+
+      -- jsonfilter emits a root JSON object or array only after successful parsing.
+      local first_char = normalized_json:match("^%s*(.)")
+      if first_char ~= "{" and first_char ~= "[" then
+        return json_response({ error = "Failed to parse JSON file" },
+          "500 Internal Server Error")
+      end
+
+      return '{"success":true,"content":' .. normalized_json .. '}',
+          "200 OK", "application/json"
     end
 
+    local content = read_file(target.path) or ""
     local escaped_content = content:gsub('\\', '\\\\'):gsub('"', '\\"'):gsub('\n', '\\n'):gsub(
       '\r', '\\r')
-    return '{"success":true,"content":"' .. escaped_content .. '"}', "200 OK", "application/json"
+    return '{"success":true,"content":"' .. escaped_content .. '"}', "200 OK", "text/plain"
   end
 
   local success, req_json = pcall(json.decode, body)
@@ -1659,23 +1660,78 @@ end
 local function handle_client(client)
   -- Keep a slow client from blocking the single-threaded server indefinitely.
   local header_deadline = socket.gettime() + 10
+  local receive_buffer = ""
+  client:settimeout(10)
+
+  -- Wait for readable data with a deadline, then make a non-blocking chunk read.
+  -- Keeping a small buffer also preserves bytes received past the final header
+  -- line, so a request body sent together with the headers is not lost.
+  local function receive_chunk(deadline)
+    while true do
+      local remaining = deadline - socket.gettime()
+      if remaining <= 0 then return nil, "timeout" end
+
+      local readable, _, select_error = socket.select({ client }, nil, remaining)
+      if not readable or #readable == 0 then
+        return nil, select_error == "timeout" and "timeout" or "incomplete"
+      end
+
+      client:settimeout(0)
+      local chunk, receive_error, partial = client:receive(4096)
+      client:settimeout(10)
+      chunk = chunk or partial
+      if chunk and #chunk > 0 then return chunk end
+      if receive_error ~= "timeout" then
+        return nil, "incomplete"
+      end
+    end
+  end
 
   local function receive_line(limit)
-    local chars = {}
-    while #chars < limit do
-      local remaining = header_deadline - socket.gettime()
-      if remaining <= 0 then return nil, "timeout" end
-      client:settimeout(remaining)
-      local char = client:receive(1)
-      if not char then return nil, "incomplete" end
-      if char == "\n" then
-        local line = table.concat(chars)
+    while true do
+      local newline = receive_buffer:find("\n", 1, true)
+      if newline then
+        if newline - 1 >= limit then return nil, "too_long" end
+        local line = receive_buffer:sub(1, newline - 1)
+        receive_buffer = receive_buffer:sub(newline + 1)
         if line:sub(-1) == "\r" then line = line:sub(1, -2) end
         return line
       end
-      chars[#chars + 1] = char
+      if #receive_buffer >= limit then return nil, "too_long" end
+
+      local chunk, err = receive_chunk(header_deadline)
+      if not chunk then return nil, err end
+      receive_buffer = receive_buffer .. chunk
     end
-    return nil, "too_long"
+  end
+
+  local function receive_body(length)
+    local deadline = socket.gettime() + 10
+    local chunks = {}
+    local received = 0
+
+    if #receive_buffer > 0 then
+      local take = math.min(length, #receive_buffer)
+      chunks[#chunks + 1] = receive_buffer:sub(1, take)
+      received = take
+      receive_buffer = receive_buffer:sub(take + 1)
+    end
+
+    while received < length do
+      local chunk, err = receive_chunk(deadline)
+      if not chunk then return nil, err end
+      local needed = length - received
+      if #chunk > needed then
+        chunks[#chunks + 1] = chunk:sub(1, needed)
+        receive_buffer = chunk:sub(needed + 1) .. receive_buffer
+        received = length
+      else
+        chunks[#chunks + 1] = chunk
+        received = received + #chunk
+      end
+    end
+
+    return table.concat(chunks)
   end
 
   -- Read the first line of the HTTP request (request line: method and path)
@@ -1785,12 +1841,12 @@ local function handle_client(client)
   -- Read the request body (if present) with a preliminary hard size limit check
   local body = ""
   if content_length > 0 then
-    client:settimeout(10)
-    body = client:receive(content_length)
-    if not body or #body < content_length then
+    local received_body = receive_body(content_length)
+    if not received_body or #received_body < content_length then
       client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
       return
     end
+    body = received_body
   end
 
   local response_body, status, content_type, extra_headers
