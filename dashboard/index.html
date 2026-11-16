@@ -23,7 +23,7 @@
   --text-muted: #969ecd;
   --accent-color: #5d8edc;
   --accent-glow: rgba(137, 180, 250, 0.15);
-  --success-color: #a6e3a1;
+  --success-color: oklch(68% .07 165);
   --danger-color: #f38ba8;
   --warning-color: #f9e2af;
   --info-color: #89dceb;
@@ -1364,11 +1364,11 @@ label {
 }
 
 .conn-status-dot.available {
-  background-color: #22c55e;
+  background-color: var(--success-color);
 }
 
 .conn-status-dot.unavailable {
-  background-color: #ef4444;
+  background-color: var(--danger-color);
 }
 
 .conn-ping-latency {
@@ -2204,6 +2204,12 @@ textarea:focus-visible,
 /* ==========================================================================
    15. Custom Select Styles
    ========================================================================== */
+#skSelectLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  pointer-events: none;
+}
 
 select.sk-select-source {
   display: none !important;
@@ -2278,6 +2284,20 @@ select.sk-select-source {
   white-space: nowrap;
 }
 
+.sk-select-label-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sk-select-label-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
 .sk-select-arrow {
   display: inline-flex;
   align-items: center;
@@ -2291,11 +2311,12 @@ select.sk-select-source {
 }
 
 .sk-select-menu {
-  position: fixed;
+  position: absolute;
   z-index: 10050;
   padding: 5px;
   overflow-x: hidden;
   overflow-y: auto;
+  pointer-events: auto;
   color: var(--text-color);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
   scrollbar-width: auto;
@@ -2309,19 +2330,20 @@ select.sk-select-source {
 .sk-select-option {
   display: flex;
   align-items: center;
+  gap: 8px;
 
   width: 100%;
   min-width: 0;
   min-height: 34px;
-  padding: 10px;
+  padding: 8px;
   margin: 2px 0;
 
   background: transparent;
-  color: var(--text-color);
+  color: var(--text-muted);
   border: 0;
   border-radius: 5px;
 
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 500;
   text-align: left;
 
@@ -2334,6 +2356,16 @@ select.sk-select-source {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sk-select-option-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.sk-select-option-primary {
+  font-weight: 600;
 }
 
 .sk-select-option:hover,
@@ -3075,6 +3107,9 @@ const ICON_REGISTRY = {
   playFill: '<path d="M5 3l14 9-14 9V3z"></path>',
   stopFill: '<rect x="5" y="5" width="14" height="14" rx="2"></rect>',
   trash: '<path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>',
+  check: '<path d="m5 12 4 4L19 6"></path>',
+  info: '<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path>',
+  sync: '<path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"></path>',
   foldAll: '<path d="M10 5h10M10 12h10M10 19h10M5 5v7m-2-2 2 2 2-2M5 19v-7m-2 2 2-2 2 2"></path>',
   fullscreen: '<path d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"></path>',
   restore: '<path d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25"></path>',
@@ -3091,8 +3126,8 @@ const ICON_REGISTRY = {
   x: '<path d="M18 6 6 18M6 6l12 12"></path>',
   lightning: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>',
   box: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.27 6.96L12 12.01l8.73-5.05"></path><path d="M12 22.08V12"></path>',
-  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>',
-  update: '<path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>'
+  update: '<path d="m15 11.25-3-3m0 0-3 3m3-3v7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>'
 };
 
 function renderIcon(name, options = {}) {
@@ -3796,6 +3831,17 @@ const customSelectInstances = new Map();
 let customSelectObserver = null;
 let activeCustomSelect = null;
 let customSelectId = 0;
+let customSelectLayer = null;
+
+function getSKSelectLayer() {
+  if (!customSelectLayer?.isConnected) {
+    customSelectLayer = document.createElement('div');
+    customSelectLayer.id = 'skSelectLayer';
+    const container = document.querySelector('.container') || document.body;
+    container.appendChild(customSelectLayer);
+  }
+  return customSelectLayer;
+}
 
 function setupCustomSelects(root = document) {
   function initSelect(select) {
@@ -3854,7 +3900,7 @@ function setupCustomSelects(root = document) {
     select.tabIndex = -1;
 
     select.insertAdjacentElement('afterend', wrapper);
-    wrapper.insertAdjacentElement('afterend', menu);
+    getSKSelectLayer().appendChild(menu);
 
     // Prevent service menu clicks from closing the service drawer.
     if (select.id === 'serviceSelect') {
@@ -4071,7 +4117,20 @@ function refreshCustomSelectInstance(instance) {
   const selectedOption = select.options[select.selectedIndex];
   const selectedText = selectedOption?.textContent.trim() || '';
 
-  label.textContent = selectedText || 'Выберите...';
+  const selectedIconName = select.id === 'extraParam'
+    ? selectedOption?.dataset.icon
+    : null;
+  if (selectedIconName) {
+    const selectedIcon = renderIcon(selectedIconName, { className: 'sk-select-option-icon' });
+    const selectedLabel = document.createElement('span');
+    selectedLabel.className = 'sk-select-label-text';
+    selectedLabel.textContent = selectedText;
+    label.classList.add('sk-select-label-with-icon');
+    label.replaceChildren(selectedIcon, selectedLabel);
+  } else {
+    label.classList.remove('sk-select-label-with-icon');
+    label.textContent = selectedText || 'Select...';
+  }
 
   const associatedLabel = select.labels?.[0]?.textContent.trim();
 
@@ -4108,9 +4167,26 @@ function refreshCustomSelectInstance(instance) {
 
     const optionLabel = document.createElement('span');
     optionLabel.className = 'sk-select-option-label';
-    optionLabel.textContent = optionText;
+    const firstSpaceIndex = optionText.search(/\s/);
+    if (firstSpaceIndex > 0) {
+      const primaryLabel = document.createElement('span');
+      primaryLabel.className = 'sk-select-option-primary';
+      primaryLabel.textContent = optionText.slice(0, firstSpaceIndex);
+      optionLabel.append(
+        primaryLabel,
+        document.createTextNode(optionText.slice(firstSpaceIndex))
+      );
+    } else {
+      optionLabel.textContent = optionText;
+    }
 
     item.title = optionText;
+    const optionIconName = select.id === 'extraParam'
+      ? option.dataset.icon
+      : null;
+    if (optionIconName) {
+      item.appendChild(renderIcon(optionIconName, { className: 'sk-select-option-icon' }));
+    }
     item.appendChild(optionLabel);
 
     if (option.selected) {
@@ -4276,6 +4352,11 @@ function positionCustomSelect(instance) {
 
   const spaceBelow = viewportHeight - rect.bottom - gap - margin;
   const spaceAbove = rect.top - gap - margin;
+  const maxMenuWidth = Math.max(0, viewportWidth - margin * 2);
+
+  menu.style.width = 'max-content';
+  menu.style.minWidth = `${Math.min(rect.width, maxMenuWidth)}px`;
+  menu.style.maxWidth = `${maxMenuWidth}px`;
 
   const naturalHeight = Math.min(menu.scrollHeight, 280);
   const openAbove =
@@ -4288,18 +4369,14 @@ function positionCustomSelect(instance) {
   );
 
   menu.style.maxHeight = `${availableSpace}px`;
-  menu.style.width = 'max-content';
-  menu.style.minWidth = `${rect.width}px`;
-  menu.style.maxWidth = `${viewportWidth - margin * 2}px`;
-
-  const menuHeight = menu.getBoundingClientRect().height;
-
-  const menuWidth = menu.getBoundingClientRect().width;
+  const menuRect = menu.getBoundingClientRect();
+  const menuHeight = menuRect.height;
+  const menuWidth = menuRect.width;
 
   const isServiceSelect = instance.select.id === 'serviceSelect';
 
   const desiredLeft = isServiceSelect
-    ? rect.left + (rect.width - menuWidth) / 2 + 4
+    ? rect.left + (rect.width - menuWidth) / 2
     : rect.left;
 
   const left = Math.max(
@@ -6444,39 +6521,49 @@ function renderDynamicActions() {
 
 function renderExtraParamOptions() {
   const select = document.getElementById('extraParam');
-  const currentValue = select.value || 'reload';
 
   const options = [
-    { val: "reload", label: t('cmdReload') },
-    { val: "sync", label: t('cmdSync') },
-    { val: "status", label: t('cmdStatus') },
-    { val: "kill", label: t('cmdKill') },
-    { val: "version", label: t('cmdVersion') },
-    { val: "iface", label: t('cmdIface') },
-    { val: "connstat", label: t('cmdConnstat') },
-    { val: "test", label: t('cmdTest') },
-    { val: "deps", label: t('cmdDeps') },
-    { val: "check", label: t('cmdCheck') },
-    { val: "format", label: t('cmdFormat') },
-    { val: "dash", label: t('cmdDash') },
-    { val: "backup", label: t('cmdBackup') },
-    { val: "backups", label: t('cmdBackups') },
-    { val: "restore", label: t('cmdRestore') },
-    { val: "clean", label: t('cmdClean') },
-    { val: "headers", label: t('cmdHeaders') },
-    { val: "tun", label: t('cmdTun') },
-    { val: "areload", label: t('cmdApiReload') },
-    { val: "aupdate", label: t('cmdApiUpdate') },
+    { val: "reload", icon: "refresh", label: t('cmdReload') },
+    { val: "sync", icon: "sync", label: t('cmdSync') },
+    { val: "status", icon: "telemetry", label: t('cmdStatus') },
+    { val: "kill", icon: "stopFill", label: t('cmdKill') },
+    { val: "version", icon: "info", label: t('cmdVersion') },
+    { val: "iface", icon: "globe", label: t('cmdIface') },
+    { val: "connstat", icon: "services", label: t('cmdConnstat') },
+    { val: "test", icon: "play", label: t('cmdTest') },
+    { val: "deps", icon: "box", label: t('cmdDeps') },
+    { val: "check", icon: "check", label: t('cmdCheck') },
+    { val: "format", icon: "lines", label: t('cmdFormat') },
+    { val: "dash", icon: "services", label: t('cmdDash') },
+    { val: "backup", icon: "save", label: t('cmdBackup') },
+    { val: "backups", icon: "configs", label: t('cmdBackups') },
+    { val: "restore", icon: "restore", label: t('cmdRestore') },
+    { val: "clean", icon: "trash", label: t('cmdClean') },
+    { val: "headers", icon: "configs", label: t('cmdHeaders') },
+    { val: "tun", icon: "lightning", label: t('cmdTun') },
+    { val: "areload", icon: "refresh", label: t('cmdApiReload') },
+    { val: "aupdate", icon: "update", label: t('cmdApiUpdate') },
   ];
 
-  select.innerHTML = options.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
-  select.value = currentValue;
+  const currentValue = select.value;
+  const savedValue = storageGet('keen_extra_param');
+  const valueToSelect = options.some(option => option.val === currentValue)
+    ? currentValue
+    : options.some(option => option.val === savedValue)
+      ? savedValue
+      : options[0].val;
+
+  select.innerHTML = options
+    .map(option => `<option value="${option.val}" data-icon="${option.icon}">${option.label}</option>`)
+    .join('');
+  select.value = valueToSelect;
   refreshCustomSelects(select);
   handleExtraParamChange();
 }
 
 function handleExtraParamChange() {
   const val = document.getElementById('extraParam').value;
+  storageSet('keen_extra_param', val);
   const container = document.getElementById('extraParamsContainer');
   container.innerHTML = '';
 
