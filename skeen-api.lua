@@ -1798,16 +1798,18 @@ local function handle_client(client)
 
   -- Preflight OPTIONS request
   if method == "OPTIONS" then
-    client:send("HTTP/1.1 204 No Content\r\n")
+    local response_headers = { "HTTP/1.1 204 No Content\r\n" }
     if current_cors ~= "" then
-      client:send("Access-Control-Allow-Origin: " .. current_cors .. "\r\n")
-      client:send("Vary: Origin\r\n")
+      response_headers[#response_headers + 1] =
+          "Access-Control-Allow-Origin: " .. current_cors .. "\r\n"
+      response_headers[#response_headers + 1] = "Vary: Origin\r\n"
     end
-    client:send("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n")
-    client:send("Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n")
-    client:send("X-Content-Type-Options: nosniff\r\n")
-    client:send("X-Frame-Options: SAMEORIGIN\r\n")
-    client:send("Connection: close\r\n\r\n")
+    response_headers[#response_headers + 1] = "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+    response_headers[#response_headers + 1] = "Access-Control-Allow-Headers: X-API-Key, Content-Type\r\n"
+    response_headers[#response_headers + 1] = "X-Content-Type-Options: nosniff\r\n"
+    response_headers[#response_headers + 1] = "X-Frame-Options: SAMEORIGIN\r\n"
+    response_headers[#response_headers + 1] = "Connection: close\r\n\r\n"
+    client:send(table.concat(response_headers))
     return
   end
 
