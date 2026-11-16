@@ -518,10 +518,29 @@ select:disabled:hover {
 /* ==========================================================================
    5. Cards & Status Panels
    ========================================================================== */
-.card {
+.surface {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.surface--card {
   border-radius: 10px;
+}
+
+.surface--inset {
+  background-color: var(--code-bg);
+}
+
+.surface--compact {
+  border-radius: var(--radius-sm);
+}
+
+.surface--dialog {
+  border-radius: 12px;
+}
+
+.card {
   padding: clamp(10px, 2vh, 20px);
   flex: 1;
   display: flex;
@@ -531,19 +550,22 @@ select:disabled:hover {
   box-shadow: var(--shadow-soft);
 }
 
+.card--fill {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.card--flush {
+  padding: 0;
+  position: relative;
+}
+
 .editor-card {
   display: flex;
   flex-direction: column;
   gap: clamp(8px, 1.2vh, 12px);
   min-width: 0;
-}
-
-#servicesTab .card {
-  height: 100%;
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 .tab-content {
@@ -584,9 +606,6 @@ h2::before {
 }
 
 .status-badge-panel {
-  background-color: var(--code-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
   padding: 10px 14px;
   display: flex;
   align-items: center;
@@ -711,9 +730,6 @@ label {
 }
 
 .output-wrapper {
-  background-color: var(--code-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
   flex: 1;
   overflow-x: auto;
   overflow-y: auto;
@@ -846,9 +862,6 @@ label {
 }
 
 .accordion-item {
-  background-color: var(--code-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
   overflow: hidden;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   flex-shrink: 0;
@@ -1045,9 +1058,6 @@ label {
 }
 
 .tooltip-content {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
   width: 100%;
   max-width: 400px;
   padding: 16px;
@@ -1110,9 +1120,6 @@ label {
 }
 
 .modal-content {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
   width: 100%;
   max-width: 400px;
   padding: 16px;
@@ -1279,10 +1286,7 @@ label {
 }
 
 .conn-item {
-  background-color: var(--code-bg);
-  border: 1px solid var(--border-color);
   padding: 2px 5px;
-  border-radius: var(--radius-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1880,9 +1884,6 @@ body.preload * {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background-color: var(--code-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
   padding: 10px 12px;
 }
 
@@ -1923,9 +1924,6 @@ body.preload * {
 }
 
 .telemetry-network-panel {
-  background-color: var(--code-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
@@ -2243,10 +2241,7 @@ select.sk-select-source {
   padding: 5px;
   overflow-x: hidden;
   overflow-y: auto;
-  background: var(--card-bg);
   color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
   scrollbar-width: auto;
   scrollbar-color: var(--border-color) var(--card-bg);
@@ -2332,6 +2327,10 @@ input[type="password"].sk-input,
   outline: none;
   cursor: text;
   min-width: 0;
+}
+
+input[type="text"].sk-input.cursor-pointer {
+  cursor: pointer;
 }
 
 input[type="text"].sk-input:hover,
@@ -2642,7 +2641,7 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- Tab 1: SKeen Management -->
   <div id="skeenTab" class="tab-content active">
-    <div class="card flex-col-gap-10">
+    <div class="surface surface--card card flex-col-gap-10">
       <div class="flex-row-between">
         <h2 class="margin-0 border-none padding-0" data-i18n="skeenCardTitle">Управление SKeen</h2>
         <div class="flex-row-center-6">
@@ -2650,7 +2649,7 @@ input[type="checkbox"].sk-checkbox:disabled {
         </div>
       </div>
       <!-- Current Status Panel -->
-      <div class="status-badge-panel">
+      <div class="surface surface--inset status-badge-panel">
         <div class="status-badge">
           <div id="serviceDot" class="status-dot"></div>
           <span id="serviceStatusText" data-i18n="statusChecking">Проверка состояния...</span>
@@ -2683,7 +2682,7 @@ input[type="checkbox"].sk-checkbox:disabled {
             data-i18n-title="btnClearOutput">
             <span data-icon="trash"></span>
           </button>
-          <pre id="cmdOutput" class="output-wrapper" data-i18n="waitingOutput">Ожидание выполнения команды...</pre>
+          <pre id="cmdOutput" class="surface surface--inset surface--compact output-wrapper" data-i18n="waitingOutput">Ожидание выполнения команды...</pre>
         </div>
       </div>
     </div>
@@ -2691,7 +2690,7 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- Tab 2: Configuration Editor -->
   <div id="configsTab" class="tab-content">
-    <div class="card editor-card">
+    <div class="surface surface--card card editor-card">
       <div class="flex-row-between">
         <h2 class="border-none padding-0" style="margin-bottom: auto;" data-i18n="jsonCardTitle">Конфигурация</h2>
         <div class="flex-row-center-6">
@@ -2763,7 +2762,7 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- Tab 3: Services Content -->
   <div id="servicesTab" class="tab-content">
-    <div class="card" id="serviceCard" style="padding: 0px; overflow: hidden; position: relative;">
+    <div class="surface surface--card card card--fill card--flush" id="serviceCard">
       <div id="serviceDrawerContainer">
         <div id="serviceDropdownPanel">
           <select id="serviceSelect" class="conn-select" onchange="handleServiceSelectChange()" title="Выбрать сервис" data-i18n-title="selectServiceTitle"></select>
@@ -2787,11 +2786,11 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- System Telemetry Modal -->
   <div id="sysTelemetryModal" class="modal">
-    <div class="modal-content modal-content--md">
+    <div class="surface surface--dialog modal-content modal-content--md">
       <h2 data-i18n="telemetryModalTitle" class="modal-title-margin-4">Системная телеметрия</h2>
 
       <!-- Device Uptime and Load Average Panel -->
-      <div class="telemetry-network-panel">
+      <div class="surface surface--inset telemetry-network-panel">
         <div class="telemetry-net-row">
           <span class="telemetry-label" data-i18n="deviceLabel">Устройство:</span>
           <span id="telDeviceModel" class="telemetry-val">-</span>
@@ -2806,7 +2805,7 @@ input[type="checkbox"].sk-checkbox:disabled {
         </div>
       </div>
 
-      <div class="telemetry-metrics-grid">
+      <div class="surface surface--inset telemetry-metrics-grid">
         <!-- CPU Load -->
         <div class="telemetry-metric-item">
           <div class="telemetry-metric-header">
@@ -2857,7 +2856,7 @@ input[type="checkbox"].sk-checkbox:disabled {
       </div>
 
       <!-- Network and Connections -->
-      <div class="telemetry-network-panel">
+      <div class="surface surface--inset telemetry-network-panel">
         <div class="telemetry-net-row">
           <span class="telemetry-label" data-i18n="netIface">Интерфейс:</span>
           <span id="telNetIface" class="telemetry-val">-</span>
@@ -2885,7 +2884,7 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- Connection Settings Modal -->
   <div id="connModal" class="modal">
-    <div class="modal-content">
+    <div class="surface surface--dialog modal-content">
       <h2 data-i18n="modalTitle" class="modal-title-margin-4">Настройки</h2>
 
       <div class="modal-tabs">
@@ -2986,7 +2985,7 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- Help Tooltip Modal -->
   <div id="tooltipModal" class="modal">
-    <div class="tooltip-content">
+    <div class="surface surface--dialog tooltip-content">
       <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="tooltipTitle">Справка по параметру</h2>
       <div id="tooltipModalText" class="tooltip-body"></div>
       <div class="form-row mt-4">
@@ -2997,14 +2996,14 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- Array Editor Modal -->
   <div id="arrayEditModal" class="modal">
-    <div class="modal-content modal-content--md">
+    <div class="surface surface--dialog modal-content modal-content--md">
       <h2 id="arrayModalTitle" class="margin-0 border-none padding-0 modal-header-title" data-i18n="arrayModalTitle">
         Редактирование списка</h2>
       <div id="arrayModalItemsList" class="array-items-list">
       </div>
       <div class="form-row flex-row-gap-8">
-        <input type="text" class="sk-input" id="arrayModalNewItemInput" data-i18n-placeholder="arrayPlaceholder"
-          placeholder="Новый элемент..." class="flex-1"
+        <input type="text" class="sk-input flex-1" id="arrayModalNewItemInput" data-i18n-placeholder="arrayPlaceholder"
+          placeholder="Новый элемент..."
           onkeydown="if(event.key==='Enter'){addArrayModalItem();event.preventDefault();}">
         <button type="button" onclick="addArrayModalItem()" class="secondary flex-shrink-0"
           data-i18n="btnAdd">Добавить</button>
@@ -3018,7 +3017,7 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- Confirmation Modal -->
   <div id="confirmModal" class="modal">
-    <div class="modal-content modal-content--sm">
+    <div class="surface surface--dialog modal-content modal-content--sm">
       <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="confirmModalTitle">Подтверждение</h2>
       <p id="confirmText" class="confirm-text"></p>
       <div class="form-row">
@@ -3030,7 +3029,7 @@ input[type="checkbox"].sk-checkbox:disabled {
 
   <!-- Alert Modal -->
   <div id="alertModal" class="modal">
-    <div class="modal-content modal-content--sm">
+    <div class="surface surface--dialog modal-content modal-content--sm">
       <h2 class="margin-0 border-none padding-0 modal-header-title" data-i18n="alertModalTitle">Внимание</h2>
       <p id="alertText" class="alert-text"></p>
       <div class="form-row">
@@ -3820,7 +3819,7 @@ function setupCustomSelects(root = document) {
     wrapper.appendChild(trigger);
 
     const menu = document.createElement('div');
-    menu.className = 'sk-select-menu';
+    menu.className = 'surface sk-select-menu';
     menu.setAttribute('role', 'listbox');
     menu.hidden = true;
 
@@ -4459,7 +4458,7 @@ function renderConnList() {
   connectionState.connections.forEach((conn, index) => {
     const item = document.createElement('div');
     const isActive = index === connectionState.activeIndex;
-    item.className = `conn-item${isActive ? ' active' : ''}`;
+    item.className = `surface surface--inset surface--compact conn-item${isActive ? ' active' : ''}`;
     const details = document.createElement('div');
     details.className = 'conn-item-select';
     details.tabIndex = 0;
@@ -5414,7 +5413,7 @@ function renderSection(title, rowsHtml) {
 function renderAccordion(index, titleText, iconSvg, contentHtml) {
   const isActive = formState.activeAccordionIndex === index ? 'active' : '';
   return `
-    <div class="accordion-item ${isActive}">
+    <div class="surface surface--inset accordion-item ${isActive}">
       <div class="accordion-header" onclick="toggleAccordion(${index})">
         <div class="accordion-title">
           ${iconSvg}
@@ -5481,7 +5480,7 @@ function renderServicesAccordion(data) {
     renderSection('SKeen API', [
       renderSettingRow(t('secApiPort'), 'services.api.port', `<input type="number" class="sk-input" id="f_services_api_port" value="${safeFormValue(data.services?.api?.port ?? 5000)}" oninput="validateField(this, 'port'); syncFormToText()">`),
       renderSettingRow(t('secApiSecret'), 'services.api.secret', `<input type="text" class="sk-input" id="f_services_api_secret" value="${safeFormValue(data.services?.api?.secret)}" oninput="syncFormToText()">`),
-      renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" class="sk-input" id="f_services_api_cors_display" readonly value="${safeFormValue(formState.arrays.apiCors.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', formState.arrays.apiCors, 'text')">`),
+      renderSettingRow(t('secCorsOrigins'), 'services.api.cors_origin', `<input type="text" class="sk-input cursor-pointer" id="f_services_api_cors_display" readonly value="${safeFormValue(formState.arrays.apiCors.join(', '))}" onclick="openArrayModal('f_services_api_cors_display', '${t('secCorsOrigins')}', formState.arrays.apiCors, 'text')">`),
       renderSettingRow(t('secDashboard'), 'services.api.dashboard', `<input type="checkbox" class="sk-checkbox" id="f_services_api_dashboard" ${data.services?.api?.dashboard ? 'checked' : ''} onchange="syncFormToText()">`),
       renderSettingRow(t('secAutoStart'), 'services.api.auto_start', `<input type="checkbox" class="sk-checkbox" id="f_services_api_autostart" ${data.services?.api?.auto_start ? 'checked' : ''} onchange="syncFormToText()">`)
     ].join('')),
@@ -5501,12 +5500,12 @@ function renderFirewallAccordion(data) {
     renderSection(t('secIntercept'), [
       renderSettingRow(t('secInterceptDns'), 'firewall.intercept.dns', `<input type="checkbox" class="sk-checkbox" id="f_firewall_intercept_dns" ${data.firewall?.intercept?.dns ? 'checked' : ''} onchange="syncFormToText()">`),
       renderSettingRow(t('secFakeip'), 'firewall.intercept.fakeip.enabled', `<input type="checkbox" class="sk-checkbox" id="f_firewall_fakeip_enabled" ${data.firewall?.intercept?.fakeip?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
-      renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" class="sk-input" id="f_firewall_fakeip_clients_display" readonly value="${safeFormValue(formState.arrays.fakeipClients.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', formState.arrays.fakeipClients, 'ip')">`)
+      renderSettingRow(t('secFakeipClients'), 'firewall.intercept.fakeip.clients', `<input type="text" class="sk-input cursor-pointer" id="f_firewall_fakeip_clients_display" readonly value="${safeFormValue(formState.arrays.fakeipClients.join(', '))}" onclick="openArrayModal('f_firewall_fakeip_clients_display', '${t('secFakeipClients')}', formState.arrays.fakeipClients, 'ip')">`)
     ].join('')),
     renderSection(t('secExclude'), [
-      renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" class="sk-input" id="f_firewall_exclude_port_display" readonly value="${safeFormValue(formState.arrays.excludePorts.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', formState.arrays.excludePorts, 'portRange')">`),
-      renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" class="sk-input" id="f_firewall_exclude_v4_display" readonly value="${safeFormValue(formState.arrays.excludeV4.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', formState.arrays.excludeV4, 'v4cidr')">`),
-      renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" class="sk-input" id="f_firewall_exclude_v6_display" readonly value="${safeFormValue(formState.arrays.excludeV6.join(', '))}" class="cursor-pointer" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', formState.arrays.excludeV6, 'v6cidr')">`)
+      renderSettingRow(t('secExcludePorts'), 'firewall.exclude.port', `<input type="text" class="sk-input cursor-pointer" id="f_firewall_exclude_port_display" readonly value="${safeFormValue(formState.arrays.excludePorts.join(', '))}" onclick="openArrayModal('f_firewall_exclude_port_display', '${t('secExcludePorts')}', formState.arrays.excludePorts, 'portRange')">`),
+      renderSettingRow(t('secExcludeV4'), 'firewall.exclude.ipv4_cidr', `<input type="text" class="sk-input cursor-pointer" id="f_firewall_exclude_v4_display" readonly value="${safeFormValue(formState.arrays.excludeV4.join(', '))}" onclick="openArrayModal('f_firewall_exclude_v4_display', '${t('secExcludeV4')}', formState.arrays.excludeV4, 'v4cidr')">`),
+      renderSettingRow(t('secExcludeV6'), 'firewall.exclude.ipv6_cidr', `<input type="text" class="sk-input cursor-pointer" id="f_firewall_exclude_v6_display" readonly value="${safeFormValue(formState.arrays.excludeV6.join(', '))}" onclick="openArrayModal('f_firewall_exclude_v6_display', '${t('secExcludeV6')}', formState.arrays.excludeV6, 'v6cidr')">`)
     ].join('')),
     renderSection(t('secRedirectDns'), [
       renderSettingRow(t('secRedirectDns'), 'firewall.redirect_dns.enabled', `<input type="checkbox" class="sk-checkbox" id="f_firewall_redirect_dns_enabled" ${data.firewall?.redirect_dns?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
