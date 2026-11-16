@@ -1168,20 +1168,42 @@ label {
   gap: 10px;
   overflow-y: auto;
   max-height: calc(90vh - 120px);
-  min-height: 389px;
-  padding: 3px;
+}
+
+#connModal .modal-tab-content {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+#connectionsPane {
+  overflow: hidden;
+}
+
+.connection-pane {
+  flex: 1;
+  min-height: 0;
+}
+
+.connection-pane-footer {
+  flex-shrink: 0;
+  margin-top: 0;
+  padding-top: 8px;
 }
 
 .modal-tab-content.active {
   display: flex;
 }
 
+#connectionForm .form-group {
+  margin: 4px;
+}
+
 .setting-item-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border-color);
+  padding: 8px;
   gap: 10px;
 }
 
@@ -1195,7 +1217,7 @@ label {
   gap: 8px;
   font-size: 0.88rem;
   font-weight: 500;
-  color: var(--text-color);
+  color: var(--text-muted);
 }
 
 .setting-label-group svg {
@@ -1225,7 +1247,7 @@ label {
   border: none;
   color: var(--text-muted);
   width: 42px;
-  height: 30px;
+  height: 24px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
@@ -1256,7 +1278,7 @@ label {
 }
 
 #connList {
-  max-height: 160px;
+  max-height: 180px;
   overflow-y: auto;
   padding-right: 2px;
   display: flex;
@@ -2156,9 +2178,14 @@ select.sk-select-source {
 }
 
 .sk-select.select-lang {
-  height: 38px;
+  height: 32px;
   width: 170px;
   max-width: 170px;
+}
+
+.setting-item-row .sk-select-option {
+  padding: 6px;
+  margin: 0;
 }
 
 .sk-select-trigger {
@@ -2436,7 +2463,7 @@ input[type="checkbox"].sk-checkbox:disabled {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 6px 10px;
-  height: 38px;
+  height: 32px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2721,10 +2748,8 @@ input[type="checkbox"].sk-checkbox:disabled {
     </div>
   </div>
 
-  <!-- Custom Selector Wrapper-->
-  <div id="customSelectors"></div>
-
   <!-- Shared overlays and dialogs -->
+
   <!-- System Telemetry Modal -->
   <div id="sysTelemetryModal" class="modal">
     <div class="surface surface--dialog modal-content modal-content--md">
@@ -2836,33 +2861,35 @@ input[type="checkbox"].sk-checkbox:disabled {
 
       <!-- Connections Tab -->
       <div id="connectionsPane" class="modal-tab-content active">
-        <div id="connList"></div>
-        <hr class="hr-custom">
-        <h3 id="formTitle" class="modal-h3-title" data-i18n="formTitleAdd">Добавить новое подключение</h3>
-        <form id="connectionForm" onsubmit="event.preventDefault(); saveConnection();">
-          <input type="hidden" id="editIndex" value="-1">
-          <div class="form-group">
-            <label data-i18n="labelName">Имя роутера</label>
-            <input type="text" class="sk-input" id="connName" name="router-name" autocomplete="nickname" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
-          </div>
-          <div class="form-group">
-            <label data-i18n="labelUrl">URL сервера</label>
-            <input type="url" class="sk-input" id="connUrl" name="server-url" autocomplete="username" placeholder="http://192.168.1.1:3000">
-          </div>
-          <div class="form-group">
-            <label data-i18n="labelKey">Секрет</label>
-            <div class="password-wrapper">
-              <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="new-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
-              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('connKey', this)" title="Показать секрет" data-i18n-title="btnShowPassword" aria-label="Toggle password visibility">
-                <span data-icon="eye"></span>
-              </button>
+        <div class="connection-pane">
+          <div id="connList"></div>
+          <hr class="hr-custom">
+          <h3 id="formTitle" class="modal-h3-title" data-i18n="formTitleAdd">Добавить новое подключение</h3>
+          <form id="connectionForm" onsubmit="event.preventDefault(); saveConnection();">
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="form-group">
+              <label data-i18n="labelName">Имя роутера</label>
+              <input type="text" class="sk-input" id="connName" name="router-name" autocomplete="nickname" data-i18n-placeholder="placeholderName" placeholder="Необязательно">
             </div>
-          </div>
-          <div class="form-row" style="margin-top:23px">
-            <button type="submit" data-i18n="btnSaveConn">Сохранить</button>
-            <button type="button" class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
-          </div>
-        </form>
+            <div class="form-group">
+              <label data-i18n="labelUrl">URL сервера</label>
+              <input type="url" class="sk-input" id="connUrl" name="server-url" autocomplete="username" placeholder="http://192.168.1.1:3000">
+            </div>
+            <div class="form-group">
+              <label data-i18n="labelKey">Секрет</label>
+              <div class="password-wrapper">
+                <input type="password" class="sk-input" id="connKey" name="server-secret" autocomplete="new-password" data-i18n-placeholder="placeholderKey" placeholder="Секретный ключ">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('connKey', this)" title="Показать секрет" data-i18n-title="btnShowPassword" aria-label="Toggle password visibility">
+                  <span data-icon="eye"></span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="form-row connection-pane-footer">
+          <button type="submit" form="connectionForm" data-i18n="btnSaveConn">Сохранить</button>
+          <button type="button" class="secondary" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
+        </div>
       </div>
 
       <!-- Misc Tab -->
@@ -2914,7 +2941,6 @@ input[type="checkbox"].sk-checkbox:disabled {
             <option value="en">English</option>
           </select>
         </div>
-
         <div class="spacer-v-10"></div>
         <div class="form-row modal-footer-row">
           <button type="button" class="secondary width-100" onclick="closeConnModal()" data-i18n="btnClose">Закрыть</button>
@@ -3783,7 +3809,7 @@ function setupCustomSelects(root = document) {
     select.tabIndex = -1;
 
     select.insertAdjacentElement('afterend', wrapper);
-    document.getElementById('customSelectors').appendChild(menu);
+    wrapper.insertAdjacentElement('afterend', menu);
 
     // Prevent service menu clicks from closing the service drawer.
     if (select.id === 'serviceSelect') {
