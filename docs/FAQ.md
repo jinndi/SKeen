@@ -34,7 +34,7 @@ Notes:
   <summary>2. Web UI?</summary>
 <br>
 
-Unlike bloated control panels built with Python, Go, or even Rust (which consume anywhere from 12 to 45+ MB of RAM), our solution is written in pure Lua and uses just **~3 MB of RAM**. The entire backend with the frontend is delivered as a single compact file under **150 KB**, alongside the essential Lua (~20 KB) and LuaSocket (~250 KB) packages.
+Unlike bloated control panels built with Python, Go, or even Rust (which consume anywhere from 6 to 45+ MB of RAM), our solution is written in pure Lua and uses just **~4 MB of RAM**. The entire backend with the frontend is delivered as a single compact file under **100 KB**, alongside the essential Lua (~20 KB) and LuaSocket (~250 KB) packages.
 
 For flexible automation and sing-box configuration synchronization, you can—and should—continue using external tools: [Sub-Store-Docker](https://github.com/jinndi/Sub-Store-Docker) in a Docker container on a VPS or local host, [Sub-Store-GUI](https://github.com/jinndi/sub-store-gui) on Desktop, or the [sync plugin](https://github.com/jinndi/sync-profile-to-skeen) via [GUI.for.SingBox](https://github.com/GUI-for-Cores/GUI.for.SingBox).
 
@@ -191,7 +191,7 @@ P.S. sing-box 1.15.0-alpha.6
 
 Thanks to its lightweight Lua backend, SKeen API delivers minimal system resource consumption on router hardware (under MIPS/ARM embedded environments):
 
-- **Lua (SKeen API)**: **2–3 MB RAM** — peak efficiency with a minimal script footprint and zero bloat.
+- **Lua (SKeen API)**: **3–5 MB RAM** — peak efficiency with a minimal script footprint and zero bloat.
 - **Rust** *(framework-dependent)*: **3–15 MB RAM** — performance close to Lua when using low-level synchronous libraries (`tiny_http`), but comes with complex cross-compilation and a bloated binary size.
 - **Go** *(net/http)*: **12–25 MB RAM** — persistent memory overhead caused by the embedded runtime, garbage collector, and goroutine scheduler.
 - **Python** *(FastAPI / Flask)*: **25–45+ MB RAM** — excessively heavy for a router environment due to the CPython interpreter and external dependencies.
