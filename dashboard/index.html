@@ -69,13 +69,13 @@
   --code-color: var(--text-color);
 }
 
+/* ==========================================================================
+   2. Base Resets & Layout
+   ========================================================================== */
 * {
   box-sizing: border-box;
 }
 
-/* ==========================================================================
-   2. Base Resets & Layout
-   ========================================================================== */
 html,
 body {
   height: 100%;
@@ -386,7 +386,6 @@ button.success-btn:hover {
 }
 
 /* Form Fields & Selects */
-select.conn-select,
 select,
 input {
   appearance: none;
@@ -421,7 +420,6 @@ input[type="password"] {
   cursor: text;
 }
 
-select.conn-select:hover,
 select:hover,
 input[type="text"]:hover,
 input[type="number"]:hover,
@@ -430,7 +428,6 @@ input[type="password"]:hover {
   border-color: var(--border-focus);
 }
 
-select.conn-select:focus,
 select:focus,
 input[type="text"]:focus,
 input[type="number"]:focus,
@@ -2305,61 +2302,15 @@ select.sk-select-source {
 
 
 /* ==========================================================================
-   16. Custom Inputs
+   16. Custom Input Spacing
    ========================================================================== */
-input[type="text"].sk-input,
-input[type="number"].sk-input,
-input[type="url"].sk-input,
-input[type="password"].sk-input,
-.sk-input {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-color: var(--code-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
+input.sk-input {
   padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-size: 0.88rem;
-  width: 100%;
-  transition: var(--transition-fast);
-  outline: none;
-  cursor: text;
-  min-width: 0;
 }
 
 input[type="text"].sk-input.cursor-pointer {
   cursor: pointer;
 }
-
-input[type="text"].sk-input:hover,
-input[type="number"].sk-input:hover,
-input[type="url"].sk-input:hover,
-input[type="password"].sk-input:hover,
-.sk-input:hover {
-  border-color: var(--border-focus);
-}
-
-input[type="text"].sk-input:focus,
-input[type="number"].sk-input:focus,
-input[type="url"].sk-input:focus,
-input[type="password"].sk-input:focus,
-.sk-input:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-input[type="text"].sk-input.invalid-input,
-input[type="number"].sk-input.invalid-input,
-input[type="url"].sk-input.invalid-input,
-input[type="password"].sk-input.invalid-input,
-.sk-input.invalid-input {
-  border-color: var(--danger-color) !important;
-  box-shadow: 0 0 0 2px rgba(243, 139, 168, 0.3) !important;
-  background-color: rgba(243, 139, 168, 0.05) !important;
-}
-
 
 /* Password Input Toggle Wrapper */
 .password-wrapper {
@@ -2609,6 +2560,7 @@ input[type="checkbox"].sk-checkbox:disabled {
 
 <body>
 
+<!-- Dashboard application -->
 <div class="container">
   <!-- Navbar -->
   <div class="navbar">
@@ -2639,6 +2591,7 @@ input[type="checkbox"].sk-checkbox:disabled {
     </div>
   </div>
 
+  <!-- Main dashboard tabs -->
   <!-- Tab 1: SKeen Management -->
   <div id="skeenTab" class="tab-content active">
     <div class="surface surface--card card flex-col-gap-10">
@@ -2784,6 +2737,7 @@ input[type="checkbox"].sk-checkbox:disabled {
   <!-- Custom Selector Wrapper-->
   <div id="customSelectors"></div>
 
+  <!-- Shared overlays and dialogs -->
   <!-- System Telemetry Modal -->
   <div id="sysTelemetryModal" class="modal">
     <div class="surface surface--dialog modal-content modal-content--md">
@@ -3124,7 +3078,7 @@ function initIcons(root = document) {
 }
 
 
-    /* ==========================================================================
+/* ==========================================================================
    Localization & Dictionaries
    ========================================================================== */
 const translations = {
@@ -4801,7 +4755,7 @@ function executeSwitchTab(tabId, btn, save) {
 }
 
 /* ==========================================================================
-   Sevices Selector & Dynamic Loading
+   Services Selector & Dynamic Loading
    ========================================================================== */
 const baseServices = [
   { host: "sing-box-dashboard.sagernet.org", label: "SagerNet", code: 1 },
@@ -5036,6 +4990,9 @@ window.addEventListener('blur', () => {
   }
 });
 
+/* ==========================================================================
+   Service Help Template & Modal Tab Navigation
+   ========================================================================== */
 function getHelpTemplate() {
   const lang = languageState.currentLang || 'en';
   const t = helpDict[lang] || helpDict.en;
