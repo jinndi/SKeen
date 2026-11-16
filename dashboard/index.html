@@ -1280,10 +1280,21 @@ label {
 #connList {
   max-height: 180px;
   overflow-y: auto;
-  padding-right: 2px;
+  padding: 0 5px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  background-color: var(--card-hover);
+  justify-content: center;
+  min-height: 60px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-md);
+}
+
+#formTitle {
+  color: var(--text-muted);
+  padding: 0 5px;
+  margin-bottom: 10px;
 }
 
 ::-webkit-scrollbar {
@@ -1696,12 +1707,6 @@ label {
 
 .modal-title-margin-4 {
   margin-bottom: 4px;
-}
-
-.hr-custom {
-  border-color: var(--border-color);
-  width: 100%;
-  margin: 4px 0;
 }
 
 .modal-h3-title {
@@ -2863,7 +2868,6 @@ input[type="checkbox"].sk-checkbox:disabled {
       <div id="connectionsPane" class="modal-tab-content active">
         <div class="connection-pane">
           <div id="connList"></div>
-          <hr class="hr-custom">
           <h3 id="formTitle" class="modal-h3-title" data-i18n="formTitleAdd">Добавить новое подключение</h3>
           <form id="connectionForm" onsubmit="event.preventDefault(); saveConnection();">
             <input type="hidden" id="editIndex" value="-1">
@@ -3136,7 +3140,7 @@ const translations = {
   btnHidePassword: { ru: "Скрыть секрет", en: "Hide secret" },
   btnClose: { ru: "Закрыть", en: "Close" },
   noConnections: { ru: "-- Нет подключений --", en: "-- No connections --" },
-  emptyList: { ru: "Список пуст.", en: "List is empty." },
+  emptyList: { ru: "Список подключений пуст.", en: "Connection list is empty." },
   btnEdit: { ru: "Изменить", en: "Edit" },
   btnDelete: { ru: "Удалить", en: "Delete" },
   statusLoaded: { ru: "Файл успешно загружен", en: "File successfully loaded" },
@@ -4418,7 +4422,7 @@ function renderConnList() {
   const listEl = document.getElementById('connList');
   listEl.innerHTML = '';
   if (connectionState.connections.length === 0) {
-    listEl.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem;">${t('emptyList')}</div>`;
+    listEl.innerHTML = `<div style="text-align:center;color:var(--text-muted);font-size: 0.82rem;">${t('emptyList')}</div>`;
     return;
   }
   connectionState.connections.forEach((conn, index) => {
@@ -5027,6 +5031,12 @@ function getHelpTemplate() {
 }
 
 function switchModalTab(paneId, btn) {
+  const dialog = document.querySelector('#connModal .modal-content');
+  if (paneId === 'miscPane') {
+    dialog.style.height = `${dialog.getBoundingClientRect().height}px`;
+  } else {
+    dialog.style.height = '';
+  }
   document.querySelectorAll('.modal-tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.modal-tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById(paneId).classList.add('active');
