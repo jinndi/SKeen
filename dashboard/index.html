@@ -1877,11 +1877,12 @@ body.preload * {
 /* ==========================================================================
    12. System Telemetry Modal Styles & Progress Bars
    ========================================================================== */
-.telemetry-metrics-grid {
+.telemetry-section {
+  padding: 5px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 8px;
+  font-size: 0.85rem;
 }
 
 .telemetry-metric-item {
@@ -1920,27 +1921,13 @@ body.preload * {
   transition: width 0.4s ease, background-color 0.4s ease;
 }
 
-.telemetry-network-panel {
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.85rem;
-}
-
-.telemetry-net-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .telemetry-label {
   color: var(--text-muted);
   font-size: 0.8rem;
 }
 
 .telemetry-val {
-  font-weight: 600;
+  font-weight: 500;
   font-family: var(--font-code);
 }
 
@@ -2744,30 +2731,30 @@ input[type="checkbox"].sk-checkbox:disabled {
       <h2 data-i18n="telemetryModalTitle" class="modal-title-margin-4">Системная телеметрия</h2>
 
       <!-- Device Uptime and Load Average Panel -->
-      <div class="surface surface--inset telemetry-network-panel">
-        <div class="telemetry-net-row">
+      <div class="surface--inset telemetry-section">
+        <div class="telemetry-metric-header">
           <span class="telemetry-label" data-i18n="deviceLabel">Устройство:</span>
           <span id="telDeviceModel" class="telemetry-val">-</span>
         </div>
-        <div class="telemetry-net-row">
+        <div class="telemetry-metric-header">
           <span class="telemetry-label" data-i18n="netUptime">Аптайм:</span>
           <span id="telUptimeVal" class="telemetry-val">-</span>
         </div>
-        <div class="telemetry-net-row">
+        <div class="telemetry-metric-header">
           <span class="telemetry-label" data-i18n="netLoadAvg">LoadAvg (1/5/15m):</span>
           <span id="telLoadAvgVal" class="telemetry-val">-</span>
         </div>
       </div>
 
-      <div class="surface surface--inset telemetry-metrics-grid">
+      <div class="surface--inset telemetry-section">
         <!-- CPU Load -->
         <div class="telemetry-metric-item">
           <div class="telemetry-metric-header">
             <span class="telemetry-label" data-i18n="metricCpu">ЦП</span>
-            <span class="telemetry-val" style="display: flex; gap: 10px;">
-              <span id="telCpuVal">0%</span>
-              <span>/</span>
-              <span id="telCpuTemp">0°C</span>
+            <span class="flex-row-gap-8">
+              <span id="telCpuVal" class="telemetry-val">0%</span>
+              <span class="telemetry-val">/</span>
+              <span id="telCpuTemp" class="telemetry-val">0°C</span>
             </span>
           </div>
           <div class="telemetry-progress-track">
@@ -2810,21 +2797,20 @@ input[type="checkbox"].sk-checkbox:disabled {
       </div>
 
       <!-- Network and Connections -->
-      <div class="surface surface--inset telemetry-network-panel">
-        <div class="telemetry-net-row">
+      <div class="surface--inset telemetry-section">
+        <div class="telemetry-metric-header">
           <span class="telemetry-label" data-i18n="netIface">Интерфейс:</span>
           <span id="telNetIface" class="telemetry-val">-</span>
         </div>
-        <div class="telemetry-net-row">
+        <div class="telemetry-metric-header">
           <span class="telemetry-label" data-i18n="netRx">Загрузка:</span>
           <span id="telRxSpeed" class="telemetry-val">0 B/s</span>
         </div>
-        <div class="telemetry-net-row">
+        <div class="telemetry-metric-header">
           <span class="telemetry-label" data-i18n="netTx">Отдача:</span>
           <span id="telTxSpeed" class="telemetry-val">0 B/s</span>
         </div>
-        <hr class="hr-custom" style="margin: 4px 0;">
-        <div class="telemetry-net-row">
+        <div class="telemetry-metric-header">
           <span class="telemetry-label" data-i18n="netConns">Соединений:</span>
           <span id="telConnCount" class="telemetry-val">0</span>
         </div>
