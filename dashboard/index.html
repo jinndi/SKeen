@@ -746,6 +746,11 @@ label {
   scrollbar-color: var(--border-color) var(--code-bg);
 }
 
+#connList {
+  scrollbar-width: auto;
+  scrollbar-color: var(--border-color) var(--card-bg);
+}
+
 #formEditorContainer {
   scrollbar-width: none;
 }
@@ -753,7 +758,8 @@ label {
 /* Chrome, Edge, Safari */
 .output-wrapper::-webkit-scrollbar,
 .code-editor-wrapper::-webkit-scrollbar,
-.sk-select-menu::-webkit-scrollbar {
+.sk-select-menu::-webkit-scrollbar,
+#connList::-webkit-scrollbar {
   width: 14px;
   height: 14px;
 }
@@ -768,7 +774,8 @@ label {
   border-radius: 7px;
 }
 
-.sk-select-menu::-webkit-scrollbar-track {
+.sk-select-menu::-webkit-scrollbar-track,
+#connList::-webkit-scrollbar-track {
   background: var(--card-bg);
   border-radius: 7px;
 }
@@ -780,7 +787,8 @@ label {
   border: 3px solid var(--code-bg);
 }
 
-.sk-select-menu::-webkit-scrollbar-thumb {
+.sk-select-menu::-webkit-scrollbar-thumb,
+#connList::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 7px;
   border: 3px solid var(--card-bg);
@@ -788,13 +796,15 @@ label {
 
 .output-wrapper::-webkit-scrollbar-thumb:hover,
 .code-editor-wrapper::-webkit-scrollbar-thumb:hover,
-.sk-select-menu::-webkit-scrollbar-thumb:hover {
+.sk-select-menu::-webkit-scrollbar-thumb:hover,
+#connList::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary, #888);
 }
 
 .output-wrapper::-webkit-scrollbar-corner,
 .code-editor-wrapper::-webkit-scrollbar-corner,
-.sk-select-menu::-webkit-scrollbar-corner {
+.sk-select-menu::-webkit-scrollbar-corner,
+#connList::-webkit-scrollbar-corner {
   background: var(--code-bg);
 }
 
@@ -1278,17 +1288,24 @@ label {
 }
 
 #connList {
-  max-height: 180px;
+  max-height: 175px;
+  min-height: 58px;
   overflow-y: auto;
   padding: 0 5px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   background-color: var(--card-hover);
-  justify-content: center;
-  min-height: 60px;
+  justify-content: flex-start;
   margin-bottom: 10px;
   border-radius: var(--radius-md);
+}
+
+.conn-list-empty {
+  margin: auto;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-align: center;
 }
 
 #formTitle {
@@ -1318,6 +1335,7 @@ label {
 .conn-item {
   padding: 2px 5px;
   display: flex;
+  flex: 0 0 46px;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
@@ -3070,6 +3088,7 @@ const ICON_REGISTRY = {
   themeDark: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>',
   globe: '<circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>',
   edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>',
+  x: '<path d="M18 6 6 18M6 6l12 12"></path>',
   lightning: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>',
   box: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.27 6.96L12 12.01l8.73-5.05"></path><path d="M12 22.08V12"></path>',
   shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>',
@@ -3163,6 +3182,7 @@ const translations = {
   noConnections: { ru: "-- Нет подключений --", en: "-- No connections --" },
   emptyList: { ru: "Список подключений пуст.", en: "Connection list is empty." },
   btnEdit: { ru: "Изменить", en: "Edit" },
+  btnCancelEdit: { ru: "Отменить редактирование", en: "Cancel editing" },
   btnDelete: { ru: "Удалить", en: "Delete" },
   statusLoaded: { ru: "Файл успешно загружен", en: "File successfully loaded" },
   statusSaved: { ru: "Файл успешно сохранен. Перезапустите SKeen для применения изменений", en: "File successfully saved. Restart SKeen to apply changes" },
@@ -4425,8 +4445,8 @@ function initConnections() {
 }
 
 function openConnModal() {
-  renderConnList();
   clearConnForm();
+  renderConnList();
   setModalState('connModal', true);
 }
 
@@ -4443,7 +4463,10 @@ function renderConnList() {
   const listEl = document.getElementById('connList');
   listEl.innerHTML = '';
   if (connectionState.connections.length === 0) {
-    listEl.innerHTML = `<div style="text-align:center;color:var(--text-muted);font-size: 0.82rem;">${t('emptyList')}</div>`;
+    const emptyMessage = document.createElement('div');
+    emptyMessage.className = 'conn-list-empty';
+    emptyMessage.textContent = t('emptyList');
+    listEl.appendChild(emptyMessage);
     return;
   }
   connectionState.connections.forEach((conn, index) => {
@@ -4500,9 +4523,17 @@ function renderConnList() {
     const editButton = document.createElement('button');
     editButton.type = 'button';
     editButton.className = 'icon-btn-sm secondary';
-    editButton.title = t('btnEdit');
-    editButton.appendChild(renderIcon('edit'));
-    editButton.addEventListener('click', () => editConnection(index));
+    const isEditing = Number.parseInt(document.getElementById('editIndex').value, 10) === index;
+    editButton.title = t(isEditing ? 'btnCancelEdit' : 'btnEdit');
+    editButton.appendChild(renderIcon(isEditing ? 'x' : 'edit'));
+    editButton.addEventListener('click', () => {
+      if (Number.parseInt(document.getElementById('editIndex').value, 10) === index) {
+        clearConnForm();
+        renderConnList();
+      } else {
+        editConnection(index);
+      }
+    });
 
     const deleteButton = document.createElement('button');
     deleteButton.type = 'button';
@@ -4569,12 +4600,11 @@ async function saveConnection() {
   } else {
     connectionState.connections[editIndex] = newConn;
   }
-
   storageSet('keen_connections', JSON.stringify(connectionState.connections));
   storageSet('keen_active_index', connectionState.activeIndex);
   if (previousUrl && previousUrl !== url) connectionState.pingStatus.delete(previousUrl);
-  renderConnList();
   clearConnForm();
+  renderConnList();
   initConnections();
   restartConnectionPingPolling();
   fetchServiceStatus();
@@ -4588,6 +4618,7 @@ function editConnection(index) {
   document.getElementById('connKey').value = conn.apiKey || '';
   document.getElementById('editIndex').value = index;
   document.getElementById('formTitle').textContent = t('formTitleEdit');
+  renderConnList();
 }
 
 function deleteConnection(index) {
@@ -4599,8 +4630,8 @@ function deleteConnection(index) {
     storageSet('keen_connections', JSON.stringify(connectionState.connections));
     storageSet('keen_active_index', connectionState.activeIndex);
     connectionState.pingStatus.clear();
-    renderConnList();
     clearConnForm();
+    renderConnList();
     initConnections();
     restartConnectionPingPolling();
     updateServiceFrameUrl();
