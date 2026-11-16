@@ -69,7 +69,7 @@ skeen deps
   - Safe request execution wrapped in `pcall` to ensure socket cleanup and prevent file descriptor leaks during connection drops.
 
 - **Performance Optimization & Compression**:
-  - Built-in TTL caches for SKeen system status calls and hardware telemetry (refreshed every 2–3 seconds), significantly reducing router CPU load during frequent web dashboard polling.
+  - The SKeen status cache refreshes every 3 seconds, and the aggregate system telemetry cache every 2 seconds. The default interface name has a separate 5-second cache, while `/opt` disk usage is cached for 30 seconds.
   - **Gzip Compression Support**: The server checks the client's `Accept-Encoding` header. If `gzip` is supported, text responses, JSON, and HTML pages are compressed "on the fly" with a `Content-Encoding: gzip` header to minimize network bandwidth consumption.
 
 - **Data Format**: JSON. JSON files read through `GET /api/file` are parsed and normalized with `jsonfilter`.
@@ -266,7 +266,7 @@ Retrieves hardware metrics and system resource load (CPU, RAM, SWAP, Entware `/o
 
 - **Authentication**: Required.
 
-- **Feature**: Cached for 2 seconds (TTL) in the Lua daemon to minimize CPU overhead on the router.
+- **Feature**: The aggregate response is cached for 2 seconds (TTL) in the Lua daemon. Within it, the default interface name is refreshed at most every 5 seconds, and `/opt` disk usage at most every 30 seconds.
 
 #### Response Field Reference:
 
