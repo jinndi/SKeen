@@ -143,17 +143,6 @@ body {
   justify-content: flex-end;
 }
 
-@media (max-width: 319px) {
-  .navbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .nav-controls {
-    justify-content: space-between;
-  }
-}
-
 
 
 /* ==========================================================================
@@ -297,8 +286,8 @@ button.success-btn:hover {
 
 .fullscreen-icon-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 12px;
+  right: 16px;
   z-index: 20;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -312,7 +301,7 @@ button.success-btn:hover {
 }
 
 .fold-all-btn {
-  right: 44px;
+  right: 50px;
 }
 
 .fullscreen-icon-btn:hover {
@@ -362,9 +351,9 @@ button.success-btn:hover {
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   transition: var(--transition-fast);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 .tab-btn:hover {
@@ -449,6 +438,12 @@ select.conn-select {
   min-width: 70px;
   max-width: 180px;
   text-overflow: ellipsis;
+}
+
+select.config-file-select {
+  width: fit-content;
+  min-width: 125px;
+  max-width: min(220px, 40vw);
 }
 
 /* Checkbox Customization */
@@ -618,6 +613,63 @@ h2::before {
   gap: 6px;
   font-weight: 600;
   font-size: 0.85rem;
+}
+
+.service-details {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.service-detail {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background-color: var(--card-hover);
+}
+
+.service-detail-label {
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.service-detail-value {
+  max-width: 160px;
+  overflow: hidden;
+  color: var(--text-color);
+  font-family: var(--font-code);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-details-message {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 420px) {
+  #serviceDetails .service-detail:nth-child(2) {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  #serviceDetails .service-detail:nth-child(3) {
+    display: none;
+  }
 }
 
 .status-dot {
@@ -941,7 +993,7 @@ label {
 
 .form-section {
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 12px;
+  padding: 0 20px 20px 12px;
   margin-left: 0;
   min-width: 0;
 }
@@ -965,20 +1017,11 @@ label {
 
 .form-setting-row {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: stretch;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   gap: 6px;
   min-width: 0;
-}
-
-@media (min-width: 480px) {
-  .form-setting-row {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
 }
 
 .form-setting-row label {
@@ -993,19 +1036,13 @@ label {
   min-width: 0;
 }
 
-@media (min-width: 480px) {
-  .form-setting-row label {
-    justify-content: flex-start;
-  }
-}
-
 @media (max-width: 479px) {
-  .form-setting-row:has(input[type="checkbox"]) {
-    flex-direction: row !important;
-    justify-content: space-between;
-    align-items: center;
+  .form-section {
+    padding: 0 0 12px 0;
   }
-
+  .form-setting-row {
+    margin-bottom: 16px;
+  }
   .form-setting-row:has(input[type="checkbox"]) .form-setting-input {
     flex: 0 0 auto;
     width: auto;
@@ -1030,13 +1067,12 @@ label {
 .help-btn {
   background-color: var(--card-hover);
   color: var(--text-muted);
-  border: 1px solid var(--border-color);
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  max-width: 16px;
-  min-height: 16px;
-  max-height: 16px;
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+  max-width: 15px;
+  min-height: 15px;
+  max-height: 15px;
   border-radius: 50%;
   font-size: 10px;
   font-weight: 700;
@@ -1049,7 +1085,7 @@ label {
   line-height: 1;
   transition: var(--transition-fast);
   box-sizing: border-box;
-  margin: 0 6px 0 0;
+  margin: 4px 6px 0 0;
   vertical-align: middle;
 }
 
@@ -1685,6 +1721,45 @@ label {
   flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
+  margin-bottom: clamp(4px, 2vw, 12px);
+}
+
+.config-editor-header {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.config-editor-title {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-file-selector {
+  flex: 0 1 auto;
+  width: fit-content;
+  min-width: 125px;
+  max-width: min(220px, 40vw);
+}
+
+@media (max-width: 319px) {
+  .config-editor-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .config-editor-title {
+    flex: none;
+  }
+
+  .config-file-selector {
+    align-self: flex-start;
+  }
 }
 
 .flex-row-center-6 {
@@ -1742,10 +1817,6 @@ label {
   min-height: 0;
   margin-bottom: 0;
   margin-top: 4px;
-}
-
-.label-margin-4 {
-  margin-bottom: 4px;
 }
 
 .modal-title-margin-4 {
@@ -1857,6 +1928,10 @@ label {
   select.conn-select {
     max-width: 110px;
     padding-right: 22px;
+  }
+
+  select.config-file-select {
+    max-width: min(220px, 40vw);
   }
 
   button {
@@ -2223,6 +2298,19 @@ select.sk-select-source {
   height: 36px;
   min-width: 70px;
   max-width: 220px;
+}
+
+.sk-select.config-file-select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sk-select.config-file-select .sk-select-trigger {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .sk-select.select-lang {
@@ -2695,7 +2783,7 @@ input[type="checkbox"].sk-checkbox:disabled {
           <div id="serviceDot" class="status-dot"></div>
           <span id="serviceStatusText" data-i18n="statusChecking">Проверка состояния...</span>
         </div>
-        <div class="text-version" id="serviceDetails"></div>
+        <div id="serviceDetails" class="service-details" aria-live="polite"></div>
       </div>
 
       <!-- Dynamic Action Buttons -->
@@ -2717,7 +2805,6 @@ input[type="checkbox"].sk-checkbox:disabled {
 
       <!-- Terminal Output -->
       <div class="form-group terminal-group">
-        <label data-i18n="outputLabel" class="label-margin-4">Вывод (stdout / stderr):</label>
         <div class="terminal-container">
           <button type="button" class="terminal-clear-btn" onclick="clearTerminalOutput()" title="Очистить"
             data-i18n-title="btnClearOutput">
@@ -2732,10 +2819,10 @@ input[type="checkbox"].sk-checkbox:disabled {
   <!-- Tab 2: Configuration Editor -->
   <div id="configsTab" class="tab-content">
     <div class="surface surface--card card editor-card">
-      <div class="flex-row-between">
-        <h2 class="border-none padding-0" style="margin-bottom: auto;" data-i18n="jsonCardTitle">Конфигурация</h2>
-        <div class="flex-row-center-6">
-          <select id="configFileSelect" class="conn-select flex-1" onchange="handleFileSelectChange()">
+      <div class="config-editor-header">
+        <h2 class="config-editor-title border-none padding-0" style="margin-bottom: auto;" data-i18n="jsonCardTitle">Конфигурация</h2>
+        <div class="config-file-selector">
+          <select id="configFileSelect" class="conn-select config-file-select" onchange="handleFileSelectChange()">
             <option value="" data-i18n="loadingList">Загрузка списка...</option>
           </select>
         </div>
@@ -3177,7 +3264,6 @@ const translations = {
   skeenCardTitle: { ru: "Управление SKeen", en: "SKeen Management" },
   extraActionLabel: { ru: "Дополнительные сервисные команды", en: "Extra Service Commands" },
   btnExecute: { ru: "Выполнить", en: "Execute" },
-  outputLabel: { ru: "Вывод (stdout / stderr):", en: "Output (stdout / stderr):" },
   waitingOutput: { ru: "Ожидание выполнения команды...", en: "Waiting for command execution..." },
   jsonCardTitle: { ru: "Конфигурация", en: "Configuration" },
   jsonPlaceholder: { ru: "Выберите файл...", en: "Select a file..." },
@@ -4628,6 +4714,7 @@ function renderConnList() {
 
 async function saveConnection() {
   if (connectionState.saveInProgress) return;
+  const hadActiveConnection = Boolean(getBaseUrl());
   const name = document.getElementById('connName').value.trim();
   const url = document.getElementById('connUrl').value.trim().replace(/\/$/, '');
   const apiKey = document.getElementById('connKey').value.trim();
@@ -4684,6 +4771,9 @@ async function saveConnection() {
   restartConnectionPingPolling();
   fetchServiceStatus();
   updateServiceFrameUrl();
+  if (!hadActiveConnection && document.getElementById('configsTab').classList.contains('active')) {
+    loadFileList({ refresh: true });
+  }
 }
 
 function editConnection(index) {
@@ -4861,7 +4951,9 @@ function executeChangeConnection(nextIndex) {
   showStatus('jsonStatus', t('statusSwitchedTo') + (getActiveConnection().name || getActiveConnection().url));
   fetchServiceStatus();
   updateServiceFrameUrl();
-  if (document.getElementById('configsTab').classList.contains('active')) loadFileList();
+  if (document.getElementById('configsTab').classList.contains('active')) {
+    loadFileList({ refresh: true });
+  }
 }
 
 function getHeaders() {
@@ -4887,12 +4979,6 @@ function getConfigConnectionKey() {
    UI Navigation & Tabs
    ========================================================================== */
 function switchTab(tabId, btn, save = true) {
-  if (tabId !== 'configsTab' && hasUnsavedChanges()) {
-    showConfirmModal(t('confirmUnsaved'), () => {
-      executeSwitchTab(tabId, btn, save);
-    });
-    return;
-  }
   executeSwitchTab(tabId, btn, save);
 }
 
@@ -4922,7 +5008,7 @@ function executeSwitchTab(tabId, btn, save) {
     updateServiceFrameUrl(true);
   } else if (tabId === 'configsTab') {
     if (getBaseUrl() && editorState.loadedConnectionKey !== getConfigConnectionKey()) {
-      loadFileList();
+      loadFileList({ refresh: true });
     }
   }
 }
@@ -6177,16 +6263,21 @@ function applyLanguage() {
 /* ==========================================================================
    API & Service Operations
    ========================================================================== */
-async function loadFileList(reloadConfig = true) {
+async function loadFileList({ reloadConfig = true, refresh = false } = {}) {
   const baseUrl = getBaseUrl();
   if (!baseUrl) { showAlertModal(t('alertNeedSetup'), openConnModal); return; }
   const select = document.getElementById('configFileSelect');
   const prevSelected = select.value;
+  const wasSelectDisabled = select.disabled;
 
-  togglePreloader(true);
+  if (reloadConfig) togglePreloader(true);
+  closeCustomSelectById('configFileSelect');
+  select.disabled = true;
+  refreshCustomSelects(select);
 
   try {
-    const res = await fetchWithTimeout(`${baseUrl}/api/files-list`, {
+    const listUrl = `${baseUrl}/api/files-list${refresh ? '?refresh=true' : ''}`;
+    const res = await fetchWithTimeout(listUrl, {
       method: 'GET',
       headers: getHeaders()
     });
@@ -6198,7 +6289,8 @@ async function loadFileList(reloadConfig = true) {
     }
     if (files.length === 0) {
       select.innerHTML = `<option value="">${t('noFilesAvailable')}</option>`;
-      togglePreloader(false);
+      refreshCustomSelects(select);
+      if (reloadConfig) togglePreloader(false);
       return;
     }
 
@@ -6218,11 +6310,16 @@ async function loadFileList(reloadConfig = true) {
     editorState.currentSelectedFile = select.value;
 
     if (reloadConfig) await loadConfigFile();
-    else togglePreloader(false);
   } catch (e) {
-    select.innerHTML = `<option value="">${t('errorLoadList')}</option>`;
+    if (!refresh) {
+      select.innerHTML = `<option value="">${t('errorLoadList')}</option>`;
+      refreshCustomSelects(select);
+    }
     showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
-    togglePreloader(false);
+    if (reloadConfig) togglePreloader(false);
+  } finally {
+    select.disabled = wasSelectDisabled;
+    refreshCustomSelects(select);
   }
 }
 
@@ -6382,10 +6479,7 @@ async function saveConfigFile() {
     showStatus('jsonStatus', t('statusSaved'));
 
     if (fileKey === 'skeen') {
-      await loadFileList(false);
-      fileSelect.value = 'skeen';
-      refreshCustomSelects(fileSelect);
-      editorState.currentSelectedFile = 'skeen';
+      await loadFileList({ reloadConfig: false, refresh: true });
     }
   } catch (e) {
     showStatus('jsonStatus', `${t('errorPrefix')}${e.message}`, true);
@@ -6468,6 +6562,31 @@ async function fetchServiceStatus() {
   }
 }
 
+function renderServiceDetails(details, items) {
+  if (!details) return;
+
+  const fragments = [];
+  items.forEach(({ label, value }) => {
+    if (value === undefined || value === null || value === '') return;
+
+    const item = document.createElement('div');
+    item.className = 'service-detail';
+
+    const labelElement = document.createElement('span');
+    labelElement.className = 'service-detail-label';
+    labelElement.textContent = label;
+
+    const valueElement = document.createElement('span');
+    valueElement.className = 'service-detail-value';
+    valueElement.textContent = String(value);
+
+    item.append(labelElement, valueElement);
+    fragments.push(item);
+  });
+
+  details.replaceChildren(...fragments);
+}
+
 function updateStatusBadge(data, isOffline = false) {
   const verEl = document.getElementById('headerApiVersion');
   const dot = document.getElementById('serviceDot');
@@ -6477,7 +6596,12 @@ function updateStatusBadge(data, isOffline = false) {
   if (isOffline) {
     if (dot) dot.className = 'status-dot inactive';
     if (text) text.textContent = t('statusServerUnavailable');
-    if (details) details.textContent = t('statusNoConnection');
+    if (details) {
+      const message = document.createElement('span');
+      message.className = 'service-details-message';
+      message.textContent = t('statusNoConnection');
+      details.replaceChildren(message);
+    }
     return;
   }
 
@@ -6486,15 +6610,17 @@ function updateStatusBadge(data, isOffline = false) {
   if (data.running) {
     if (dot) dot.className = 'status-dot active';
     if (text) text.textContent = t('statusActive');
-    if (details) {
-      details.textContent = `${t('statusMode')}: ${data.mode} | SKeen: v${data.version} | Sing-box: v${data.sb_version}`;
-    }
+    renderServiceDetails(details, [
+      { label: t('statusMode'), value: data.mode },
+      { label: 'SKeen', value: data.version ? `v${data.version}` : '' },
+      { label: 'Sing-box', value: data.sb_version ? `v${data.sb_version}` : '' }
+    ]);
   } else {
     if (dot) dot.className = 'status-dot inactive';
     if (text) text.textContent = t('statusInactive');
-    if (details) {
-      details.textContent = data.version ? `SKeen: v${data.version}` : '';
-    }
+    renderServiceDetails(details, [
+      { label: 'SKeen', value: data.version ? `v${data.version}` : '' }
+    ]);
   }
 }
 
