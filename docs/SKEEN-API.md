@@ -237,6 +237,9 @@ Retrieves SKeen system status and API version.
 - **Authentication**: Required.
 
 - **Feature**: Data is served from a local TTL cache (3-second lifetime), eliminating redundant system process spawns during high-frequency UI polling.
+- `running` indicates whether Sing-box is running: its PID is read from `/tmp/run/skeen.pid` and checked via `/proc/<pid>`.
+- If Sing-box is stopped, the remaining data is not queried; `mode`, `version`, and `sb_version` are returned as `"unknown"`.
+- If Sing-box is running, `mode` and the SKeen version (`version`) are read from the firewall hook. The Sing-box version (`sb_version`) is read from `/tmp/.skeen/version`; if the cache does not exist yet, `status --json` is called to initialize it.
 
 #### Request Example:
 
@@ -251,10 +254,23 @@ curl -X GET http://192.168.1.1:3000/api/status \
 {
   "success": true,
   "running": true,
-  "mode": "sing-box",
-  "version": "1.2.0",
-  "sb_version": "1.8.0",
-  "api_version": "1.0.0"
+  "mode": "tproxy",
+  "version": "5.13.0",
+  "sb_version": "1.14.0",
+  "api_version": "1.4.0"
+}
+```
+
+When Sing-box is stopped, the response keeps the same fields, but data requiring the firewall hook or version cache is not queried:
+
+```json
+{
+  "success": true,
+  "running": false,
+  "mode": "unknown",
+  "version": "unknown",
+  "sb_version": "unknown",
+  "api_version": "1.4.0"
 }
 ```
 
@@ -389,9 +405,8 @@ All JSON files, including `skeen.json` and Sing-box configurations, are processe
 {
   "success": true,
   "content": {
-    "mode": "rule",
-    "singbox": {
-      "auto_start": true
+    "auto_start": {
+      "enabled": true
     }
   }
 }

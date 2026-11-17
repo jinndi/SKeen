@@ -253,6 +253,9 @@ curl -X GET http://192.168.1.1:3000/api/ping \
 * **Авторизация**: Требуется.
 
 * **Особенность**: Данные отдаются из локального TTL-кэша (срок жизни — 3 секунды), исключая избыточный спам процессами в ОС при частом опросе.
+* Поле `running` показывает, работает ли Sing-box: PID берётся из `/tmp/run/skeen.pid`, а наличие процесса проверяется по `/proc/<pid>`.
+* Если Sing-box остановлен, остальные данные не запрашиваются: `mode`, `version` и `sb_version` возвращаются как `"unknown"`.
+* Если Sing-box работает, `mode` и версия SKeen (`version`) читаются из firewall hook. Версия Sing-box (`sb_version`) читается из `/tmp/.skeen/version`; если кэш ещё не создан, для его заполнения вызывается `status --json`.
 
 #### Пример запроса:
 
@@ -267,10 +270,23 @@ curl -X GET http://192.168.1.1:3000/api/status \
 {
   "success": true,
   "running": true,
-  "mode": "sing-box",
-  "version": "1.2.0",
-  "sb_version": "1.8.0",
-  "api_version": "1.0.0"
+  "mode": "tproxy",
+  "version": "5.13.0",
+  "sb_version": "1.14.0",
+  "api_version": "1.4.0"
+}
+```
+
+Если Sing-box остановлен, ответ сохраняет те же поля, но данные, для получения которых нужен firewall hook или кэш версии, не запрашиваются:
+
+```json
+{
+  "success": true,
+  "running": false,
+  "mode": "unknown",
+  "version": "unknown",
+  "sb_version": "unknown",
+  "api_version": "1.4.0"
 }
 ```
 

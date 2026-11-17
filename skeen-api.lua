@@ -9,8 +9,11 @@ local VERSION = "1.4.0"
 local SCRIPT = "/opt/bin/skeen-api"
 local LUA_BIN = "/opt/bin/lua"
 local PID_FILE = "/tmp/run/skeen-api.pid"
+local SKEEN_PID_FILE = "/tmp/run/skeen.pid"
 local SKEEN_RAM_SCRIPT = "/tmp/.skeen/skeen.sh"
 local SKEEN_OPT_SCRIPT = "/opt/bin/skeen"
+local SKEEN_VERSION_FILE = "/tmp/.skeen/version"
+local SKEEN_HOOK_FILE = "/opt/etc/ndm/netfilter.d/skeen_firewall.sh"
 local REPO_BASE_URL = "https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/static/"
 local VERSION_URL = REPO_BASE_URL .. "api-version"
 local SCRIPT_URL = REPO_BASE_URL .. "skeen-api"
@@ -1206,28 +1209,86 @@ end
 
 -- Get the real working status of SKeen
 local function get_skeen_status()
-  -- Resolve command line targeting memory-cached local script or fallback to global CLI
-  local cmd = get_skeen_cmd("status --json 2>&1")
-
-  local handle = io.popen(cmd)
-  local out = ""
-  if handle then
-    out = handle:read("*a") or ""
-    handle:close()
+  local function is_skeen_running()
+    local pid = tonumber((read_file(SKEEN_PID_FILE) or ""):match("^%s*(%d+)"))
+    return pid ~= nil and pid > 0 and pid % 1 == 0 and
+      read_file(string.format("/proc/%d/stat", pid)) ~= nil
   end
 
-  local success, data = pcall(json.decode, out)
-  if success and type(data) == "table" then
-    data.__order = nil
-    return data
+  local function get_skeen_hook_info()
+    local hook = read_file(SKEEN_HOOK_FILE)
+    if not hook then return "unknown", "unknown" end
+
+    local mode = "unknown"
+    local version = "unknown"
+    for line in hook:gmatch("[^\r\n]+") do
+      local parsed_version = line:match("^#%s*SKeen%s+v([%w%.%-]+)%s+firewall hook%s*$")
+      if parsed_version then
+        version = parsed_version
+      end
+
+      local value = line:match("^%s*export SKEEN_FIREWALL_MODE%s*=%s*(.-)%s*$")
+      if value then
+        value = value:gsub('^"(.*)"$', "%1"):gsub("^'(.*)'$", "%1")
+        if value:match("^[%w_.%-]+$") then mode = value end
+      end
+    end
+    return mode, version
   end
 
-  -- Safe default value in case status retrieval fails
+  local function read_cached_sb_version()
+    local cached_status = (read_file(SKEEN_VERSION_FILE) or ""):match("^%s*(.-)%s*$")
+    if not cached_status then return nil end
+
+    local _, _, _, _, _, sb_version =
+      cached_status:match("^([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)")
+    if not sb_version or sb_version == "" or not sb_version:match("^[%w_.%-]+$") then
+      return nil
+    end
+
+    return sb_version
+  end
+
+  -- Check Sing-box first. When it is stopped, do not read the cache, query
+  -- the shell status command, or inspect the firewall hook.
+  local running = is_skeen_running()
+  if not running then
+    return {
+      running = false,
+      version = "unknown",
+      mode = "unknown",
+      sb_version = "unknown"
+    }
+  end
+
+  local sb_version = read_cached_sb_version()
+
+  -- status --json initializes the version cache when it is missing. The
+  -- get_singbox_config --json command only returns the config path; it does
+  -- not create the version record.
+  if not sb_version then
+    local cmd = get_skeen_cmd("status --json 2>/dev/null")
+    local handle = io.popen(cmd)
+    local out = ""
+    if handle then
+      out = handle:read("*a") or ""
+      handle:close()
+    end
+
+    local success, data = pcall(json.decode, out)
+    if success and type(data) == "table" then
+      data.__order = nil
+      return data
+    end
+    sb_version = read_cached_sb_version()
+  end
+
+  local mode, skeen_version = get_skeen_hook_info()
   return {
-    running = false,
-    version = "unknown",
-    mode = "unknown",
-    sb_version = "unknown"
+    running = true,
+    version = skeen_version,
+    mode = mode,
+    sb_version = sb_version or "unknown"
   }
 end
 
