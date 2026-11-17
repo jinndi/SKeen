@@ -746,11 +746,6 @@ label {
   scrollbar-color: var(--border-color) var(--code-bg);
 }
 
-#connList {
-  scrollbar-width: auto;
-  scrollbar-color: var(--border-color) var(--card-bg);
-}
-
 #formEditorContainer {
   scrollbar-width: none;
 }
@@ -1198,7 +1193,7 @@ label {
 .connection-pane-footer {
   flex-shrink: 0;
   margin-top: 0;
-  padding-top: 8px;
+  padding-top: 20px;
 }
 
 .modal-tab-content.active {
@@ -1288,10 +1283,10 @@ label {
 }
 
 #connList {
-  max-height: 175px;
-  min-height: 58px;
+  max-height: 165px;
+  min-height: 50px;
   overflow-y: auto;
-  padding: 0 5px;
+  padding: 0 2px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1299,6 +1294,8 @@ label {
   justify-content: flex-start;
   margin-bottom: 10px;
   border-radius: var(--radius-md);
+  scrollbar-width: auto;
+  scrollbar-color: var(--border-color) var(--card-bg);
 }
 
 .conn-list-empty {
@@ -1333,9 +1330,10 @@ label {
 }
 
 .conn-item {
-  padding: 2px 5px;
+  height: 50px;
+  padding: 2px 2px;
   display: flex;
-  flex: 0 0 46px;
+  flex: 0 0 50px;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
