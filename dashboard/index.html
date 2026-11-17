@@ -2570,7 +2570,7 @@ input[type="checkbox"].sk-checkbox::after {
   left: 2px;
   width: 16px;
   height: 16px;
-  background-color: var(--text-muted);
+  background-color: var(--border-focus);
   border-radius: 50%;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease;
 }
@@ -2774,7 +2774,7 @@ input[type="checkbox"].sk-checkbox:disabled {
       <div class="flex-row-between">
         <h2 class="margin-0 border-none padding-0" data-i18n="skeenCardTitle">Управление SKeen</h2>
         <div class="flex-row-center-6">
-          <span id="headerApiVersion" class="text-version">API v0.0.0</span>
+          <span id="headerApiVersion" class="text-version"></span>
         </div>
       </div>
       <!-- Current Status Panel -->
@@ -6605,9 +6605,8 @@ function updateStatusBadge(data, isOffline = false) {
     return;
   }
 
-  if (verEl) verEl.textContent = `API v${data.api_version}`;
-
   if (data.running) {
+    if (verEl) verEl.textContent = `API v${data.api_version}`;
     if (dot) dot.className = 'status-dot active';
     if (text) text.textContent = t('statusActive');
     renderServiceDetails(details, [
@@ -6616,10 +6615,11 @@ function updateStatusBadge(data, isOffline = false) {
       { label: 'Sing-box', value: data.sb_version ? `v${data.sb_version}` : '' }
     ]);
   } else {
+    if (verEl) verEl.textContent = "";
     if (dot) dot.className = 'status-dot inactive';
     if (text) text.textContent = t('statusInactive');
     renderServiceDetails(details, [
-      { label: 'SKeen', value: data.version ? `v${data.version}` : '' }
+      { label: 'SKeen-API', value: data.api_version ? `v${data.api_version}` : '' }
     ]);
   }
 }
