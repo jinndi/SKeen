@@ -321,7 +321,7 @@ Retrieves list of configuration files allowed for reading and editing.
 
 - **Authentication**: Required.
 
-Dynamically queries file paths and structure from SKeen:
+On the first request, the API queries SKeen for file paths and structure and stores the resulting map in memory. Subsequent requests use that cached map:
 
 - `skeen`: Primary configuration file `skeen.json`.
 
@@ -329,10 +329,19 @@ Dynamically queries file paths and structure from SKeen:
 
 - `singbox` / `sb_file_*`: Sing-box configurations (`config.json` or directory map array) queried via CLI command `skeen get_singbox_config --json`.
 
+- **URL parameter**: The optional `refresh=true` parameter forces the cache to be rebuilt and returns the refreshed list. Use it after changing the location or set of configuration files. Without this parameter (or with another value), the current cache is returned.
+
 #### Request Example:
 
 ```bash
 curl -X GET http://192.168.1.1:3000/api/files-list \
+     -H "X-API-Key: your_secret_key"
+```
+
+#### Force a list refresh:
+
+```bash
+curl -X GET "http://192.168.1.1:3000/api/files-list?refresh=true" \
      -H "X-API-Key: your_secret_key"
 ```
 

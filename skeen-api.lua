@@ -870,7 +870,13 @@ local function write_raw_file(filepath, content)
 end
 
 -- Build a map of configuration files available for reading/editing via the API
-local function get_allowed_files_map()
+local allowed_files_map_cache
+
+local function get_allowed_files_map(refresh)
+  if allowed_files_map_cache and not refresh then
+    return allowed_files_map_cache
+  end
+
   local default_path = SKEEN_DIR .. DEFAULT_FILES.singbox
   local map = {
     ["skeen"]     = { path = SKEEN_DIR .. DEFAULT_FILES.skeen, type = "json", name = DEFAULT_FILES.skeen },
@@ -916,7 +922,8 @@ local function get_allowed_files_map()
     map["singbox"] = { path = path, type = "json", name = filename }
   end
 
-  return map
+  allowed_files_map_cache = map
+  return allowed_files_map_cache
 end
 
 -- Get the device model from /proc/device-tree/model, or return "Unknown" if unavailable
@@ -1639,9 +1646,11 @@ local function route_request(method, path, body, request_headers)
     local status = get_cached_system_status()
     status.success = true
     return json_response(status)
-  elseif path == "/api/files-list" and method == "GET" then
+  elseif (path == "/api/files-list" or path:match("^/api/files%-list%?")) and
+      method == "GET" then
+    local refresh_files = path:match("[?&]refresh=([^&]+)") == "true"
     local files_list = {}
-    for id, target in pairs(get_allowed_files_map()) do
+    for id, target in pairs(get_allowed_files_map(refresh_files)) do
       table.insert(files_list, { id = id, name = target.name })
     end
     table.sort(files_list, function(a, b) return a.id < b.id end)
