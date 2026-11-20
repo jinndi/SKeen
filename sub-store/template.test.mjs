@@ -5,12 +5,13 @@ import vm from 'node:vm'
 
 const templateSource = await readFile(new URL('./template.js', import.meta.url), 'utf8')
 
-async function runTemplate({ outbound, proxies, templateOutbounds }) {
+async function runTemplate({ outbound, proxies, templateOutbounds, countryUrltestTolerance }) {
   const context = {
     $arguments: {
       type: 'collection',
       name: 'test',
       outbound,
+      countryUrltestTolerance,
       includeUnsupportedProxy: false,
     },
     $content: JSON.stringify({
@@ -61,6 +62,69 @@ test('default rule adds nodes, country groups, and singleton countries in order'
     config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').outbounds,
     ['🇩🇪 Berlin', '🇩🇪 Frankfurt'],
   )
+})
+
+test('country urltest interval grows by 30 seconds per node and is capped at 30 minutes', async () => {
+  const config = await runTemplate({
+    outbound: '📂Main',
+    proxies: [
+      { tag: '🇩🇪 Berlin' },
+      { tag: '🇩🇪 Frankfurt' },
+      { tag: '🇸🇪 Sweden 1' },
+      { tag: '🇸🇪 Sweden 2' },
+      { tag: '🇸🇪 Sweden 3' },
+      { tag: '🇫🇮 Finland 1' },
+      { tag: '🇫🇮 Finland 2' },
+      { tag: '🇫🇮 Finland 3' },
+      { tag: '🇫🇮 Finland 4' },
+      ...Array.from({ length: 60 }, (_, index) => ({ tag: `🇳🇱 Netherlands ${index + 1}` })),
+    ],
+    templateOutbounds: [
+      { tag: 'Main', type: 'selector', outbounds: [] },
+    ],
+  })
+
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').interval, '3m')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').tolerance, 75)
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇸🇪 Sweden').interval, '3m30s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇫🇮 Finland').interval, '4m')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇳🇱 Netherlands').interval, '30m')
+})
+
+test('country urltest tolerance accepts numeric strings or numbers from 10 through 500', async () => {
+  for (const countryUrltestTolerance of ['10', 500, '125', 250]) {
+    const config = await runTemplate({
+      outbound: '📂Main',
+      countryUrltestTolerance,
+      proxies: [
+        { tag: '🇩🇪 Berlin' },
+        { tag: '🇩🇪 Frankfurt' },
+      ],
+      templateOutbounds: [
+        { tag: 'Main', type: 'selector', outbounds: [] },
+      ],
+    })
+
+    assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').tolerance, Number(countryUrltestTolerance))
+  }
+})
+
+test('invalid or out-of-range country urltest tolerance falls back to 75', async () => {
+  for (const countryUrltestTolerance of ['9', 501, 'not-a-number', 10.5]) {
+    const config = await runTemplate({
+      outbound: '📂Main',
+      countryUrltestTolerance,
+      proxies: [
+        { tag: '🇩🇪 Berlin' },
+        { tag: '🇩🇪 Frankfurt' },
+      ],
+      templateOutbounds: [
+        { tag: 'Main', type: 'selector', outbounds: [] },
+      ],
+    })
+
+    assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').tolerance, 75)
+  }
 })
 
 test('country and regex include/exclude alternatives filter only matching nodes', async () => {

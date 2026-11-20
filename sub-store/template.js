@@ -1,4 +1,6 @@
-// https://raw.githubusercontent.com/jinndi/SKeen/sub-store/sing-box-config.js#type=0&name=Подписка&outbound=📂proxy🔖🚫ru|🇷🇺|мос|мск|msk|санкт|spb📂ru🔖ru|🇷🇺|мос|мск|msk|санкт|spb📂torrent🔖torrent|✅|vless📂games🔖hys|hy2|tuic|🇷🇺📂ai🔖🇩🇪|🇳🇱|de|nl📂🌍 auto🔖🚫ru|🇷🇺|мос|мск|msk|санкт|spb📂🇷🇺 auto🔖ru|🇷🇺|мос|мск|msk|санкт|spb
+// https://raw.githubusercontent.com/jinndi/SKeen/main/sub-store/template.js#name=ИмяIdВашейПодписки&type=Подписка&outbound=📂Proxy🔖🚫ru🌐🚫ru📂Runet🔖🇷🇺🌐ru📂Torrent🔖torrent|торрент|✅🌐ru📂Games🔖hysteria|hy2|tuic|🎮|🇷🇺|est|fin|lv🌐🚫📂AI🔖🚫🌐🚫ru📂Auto🔖🚫ru🌐🚫
+
+// Использование: https://raw.githubusercontent.com/jinndi/SKeen/main/sub-store/README.md
 
 // Все 249 записей ISO 3166-1 из Википедии, в порядке исходного списка.
 const COUNTRY_RULES = [
@@ -297,7 +299,7 @@ COUNTRY_RULES.forEach(country => {
 log(`🚀 Начало работы скрипта распределения нод`)
 
 // 1. Получение входных параметров из Sub-Store
-let { type, name, fileName, outbound, includeUnsupportedProxy, url } = $arguments
+let { type, name, fileName, outbound, includeUnsupportedProxy, countryUrltestTolerance, url } = $arguments
 
 // Получение входных параметров из Sub-Store
 const entries = [
@@ -306,10 +308,20 @@ const entries = [
   ['fileName', fileName],
   ['outbound', outbound],
   ['includeUnsupportedProxy', includeUnsupportedProxy],
+  ['countryUrltestTolerance', countryUrltestTolerance],
   ['url', url],
 ]
 
 const isPresent = (val) => val !== undefined && val !== null && !(typeof val === 'string' && val.trim() === '')
+
+const toleranceValue = typeof countryUrltestTolerance === 'number'
+  ? countryUrltestTolerance
+  : typeof countryUrltestTolerance === 'string' && countryUrltestTolerance.trim() !== ''
+    ? Number(countryUrltestTolerance.trim())
+    : NaN
+const urltestTolerance = Number.isInteger(toleranceValue) && toleranceValue >= 10 && toleranceValue <= 500
+  ? toleranceValue
+  : 75
 
 const formattedParams = entries
   .filter(([, val]) => isPresent(val))
@@ -515,15 +527,20 @@ if (countriesWithEnoughNodes.length === 0) {
       return
     }
 
+    // Начинаем с 3 минут для минимальной группы из двух нод, затем добавляем
+    // по 30 секунд на каждую дополнительную ноду, но не превышаем 30 минут.
+    const intervalSeconds = Math.min(30 * 60, 3 * 60 + (country.tags.length - 2) * 30)
+    const interval = `${Math.floor(intervalSeconds / 60)}m${intervalSeconds % 60 ? `${intervalSeconds % 60}s` : ''}`
     config.outbounds.push({
       tag: country.groupTag,
       type: 'urltest',
       outbounds: country.tags,
-      interval: '10m',
-      tolerance: 75,
+      interval,
+      tolerance: urltestTolerance,
       idle_timeout: '30m0s',
+      interrupt_exist_connections: true
     })
-    log(`Создана группа urltest "${country.groupTag}" (${country.tags.length} узлов)`)
+    log(`Создана группа urltest "${country.groupTag}" (${country.tags.length} узлов, interval ${interval})`)
   })
 }
 
