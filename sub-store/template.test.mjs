@@ -64,7 +64,7 @@ test('default rule adds nodes, country groups, and singleton countries in order'
   )
 })
 
-test('country urltest interval grows by 30 seconds per node and is capped at 30 minutes', async () => {
+test('country urltest interval grows by 20 seconds per additional node and is capped at 10 minutes', async () => {
   const config = await runTemplate({
     outbound: '📂Main',
     proxies: [
@@ -77,6 +77,7 @@ test('country urltest interval grows by 30 seconds per node and is capped at 30 
       { tag: '🇫🇮 Finland 2' },
       { tag: '🇫🇮 Finland 3' },
       { tag: '🇫🇮 Finland 4' },
+      ...Array.from({ length: 23 }, (_, index) => ({ tag: `🇨🇦 Canada ${index + 1}` })),
       ...Array.from({ length: 60 }, (_, index) => ({ tag: `🇳🇱 Netherlands ${index + 1}` })),
     ],
     templateOutbounds: [
@@ -86,9 +87,11 @@ test('country urltest interval grows by 30 seconds per node and is capped at 30 
 
   assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').interval, '3m')
   assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').tolerance, 75)
-  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇸🇪 Sweden').interval, '3m30s')
-  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇫🇮 Finland').interval, '4m')
-  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇳🇱 Netherlands').interval, '30m')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').idle_timeout, '10m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇸🇪 Sweden').interval, '3m20s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇫🇮 Finland').interval, '3m40s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇨🇦 Canada').interval, '10m')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇳🇱 Netherlands').interval, '10m')
 })
 
 test('country urltest tolerance accepts numeric strings or numbers from 10 through 500', async () => {

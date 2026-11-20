@@ -95,13 +95,17 @@ Next, review the parameter breakdown for the script URL and how to work with the
 
 ## Script Parameters (`$arguments`)
 
-- `name` — Sub-Store subscription or collection name to pull nodes from.
-- `type` — Optional subscription type (if `name` is specified). For collections, specify `type=col`, `type=кол`, or `type=1`. For single subscriptions, this parameter is not required.
-- `fileName` — Ooptional. The name of another file from which to include the nodes array from the `outbounds` and `endpoints` keys of the sing-box object.
-- `url` — Optional subscription URL, takes precedence over `name`. The URL must be encoded using `encodeURIComponent`. For example, `http://a.com?token=123` is passed as `url=http%3A%2F%2Fa.com%3Ftoken%3D123`.
-- `includeUnsupportedProxy` — Optional parameter to enable protocols that are usually unsupported (e.g., SSR, Snell). Example: `&includeUnsupportedProxy=true`.
-- `countryUrltestTolerance` — Optional value for the [`tolerance`](https://sing-box.sagernet.org/configuration/outbound/urltest/#tolerance) parameter of country `urltest` groups, in milliseconds. Accepts an integer or an integer string from `10` to `500`; if omitted, invalid, or out of range, defaults to `75`. For example, `&countryUrltestTolerance=100`.
-- `outbound` — A rule string for node distribution across groups; see details below.
+| Parameter | Description |
+|---|---|
+| `outbound` | **Required.** Rule string for distributing nodes across groups; see details below. |
+| `name` | Optional. Name of the Sub-Store subscription or collection to pull nodes from. |
+| `url` | Optional. Subscription URL. It must be encoded using `encodeURIComponent`. For example, `http://a.com?token=123` is passed as `url=http%3A%2F%2Fa.com%3Ftoken%3D123`. |
+| `fileName` | Optional. Name of a file from which to include nodes from the `outbounds` and `endpoints` keys of the sing-box object. |
+| `type` | Optional. Subscription type (when `name` is specified). For collections, specify `type=col`, `type=кол`, or `type=1`. This parameter is not needed for a single subscription. |
+| `includeUnsupportedProxy` | Optional. Enables protocols that are usually unsupported (e.g., SSR, Snell). Example: `&includeUnsupportedProxy=true`. |
+| `countryUrltestTolerance` | Optional. Value for the [`tolerance`](https://sing-box.sagernet.org/configuration/outbound/urltest/#tolerance) parameter of country `urltest` groups, in milliseconds. Accepts an integer or an integer string from `10` to `500`; if omitted, invalid, or out of range, defaults to `75`. For example, `&countryUrltestTolerance=100`. |
+
+> ⚠️ `name`, `url`, and `fileName` are each optional, but at least one of them must be specified so the script has something to process.
 
 ## `outbound` Rules
 
@@ -283,7 +287,7 @@ Multi-line format for the Sub-Store editor (without the `outbound=` prefix):
 
 - The catalog contains all 249 ISO 3166-1 entries from the Wikipedia list. Each country includes a flag, ISO alpha-2 code, ISO alpha-3 code, and a pattern for matching node tags.
 - A country `urltest` group is created when **two or more nodes** are found for a country allowed by the `outbound` rule. If exactly one node matches unambiguously to a single country, it is added directly to matching `selector` groups as a standard node without creating a country group. If the tag of that node matches patterns for multiple countries, the script does not assign it as a single node to any of them.
-- The `urltest` check interval scales with the number of nodes: **3 minutes for two nodes**, then **+30 seconds per additional node**, capped at **30 minutes**. This balances faster rechecks for small groups against the number of checks for larger groups.
+- The `urltest` check interval scales with the number of nodes: **3 minutes for two nodes**, then **+20 seconds per additional node**, capped at **10 minutes**. Country groups also use an `idle_timeout` of **10 minutes**, and the check interval does not exceed it.
 - Nodes are recognized by flags, codes, and names. For some countries, common name variations and city names are also included in the patterns.
 - In the [`COUNTRY_RULES` array in `template.js`](template.js#L4), literal aliases for country and city names are stored in `patternAliases` in lowercase separated by `|`. Add exact standalone variants (including common abbreviations) rather than truncated stems or demonyms, and avoid duplicating an alias across rules for different countries. When building the catalog, the script escapes aliases as plain text, adds a general Unicode word boundary, and sets the case-insensitive flag; word boundaries do not need to be repeated in each alias. Custom regular expressions for exclusions and codes are specified separately in `patternExtras` and `patternCodePatterns`.
 - The country group tag format uses the flag and English country name, e.g., `🇩🇪 Germany`.

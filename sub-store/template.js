@@ -528,8 +528,8 @@ if (countriesWithEnoughNodes.length === 0) {
     }
 
     // Начинаем с 3 минут для минимальной группы из двух нод, затем добавляем
-    // по 30 секунд на каждую дополнительную ноду, но не превышаем 30 минут.
-    const intervalSeconds = Math.min(30 * 60, 3 * 60 + (country.tags.length - 2) * 30)
+    // по 20 секунд на каждую дополнительную ноду, но не превышаем idle_timeout.
+    const intervalSeconds = Math.min(10 * 60, 3 * 60 + (country.tags.length - 2) * 20)
     const interval = `${Math.floor(intervalSeconds / 60)}m${intervalSeconds % 60 ? `${intervalSeconds % 60}s` : ''}`
     config.outbounds.push({
       tag: country.groupTag,
@@ -537,7 +537,7 @@ if (countriesWithEnoughNodes.length === 0) {
       outbounds: country.tags,
       interval,
       tolerance: urltestTolerance,
-      idle_timeout: '30m0s',
+      idle_timeout: '10m0s',
       interrupt_exist_connections: true
     })
     log(`Создана группа urltest "${country.groupTag}" (${country.tags.length} узлов, interval ${interval})`)
