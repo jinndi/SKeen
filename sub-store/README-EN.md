@@ -96,7 +96,8 @@ Next, review the parameter breakdown for the script URL and how to work with the
 ## Script Parameters (`$arguments`)
 
 - `name` — Sub-Store subscription or collection name to pull nodes from.
-- `type` — Optional subscription type. For collections, specify `type=col`, `type=кол`, or `type=1`. For single subscriptions, this parameter is not needed.
+- `type` — Optional subscription type (if `name` is specified). For collections, specify `type=col`, `type=кол`, or `type=1`. For single subscriptions, this parameter is not required.
+- `fileName` — Ooptional. The name of another file from which to include the nodes array from the `outbounds` and `endpoints` keys of the sing-box object.
 - `url` — Optional subscription URL, takes precedence over `name`. The URL must be encoded using `encodeURIComponent`. For example, `http://a.com?token=123` is passed as `url=http%3A%2F%2Fa.com%3Ftoken%3D123`.
 - `includeUnsupportedProxy` — Optional parameter to enable protocols that are usually unsupported (e.g., SSR, Snell). Example: `&includeUnsupportedProxy=true`.
 - `outbound` — A rule string for node distribution across groups; see details below.

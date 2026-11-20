@@ -297,9 +297,34 @@ COUNTRY_RULES.forEach(country => {
 log(`🚀 Начало работы скрипта распределения нод`)
 
 // 1. Получение входных параметров из Sub-Store
-let { type, name, outbound, includeUnsupportedProxy, url } = $arguments
+let { type, name, fileName, outbound, includeUnsupportedProxy, url } = $arguments
 
-log(`Входные параметры -> type: ${type}, name: ${name}, outbound: ${outbound}`)
+// Получение входных параметров из Sub-Store
+const entries = [
+  ['type', type],
+  ['name', name],
+  ['fileName', fileName],
+  ['outbound', outbound],
+  ['includeUnsupportedProxy', includeUnsupportedProxy],
+  ['url', url],
+]
+
+const isPresent = (val) => val !== undefined && val !== null && !(typeof val === 'string' && val.trim() === '')
+
+const formattedParams = entries
+  .filter(([, val]) => isPresent(val))
+  .map(([key, val]) => `${key}: ${val}`)
+  .join(', ')
+
+log(`Входные параметры -> ${formattedParams || 'нет'}`)
+
+if (!isPresent(outbound)) {
+  throw new Error('Параметр outbound обязателен и не задан')
+}
+
+if (![name, fileName, url].some(isPresent)) {
+  throw new Error('Необходимо указать хотя бы один из параметров: name, fileName или url')
+}
 
 // Определение типа подписки: 'collection' (комбинированная) или 'subscription' (одиночная)
 type = /^1$|col|кол/i.test(type) ? 'collection' : 'subscription'
@@ -314,7 +339,7 @@ try {
   config = parser.parse($content ?? $files[0])
 } catch (e) {
   log(`${e.message ?? e}`)
-  throw new Error(`Ошибка: Конфигурационный файл имеет невалидный формат ${ProxyUtils.JSON5 ? 'JSON5' : 'JSON'}`)
+  throw new Error(`Ошибка: Конфигурационный файл шаблона имеет невалидный формат ${ProxyUtils.JSON5 ? 'JSON5' : 'JSON'}`)
 }
 
 log(`② Загрузка узлов подписки`)
@@ -323,39 +348,65 @@ let proxies = []
 let outbounds = []
 let endpoints = []
 let data = {}
+let dataFile = {}
 
 // Загрузка нод из URL или из сохраненной подписки в Sub-Store
 if (url) {
   log(`Чтение подписки напрямую из URL: ${url}`)
-  data = await produceArtifact({
-    name,
-    type,
-    platform: 'sing-box',
-    produceOpts: {
-      'include-unsupported-proxy': includeUnsupportedProxy,
-    },
-    subscription: {
+  try {
+    data = parser.parse(await produceArtifact({
       name,
-      url,
-      source: 'remote',
-    },
-  })
+      type,
+      platform: 'sing-box',
+      produceOpts: {
+        'include-unsupported-proxy': includeUnsupportedProxy,
+      },
+      subscription: {
+        name,
+        url,
+        source: 'remote',
+      },
+    }))
+  } catch (e) {
+    log(`${e.message ?? e}`)
+    throw new Error(`Не удалось загрузить подписку из URL '${url}'. Проверьте формат, требование к HWID и User-Agent.`)
+  }
 } else {
   log(`Загрузка подписки "${name}" (тип: ${type === 'collection' ? 'коллекция' : 'одиночная'})`)
-  data = await produceArtifact({
-    name,
-    type,
-    platform: 'sing-box',
-    produceOpts: {
-      'include-unsupported-proxy': includeUnsupportedProxy,
-    },
-  })
+  try {
+    data = parser.parse(await produceArtifact({
+      name,
+      type,
+      platform: 'sing-box',
+      produceOpts: {
+        'include-unsupported-proxy': includeUnsupportedProxy,
+      },
+    }))
+  } catch (e) {
+    log(`${e.message ?? e}`)
+    throw new Error(`Не удалось загрузить подписку '${name}'. Проверьте формат, требование к HWID и User-Agent.`)
+  }
 }
 
-// Преобразование полученного ответа в JSON-объект
-data = JSON.parse(data)
-outbounds = data.outbounds ?? []
-endpoints = data.endpoints ?? []
+if (fileName){
+  try {
+    dataFile = parser.parse(await produceArtifact({
+      name: fileName,
+      type: 'file',
+      platform: 'sing-box',
+      produceOpts: {
+        'include-unsupported-proxy': includeUnsupportedProxy,
+      },
+    }))
+  } catch (e) {
+    log(`${e.message ?? e}`)
+    throw new Error(`Не удалось загрузить файл '${fileName}'. Проверьте имя и формат файла.`)
+  }
+}
+
+// Слияние полученного ответа в массивы outbounds и endpoints
+outbounds = [...dataFile.outbounds ?? [], ...data.outbounds ?? []]
+endpoints = [...dataFile.endpoints ?? [], ...data.endpoints ?? []]
 
 // Объединяем outbounds и endpoints в один общий массив прокси
 proxies = [...outbounds, ...endpoints]
