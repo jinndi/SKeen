@@ -64,7 +64,7 @@
 
   "outbounds": [
     { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [ "🌍 Auto", "🔒 TROYAN" ], "default": "🔒 TROYAN", "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Runet",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🧲 Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
@@ -105,14 +105,14 @@
       { "rule_set": "private", "outbound": "🔌 DIRECT" },
       { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
-      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
+      { "protocol": "ntp", "outbound": "🇷🇺 Runet" },
       { "protocol": "bittorrent", "outbound": "🧲 Torrent" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       { "rule_set": "games", "outbound": "🕹️ Games" },
       { "rule_set": "ai", "outbound": "🤖 AI" },
       { "rule_set": "telegramip", "outbound": "🌍 Proxy" },
       { "rule_set": "proxy", "outbound": "🌍 Proxy" },
-      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 Runet" },
       { "clash_mode": "Global", "outbound": "🌍 Proxy" }
     ],
     "rule_set": [

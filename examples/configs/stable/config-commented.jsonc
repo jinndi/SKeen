@@ -8,7 +8,7 @@
 // Лучший шаблон - тот, который вам больше всего подходит.
 // Если у вас нет особых требований, вы можете скопировать всё дословно.
 
-// 2. Это решение обеспечивает маршрутизацию RU-трафика через селектор "🇷🇺 RU" отдельно от Чебурнета,
+// 2. Это решение обеспечивает маршрутизацию RU-трафика через селектор "🇷🇺 Runet" отдельно от Чебурнета,
 // обход российских IP-адресов, а также неизвестных доменов, если их IP географически находятся в РФ и не заблокированы.
 // Дополнительно предотвращаются утечки DNS и IP-адресов серверов подключения.
 // Конфигурация работает только с IPv4, принудительно отклоняя IPv6 (AAAA запросы) для стабильности и безопасности.
@@ -314,7 +314,7 @@
     // https://kb.msk-ix.ru/public/ntp-server/
     "server": "ntp.msk-ix.ru",
     "server_port": 123,
-    "detour": "🇷🇺 RU" // Следовать стратегии данного селектора
+    "detour": "🇷🇺 Runet" // Следовать стратегии данного селектора
   },
 
   // ═══════════════════════════════════════════════
@@ -358,7 +358,7 @@
     // "interrupt_exist_connections": true - Переключение прерываний. Это очень важно для переключения узлов в середине просмотра видео;
     // в противном случае видео зависнет до тех пор, пока не истечет время ожидания старого соединения.
     { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [ "🌍 Auto", "🔒 TROYAN" ], "default": "🔒 TROYAN", "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ], "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Runet",      "type": "selector", "outbounds": [ "🇷🇺 Auto", "🔌 DIRECT", "🇷🇺 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🧲 Torrent", "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🕹️ Games",   "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
     { "tag": "🤖 AI",      "type": "selector", "outbounds": [ "🌍 Auto", "🔌 DIRECT", "🔒 TROYAN" ], "interrupt_exist_connections": true },
@@ -470,9 +470,9 @@
       // Правило 10: Локальные сервисы чебурнета через провайдера.
       { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
 
-      // Правило 11: Синхронизация времени NTP -> селектор "🇷🇺 RU"
-      // Отправляем в селектор "🇷🇺 RU" чтобы гибко управлять трафиком NTP (NTP в KeeneticOS)
-      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
+      // Правило 11: Синхронизация времени NTP -> селектор "🇷🇺 Runet"
+      // Отправляем в селектор "🇷🇺 Runet" чтобы гибко управлять трафиком NTP (NTP в KeeneticOS)
+      { "protocol": "ntp", "outbound": "🇷🇺 Runet" },
 
       // Правила 12: Назаначаем выходы (outbound) Нашим "Гибким" селекторам/рулсетам
       { "protocol": "bittorrent", "outbound": "🧲 Torrent" },
@@ -499,10 +499,10 @@
       // Это указано еще раз в качестве резервного варианта для сценариев без FakeIP и TUN.
       { "rule_set": "proxy", "outbound": "🌍 Proxy" },
 
-      // Правило 16: RU домены/IP (не в блоке т.к. после Fake-IP) -> селектор "🇷🇺 RU"
+      // Правило 16: RU домены/IP (не в блоке т.к. после Fake-IP) -> селектор "🇷🇺 Runet"
       // Пояснение: Эта часть трафика проходит напрямую через DIRECT либо прокси в РФ,
       // что обеспечивает скорость доступа внутри страны.
-      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 Runet" },
 
       // Правило 17: Отклонить протокол STUN/DTLS
       // Протокол STUN используется в WebRTC для получения публичного IP-адреса, что может привести к его утечке.

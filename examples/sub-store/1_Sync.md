@@ -96,7 +96,7 @@
     "interval": "30m0s",
     "server": "ntp.msk-ix.ru",
     "server_port": 123,
-    "detour": "🇷🇺 RU"
+    "detour": "🇷🇺 Runet"
   },
 
   "http_clients": [
@@ -120,7 +120,7 @@
 
   "outbounds": [
     { "tag": "🌍 Proxy",   "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 RU",      "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Runet",      "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
     { "tag": "🧲 Torrent", "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
     { "tag": "🕹️ Games",   "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
     { "tag": "🤖 AI",      "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
@@ -143,7 +143,7 @@
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
       { "rule_set": "private", "outbound": "🔌 DIRECT" },
       { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
-      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
+      { "protocol": "ntp", "outbound": "🇷🇺 Runet" },
       { "protocol": "bittorrent", "outbound": "🧲 Torrent" },
       { "rule_set": "games", "outbound": "🕹️ Games" },
       { "rule_set": "ai", "outbound": "🤖 AI" },
@@ -151,7 +151,7 @@
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
       { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
       { "rule_set": "proxy", "outbound": "🌍 Proxy" },
-      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 Runet" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
         "type": "logical", "mode": "or",

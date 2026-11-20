@@ -72,7 +72,7 @@
     "interval": "30m0s",
     "server": "ntp.msk-ix.ru",
     "server_port": 123,
-    "detour": "🇷🇺 RU"
+    "detour": "🇷🇺 Runet"
   },
 
   "http_clients": [
@@ -102,7 +102,7 @@
 
   "outbounds": [
     { "tag": "🌍 Proxy",  "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
-    { "tag": "🇷🇺 RU",     "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
+    { "tag": "🇷🇺 Runet",     "type": "selector", "outbounds": [], "interrupt_exist_connections": true },
     { "tag": "🌍 Auto",   "type": "urltest",  "outbounds": [], "interval": "10m", "tolerance": 100 },
     { "tag": "🇷🇺 Auto",   "type": "urltest",  "outbounds": [], "interval": "5m",  "tolerance": 100 },
     { "tag": "🔌 DIRECT", "type": "direct",   "domain_resolver": "dns_direct" }
@@ -119,12 +119,12 @@
       { "rule_set": "ipdetect", "action": "reject" },
       { "clash_mode": "Direct", "outbound": "🔌 DIRECT" },
       { "rule_set": "private", "outbound": "🔌 DIRECT" },
-      { "protocol": "ntp", "outbound": "🇷🇺 RU" },
+      { "protocol": "ntp", "outbound": "🇷🇺 Runet" },
       { "rule_set": "cheburnet", "outbound": "🔌 DIRECT" },
       { "ip_is_private": true, "outbound": "🔌 DIRECT" },
       { "ip_cidr": "198.18.0.0/15", "outbound": "🌍 Proxy" },
       { "rule_set": "proxy", "outbound": "🌍 Proxy" },
-      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 RU" },
+      { "rule_set": [ "ru", "ruip" ], "outbound": "🇷🇺 Runet" },
       { "protocol": [ "stun", "dtls" ], "action": "reject", "method": "drop" },
       {
         "type": "logical", "mode": "or",
