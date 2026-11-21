@@ -62,9 +62,32 @@ test('default rule adds nodes, country groups, and singleton countries in order'
     config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').outbounds,
     ['🇩🇪 Berlin', '🇩🇪 Frankfurt'],
   )
+  assert.deepEqual(
+    config.outbounds
+      .filter(outbound => outbound.type === 'urltest')
+      .map(outbound => outbound.tag),
+    ['🇩🇪 Germany'],
+  )
 })
 
-test('country urltest interval grows by 20 seconds per additional node and is capped at 10 minutes', async () => {
+test('country groups stay alphabetically ordered when a selector matches multiple rules', async () => {
+  const config = await runTemplate({
+    outbound: '📂Main🔖🚫🌐🇿🇼📂Main🔖🚫🌐🇦🇺',
+    proxies: [
+      { tag: '🇿🇼 Harare 1' },
+      { tag: '🇿🇼 Harare 2' },
+      { tag: '🇦🇺 Sydney 1' },
+      { tag: '🇦🇺 Sydney 2' },
+    ],
+    templateOutbounds: [
+      { tag: 'Main', type: 'selector', outbounds: [] },
+    ],
+  })
+
+  assert.deepEqual(selector(config).outbounds, ['🇦🇺 Australia', '🇿🇼 Zimbabwe'])
+})
+
+test('country urltest interval increases its per-node step every 10 nodes and is capped at 30 minutes', async () => {
   const config = await runTemplate({
     outbound: '📂Main',
     proxies: [
@@ -77,8 +100,13 @@ test('country urltest interval grows by 20 seconds per additional node and is ca
       { tag: '🇫🇮 Finland 2' },
       { tag: '🇫🇮 Finland 3' },
       { tag: '🇫🇮 Finland 4' },
-      ...Array.from({ length: 23 }, (_, index) => ({ tag: `🇨🇦 Canada ${index + 1}` })),
-      ...Array.from({ length: 60 }, (_, index) => ({ tag: `🇳🇱 Netherlands ${index + 1}` })),
+      ...Array.from({ length: 10 }, (_, index) => ({ tag: `🇨🇦 Canada ${index + 1}` })),
+      ...Array.from({ length: 20 }, (_, index) => ({ tag: `🇳🇱 Netherlands ${index + 1}` })),
+      ...Array.from({ length: 30 }, (_, index) => ({ tag: `🇦🇺 Australia ${index + 1}` })),
+      ...Array.from({ length: 40 }, (_, index) => ({ tag: `🇧🇷 Brazil ${index + 1}` })),
+      ...Array.from({ length: 50 }, (_, index) => ({ tag: `🇯🇵 Japan ${index + 1}` })),
+      ...Array.from({ length: 60 }, (_, index) => ({ tag: `🇰🇷 South Korea ${index + 1}` })),
+      ...Array.from({ length: 120 }, (_, index) => ({ tag: `🇺🇸 USA ${index + 1}` })),
     ],
     templateOutbounds: [
       { tag: 'Main', type: 'selector', outbounds: [] },
@@ -87,11 +115,42 @@ test('country urltest interval grows by 20 seconds per additional node and is ca
 
   assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').interval, '3m')
   assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').tolerance, 75)
-  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').idle_timeout, '10m0s')
-  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇸🇪 Sweden').interval, '3m20s')
-  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇫🇮 Finland').interval, '3m40s')
-  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇨🇦 Canada').interval, '10m')
-  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇳🇱 Netherlands').interval, '10m')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇩🇪 Germany').idle_timeout, '3m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇸🇪 Sweden').interval, '3m3s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇸🇪 Sweden').idle_timeout, '4m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇫🇮 Finland').interval, '3m6s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇫🇮 Finland').idle_timeout, '4m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇨🇦 Canada').interval, '3m24s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇨🇦 Canada').idle_timeout, '4m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇳🇱 Netherlands').interval, '4m24s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇳🇱 Netherlands').idle_timeout, '5m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇦🇺 Australia').interval, '5m54s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇦🇺 Australia').idle_timeout, '6m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇧🇷 Brazil').interval, '7m54s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇧🇷 Brazil').idle_timeout, '8m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇯🇵 Japan').interval, '10m24s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇯🇵 Japan').idle_timeout, '11m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇰🇷 South Korea').interval, '13m24s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇰🇷 South Korea').idle_timeout, '14m0s')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇺🇸 United States').interval, '30m')
+  assert.equal(config.outbounds.find(outbound => outbound.tag === '🇺🇸 United States').idle_timeout, '30m0s')
+  assert.deepEqual(
+    config.outbounds
+      .filter(outbound => outbound.type === 'urltest')
+      .map(outbound => outbound.tag),
+    [
+      '🇦🇺 Australia',
+      '🇧🇷 Brazil',
+      '🇨🇦 Canada',
+      '🇫🇮 Finland',
+      '🇩🇪 Germany',
+      '🇯🇵 Japan',
+      '🇳🇱 Netherlands',
+      '🇰🇷 South Korea',
+      '🇸🇪 Sweden',
+      '🇺🇸 United States',
+    ],
+  )
 })
 
 test('country urltest tolerance accepts numeric strings or numbers from 10 through 500', async () => {

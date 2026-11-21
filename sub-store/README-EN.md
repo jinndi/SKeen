@@ -287,7 +287,21 @@ Multi-line format for the Sub-Store editor (without the `outbound=` prefix):
 
 - The catalog contains all 249 ISO 3166-1 entries from the Wikipedia list. Each country includes a flag, ISO alpha-2 code, ISO alpha-3 code, and a pattern for matching node tags.
 - A country `urltest` group is created when **two or more nodes** are found for a country allowed by the `outbound` rule. If exactly one node matches unambiguously to a single country, it is added directly to matching `selector` groups as a standard node without creating a country group. If the tag of that node matches patterns for multiple countries, the script does not assign it as a single node to any of them.
-- The `urltest` check interval scales with the number of nodes: **3 minutes for two nodes**, then **+20 seconds per additional node**, capped at **10 minutes**. Country groups also use an `idle_timeout` of **10 minutes**, and the check interval does not exceed it.
+- The `urltest` check interval scales with the number of nodes: **3 minutes for two nodes**; nodes 3–10 add **3 seconds each**, and the step increases by **3 seconds** for each subsequent group of ten nodes. The interval is capped at **30 minutes**. `idle_timeout` equals the interval rounded up to a whole minute and uses the `Nm0s` format.
+
+| Nodes | `interval` | `idle_timeout` |
+|---:|---:|---:|
+| 2 | 3m | 3m0s |
+| 10 | 3m24s | 4m0s |
+| 20 | 4m24s | 5m0s |
+| 30 | 5m54s | 6m0s |
+| 40 | 7m54s | 8m0s |
+| 50 | 10m24s | 11m0s |
+| 60 | 13m24s | 14m0s |
+| 70 | 16m54s | 17m0s |
+| 80 | 20m54s | 21m0s |
+| 90 | 25m24s | 26m0s |
+| 100+ | 30m | 30m0s |
 - Nodes are recognized by flags, codes, and names. For some countries, common name variations and city names are also included in the patterns.
 - In the [`COUNTRY_RULES` array in `template.js`](template.js#L4), literal aliases for country and city names are stored in `patternAliases` in lowercase separated by `|`. Add exact standalone variants (including common abbreviations) rather than truncated stems or demonyms, and avoid duplicating an alias across rules for different countries. When building the catalog, the script escapes aliases as plain text, adds a general Unicode word boundary, and sets the case-insensitive flag; word boundaries do not need to be repeated in each alias. Custom regular expressions for exclusions and codes are specified separately in `patternExtras` and `patternCodePatterns`.
 - The country group tag format uses the flag and English country name, e.g., `🇩🇪 Germany`.
@@ -295,17 +309,17 @@ Multi-line format for the Sub-Store editor (without the `outbound=` prefix):
 
 ## Node Order and Tag Uniqueness
 
-- In a `selector` group, pre-defined template elements are preserved first, followed by country groups, `🔖` selected nodes, and unique single country nodes not already present in the group.
+- The order in a `selector` group is: elements defined in the template; country `urltest` groups sorted alphabetically by English country name; nodes from the `fileName` file matching `🔖`; matching nodes from the subscription (`name` or `url`); then unique single country nodes not already present. Original order is preserved within each source. Nodes are processed as combined `outbounds` first, then `endpoints`; for each type, `fileName` entries precede subscription entries.
 - For example, given an empty group and the rule `📂Main🔖game🌐🇩🇪|🇫🇮`, the resulting list will be:
 
   ```text
-  ["🇩🇪 Germany", "🇫🇮 Finland", "game-node-1", "game-node-2"]
+  ["🇫🇮 Finland", "🇩🇪 Germany", "game-node-1", "game-node-2"]
   ```
 
-- If the template already contained elements `["template-outbound-1", "template-outbound-2"]`, the final order will be:
+- If the template already contained elements `["template-outbound-1", "template-outbound-2"]`, and `game-node-1` comes from `fileName`, the final order will be:
 
   ```text
-  ["template-outbound-1", "template-outbound-2", "🇩🇪 Germany", "🇫🇮 Finland", "game-node-1", "game-node-2"]
+  ["template-outbound-1", "template-outbound-2", "🇫🇮 Finland", "🇩🇪 Germany", "game-node-1", "game-node-2"]
   ```
 
 - Group tags defined in the template are not modified. Incoming node tags and dynamically created country group tags are checked for collisions against each other and existing template tags. Upon collision, a numeric suffix is appended with a hyphen: `🇩🇪 Germany-1`, `🇩🇪 Germany-2`, and so on.

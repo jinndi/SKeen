@@ -507,9 +507,9 @@ const selectedSingletonCountries = detectedCountries.filter(country =>
   countriesByNodeTag.get(country.tags[0]).length === 1 &&
   outboundRules.some(rule => rule.countryFilter(country))
 )
-const selectedCountries = countriesWithEnoughNodes.filter(country =>
-  outboundRules.some(rule => rule.countryFilter(country))
-)
+const selectedCountries = countriesWithEnoughNodes
+  .filter(country => outboundRules.some(rule => rule.countryFilter(country)))
+  .sort((a, b) => a.name.localeCompare(b.name, 'en'))
 const generatedCountryTags = new Set()
 selectedCountries.forEach(country => {
   country.groupTag = createUniqueTag(country.tag, occupiedTags)
@@ -527,17 +527,31 @@ if (countriesWithEnoughNodes.length === 0) {
       return
     }
 
-    // Начинаем с 3 минут для минимальной группы из двух нод, затем добавляем
-    // по 20 секунд на каждую дополнительную ноду, но не превышаем idle_timeout.
-    const intervalSeconds = Math.min(10 * 60, 3 * 60 + (country.tags.length - 2) * 20)
+    // Базовый интервал — 3 минуты для минимальной группы из двух узлов.
+    // На узлах 3–10 шаг равен 3 секундам, а с каждым следующим десятком
+    // узлов увеличивается еще на 3 секунды. Интервал не превышает idle_timeout.
+    let intervalSeconds = 3 * 60
+    let remainingNodes = country.tags.length - 2
+    let currentNodeCount = 2
+    let secondsPerNode = 3
+    while (remainingNodes > 0 && intervalSeconds < 30 * 60) {
+      const nodesUntilNextTier = 10 - (currentNodeCount % 10)
+      const nodesInTier = Math.min(remainingNodes, nodesUntilNextTier)
+      intervalSeconds += nodesInTier * secondsPerNode
+      remainingNodes -= nodesInTier
+      currentNodeCount += nodesInTier
+      secondsPerNode += 3
+    }
+    intervalSeconds = Math.min(intervalSeconds, 30 * 60)
     const interval = `${Math.floor(intervalSeconds / 60)}m${intervalSeconds % 60 ? `${intervalSeconds % 60}s` : ''}`
+    const idleTimeoutMinutes = Math.ceil(intervalSeconds / 60)
     config.outbounds.push({
       tag: country.groupTag,
       type: 'urltest',
       outbounds: country.tags,
       interval,
       tolerance: urltestTolerance,
-      idle_timeout: '10m0s',
+      idle_timeout: `${idleTimeoutMinutes}m0s`,
       interrupt_exist_connections: true
     })
     log(`Создана группа urltest "${country.groupTag}" (${country.tags.length} узлов, interval ${interval})`)
@@ -560,18 +574,12 @@ if (generatedCountryTags.size > 0 || selectedSingletonCountries.length > 0) {
     const matchingRules = outboundRules.filter(rule => rule.groupRegex.test(group.tag))
     if (matchingRules.length === 0) return
 
-    const countryGroupRefs = []
-    matchingRules.forEach(rule => {
-      selectedCountries.forEach(country => {
-        if (
-          rule.countryFilter(country) &&
-          generatedCountryTags.has(country.groupTag) &&
-          !countryGroupRefs.includes(country.groupTag)
-        ) {
-          countryGroupRefs.push(country.groupTag)
-        }
-      })
-    })
+    const countryGroupRefs = selectedCountries
+      .filter(country =>
+        generatedCountryTags.has(country.groupTag) &&
+        matchingRules.some(rule => rule.countryFilter(country))
+      )
+      .map(country => country.groupTag)
 
     const singletonNodeRefs = []
     matchingRules.forEach(rule => {
