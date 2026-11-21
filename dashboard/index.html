@@ -4193,6 +4193,18 @@ function refreshCustomSelects(root = document) {
 }
 
 
+let customSelectRefreshFrame = null;
+
+function scheduleCustomSelectRefresh() {
+  if (customSelectRefreshFrame !== null) return;
+
+  customSelectRefreshFrame = window.requestAnimationFrame(() => {
+    customSelectRefreshFrame = null;
+    refreshCustomSelects();
+  });
+}
+
+
 function refreshCustomSelectInstance(instance) {
   if (!instance) return;
 
@@ -4552,6 +4564,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         serviceState.pollingTimer = null;
       }
     } else {
+      scheduleCustomSelectRefresh();
       if (document.getElementById('skeenTab').classList.contains('active')) {
         fetchServiceStatus().finally(startPolling);
       }
@@ -4560,6 +4573,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       }
     }
     updateConnectionPingPolling();
+  });
+
+  window.addEventListener('pageshow', () => {
+    scheduleCustomSelectRefresh();
   });
 });
 
