@@ -282,7 +282,7 @@ Retrieves hardware metrics and system resource load (CPU, RAM, SWAP, Entware `/o
 
 - **Authentication**: Required.
 
-- **Feature**: The aggregate response is cached for 2 seconds (TTL) in the Lua daemon. Within it, the default interface name is refreshed at most every 5 seconds, and `/opt` disk usage at most every 30 seconds.
+- **Feature**: The aggregate response is cached for 1 second (TTL) in the Lua daemon. Within it, the default interface name is refreshed at most every 5 seconds, and `/opt` disk usage at most every 30 seconds.
 
 #### Response Field Reference:
 

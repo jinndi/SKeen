@@ -874,11 +874,14 @@ end
 
 -- Build a map of configuration files available for reading/editing via the API
 local allowed_files_map_cache
+local allowed_files_list_json_cache
 
 local function get_allowed_files_map(refresh)
   if allowed_files_map_cache and not refresh then
     return allowed_files_map_cache
   end
+
+  allowed_files_list_json_cache = nil
 
   local default_path = SKEEN_DIR .. DEFAULT_FILES.singbox
   local map = {
@@ -927,6 +930,22 @@ local function get_allowed_files_map(refresh)
 
   allowed_files_map_cache = map
   return allowed_files_map_cache
+end
+
+-- Serialize the cached file map once; refresh requests invalidate this body.
+local function get_allowed_files_list_json(refresh)
+  if not refresh and allowed_files_list_json_cache then
+    return allowed_files_list_json_cache
+  end
+
+  local files_list = {}
+  for id, target in pairs(get_allowed_files_map(refresh)) do
+    table.insert(files_list, { id = id, name = target.name })
+  end
+  table.sort(files_list, function(a, b) return a.id < b.id end)
+
+  allowed_files_list_json_cache = json.encode(files_list)
+  return allowed_files_list_json_cache
 end
 
 -- Get the device model from /proc/device-tree/model, or return "Unknown" if unavailable
@@ -1293,33 +1312,33 @@ local function get_skeen_status()
 end
 
 -- Cache for SKeen status to reduce router CPU load during frequent requests
-local skeen_status_cache = { data = nil, expire = 0 }
+local skeen_status_cache = { body = nil, expire = 0 }
 
--- Return cached SKeen service status, refreshing when stale
+-- Return the cached, serialized SKeen service status, refreshing when stale
 local function get_cached_skeen_status()
   local now = os.time()
-  if skeen_status_cache.data and now < skeen_status_cache.expire then
-    return skeen_status_cache.data
+  if skeen_status_cache.body and now < skeen_status_cache.expire then
+    return skeen_status_cache.body
   end
 
   -- Retrieve base status from SKeen CLI / memory script
   local st = get_skeen_status()
-
   st.api_version = VERSION
+  st.success = true
 
-  skeen_status_cache.data = st
+  skeen_status_cache.body = json.encode(st)
   skeen_status_cache.expire = now + 3 -- Cache the result for 3 seconds
-  return st
+  return skeen_status_cache.body
 end
 
 -- Cache for System status to reduce router CPU load during frequent requests
-local system_status_cache = { data = nil, expire = 0 }
+local system_status_cache = { body = nil, expire = 0 }
 
--- Return cached system status, refreshing when stale
+-- Return the cached, serialized system status, refreshing when stale
 local function get_cached_system_status()
   local now = os.time()
-  if system_status_cache.data and now < system_status_cache.expire then
-    return system_status_cache.data
+  if system_status_cache.body and now < system_status_cache.expire then
+    return system_status_cache.body
   end
 
   -- Collect system metrics with safety fallbacks
@@ -1347,10 +1366,11 @@ local function get_cached_system_status()
     conn_cnt   = get_connections_count() or 0
   }
 
-  -- Cache the enriched result for 2 seconds to reduce CPU overhead
-  system_status_cache.data = sys_st
-  system_status_cache.expire = now + 2
-  return sys_st
+  sys_st.success = true
+  -- Cache the enriched result for 1 second to reduce CPU overhead
+  system_status_cache.body = json.encode(sys_st)
+  system_status_cache.expire = now + 1
+  return system_status_cache.body
 end
 
 -- Load the configuration of the API server itself (port, secret key, CORS, and rate limit)
@@ -1700,22 +1720,13 @@ local function route_request(method, path, body, request_headers)
     end
     return json_response({ success = false, data = {} })
   elseif path == "/api/status" and method == "GET" then
-    local status = get_cached_skeen_status()
-    status.success = true
-    return json_response(status)
+    return get_cached_skeen_status(), "200 OK", "application/json"
   elseif path == "/api/system/status" and method == "GET" then
-    local status = get_cached_system_status()
-    status.success = true
-    return json_response(status)
+    return get_cached_system_status(), "200 OK", "application/json"
   elseif (path == "/api/files-list" or path:match("^/api/files%-list%?")) and
       method == "GET" then
     local refresh_files = path:match("[?&]refresh=([^&]+)") == "true"
-    local files_list = {}
-    for id, target in pairs(get_allowed_files_map(refresh_files)) do
-      table.insert(files_list, { id = id, name = target.name })
-    end
-    table.sort(files_list, function(a, b) return a.id < b.id end)
-    return json_response(files_list)
+    return get_allowed_files_list_json(refresh_files), "200 OK", "application/json"
   elseif (path == "/api/file" or path:match("^/api/file%?")) and method == "GET" or
       (path == "/api/file" and method == "POST") then
     return handle_file_request(method, path, body)
