@@ -627,12 +627,12 @@ h2::before {
 .service-detail {
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 5px;
   max-width: 100%;
-  padding: 4px 8px;
-  border: 1px solid var(--border-color);
+  padding: 2px 4px;
+  border: 1px solid transparent;
   border-radius: 999px;
-  background-color: var(--card-hover);
+  background-color: color-mix(in srgb, var(--code-bg) 18%, var(--card-hover));
 }
 
 .service-detail-label {
@@ -640,6 +640,7 @@ h2::before {
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.04em;
+  opacity: 0.85;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -647,9 +648,9 @@ h2::before {
 .service-detail-value {
   max-width: 160px;
   overflow: hidden;
-  color: var(--text-color);
+  color: var(--text-muted);
   font-family: var(--font-code);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
