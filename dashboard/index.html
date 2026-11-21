@@ -1449,7 +1449,7 @@ label {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
-  padding: 3px;
+  padding: 3px 5px;
 }
 
 
@@ -3474,7 +3474,7 @@ const helpDict = {
     remoteTitle: "Настройка для удаленного доступа и браузеров на базе Chromium",
     browserBoxTitle: "Особенности работы браузеров (Google Chrome, Edge, Opera, Brave, Vivaldi):",
     browserBoxDesc: "Браузеры на движке <strong>Chromium</strong> проверяют безопасность контекста родительской страницы. Поскольку внешние панели (remote) открываются <strong>во фрейме</strong>, браузер оценивает защищенность самого интерфейса SKeen Dashboard, а не адрес панели внутри.",
-    browserBoxLi: "Если SKeen Dashboard открыта по обычному <code>HTTP</code>, а внешняя панель загружается по <code>HTTPS</code> (или наоборот), браузер блокирует запросы к локальной сети из соображений безопасности. Поскольку <strong>Clash API работает по HTTP в 100% случаев</strong>, а настраивать HTTPS для локального <strong>sing-box API</strong> вручную на роутере никто не будет, для возможности подключения к ним из локальной сети в браузерах на основе Chromium требуется перевести SKeen Dashboard и/или sing-box API / Clash API на HTTPS через KeenDNS / CrazeDNS.",
+    browserBoxLi: "Если SKeen Dashboard открыта по обычному <code>HTTP</code>, а внешняя панель загружается по <code>HTTPS</code> (или наоборот), браузер блокирует запросы к локальной сети из соображений безопасности. Поскольку <strong>Clash API работает по HTTP в 100% случаев</strong>, а настраивать HTTPS для локального <strong>sing-box API</strong> вручную на роутере никто не будет, для возможности подключения к ним из локальной сети в браузерах на основе Chromium требуется перевести SKeen Dashboard и/или sing-box API / Clash API на HTTPS через KeenDNS / CrazeDNS либо использовать HTTPS-панель SKeen по адресу <a href=\"https://skeen.indevs.in\" target=\"_blank\" rel=\"noopener noreferrer\">https://skeen.indevs.in</a>.",
     httpsStepsTitle: "Инструкция по настройке HTTPS через KeenDNS / CrazeDNS:",
     httpsStepsIntro: "Чтобы браузеры на основе Chromium пропускали запросы к локальной сети, либо для подключения из внешней сети, нужно опубликовать сервис в KeenDNS/CrazeDNS:",
     steps: [
@@ -3507,7 +3507,7 @@ const helpDict = {
     remoteTitle: "Setup for Remote Access and Chromium-Based Browsers",
     browserBoxTitle: "Browser Behavior (Google Chrome, Edge, Opera, Brave, Vivaldi):",
     browserBoxDesc: "Chromium-engine browsers check the security context of the parent page. Since remote panels load <strong>inside an iframe</strong>, the browser evaluates the security of the SKeen Dashboard interface itself rather than the internal panel address.",
-    browserBoxLi: "If the SKeen Dashboard is opened via regular <code>HTTP</code> while the remote panel loads via <code>HTTPS</code> (or vice versa), the browser blocks requests to the local network for security reasons. Since <strong>Clash API operates over HTTP 100% of the time</strong>, and nobody configures HTTPS for a local <strong>sing-box API</strong> manually on a router, connecting to them from a local network in Chromium-based browsers requires switching SKeen Dashboard and/or sing-box API / Clash API to HTTPS via KeenDNS / CrazeDNS.",
+    browserBoxLi: "If the SKeen Dashboard is opened via regular <code>HTTP</code> while the remote panel loads via <code>HTTPS</code> (or vice versa), the browser blocks requests to the local network for security reasons. Since <strong>Clash API operates over HTTP 100% of the time</strong>, and nobody configures HTTPS for a local <strong>sing-box API</strong> manually on a router, connecting to them from a local network in Chromium-based browsers requires switching SKeen Dashboard and/or sing-box API / Clash API to HTTPS via KeenDNS / CrazeDNS, or using the SKeen HTTPS dashboard at <a href=\"https://skeen.indevs.in\" target=\"_blank\" rel=\"noopener noreferrer\">https://skeen.indevs.in</a>.",
     httpsStepsTitle: "HTTPS Setup Instructions via KeenDNS / CrazeDNS:",
     httpsStepsIntro: "To allow Chromium-based browsers to pass requests to the local network, or for external network access, you must publish the service in KeenDNS/CrazeDNS:",
     steps: [
