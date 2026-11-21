@@ -1726,89 +1726,95 @@ local function route_request(method, path, body, request_headers)
   return json_response({ error = "Not found" }, "404 Not Found")
 end
 
+-- Wait for readable data with a deadline, then make a non-blocking chunk read.
+local function receive_chunk(request, deadline)
+  local client = request.client
+
+  while true do
+    local remaining = deadline - socket.gettime()
+    if remaining <= 0 then return nil, "timeout" end
+
+    local readable, _, select_error = socket.select({ client }, nil, remaining)
+    if not readable or #readable == 0 then
+      return nil, select_error == "timeout" and "timeout" or "incomplete"
+    end
+
+    client:settimeout(0)
+    local chunk, receive_error, partial = client:receive(4096)
+    client:settimeout(10)
+    chunk = chunk or partial
+    if chunk and #chunk > 0 then return chunk end
+    if receive_error ~= "timeout" then
+      return nil, "incomplete"
+    end
+  end
+end
+
+-- Read one bounded request line, preserving bytes already read past its newline.
+local function receive_line(request, limit)
+  while true do
+    local receive_buffer = request.receive_buffer
+    local newline = receive_buffer:find("\n", 1, true)
+    if newline then
+      if newline - 1 >= limit then return nil, "too_long" end
+      local line = receive_buffer:sub(1, newline - 1)
+      request.receive_buffer = receive_buffer:sub(newline + 1)
+      if line:sub(-1) == "\r" then line = line:sub(1, -2) end
+      return line
+    end
+    if #receive_buffer >= limit then return nil, "too_long" end
+
+    local chunk, err = receive_chunk(request, request.header_deadline)
+    if not chunk then return nil, err end
+    request.receive_buffer = receive_buffer .. chunk
+  end
+end
+
+-- Read the declared request body, preserving any bytes beyond it for consistency.
+local function receive_body(request, length)
+  local deadline = socket.gettime() + 10
+  local chunks = {}
+  local received = 0
+
+  if #request.receive_buffer > 0 then
+    local take = math.min(length, #request.receive_buffer)
+    chunks[#chunks + 1] = request.receive_buffer:sub(1, take)
+    received = take
+    request.receive_buffer = request.receive_buffer:sub(take + 1)
+  end
+
+  while received < length do
+    local chunk, err = receive_chunk(request, deadline)
+    if not chunk then return nil, err end
+    local needed = length - received
+    if #chunk > needed then
+      chunks[#chunks + 1] = chunk:sub(1, needed)
+      request.receive_buffer = chunk:sub(needed + 1) .. request.receive_buffer
+      received = length
+    else
+      chunks[#chunks + 1] = chunk
+      received = received + #chunk
+    end
+  end
+
+  return table.concat(chunks)
+end
+
 -- Function for safely processing an individual client connection
 local function handle_client(client)
   -- Keep a slow client from blocking the single-threaded server indefinitely.
-  local header_deadline = socket.gettime() + 10
-  local receive_buffer = ""
+  local request = {
+    client = client,
+    header_deadline = socket.gettime() + 10,
+    receive_buffer = ""
+  }
   client:settimeout(10)
 
-  -- Wait for readable data with a deadline, then make a non-blocking chunk read.
-  -- Keeping a small buffer also preserves bytes received past the final header
-  -- line, so a request body sent together with the headers is not lost.
-  local function receive_chunk(deadline)
-    while true do
-      local remaining = deadline - socket.gettime()
-      if remaining <= 0 then return nil, "timeout" end
-
-      local readable, _, select_error = socket.select({ client }, nil, remaining)
-      if not readable or #readable == 0 then
-        return nil, select_error == "timeout" and "timeout" or "incomplete"
-      end
-
-      client:settimeout(0)
-      local chunk, receive_error, partial = client:receive(4096)
-      client:settimeout(10)
-      chunk = chunk or partial
-      if chunk and #chunk > 0 then return chunk end
-      if receive_error ~= "timeout" then
-        return nil, "incomplete"
-      end
-    end
-  end
-
-  local function receive_line(limit)
-    while true do
-      local newline = receive_buffer:find("\n", 1, true)
-      if newline then
-        if newline - 1 >= limit then return nil, "too_long" end
-        local line = receive_buffer:sub(1, newline - 1)
-        receive_buffer = receive_buffer:sub(newline + 1)
-        if line:sub(-1) == "\r" then line = line:sub(1, -2) end
-        return line
-      end
-      if #receive_buffer >= limit then return nil, "too_long" end
-
-      local chunk, err = receive_chunk(header_deadline)
-      if not chunk then return nil, err end
-      receive_buffer = receive_buffer .. chunk
-    end
-  end
-
-  local function receive_body(length)
-    local deadline = socket.gettime() + 10
-    local chunks = {}
-    local received = 0
-
-    if #receive_buffer > 0 then
-      local take = math.min(length, #receive_buffer)
-      chunks[#chunks + 1] = receive_buffer:sub(1, take)
-      received = take
-      receive_buffer = receive_buffer:sub(take + 1)
-    end
-
-    while received < length do
-      local chunk, err = receive_chunk(deadline)
-      if not chunk then return nil, err end
-      local needed = length - received
-      if #chunk > needed then
-        chunks[#chunks + 1] = chunk:sub(1, needed)
-        receive_buffer = chunk:sub(needed + 1) .. receive_buffer
-        received = length
-      else
-        chunks[#chunks + 1] = chunk
-        received = received + #chunk
-      end
-    end
-
-    return table.concat(chunks)
-  end
-
   -- Read the first line of the HTTP request (request line: method and path)
-  local request = receive_line(4096)
-  if not request then return end
+  local request_line = receive_line(request, 4096)
+  if not request_line then return end
 
-  local method, path = request:match("^(%a+)%s+(%S+)%s+HTTP/1%.[01]$")
+  local method, path = request_line:match("^(%a+)%s+(%S+)%s+HTTP/1%.[01]$")
   if not method or not path then
     client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
     return
@@ -1820,7 +1826,7 @@ local function handle_client(client)
 
   -- Bound both header size and total read time, not just the number of lines.
   while true do
-    local line, line_error = receive_line(8192)
+    local line, line_error = receive_line(request, 8192)
     if not line then
       local status = line_error == "too_long" and
           "431 Request Header Fields Too Large" or "400 Bad Request"
@@ -1913,7 +1919,7 @@ local function handle_client(client)
   -- Read the request body (if present) with a preliminary hard size limit check
   local body = ""
   if content_length > 0 then
-    local received_body = receive_body(content_length)
+    local received_body = receive_body(request, content_length)
     if not received_body or #received_body < content_length then
       client:send("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n")
       return
