@@ -3,3 +3,4 @@ npm-debug.log*
 
 dashboard/index.min.html
 skeen-api
+/dist/

@@ -23,6 +23,11 @@ jobs:
         with:
           node-version: '22'
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: tools/shell-minifier/go.mod
+          cache-dependency-path: tools/shell-minifier/go.sum
+
       - name: Build skeen-api
         run: |
           npm ci --prefix dashboard
@@ -30,21 +35,21 @@ jobs:
           cp skeen-api skeen-api_tmp
           cp api-version api-version_tmp
 
+      - name: Build optimized shell scripts
+        run: |
+          SHFMT_VERSION="v3.14.1"
+          curl -fsSL -o "$RUNNER_TEMP/shfmt" "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
+          chmod +x "$RUNNER_TEMP/shfmt"
+          export PATH="$RUNNER_TEMP:$PATH"
+          (cd tools/shell-minifier && go test ./...)
+          sh tools/build-shell-scripts.sh dist
+          mv dist/skeen skeen_min
+          mv dist/skeen_ru skeen_ru_min
+
       - name: Prepare and Push to Static Branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          SHFMT_VERSION="v3.14.1"
-          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Downloading shfmt"
-          sudo curl -sL -o /usr/local/bin/shfmt "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
-          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] shfmt download finished"
-          sudo chmod +x /usr/local/bin/shfmt
-
-          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Formatting scripts"
-          shfmt -s -mn skeen.sh > skeen_min
-          shfmt -s -mn skeen_ru.sh > skeen_ru_min
-          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Script formatting finished"
-
           cp config.json config.json_tmp
           cp config_beta.json config_beta.json_tmp
           cp config_lite.json config_lite.json_tmp
