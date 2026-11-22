@@ -16,7 +16,7 @@ Build both distributable scripts from the repository root with `shfmt` on
 `PATH`:
 
 ```sh
-sh tools/build-shell-scripts.sh [output-directory]
+sh .github/build-shell-scripts.sh [output-directory]
 ```
 
 The default output directory is `dist/`; the generated files are `skeen` and
@@ -24,7 +24,7 @@ The default output directory is `dist/`; the generated files are `skeen` and
 tests:
 
 ```sh
-cd tools/shell-minifier
+cd .github/shell-minifier
 go test ./...
 ```
 

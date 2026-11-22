@@ -19,7 +19,7 @@ for source in skeen.sh skeen_ru.sh; do
   output=${source%.sh}
   shfmt -s -mn "$source" > "$BUILD_DIR/$output.formatted"
   (
-    cd "$ROOT_DIR/tools/shell-minifier"
+    cd "$ROOT_DIR/.github/shell-minifier"
     go run .
   ) < "$BUILD_DIR/$output.formatted" > "$BUILD_DIR/$output"
   sh -n "$BUILD_DIR/$output"
