@@ -36,6 +36,63 @@ say_long
 	}
 }
 
+func TestMinifyRemovesCommentsFromReservedAddressConstants(t *testing.T) {
+	source := []byte(`#!/bin/sh
+readonly RESERVED_IPV4="
+# IPv4 registry comment
+
+10.0.0.0/8 # private network
+
+192.168.0.0/16 # private network
+"
+readonly RESERVED_IPV6="
+# IPv6 registry comment
+
+fe80::/10 # link-local
+"
+readonly OTHER_TEXT="keep# this literal text"
+print_reserved_addresses() {
+  while IFS= read -r line; do
+    case "$line" in \#*) continue ;; esac
+    subnet=$(echo "$line" | cut -d ' ' -f1)
+    [ -n "$subnet" ] && printf '%s\n' "$subnet"
+  done <<EOF
+$RESERVED_IPV4
+$RESERVED_IPV6
+EOF
+  return 0
+}
+print_reserved_addresses
+`)
+
+	minified, stats, err := minify(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, comment := range []string{
+		"IPv4 registry comment",
+		"IPv6 registry comment",
+		"private network",
+		"link-local",
+	} {
+		if strings.Contains(string(minified), comment) {
+			t.Fatalf("reserved-address comment %q was not removed: %s", comment, minified)
+		}
+	}
+	if !strings.Contains(string(minified), "keep# this literal text") {
+		t.Fatalf("comment-like text in another constant was changed: %s", minified)
+	}
+	if !strings.Contains(string(minified), "10.0.0.0/8\n192.168.0.0/16\n") {
+		t.Fatalf("blank lines were not removed from reserved-address data: %s", minified)
+	}
+	if stats.bytesSaved == 0 {
+		t.Fatal("expected comment removal to save bytes")
+	}
+	if got, want := runShell(t, minified), runShell(t, source); !bytes.Equal(got, want) {
+		t.Fatalf("output changed: got %q, want %q", got, want)
+	}
+}
+
 func TestMinifyPreservesArithmeticVariableReferences(t *testing.T) {
 	source := []byte(`#!/bin/sh
 increment_long() {

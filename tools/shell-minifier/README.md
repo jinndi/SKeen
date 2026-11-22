@@ -8,7 +8,9 @@ declared later are left unchanged. Function names are renamed only when all
 uses are statically identifiable in the source; names found in opaque strings
 are left unchanged. Runtime-computed function calls cannot be proven safe
 statically and should be added to the protected-name handling if introduced.
-The tool does not alter the readable source files.
+Documentation comments and blank lines inside the top-level `RESERVED_IPV4` and
+`RESERVED_IPV6` string constants are removed from generated output; other quoted
+text is left unchanged. The tool does not alter the readable source files.
 
 Build both distributable scripts from the repository root with `shfmt` on
 `PATH`:

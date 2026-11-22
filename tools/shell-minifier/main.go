@@ -75,6 +75,7 @@ func minify(source []byte) ([]byte, minifyStats, error) {
 	variables := make(map[string]*symbol)
 	var literals []*syntax.Lit
 	var functionDecls []*syntax.FuncDecl
+	var commentEdits []edit
 	commandWords := make(map[int]bool)
 	protectedAssignments := make(map[string]bool)
 	var opaqueStrings []string
@@ -143,6 +144,31 @@ func minify(source []byte) ([]byte, minifyStats, error) {
 			readonlyNames[name] = true
 			addPosition(target, name, start, end)
 		})
+		for _, word := range call.Args[1:] {
+			literal, ok := firstLiteral(word)
+			if !ok {
+				continue
+			}
+			match := localAssignment.FindStringSubmatchIndex(literal.Value)
+			if match == nil {
+				continue
+			}
+			name := literal.Value[match[2]:match[3]]
+			if name != "RESERVED_IPV4" && name != "RESERVED_IPV6" {
+				continue
+			}
+			for _, part := range word.Parts {
+				quoted, ok := part.(*syntax.DblQuoted)
+				if !ok || quoted.Dollar {
+					continue
+				}
+				commentEdits = append(commentEdits, reservedCommentEdits(
+					source,
+					int(quoted.Pos().Offset())+1,
+					int(quoted.End().Offset())-1,
+				)...)
+			}
+		}
 	}
 	if len(readonlyNames) > 0 {
 		syntax.Walk(file, func(node syntax.Node) bool {
@@ -339,8 +365,11 @@ func minify(source []byte) ([]byte, minifyStats, error) {
 		}
 	}
 
-	edits := make([]edit, 0)
+	edits := append([]edit(nil), commentEdits...)
 	stats := minifyStats{}
+	for _, commentEdit := range commentEdits {
+		stats.bytesSaved += commentEdit.end - commentEdit.start
+	}
 	for _, group := range []struct {
 		symbols  map[string]*symbol
 		alphabet string
@@ -413,6 +442,57 @@ func minify(source []byte) ([]byte, minifyStats, error) {
 		return nil, minifyStats{}, fmt.Errorf("minified output did not parse: %w", err)
 	}
 	return result, stats, nil
+}
+
+func reservedCommentEdits(source []byte, start, end int) []edit {
+	var edits []edit
+	for lineStart := start; lineStart < end; {
+		lineEnd := end
+		if offset := bytes.IndexByte(source[lineStart:end], '\n'); offset >= 0 {
+			lineEnd = lineStart + offset
+		}
+		nextLine := lineEnd
+		if lineEnd < end {
+			nextLine++
+		}
+
+		if offset := bytes.IndexByte(source[lineStart:lineEnd], '#'); offset >= 0 {
+			commentStart := lineStart + offset
+			prefix := source[lineStart:commentStart]
+			trimmedPrefix := len(prefix)
+			for trimmedPrefix > 0 && shellWhitespace(prefix[trimmedPrefix-1]) {
+				trimmedPrefix--
+			}
+
+			switch {
+			case trimmedPrefix == 0:
+				edits = append(edits, edit{start: lineStart, end: nextLine})
+			case trimmedPrefix < len(prefix):
+				edits = append(edits, edit{start: lineStart + trimmedPrefix, end: lineEnd})
+			}
+		} else if shellWhitespaceOnly(source[lineStart:lineEnd]) {
+			edits = append(edits, edit{start: lineStart, end: nextLine})
+		}
+
+		if nextLine == end {
+			break
+		}
+		lineStart = nextLine
+	}
+	return edits
+}
+
+func shellWhitespaceOnly(value []byte) bool {
+	for _, b := range value {
+		if !shellWhitespace(b) {
+			return false
+		}
+	}
+	return true
+}
+
+func shellWhitespace(b byte) bool {
+	return b == ' ' || b == '\t' || b == '\r'
 }
 
 func addArithmeticNames(
