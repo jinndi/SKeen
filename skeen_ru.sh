@@ -3030,14 +3030,14 @@ show_connstat() {
   cyan_bold "--- Локальные TCP-сокеты (netstat) ---"
   echo "netstat показывает сокеты роутера; conntrack учитывает трафик клиентов."
   if ! command -v netstat >/dev/null 2>&1; then
-    echo "netstat не установлен"
+    echowarn "netstat не установлен"
   else
     tcp_summary="$(netstat -antp 2>/dev/null | awk '
       $1~/^tcp/ && $6!="" { count[$6]++ }
       END { for(s in count) printf "%s|%s\n",s,count[s] }
     ')"
     if [ -z "$tcp_summary" ]; then
-      echo "Данные TCP-сокетов недоступны"
+      echowarn "Данные TCP-сокетов недоступны"
     else
       printf '%s\n' "$tcp_summary" | sort -t'|' -k1,1 | awk -F'|' '
         BEGIN { print "Состояние TCP|Значение|Количество" }

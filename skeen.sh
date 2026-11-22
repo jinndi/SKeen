@@ -389,7 +389,7 @@ get_singbox_config() {
   : "${sing_external_api_secret:=$sing_api_secret}"
 
   _init_box_target() {
-    local use_dir="${1:-0}" dir_path="${2:-}" file_path="${3:-}"
+    local use_dir="${1:-0}" dir_path="${2:-}" file_path="${3:-}" src
     if [ "$use_dir" = "1" ]; then
       mkdir -p "$dir_path"
       if [ -z "$(ls -A "$dir_path")" ]; then
@@ -1140,7 +1140,7 @@ uninstall() {
   rm -f "$SKEEN_SCRIPT"
 
   echomsg "Removing ${SKEEN_NAME} caches..."
-  rm -f "$RUN_DIR"
+  rm -rf "$RUN_DIR"
 
   echomsg "Delete group ${SKEEN_PROC}..."
   delgroup "$SKEEN_PROC"
@@ -2121,7 +2121,7 @@ prepare_firewall() {
   elif [ -z "$POLICY_SEGMENT" ]; then
     cyan " - Segment name not set"
   elif [ -z "$SKEEN_MARK_POLICY" ]; then
-    cyan " - Segment policy $POLICY_SEGMENT is not available"
+    echowarn "Segment policy $POLICY_SEGMENT is not available"
   else
     cyan " - Segment policy routing: $POLICY_SEGMENT"
     route_all=0
@@ -2587,7 +2587,7 @@ get_ulimit_n() {
 }
 
 start_singbox() {
-  local timeout=10
+  local timeout=40
   local status_start msg
 
   echomsg "Starting ${SINGBOX_NAME}..."
@@ -2607,7 +2607,7 @@ start_singbox() {
   fi
 
   while ! is_running && [ $timeout -gt 0 ]; do
-    sleep 1
+    usleep 250000
     timeout=$((timeout - 1))
   done
 
@@ -2671,7 +2671,7 @@ start() {
 }
 
 stop_singbox() {
-  local timeout=10
+  local timeout=40
   local msg
 
   echomsg "Stopping ${SINGBOX_NAME}..."
@@ -2689,7 +2689,7 @@ stop_singbox() {
   fi
 
   while is_running && [ $timeout -gt 0 ]; do
-    sleep 1
+    usleep 250000
     timeout=$((timeout - 1))
   done
 
