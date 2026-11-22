@@ -15,9 +15,26 @@ mkdir -p "$OUTPUT_DIR"
 BUILD_DIR=$(mktemp -d)
 trap 'rm -rf "$BUILD_DIR"' EXIT HUP INT TERM
 
-for source in skeen.sh skeen_ru.sh; do
-  output=${source%.sh}
-  shfmt -s -mn "$source" > "$BUILD_DIR/$output.formatted"
+(
+  cd "$ROOT_DIR/.github/i18n"
+  go test ./...
+)
+
+for locale in en ru; do
+  case "$locale" in
+    en) output=skeen ;;
+    ru) output=skeen_ru ;;
+  esac
+
+  (
+    cd "$ROOT_DIR/.github/i18n"
+    go run . \
+      -input "$ROOT_DIR/skeen.sh" \
+      -catalog "$ROOT_DIR/translations.json" \
+      -locale "$locale"
+  ) > "$BUILD_DIR/$output.source"
+
+  shfmt -s -mn "$BUILD_DIR/$output.source" > "$BUILD_DIR/$output.formatted"
   (
     cd "$ROOT_DIR/.github/shell-minifier"
     go run .

@@ -1,0 +1,1286 @@
+{
+  "ALSO_WITH_THE_SPECIFIED_DNS_REDIRECT_PAR": {
+    "en": "Also, with the specified DNS redirect parameters",
+    "ru": "А также при заданных параметрах редиректа DNS"
+  },
+  "APPLYING_FIREWALL_RULES": {
+    "en": "Applying firewall rules...",
+    "ru": "Применение правил фаервола..."
+  },
+  "ARCHIVE_MISSING_OR_SKEEN_FOLDER_NOT_FOUN": {
+    "en": "Archive missing or 'skeen' folder not found",
+    "ru": "Архив отсутствует или папка 'skeen' не найдена"
+  },
+  "ASSESSMENT_BELOW_THE_WARNING_THRESHOLD": {
+    "en": "Assessment: below the warning threshold",
+    "ru": "Оценка: ниже порога предупреждения"
+  },
+  "ASSESSMENT_CRITICAL_CONNTRACK_TABLE_IS_A": {
+    "en": "Assessment: CRITICAL — conntrack table is almost full",
+    "ru": "Оценка: КРИТИЧНО — таблица conntrack почти заполнена"
+  },
+  "ASSESSMENT_CRITICAL_CONNTRACK_TABLE_LIMI": {
+    "en": "Assessment: CRITICAL — conntrack table limit reached or exceeded",
+    "ru": "Оценка: КРИТИЧНО — достигнут или превышен лимит таблицы conntrack"
+  },
+  "ASSESSMENT_INSERT_FAILED_EARLY_DROP_AND": {
+    "en": "Assessment: insert_failed, early_drop, and drop are zero.",
+    "ru": "Счётчики insert_failed, early_drop и drop равны нулю."
+  },
+  "ASSESSMENT_POSSIBLE_PACKET_ENTRY_DROPS_W": {
+    "en": "Assessment: possible packet/entry drops were recorded.",
+    "ru": "Зафиксированы возможные потери пакетов или записей."
+  },
+  "ASSESSMENT_WARNING_CONNTRACK_TABLE_IS_OV": {
+    "en": "Assessment: WARNING — conntrack table is over 80% full",
+    "ru": "Оценка: ВНИМАНИЕ — таблица заполнена более чем на 80%"
+  },
+  "AUTOSTART": {
+    "en": "Autostart",
+    "ru": "Автостарт"
+  },
+  "AUTOSTART_SCRIPT_CREATED_SUCCESSFULLY": {
+    "en": "Autostart script created successfully",
+    "ru": "Скрипт автозапуска создан успешно"
+  },
+  "AUTO_MUST_BE_1_STABLE_2_BETA_OR_3_EXTERN": {
+    "en": "AUTO must be 1 (stable), 2 (beta), or 3 (external)",
+    "ru": "AUTO может быть: 1 (stable), 2 (beta) или 3 (external)"
+  },
+  "AWK_ACTIVE_CONNECTION": {
+    "en": "Active connection",
+    "ru": "Соединение активно"
+  },
+  "AWK_CONNECTION_IS_CLOSING": {
+    "en": "Connection is closing",
+    "ru": "Соединение закрывается"
+  },
+  "AWK_COUNTER_VALUE_MEANING": {
+    "en": "Counter|Value|Meaning",
+    "ru": "Счётчик|Значение|Пояснение"
+  },
+  "AWK_ENTRIES_EVICTED_EARLY_CHECK_IF_INCREASIN": {
+    "en": "Entries evicted early; check if increasing",
+    "ru": "Записи удалялись раньше срока; проверьте рост"
+  },
+  "AWK_EXISTING_ENTRY_FOUND_INFORMATIONAL": {
+    "en": "Existing entry found; informational",
+    "ru": "Найдена существующая запись; информационный счётчик"
+  },
+  "AWK_HASH_SEARCH_RESTARTED_USUALLY_INFORMATIO": {
+    "en": "Hash search restarted; usually informational",
+    "ru": "Перезапуск поиска; обычно информативно"
+  },
+  "AWK_MARK_DEC_HEX_COUNT_PURPOSE": {
+    "en": "Mark (dec / hex)|Count|Purpose",
+    "ru": "Метка (dec / hex)|Количество|Назначение"
+  },
+  "AWK_MARK_IS_NOT_SET": {
+    "en": "Mark is not set",
+    "ru": "Метка не установлена"
+  },
+  "AWK_NEW_ENTRIES_COULD_NOT_BE_ADDED_CHECK_IF": {
+    "en": "New entries could not be added; check if increasing",
+    "ru": "Не удалось добавить запись; проверьте, растёт ли"
+  },
+  "AWK_NEW_ENTRIES_INSERTED_INFORMATIONAL": {
+    "en": "New entries inserted; informational",
+    "ru": "Добавлены новые записи; информационный счётчик"
+  },
+  "AWK_NONE": {
+    "en": "none",
+    "ru": "нет"
+  },
+  "AWK_NO_CONNTRACK_MARK": {
+    "en": "No conntrack mark",
+    "ru": "conntrack не видит метку"
+  },
+  "AWK_OTHER_MARK_SOURCE_UNKNOWN_FROM_VALUE": {
+    "en": "Other mark; source unknown from value",
+    "ru": "Другая метка; источник неизвестен по значению"
+  },
+  "AWK_PACKETS_CLASSIFIED_INVALID_OFTEN_UNRELAT": {
+    "en": "Packets classified INVALID; often unrelated noise",
+    "ru": "Пакеты помечены INVALID; часто это обычный сетевой шум"
+  },
+  "AWK_PACKETS_DROPPED_BY_CONNTRACK_CHECK_IF_IN": {
+    "en": "Packets dropped by conntrack; check if increasing",
+    "ru": "Пакеты отброшены conntrack; проверьте рост"
+  },
+  "AWK_PACKETS_INTENTIONALLY_NOT_TRACKED_OFTEN": {
+    "en": "Packets intentionally not tracked; often normal",
+    "ru": "Пакеты намеренно не отслеживались; часто это нормально"
+  },
+  "AWK_PEER_CLOSED_LOCAL_PROCESS_MAY_NOT_HAVE_C": {
+    "en": "Peer closed; local process may not have closed",
+    "ru": "Удалённая сторона закрыла; приложение ещё не закрыло сокет"
+  },
+  "AWK_PROCESSING_ERRORS_CUMULATIVE_COMPARE_OVE": {
+    "en": "Processing errors; cumulative, compare over time",
+    "ru": "Ошибки обработки; счётчик накопительный"
+  },
+  "AWK_RECENTLY_CLOSED_EXPIRES_AUTOMATICALLY": {
+    "en": "Recently closed; expires automatically",
+    "ru": "Недавно закрыто; запись истечёт сама"
+  },
+  "AWK_SKEEN_TPROXY_POLICY_ROUTING_MARK_0X12": {
+    "en": "SKeen: TProxy/policy-routing mark (0x12)",
+    "ru": "SKeen: метка TProxy/policy routing (0x12)"
+  },
+  "AWK_TCP_STATE_MEANING_COUNT": {
+    "en": "TCP state|Meaning|Count",
+    "ru": "Состояние TCP|Значение|Количество"
+  },
+  "AWK_WAITING_FOR_FINAL_CLOSE_ACKNOWLEDGEMENT": {
+    "en": "Waiting for final close acknowledgement",
+    "ru": "Ожидается подтверждение закрытия"
+  },
+  "AWK_WAITING_FOR_FINAL_HANDSHAKE": {
+    "en": "Waiting for final handshake",
+    "ru": "Ожидается завершение TCP handshake"
+  },
+  "AWK_WAITING_FOR_INCOMING_CONNECTIONS": {
+    "en": "Waiting for incoming connections",
+    "ru": "Ожидание входящих подключений"
+  },
+  "AWK_WAITING_FOR_PEER_RESPONSE": {
+    "en": "Waiting for peer response",
+    "ru": "Ожидается ответ удалённой стороны"
+  },
+  "A_FULL_CONFIGURATION_RESET_WILL_BE_PERFO": {
+    "en": "A full configuration reset will be performed,\\n",
+    "ru": "Будет выполнен полный сброс конфигурации,\\n"
+  },
+  "BACKUP_SUCCESSFULLY_CREATED_AT_ARCHIVE_P": {
+    "en": "Backup successfully created at {archive_path}",
+    "ru": "Резервная копия успешно создана: {archive_path}"
+  },
+  "BACKUP_SUCCESSFULLY_RESTORED": {
+    "en": "Backup successfully restored",
+    "ru": "Резервная копия успешно восстановлена"
+  },
+  "BINARY_FILE_SING_BOX_NOT_FOUND_INSIDE_TH": {
+    "en": "Binary file sing-box not found inside the package!",
+    "ru": "Бинарный файл sing-box не найден внутри пакета!"
+  },
+  "CACHE_CLEARED_RESTART_SKEEN_NAME_TO_APPL": {
+    "en": "Cache cleared. Restart {SKEEN_NAME} to apply changes",
+    "ru": "Кэш очищен. Перезапустите {SKEEN_NAME} для применения изменений"
+  },
+  "CACHE_FILE_IS_DISABLED_IN_SINGBOX_NAME_C": {
+    "en": "Cache file is disabled in {SINGBOX_NAME} configuration",
+    "ru": "Кэш файл отключен в конфигурации {SINGBOX_NAME}"
+  },
+  "CACHE_FILE_NOT_FOUND_AT_PATH": {
+    "en": "Cache file not found at path",
+    "ru": "Кэш файл не найден по пути"
+  },
+  "CHAIN_CHAIN_DID_NOT_APPEAR_WITHIN_30_CHE": {
+    "en": "Chain {chain} did not appear within 30 checks",
+    "ru": "Цепочка {chain} не появилась за 30 проверок"
+  },
+  "CHAIN_CHAIN_FOUND": {
+    "en": "Chain {chain} found",
+    "ru": "Цепочка {chain} найдена"
+  },
+  "CHECKING_AND_LOADING_MODULES": {
+    "en": " - Checking and loading modules...",
+    "ru": " - Проверка и загрузка модулей..."
+  },
+  "CHECKING_DEPENDENCIES": {
+    "en": "Checking dependencies",
+    "ru": "Проверка зависимостей"
+  },
+  "CHECKING_NAME_FOR_UPDATES": {
+    "en": "Checking {name} for updates...",
+    "ru": "Проверка обновлений {name}..."
+  },
+  "CHECKING_SINGBOX_NAME_CONFIGURATION": {
+    "en": "Checking {SINGBOX_NAME} configuration...",
+    "ru": "Проверка конфигурации {SINGBOX_NAME}..."
+  },
+  "CHECKING_SKEEN_NAME_CONFIGURATION": {
+    "en": "Checking {SKEEN_NAME} configuration...",
+    "ru": "Проверка конфигурации {SKEEN_NAME}..."
+  },
+  "CHECK_YOUR_INTERNET_CONNECTION": {
+    "en": "Check your internet connection",
+    "ru": "Проверьте подключение к интернету"
+  },
+  "CHOICE_0_5": {
+    "en": "Choice [0-5]: ",
+    "ru": "Выбор [0-5]: "
+  },
+  "CLEANING_FIREWALL_RULES": {
+    "en": "Cleaning firewall rules...",
+    "ru": "Очистка правил фаервола..."
+  },
+  "COMMAND_SUPPORTS_ONLY_TTY": {
+    "en": "Command supports only tty",
+    "ru": "Команда только для терминала"
+  },
+  "COMPARE_COUNTER_SNAPSHOTS_DURING_A_FAULT": {
+    "en": "Compare counter snapshots during a fault. Rising insert_failed, early_drop, or drop needs investigation.",
+    "ru": "При сбое сравните снимки; рост insert_failed, early_drop или drop требует проверки."
+  },
+  "CONFIGURATION_DIRECTORY_WORK_DIR_IS_RETA": {
+    "en": "Configuration directory {WORK_DIR} is retained",
+    "ru": "Каталог конфигурации {WORK_DIR} незатронут"
+  },
+  "CONFIGURATION_FILE_SKEEN_NAME_ALREADY_EX": {
+    "en": "Configuration file {SKEEN_NAME} already exists, skipping creation",
+    "ru": "Конфигурационный файл {SKEEN_NAME} уже существует, пропускаем создание"
+  },
+  "CONFIGURATION_FILE_SKEEN_NAME_CREATED_SU": {
+    "en": "Configuration file {SKEEN_NAME} created successfully",
+    "ru": "Конфигурационный файл {SKEEN_NAME} создан успешно"
+  },
+  "CONFIGURATION_FILE_WITH_EXPERIMENTAL_CAC": {
+    "en": "Configuration file with 'experimental.cache_file' parameter not found",
+    "ru": "Файл конфигурации с параметром experimental.cache_file не найден"
+  },
+  "CONFIGURATION_FORMATTED_SUCCESSFULLY": {
+    "en": "Configuration formatted successfully",
+    "ru": "Конфигурация отформатирована успешно"
+  },
+  "CONFIGURATION_FORMATTING_FAILED": {
+    "en": "Configuration formatting failed",
+    "ru": "Ошибка форматирования конфигурации"
+  },
+  "CONFIGURATION_RESET_COMPLETED": {
+    "en": "Configuration reset completed",
+    "ru": "Сброс конфигурации выполнен"
+  },
+  "CONFIGURATION_SINGBOX_NAME_FOUND_SKIPPIN": {
+    "en": "Configuration {SINGBOX_NAME} found, skipping creation",
+    "ru": "Конгифурация {SINGBOX_NAME} найдена, пропускаем загрузку"
+  },
+  "CONFIGURATION_SYNCED_RESTART_SKEEN_NAME": {
+    "en": "Configuration synced, restart {SKEEN_NAME} to apply changes",
+    "ru": "Конфигурация синхронизирована, перезапустите {SKEEN_NAME} для применения изменений"
+  },
+  "CONFIGURE_SINGBOX_NAME_BY_EDITING_CONFIG": {
+    "en": "Configure {SINGBOX_NAME} by editing: {CONFIG_DIR}",
+    "ru": "Настройте {SINGBOX_NAME}: отредактировав {SINGBOX_CONFIG}"
+  },
+  "CONFIGURE_SKEEN_NAME_BY_EDITING_SKEEN_CO": {
+    "en": "Configure {SKEEN_NAME} by editing: {SKEEN_CONFIG}",
+    "ru": "Настройте {SKEEN_NAME}: отредактировав {SKEEN_CONFIG}"
+  },
+  "CONNECTION_DIAGNOSTICS": {
+    "en": "=== Connection diagnostics ===",
+    "ru": "=== Диагностика соединений ==="
+  },
+  "CONNECTION_MARKS": {
+    "en": "--- Connection marks ---",
+    "ru": "--- Метки соединений ---"
+  },
+  "CONNTRACK_EVENT_COUNTERS": {
+    "en": "--- Conntrack event counters ---",
+    "ru": "--- Счётчики событий conntrack ---"
+  },
+  "CONNTRACK_RETURNED_NO_DATA_EMPTY_TABLE_O": {
+    "en": "conntrack returned no data (empty table or access unavailable)",
+    "ru": "conntrack не вернул данные (пусто или нет доступа)"
+  },
+  "CONNTRACK_TABLE_KERNEL_COUNT_MAX_COUNTER": {
+    "en": "Conntrack table: kernel count/max counters are unavailable",
+    "ru": "Таблица conntrack: системные счётчики недоступны"
+  },
+  "CONNTRACK_TABLE_S_S_ENTRIES_S_S_FULL_N": {
+    "en": "Conntrack table: %s / %s entries (%s.%s%% full)\\n",
+    "ru": "Таблица conntrack: %s / %s записей (заполнена на %s.%s%%)\\n"
+  },
+  "CONNTRACK_TABLE_UNABLE_TO_READ_COUNT_MAX": {
+    "en": "Conntrack table: unable to read count/max",
+    "ru": "Таблица conntrack: не удалось прочитать число записей/лимит"
+  },
+  "CONNTRACK_UTILITY_MISSING_DETAILED_SUMMA": {
+    "en": "'conntrack' utility missing; detailed summary unavailable",
+    "ru": "Утилита conntrack не установлена; сводка недоступна"
+  },
+  "CONTINUE_Y_N": {
+    "en": "Continue? [y/n]: ",
+    "ru": "Продолжить? [y/n]: "
+  },
+  "COUNTERS_UNAVAILABLE_WITHOUT_THE_CONNTRA": {
+    "en": "Counters unavailable without the 'conntrack' utility",
+    "ru": "Счётчики недоступны без утилиты conntrack"
+  },
+  "COUNTER": {
+    "en": "| Counter ",
+    "ru": "| Счётчик "
+  },
+  "COUNTER_DATA_IS_UNAVAILABLE": {
+    "en": "Counter data is unavailable",
+    "ru": "Данные счётчиков недоступны"
+  },
+  "CREATE_SKEEN_NAME_AUTOSTART_SCRIPT": {
+    "en": "Create {SKEEN_NAME} autostart script...",
+    "ru": "Создание скрипта автозапуска {SKEEN_NAME}..."
+  },
+  "CREATING_A_BACKUP_OF_THE_CURRENT_CONFIGU": {
+    "en": "Creating a backup of the current configuration...",
+    "ru": "Создание резервной копии конфигурации..."
+  },
+  "CREATING_CONFIGURATION_FILE_SKEEN_NAME": {
+    "en": "Creating configuration file {SKEEN_NAME}...",
+    "ru": "Создаем конфигурационный файл {SKEEN_NAME}..."
+  },
+  "CREATING_GROUP_NAME_WITH_GID_GID_NUM": {
+    "en": "Creating group {name} with GID {gid_num}...",
+    "ru": "Создание группы {name} с GID {gid_num}..."
+  },
+  "CURL_LS_HTTPS_GITHUB_COM_JINNDI_SKEEN_RE": {
+    "en": "curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen {CURL_RESOLVE_FIX} | sh",
+    "ru": "curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru {CURL_RESOLVE_FIX} | sh"
+  },
+  "CURRENT_VERSION_NAME": {
+    "en": "Current version {name}:",
+    "ru": "Текущая версия {name}:"
+  },
+  "DELETE_GROUP_SKEEN_PROC": {
+    "en": "Delete group {SKEEN_PROC}...",
+    "ru": "Удаление группы {SKEEN_PROC}..."
+  },
+  "DELETE_S_Y_N": {
+    "en": "Delete %s? [y/n]: ",
+    "ru": "Удалить %s? [y/n]: "
+  },
+  "DEPENDENCY_CHECK_COMPLETED": {
+    "en": "Dependency check completed",
+    "ru": "Все зависимости проверены"
+  },
+  "DESCRIPTORS_S_LIMIT_S_N": {
+    "en": "Descriptors: %s (limit: %s)\\n",
+    "ru": "Дескрипторы: %s (лимит: %s)\\n"
+  },
+  "DETECTED_DNS_CONFIGURATION": {
+    "en": " - Detected DNS configuration:",
+    "ru": " - Обнаружена конфигурация DNS:"
+  },
+  "DETECTED_FIREWALL_MODE_SKEEN_FIREWALL_MO": {
+    "en": " - Detected firewall mode: {SKEEN_FIREWALL_MODE} {has_opkgtun}",
+    "ru": " - Обнаружен режим фаервола: {SKEEN_FIREWALL_MODE} {has_opkgtun}"
+  },
+  "DNS_INTERCEPT_DOES_NOT_WORK_IN_SKEEN_FIR": {
+    "en": "DNS intercept does not work in '{SKEEN_FIREWALL_MODE}' mode",
+    "ru": "В режиме '{SKEEN_FIREWALL_MODE}' перехват DNS не работает"
+  },
+  "DNS_REDIRECT_ENABLED_BUT_PORT_IS_MISSING": {
+    "en": "DNS redirect enabled, but port is missing in {SKEEN_NAME} config",
+    "ru": "Включен редирект DNS, но порт не указан в конфигурации {SKEEN_NAME}"
+  },
+  "DNS_REDIRECT_INTERCEPT_CONFLICT_USING_RE": {
+    "en": "DNS redirect/intercept conflict: using redirect only",
+    "ru": "Включен редирект и перехват DNS, будет работать только редирект"
+  },
+  "DNS_SETTINGS_PROVIDED_IN_SKEEN_NAME_BUT": {
+    "en": "DNS settings provided in {SKEEN_NAME}, but {SINGBOX_NAME} is not configured",
+    "ru": "Заданы настройки DNS в {SKEEN_NAME}, но {SINGBOX_NAME} не нестроен"
+  },
+  "DOWNLOADED_PKG_NAME_SUCCESSFULLY": {
+    "en": "Downloaded {PKG_NAME} successfully",
+    "ru": "{PKG_NAME} загружен успешно"
+  },
+  "DOWNLOADING_INITIAL_RULESET": {
+    "en": "Downloading initial ruleset...",
+    "ru": "Загрузка начального набора правил..."
+  },
+  "DOWNLOADING_PKG_NAME": {
+    "en": "Downloading {PKG_NAME}...",
+    "ru": "Загрузка {PKG_NAME}..."
+  },
+  "DOWNLOADING_SINGBOX_NAME_CONFIGURATION": {
+    "en": "Downloading {SINGBOX_NAME} configuration...",
+    "ru": "Загрузка конфигурации {SINGBOX_NAME}..."
+  },
+  "DOWNLOADING_SKEEN_NAME_SCRIPT_AT_SKEEN_S": {
+    "en": "Downloading {SKEEN_NAME} script at {SKEEN_SCRIPT}",
+    "ru": "Загрузка скрипта {SKEEN_NAME}..."
+  },
+  "ENTER_1_2_OR_3": {
+    "en": "Enter 1, 2, or 3.",
+    "ru": "Введите 1, 2 или 3."
+  },
+  "ENTER_THE_NAME_OF_THE_BACKUP_ARCHIVE_FIL": {
+    "en": "Enter the name of the backup archive file\\n",
+    "ru": "Введите имя файла резервного архива\\n"
+  },
+  "ERROR_CREATING_BACKUP": {
+    "en": "Error creating backup!",
+    "ru": "Ошибка создания резервной копии!"
+  },
+  "ERROR_CREATING_FILE_FAKEIP_INTERCEPT_FIL": {
+    "en": "Error creating file {FAKEIP_INTERCEPT_FILE}",
+    "ru": "Ошибка создания файла {FAKEIP_INTERCEPT_FILE}"
+  },
+  "ERROR_CREATING_TEMPORARY_FILE_FOR_IPSET": {
+    "en": "Error creating temporary file for ipset {FAKEIP_INTERCEPT_SET}",
+    "ru": "Ошибка создания временного файла для ipset {FAKEIP_INTERCEPT_SET}"
+  },
+  "ERROR_EXTRACTING_ARCHIVE_ARCHIVE_PATH": {
+    "en": "Error extracting archive {archive_path}",
+    "ru": "Ошибка распаковки архива {archive_path}"
+  },
+  "ERROR_SPLITTING_CONFIGURATION_SYNC_CANCE": {
+    "en": "Error splitting configuration, sync canceled!",
+    "ru": "Ошибка при разделении конфигурации, синхронизация отменена!"
+  },
+  "ERROR_WRITING_TO_TEMPORARY_FILE_FOR_IPSE": {
+    "en": "Error writing to temporary file for ipset {FAKEIP_INTERCEPT_SET}",
+    "ru": "Ошибка записи в временный файл ipset {FAKEIP_INTERCEPT_SET}"
+  },
+  "ERR_TEMPLATE_NO_PROCESS_IS_LISTENING_ON": {
+    "en": "{err_template} no process is listening on port {SERVICE_PROXY_PORT}",
+    "ru": "{err_template} процесс не слушает на порту {SERVICE_PROXY_PORT}"
+  },
+  "ERR_TEMPLATE_SERVICE_PROXY_PORT_IS_NOT_S": {
+    "en": "{err_template} 'service_proxy.port' is not set",
+    "ru": "{err_template} 'service_proxy.port' не задан"
+  },
+  "ERR_TEMPLATE_SINGBOX_NAME_IS_NOT_RUNNING": {
+    "en": "{err_template} {SINGBOX_NAME} is not running",
+    "ru": "{err_template} {SINGBOX_NAME} не запущен"
+  },
+  "EXECUTABLE_FILE_SINGBOX_NAME_IS_MISSING": {
+    "en": "Executable file {SINGBOX_NAME} is missing",
+    "ru": "Исполняемый файл {SINGBOX_NAME} отсутствует"
+  },
+  "EXTRACTING_ARCHIVE_ARCHIVE_PATH": {
+    "en": "Extracting archive {archive_path}...",
+    "ru": "Распаковка архива {archive_path}..."
+  },
+  "EXTRACTING_PKG_NAME": {
+    "en": "Extracting {PKG_NAME}",
+    "ru": "Распаковка {PKG_NAME}"
+  },
+  "EXTRACTION_COMPLETED": {
+    "en": "Extraction completed",
+    "ru": "Распаковка завершена"
+  },
+  "EXTRACTION_ERROR_FOR_PKG_NAME": {
+    "en": "Extraction error for {PKG_NAME}",
+    "ru": "Ошибка распаковки {PKG_NAME}"
+  },
+  "FAILED_TO_ADD_IP_RULE_FOR_FAMILY_IP_VERS": {
+    "en": "Failed to add IP rule for family {IP_VERSION}",
+    "ru": "Не удалось добавить правило IP для семейства {IP_VERSION}"
+  },
+  "FAILED_TO_CONFIGURE_FAKEIP_INTERCEPTION": {
+    "en": "Failed to configure FakeIP interception",
+    "ru": "Не удалось настроить FakeIP перехват"
+  },
+  "FAILED_TO_CREATE_GROUP_NAME": {
+    "en": "Failed to create group {name}",
+    "ru": "Не удалось создать группу {name}"
+  },
+  "FAILED_TO_CREATE_TEMPORARY_DIRECTORY_FOR": {
+    "en": "Failed to create temporary directory for extraction",
+    "ru": "Не удалось создать временную директорию для распаковки"
+  },
+  "FAILED_TO_CREATE_TEMPORARY_FILE": {
+    "en": "Failed to create temporary file",
+    "ru": "Не удалось создать временный файл"
+  },
+  "FAILED_TO_CREATE_THE_INTERFACE": {
+    "en": "Failed to create the interface",
+    "ru": "Не удалось создать интерфейс"
+  },
+  "FAILED_TO_CREATE_TMP_DIRECTORY": {
+    "en": "Failed to create tmp directory",
+    "ru": "Не удалось создать временную директорию"
+  },
+  "FAILED_TO_DOWNLOAD_CONFIGURATION_FROM_AD": {
+    "en": "Failed to download configuration from {address}",
+    "ru": "Не удалось загрузить конфигурацию с {address}"
+  },
+  "FAILED_TO_DOWNLOAD_INITIAL_RULESET": {
+    "en": "Failed to download initial ruleset",
+    "ru": "Не удалось загрузить начальный набор правил"
+  },
+  "FAILED_TO_DOWNLOAD_PKG_NAME": {
+    "en": "Failed to download {PKG_NAME}",
+    "ru": "Не удалось загрузить {PKG_NAME}"
+  },
+  "FAILED_TO_DOWNLOAD_SINGBOX_NAME_CONFIGUR": {
+    "en": "Failed to download {SINGBOX_NAME} configuration",
+    "ru": "Не удалось загрузить конфигурацию {SINGBOX_NAME}"
+  },
+  "FAILED_TO_DOWNLOAD_SKEEN_NAME_SCRIPT": {
+    "en": "Failed to download {SKEEN_NAME} script",
+    "ru": "Не удалось загрузить скрипт {SKEEN_NAME}"
+  },
+  "FAILED_TO_EXTRACT_RULESET_ARCHIVE_OR_IT": {
+    "en": "Failed to extract ruleset archive or it is corrupted",
+    "ru": "Не удалось распаковать архив правил или он поврежден"
+  },
+  "FAILED_TO_FETCH_VERSION_NUMBER": {
+    "en": "Failed to fetch the latest version",
+    "ru": "Не удалось получить номер последней версии"
+  },
+  "FAILED_TO_FETCH_VERSION": {
+    "en": "Failed to fetch the latest version",
+    "ru": "Не удалось получить версию"
+  },
+  "FAILED_TO_FORCE_STOP_SINGBOX_NAME": {
+    "en": "Failed to force stop {SINGBOX_NAME}",
+    "ru": "Не удалось принудительно завершить {SINGBOX_NAME}"
+  },
+  "FAILED_TO_MERGE_SINGBOX_NAME_CONFIGURATI": {
+    "en": "Failed to merge {SINGBOX_NAME} configuration from {SINGBOX_CONFIG_DIR}",
+    "ru": "Ошибка слияния конфига {SINGBOX_NAME} из {SINGBOX_CONFIG_DIR}"
+  },
+  "FAILED_TO_REPLACE_LOCAL_ROUTE_IN_TABLE_T": {
+    "en": "Failed to replace local route in table {TABLE_ID}",
+    "ru": "Не удалось заменить локальный маршрут в таблице {TABLE_ID}"
+  },
+  "FAILED_TO_RESET_CONFIGURATION": {
+    "en": "Failed to reset configuration!",
+    "ru": "Не удалось сбросить конфигурацию!"
+  },
+  "FAILED_TO_SAVE_NEW_CONFIG_ROLLBACK_EXECU": {
+    "en": "Failed to save new config, rollback executed!",
+    "ru": "Не удалось сохранить файл конфигурации, выполнен откат!"
+  },
+  "FAILED_TO_SEND_STOP_SIGNAL_TO_SINGBOX_NA": {
+    "en": "Failed to send stop signal to {SINGBOX_NAME} (process not found or already terminated)",
+    "ru": "Не удалось отправить сигнал остановки {SINGBOX_NAME} (процесс не найден или уже завершен)"
+  },
+  "FAILED_TO_SET_1_THE_INTERFACE": {
+    "en": "Failed to set {1} the interface",
+    "ru": "Не удалось установить {1} для интерфейса"
+  },
+  "FAILED_TO_SET_ULIMIT_N": {
+    "en": "Failed to set ulimit -n",
+    "ru": "Не удалось установить ulimit -n"
+  },
+  "FAILED_TO_START_SINGBOX_NAME": {
+    "en": "Failed to start {SINGBOX_NAME}",
+    "ru": "Не удалось запустить {SINGBOX_NAME}"
+  },
+  "FAILED_TO_SYNCHRONIZE_SKEEN_CONFIG_TO_ME": {
+    "en": "Failed to synchronize {SKEEN_CONFIG} to memory",
+    "ru": "Не удалось синхронизировать {SKEEN_CONFIG} в память"
+  },
+  "FAILED_TO_UPDATE_SKEEN_NAME": {
+    "en": "Failed to update {SKEEN_NAME}",
+    "ru": "Ошибка обновления {SKEEN_NAME}"
+  },
+  "FAKEIP_INTERCEPTION_ENABLED_CLIENTS_SRC": {
+    "en": " - FakeIP interception enabled{clients_src_count}",
+    "ru": " - Перехват FakeIP включен{clients_src_count}"
+  },
+  "FETCHING_THE_LATEST_VERSION": {
+    "en": "Fetching the latest version...",
+    "ru": "Получение последней версии..."
+  },
+  "FILE_SINGBOX_BIN_PATH_KEPT": {
+    "en": "File {SINGBOX_BIN_PATH} kept!",
+    "ru": "Файл {SINGBOX_BIN_PATH} оставлен!"
+  },
+  "FIREWALL_CLEANUP_COMPLETED": {
+    "en": "Firewall cleanup completed",
+    "ru": "Очистка фаервола завершена"
+  },
+  "FIREWALL_PREPARATION_IS_COMPLETE": {
+    "en": "Firewall preparation is complete",
+    "ru": "Подготовка фаервола завершена"
+  },
+  "FIREWALL_RULES_APPLIED_SUCCESSFULLY": {
+    "en": "Firewall rules applied successfully",
+    "ru": "Правила фаервола применены"
+  },
+  "FORMATTING_SINGBOX_NAME_CONFIGURATION": {
+    "en": "Formatting {SINGBOX_NAME} configuration...",
+    "ru": "Форматирование конфигурации {SINGBOX_NAME}..."
+  },
+  "FOR_EXAMPLE_S": {
+    "en": "for example %s: ",
+    "ru": "например %s: "
+  },
+  "FOR_REINSTALLATION_USE": {
+    "en": "For reinstallation, use:",
+    "ru": "Для повторной установки используйте:"
+  },
+  "FULL_DEVICE_ROUTING_YOU_CAN_CONFIGURE_TH": {
+    "en": "Full device routing. You can configure the segment policy in skeen.json (policy.segment).",
+    "ru": "Маршрутизация всего устройства. Настроить политику для сегмента можно в skeen.json (policy.segment)."
+  },
+  "GENERATED_RANDOM_DEVICE_PARAMETERS": {
+    "en": "Generated random device parameters:",
+    "ru": "Сгенерированные случайные параметры устройства:"
+  },
+  "GROUP_NAME_CREATED_SUCCESSFULLY": {
+    "en": "Group {name} created successfully",
+    "ru": "Группа {name} создана успешно"
+  },
+  "IF_YOU_WANT_TO_REMOVE_IT_MANUALLY_RUN_RM": {
+    "en": "If you want to remove it manually, run: rm -rf {WORK_DIR}",
+    "ru": "Для удаления вручную выполните: rm -rf {WORK_DIR}"
+  },
+  "INCORRECT_OPTION": {
+    "en": "Incorrect option",
+    "ru": "Неверный вариант"
+  },
+  "INVALID_OPTION": {
+    "en": "Incorrect option",
+    "ru": "Некорректный вариант"
+  },
+  "INITIAL_RULESET_DOWNLOADED_SUCCESSFULLY": {
+    "en": "Initial ruleset downloaded successfully",
+    "ru": "Начальный набор правил загружен успешно"
+  },
+  "INSTALLATION_COMPLETED": {
+    "en": "Installation completed",
+    "ru": "Установка завершена"
+  },
+  "INSTALLATION_FAILED": {
+    "en": "Installation failed",
+    "ru": "Не удалось установить"
+  },
+  "INSTALLED": {
+    "en": "Installed",
+    "ru": "Установлено"
+  },
+  "INSTALLING_SINGBOX_NAME_TO_SINGBOX_BIN_P": {
+    "en": "Installing {SINGBOX_NAME} to {SINGBOX_BIN_PATH}",
+    "ru": "Установка {SINGBOX_NAME} в {SINGBOX_BIN_PATH}"
+  },
+  "INSUFFICIENT_FREE_SPACE_ON_PATH_REQUIRED": {
+    "en": "Insufficient free space on {path}: {required_mb}MB required, {free_mb}MB available",
+    "ru": "Недостаточно свободного места на {path}: требуется {required_mb}MB, доступно {free_mb}MB"
+  },
+  "INTERFACE_NAMED_OPKGTUN_DESC_ALREADY_EXI": {
+    "en": "Interface named '{opkgtun_desc}' already exists",
+    "ru": "Интерфейс с именем '{opkgtun_desc}' уже существует"
+  },
+  "INTERFACE_NAMED_OPKGTUN_DESC_DOES_NOT_EX": {
+    "en": "Interface named {opkgtun_desc} does not exist",
+    "ru": "Интерфейс с именем {opkgtun_desc} не существует"
+  },
+  "INTERFACE_NAME_OPKGTUN_NAME_NOT_OPKGTUN": {
+    "en": "Interface name: '{opkgtun_name}' not OpkgTun",
+    "ru": "Имя интерфейса: '{opkgtun_name}' не является OpkgTun"
+  },
+  "INTERFACE_OPKGTUN_NAME_HAS_BEEN_SUCCESSF": {
+    "en": "Interface '{opkgtun_name}' has been successfully deleted",
+    "ru": "Интерфейс '{opkgtun_name}' был успешно удален"
+  },
+  "INVALID_IPV4_ADDRESS_SPECIFIED": {
+    "en": "Invalid IPv4 address specified",
+    "ru": "Неверный IPv4 адрес: {opkgtun_ip}"
+  },
+  "INVALID_IPV_IP_V_EXCLUDE_INVALID_LIST": {
+    "en": "Invalid IPv{ip_v} exclude: {invalid_list}",
+    "ru": "Неверные IPv{ip_v} исключения: {invalid_list}"
+  },
+  "INVALID_LABEL_PORT_S_INVALID_PORTS": {
+    "en": "Invalid {label} port(s): {invalid_ports}",
+    "ru": "Неверные {label} порт(ы): {invalid_ports}"
+  },
+  "INVALID_NAME_ALLOWED_CHARACTERS_A_Z_A_Z": {
+    "en": "Invalid name, allowed characters: A–Z, a–z, 0–9, _ and -",
+    "ru": "Недопустимое имя, допустимые символы: A–Z, a–z, 0–9, _ и -"
+  },
+  "IPTABLES_UTILITY_IS_NOT_INSTALLED": {
+    "en": "iptables utility is not installed",
+    "ru": "Утилита iptables не установлена?"
+  },
+  "IPV6_IS_ENABLED_IN_THE_SKEEN_NAME_CONFIG": {
+    "en": "IPv6 is enabled in the {SKEEN_NAME} configuration, but external IPv6 connectivity is unavailable. Disable IPv6: network.ipv6=0",
+    "ru": "IPv6 включён в конфигурации {SKEEN_NAME}, но внешнее IPv6-соединение недоступно. Отключите IPv6: network.ipv6=0"
+  },
+  "IP_ADDRESS_OPKGTUN_IP_IS_ALREADY_IN_USE": {
+    "en": "IP address {opkgtun_ip} is already in use",
+    "ru": "IP адрес {opkgtun_ip} уже используется"
+  },
+  "IP_VER": {
+    "en": "IP ver.",
+    "ru": "IP вер."
+  },
+  "KILLING_SKEEN_PROC": {
+    "en": "Killing {SKEEN_PROC}...",
+    "ru": "Принудительная остановка {SKEEN_PROC}..."
+  },
+  "LATEST_VERSION_IS_VERSION": {
+    "en": "Latest version is {version}",
+    "ru": "Последняя версия: {version}"
+  },
+  "LOCAL_TCP_SOCKETS_NETSTAT": {
+    "en": "--- Local TCP sockets (netstat) ---",
+    "ru": "--- Локальные TCP-сокеты (netstat) ---"
+  },
+  "LOCATED_IN_THE_OPT_ROOT_DIRECTORY_N": {
+    "en": "located in the /opt root directory,\\n",
+    "ru": "находящегося в корневом каталоге /opt,\\n"
+  },
+  "LOGGER_P_NOTICE_T_SKEEN_NAME_UPDATING_TY": {
+    "en": "logger -p notice -t \"{SKEEN_NAME}\" \"Updating $type rules for $table table\"",
+    "ru": "logger -p notice -t \"{SKEEN_NAME}\" \"Обновление $type правил $table таблицы\""
+  },
+  "MARK": {
+    "en": "| Mark ",
+    "ru": "| Метка "
+  },
+  "MAXIMUM_ATTEMPTS_REACHED_EXITING_MENU": {
+    "en": "Maximum attempts reached, exiting menu.",
+    "ru": "Достигнуто максимальное количество попыток, выход из меню."
+  },
+  "MEMORY_S_MB_PEAK_S_MB_N": {
+    "en": "Memory: %s MB (peak: %s MB)\\n",
+    "ru": "Память: %s MB (пиковая: %s MB)\\n"
+  },
+  "MESSAGE_1_LATEST_STABLE_N_2_LATEST_ALPHA_BETA_RC": {
+    "en": " 1) Latest stable\\n 2) Latest alpha/beta/rc\\n 3) Use custom binary\\n\\n",
+    "ru": " 1) Последняя стабильная\\n 2) Последняя alpha/beta/rc\\n 3) Буду использовать свой бинарник\\n\\n"
+  },
+  "MESSAGE_80_AND_95_THRESHOLDS_ARE_HEURISTICS_GROW": {
+    "en": "80% and 95% thresholds are heuristics; growth rate is not measured.",
+    "ru": "Пороги 80% и 95% ориентировочные; скорость роста не измеряется."
+  },
+  "MESSAGE_ONE_SNAPSHOT_CANNOT_SHOW_IF_THEY": {
+    "en": "{message} One snapshot cannot show if they continue.",
+    "ru": "{message} По снимку неясно, продолжаются ли потери."
+  },
+  "MIRROR_SKEEN": {
+    "en": "{MIRROR}skeen",
+    "ru": "{MIRROR}skeen_ru"
+  },
+  "MIRROR_URL_MUST_START_WITH_HTTP_S_AND_EN": {
+    "en": "Mirror URL must start with http(s):// and end with static/",
+    "ru": "URL зеркала должен начинаться с http(s):// и заканчиваться на static/"
+  },
+  "MODE": {
+    "en": "Mode",
+    "ru": "Режим"
+  },
+  "MODULE_MODULE_NOT_FOUND_OR_FAILED_TO_LOA": {
+    "en": "Module '{module}' not found or failed to load",
+    "ru": "Модуль '{module}' не найден или ошибка в загрузке"
+  },
+  "MORE_DETAILS": {
+    "en": "More details:",
+    "ru": "Подробнее:"
+  },
+  "MSG_FOR_SEGMENT_SKEEN_POLICY_SEGMENT": {
+    "en": "{msg} for segment {policy_segment_display}",
+    "ru": "{msg} для сегмента {policy_segment_display}"
+  },
+  "NETSTAT_IS_NOT_INSTALLED": {
+    "en": "netstat is not installed",
+    "ru": "netstat не установлен"
+  },
+  "NETSTAT_SHOWS_ROUTER_SOCKETS_CONNTRACK_A": {
+    "en": "netstat shows router sockets; conntrack also tracks client traffic.",
+    "ru": "netstat показывает сокеты роутера; conntrack учитывает трафик клиентов."
+  },
+  "NETWORK": {
+    "en": "Network",
+    "ru": "Сеть"
+  },
+  "NEW_VERSION_IS_AVAILABLE": {
+    "en": "New version is available:",
+    "ru": "Доступна новая версия:"
+  },
+  "NOT_FOUND": {
+    "en": "not found",
+    "ru": "не найден"
+  },
+  "SINGBOX_VERSION_NOT_INSTALLED": {
+    "en": "not installed",
+    "ru": "не установлен"
+  },
+  "CURRENT_VERSION_NOT_INSTALLED": {
+    "en": "not installed",
+    "ru": "не установлено"
+  },
+  "NO": {
+    "en": "no",
+    "ru": "нет"
+  },
+  "NO_ARCHIVE_NAME_PROVIDED": {
+    "en": "No archive name provided",
+    "ru": "Имя архива не указано"
+  },
+  "NO_CURRENT_CONFIGURATION_FOUND_SKIPPING": {
+    "en": "No current configuration found, skipping backup",
+    "ru": "Конфигурация не найдена, резервное копирование пропущено"
+  },
+  "NO_FREE_GID_AVAILABLE": {
+    "en": "No free GID available",
+    "ru": "Нет свободного GID"
+  },
+  "NO_MARKED_CONNECTIONS_AVAILABLE": {
+    "en": "No marked connections available",
+    "ru": "Соединения с меткой не найдены"
+  },
+  "NO_OPKGTUN_INTERFACES_FOUND": {
+    "en": "No OpkgTun interfaces found",
+    "ru": "Интерфейсы типа OpkgTun не найдены"
+  },
+  "NO_SUPPORTED_IPTABLES_FOUND": {
+    "en": "No supported iptables found",
+    "ru": "Нет поддерживаемых iptables"
+  },
+  "NO_TCP_SOCKET_DATA_AVAILABLE": {
+    "en": "No TCP socket data available",
+    "ru": "Данные TCP-сокетов недоступны"
+  },
+  "ONLY_SUPPORTED_IN_SINGBOX_NAME_1_14_0": {
+    "en": "Only supported in {SINGBOX_NAME} 1.14.0+",
+    "ru": "Поддерживается только в {SINGBOX_NAME} 1.14.0+"
+  },
+  "OPKGTUN_INTERFACE_NAMED_OPKGTUN_DESC_WAS": {
+    "en": "OpkgTun interface named '{opkgtun_desc}' was created successfully",
+    "ru": "OpkgTun интерфейс с именем '{opkgtun_desc}' был успешно создан"
+  },
+  "PERFORM_THE_UPDATE_Y_N_DEFAULT_N": {
+    "en": "Perform the update? [y/n] (default: n): ",
+    "ru": "Выполнить обновление? [y/n] (по умолчанию: n): "
+  },
+  "PLEASE_ENTER_Y_YES_OR_N_NO": {
+    "en": "Please enter y (yes) or n (no).",
+    "ru": "Пожалуйста, введите y (да) или n (нет)."
+  },
+  "PLEASE_INSTALL_ROUTER_COMPONENT_KERNEL_M": {
+    "en": "Please install router component: «Kernel modules for Netfilter»",
+    "ru": "Установите компонент роутера: «Модули ядра подсистемы Netfilter»"
+  },
+  "PLEASE_REBOOT_SINGBOX_NAME": {
+    "en": "Please reboot {SINGBOX_NAME}",
+    "ru": "Пожалуйста, перезагрузите {SINGBOX_NAME}"
+  },
+  "PLEASE_SPECIFY_THE_NAME_OF_THE_OPKGTUN_I": {
+    "en": "Please specify the name of the OpkgTun interface to delete",
+    "ru": "Пожалуйста, укажите имя для интерфейса OpkgTun"
+  },
+  "PORT_PORT_IS_IN_USE_FREE_IT_AND_TRY_RUNN": {
+    "en": "Port {port} is in use. Free it and try running again",
+    "ru": "Порт {port} занят. Освободите его и попробуйте снова"
+  },
+  "PREPARING_A_FIREWALL": {
+    "en": "Preparing a firewall:",
+    "ru": "Подготовка фаервола:"
+  },
+  "PRESS_ANY_KEY_TO_OPEN_MENU": {
+    "en": "Press any key to open menu...",
+    "ru": "Нажмите любую клавишу для открытия меню..."
+  },
+  "PROTOCOL": {
+    "en": "| Protocol ",
+    "ru": "| Протокол "
+  },
+  "PROTOCOL_STATE_MEANING_COUNT": {
+    "en": "Protocol|State|Meaning|Count",
+    "ru": "Протокол|Состояние|Значение|Количество"
+  },
+  "RELEASE_VERSION_KEENETICOS_IS_LOWER_THAN": {
+    "en": "Release version KeeneticOS is lower than 5",
+    "ru": "Версия KeeneticOS ниже 5-ой"
+  },
+  "REMOVING_AUTO_START_SCRIPT": {
+    "en": "Removing auto-start script...",
+    "ru": "Удаление скрипта автозапуска..."
+  },
+  "REMOVING_FIREWALL_HOOK_SCRIPT": {
+    "en": "Removing firewall hook script...",
+    "ru": "Удаление скрипта фаервола..."
+  },
+  "REMOVING_SINGBOX_NAME_BINARY": {
+    "en": "Removing {SINGBOX_NAME} binary...",
+    "ru": "Удаление файла {SINGBOX_NAME}..."
+  },
+  "REMOVING_SKEEN_NAME_API_SCRIPT": {
+    "en": "Removing {SKEEN_NAME} API script...",
+    "ru": "Удаление файла {SKEEN_NAME} API..."
+  },
+  "REMOVING_SKEEN_NAME_CACHES": {
+    "en": "Removing {SKEEN_NAME} caches...",
+    "ru": "Удаление кешей {SKEEN_NAME}..."
+  },
+  "REMOVING_SKEEN_NAME_SCRIPT": {
+    "en": "Removing {SKEEN_NAME} script...",
+    "ru": "Удаление скрипта {SKEEN_NAME}..."
+  },
+  "SEGMENT": {
+    "en": "Segment",
+    "ru": "Сегмент"
+  },
+  "SEGMENT_DISABLED_ON_SKEEN_JSON": {
+    "en": " - Segment disabled on skeen.json",
+    "ru": " - Политика отключена в skeen.json"
+  },
+  "SEGMENT_NAME_MUST_START_WITH_BR_FOLLOWED": {
+    "en": "Segment name must start with 'br' followed by 1 or 2 digits",
+    "ru": "Название сегмента должно начинаться с br + после до 2х цифр"
+  },
+  "SEGMENT_NAME_NOT_SET": {
+    "en": " - Segment name not set",
+    "ru": " - Имя сегмента не задано"
+  },
+  "SEGMENT_POLICY_POLICY_SEGMENT_IS_NOT_AVA": {
+    "en": "Segment policy {POLICY_SEGMENT} is not available",
+    "ru": "Политика сегмента {POLICY_SEGMENT} недоступна"
+  },
+  "SEGMENT_POLICY_ROUTING_POLICY_SEGMENT": {
+    "en": " - Segment policy routing: {POLICY_SEGMENT}",
+    "ru": " - Маршрутизация политики сегмента: {POLICY_SEGMENT}"
+  },
+  "SELECTED_CHANNEL_INSTALLATION_OPTION_FOR": {
+    "en": "Selected {channel} installation option for {SINGBOX_NAME}",
+    "ru": "Выбран {channel} вариант установки {SINGBOX_NAME}"
+  },
+  "SELECT_AN_OPTION_1_3": {
+    "en": "Select an option [1-3]: ",
+    "ru": "Выберите пункт [1-3]: "
+  },
+  "SELECT_OPTION": {
+    "en": "Select option:",
+    "ru": "Выберите опцию:"
+  },
+  "SERVICE_PROXY_IS_ENABLED_BUT": {
+    "en": "Service proxy is enabled but",
+    "ru": "Прокси-сервис включен, но"
+  },
+  "SET_THE_SINGBOX_NAME_BINARY_PATH_IN_SKEE": {
+    "en": "Set the {SINGBOX_NAME} binary path in {SKEEN_CONFIG}",
+    "ru": "Укажите путь к бинарному файлу {SINGBOX_NAME} в {SKEEN_CONFIG}"
+  },
+  "SINGBOX_NAME_ALREADY_STARTED": {
+    "en": "{SINGBOX_NAME} already started",
+    "ru": "{SINGBOX_NAME} уже запущен"
+  },
+  "SINGBOX_NAME_ALREADY_STOPPED": {
+    "en": "{SINGBOX_NAME} already stopped",
+    "ru": "{SINGBOX_NAME} уже остановлен"
+  },
+  "SINGBOX_NAME_BINARY_NOT_FOUND_PLEASE_INS": {
+    "en": "{SINGBOX_NAME} binary not found, please install it first",
+    "ru": "{SINGBOX_NAME} не найден, сначала установите его"
+  },
+  "SINGBOX_NAME_CONFIGURATION_DOWNLOADED_SU": {
+    "en": "{SINGBOX_NAME} configuration downloaded successfully",
+    "ru": "Конфигурация {SINGBOX_NAME} загружена"
+  },
+  "SINGBOX_NAME_CONFIGURATION_IS_INVALID": {
+    "en": "{SINGBOX_NAME} configuration is invalid",
+    "ru": "{SINGBOX_NAME} конфигурация не корректна"
+  },
+  "SINGBOX_NAME_CONFIGURATION_IS_INVALID_SY": {
+    "en": "{SINGBOX_NAME} configuration is invalid, sync canceled!",
+    "ru": "{SINGBOX_NAME} конфигурация c ошибками, синхронизация отменена!"
+  },
+  "SINGBOX_NAME_CONFIGURATION_IS_VALID": {
+    "en": "{SINGBOX_NAME} configuration is valid",
+    "ru": "Конфигурация {SINGBOX_NAME} корректна"
+  },
+  "SINGBOX_NAME_CORE_HAS_BEEN_SUCCESSFULLY": {
+    "en": "{SINGBOX_NAME} core has been successfully updated",
+    "ru": "Ядро {SINGBOX_NAME} успешно обновлено"
+  },
+  "SINGBOX_NAME_DID_NOT_START_IN_TIME": {
+    "en": "{SINGBOX_NAME} did not start in time",
+    "ru": "{SINGBOX_NAME} не запустился вовремя"
+  },
+  "SINGBOX_NAME_DID_NOT_STOP_IN_TIME": {
+    "en": "{SINGBOX_NAME} did not stop in time",
+    "ru": "{SINGBOX_NAME} не остановился вовремя"
+  },
+  "SINGBOX_NAME_EXECUTABLE_IS_MISSING": {
+    "en": "{SINGBOX_NAME} executable is missing",
+    "ru": "Исполняемый файл {SINGBOX_NAME} отсутствует"
+  },
+  "SINGBOX_NAME_INSTALLATION_OPTIONS": {
+    "en": "{SINGBOX_NAME} installation options:",
+    "ru": "Варианты установки {SINGBOX_NAME}:"
+  },
+  "SINGBOX_NAME_IS_NOT_RUNNING": {
+    "en": "{SINGBOX_NAME} is not running",
+    "ru": "{SINGBOX_NAME} не запущен"
+  },
+  "SINGBOX_NAME_STARTED": {
+    "en": "{SINGBOX_NAME} started",
+    "ru": "{SINGBOX_NAME} запущен"
+  },
+  "SINGBOX_NAME_STOPPED": {
+    "en": "{SINGBOX_NAME} stopped",
+    "ru": "{SINGBOX_NAME} остановлен"
+  },
+  "SINGBOX_NAME_STOPPED_SUCCESSFULLY": {
+    "en": "{SINGBOX_NAME} stopped successfully",
+    "ru": "{SINGBOX_NAME} успешно остановлен"
+  },
+  "SINGBOX_NAME_SUCCESSFULLY_INSTALLED": {
+    "en": "{SINGBOX_NAME} successfully installed",
+    "ru": "{SINGBOX_NAME} успешно установлен"
+  },
+  "SKEEN_API_URL_DOWNLOAD_SKEEN": {
+    "en": "{SKEEN_API_URL}/download/skeen",
+    "ru": "{SKEEN_API_URL}/download/skeen_ru"
+  },
+  "SKEEN_NAME_CONFIGURATION_IS_INVALID": {
+    "en": "{SKEEN_NAME} configuration is invalid",
+    "ru": "{SKEEN_NAME} конфигурация не корректна"
+  },
+  "SKEEN_NAME_HAS_BEEN_SUCCESSFULLY_UPDATED": {
+    "en": "{SKEEN_NAME} has been successfully updated",
+    "ru": "{SKEEN_NAME} успешно обновлен"
+  },
+  "SKEEN_NAME_HAS_BEEN_UNINSTALLED_SUCCESSF": {
+    "en": "{SKEEN_NAME} has been uninstalled successfully",
+    "ru": "{SKEEN_NAME} успешно удалён"
+  },
+  "SKEEN_NAME_JSON_IS_VALID": {
+    "en": "{SKEEN_NAME} JSON is valid",
+    "ru": "{SKEEN_NAME} JSON корректен"
+  },
+  "SKEEN_NAME_SCRIPT_DOWNLOADED_SUCCESSFULL": {
+    "en": "{SKEEN_NAME} script downloaded successfully",
+    "ru": "Скрипт {SKEEN_NAME} загружен успешно"
+  },
+  "SKEEN_TUN_CREATE_IPV4_NAME": {
+    "en": "skeen tun create \u003cipv4\u003e \u003cname\u003e",
+    "ru": "skeen tun create \u003cipv4\u003e \u003cимя\u003e"
+  },
+  "SKEEN_TUN_DELETE_NAME": {
+    "en": "skeen tun delete \u003cname\u003e",
+    "ru": "skeen tun delete \u003cимя\u003e"
+  },
+  "SOME_LOSS_COUNTERS_ARE_UNAVAILABLE_THIS": {
+    "en": "Some loss counters are unavailable; this snapshot cannot confirm their absence.",
+    "ru": "Некоторые счётчики потерь недоступны; по этому снимку нельзя подтвердить их отсутствие."
+  },
+  "STARTING_SINGBOX_NAME": {
+    "en": "Starting {SINGBOX_NAME}...",
+    "ru": "Запуск {SINGBOX_NAME}..."
+  },
+  "START": {
+    "en": "Start",
+    "ru": "Запустить"
+  },
+  "TABLE_STATE_COLUMN": {
+    "en": "| State ",
+    "ru": "| Состояние "
+  },
+  "STATUS_STATE_LABEL": {
+    "en": "State",
+    "ru": "Состояние"
+  },
+  "STATUS_S_N": {
+    "en": "Status: %s\\n",
+    "ru": "Статус: %s\\n"
+  },
+  "STOPPING_SINGBOX_NAME": {
+    "en": "Stopping {SINGBOX_NAME}...",
+    "ru": "Остановка {SINGBOX_NAME}..."
+  },
+  "STOP": {
+    "en": "Stop",
+    "ru": "Остановить"
+  },
+  "SUB_STORE_ADD_THE_FOLLOWING_PARAMETER_TO": {
+    "en": "Sub-Store: Add the following parameter to the end of your subscription link:",
+    "ru": "Sub-Store: Добавьте в конец ссылки подписки параметр:"
+  },
+  "SUMMARY_COUNTERS_ACCUMULATE_AND_RESET_WH": {
+    "en": "Summary: counters accumulate and reset when the system reboots. Nonzero values alone do not prove a current fault.",
+    "ru": "Счётчики накопительные; после перезагрузки системы они сбрасываются. Ненулевые значения не доказывают сбой."
+  },
+  "SUMMARY_INVESTIGATE_SOCKETS_THAT_PERSIST": {
+    "en": "Summary: investigate sockets that persist or keep increasing.",
+    "ru": "Итог: проверяйте долго открытые сокеты и рост их числа."
+  },
+  "SYNC_URL_ADDRESS_IS_NOT_SPECIFIED": {
+    "en": "Sync URL address is not specified",
+    "ru": "Адрес для синхронизации не указан"
+  },
+  "TCP_STATE": {
+    "en": "| TCP state ",
+    "ru": "| Состояние TCP "
+  },
+  "TERMINATING_SINGBOX_NAME_PID_SING_PID": {
+    "en": "Terminating {SINGBOX_NAME} (pid: {sing_pid})...",
+    "ru": "Завершаем {SINGBOX_NAME} (pid: {sing_pid})..."
+  },
+  "TESTING_ARE_AVAILABLE_ONLY_WHEN_SKEEN_NA": {
+    "en": "Testing are available only when {SKEEN_NAME} is started",
+    "ru": "Тестирование доступно только когда {SKEEN_NAME} запущен"
+  },
+  "TESTING_IS_AVAILABLE_IN_TUN_REDIRECT_TPR": {
+    "en": "Testing is available in tun, redirect, tproxy, and hybrid modes",
+    "ru": "Тестирование доступно в режимах tun, redirect, tproxy и hybrid"
+  },
+  "TEST_REF_1_2": {
+    "en": "Test {ref} {1} {2}",
+    "ru": "Тест {ref} {1} {2}"
+  },
+  "THESE_COUNTERS_SHOW_NO_LOSS_SIGNAL": {
+    "en": "These counters show no loss signal.",
+    "ru": "Признаков потерь по ним нет."
+  },
+  "THE_FILE_AT_PATH_FIREWALL_HOOK_FILE_IS_M": {
+    "en": "The file at path {FIREWALL_HOOK_FILE} is missing!",
+    "ru": "Файл по пути {FIREWALL_HOOK_FILE} отсутствует!"
+  },
+  "THE_LATEST_NAME_VERSION_LATEST_VERSION_I": {
+    "en": "The latest {name} version {latest_version} is already installed",
+    "ru": "Последняя версия {name} {latest_version} уже установлена"
+  },
+  "THREADS_S_N": {
+    "en": "Threads: %s\\n",
+    "ru": "Потоки: %s\\n"
+  },
+  "TRACKED_CONNTRACK_CONNECTIONS": {
+    "en": "--- Tracked conntrack connections ---",
+    "ru": "--- Отслеживаемые соединения conntrack ---"
+  },
+  "UNABLE_TO_DETERMINE_FREE_SPACE_ON_PATH_F": {
+    "en": "Unable to determine free space on {path} ({free_mb_display})",
+    "ru": "Не удалось определить свободное место на {path} ({free_mb_display})"
+  },
+  "UNINSTALLING_SKEEN_NAME": {
+    "en": "Uninstalling {SKEEN_NAME}...",
+    "ru": "Удаление {SKEEN_NAME}..."
+  },
+  "UNINSTALL_S_Y_N": {
+    "en": "Uninstall, %s? [y/n]: ",
+    "ru": "Удалить, %s? [y/n]: "
+  },
+  "UNKNOWN_IPTABLES_IPTABLES": {
+    "en": "Unknown iptables: {iptables_display}",
+    "ru": "Неизвестный iptables: {iptables_display}"
+  },
+  "UNSUPPORTED_CPU_ARCHITECTURE": {
+    "en": "Unsupported CPU architecture",
+    "ru": "Неподдерживаемая архитектура CPU"
+  },
+  "UNSUPPORTED_THE_SYSTEM_OS": {
+    "en": "Unsupported the system OS!",
+    "ru": "Неподдерживаемая система!"
+  },
+  "UPDATES_ARE_DISABLED_IN_THE_SKEEN_NAME_C": {
+    "en": "Updates are disabled in the {SKEEN_NAME} configuration!",
+    "ru": "Обновления отключены в конфигурации {SKEEN_NAME}!"
+  },
+  "UPTIME_S_N": {
+    "en": "Uptime: %s\\n",
+    "ru": "Время работы: %s\\n"
+  },
+  "URL_MUST_START_WITH_HTTP_OR_HTTPS": {
+    "en": "URL must start with http:// or https://",
+    "ru": "URL должен начинаться с http:// или https://"
+  },
+  "USAGE_SKEEN_COMMAND_AVAILABLE_COMMANDS_S": {
+    "en": "Usage:\n  skeen [command]\n\nAvailable Commands:\n  start   - Start service\n  stop    - Stop service\n  restart - Full restart\n  reload  - Reload {SINGBOX_NAME} only\n  kill    - Force stop\n  status  - Show status\n  version - Show version\n  help    - Help about any command\n  iface   - Show network interface table\n  connstat- Connection diagnostics\n  update  - Check and install updates\n  test    - Test firewall rules\n  deps    - Check dependencies\n  check   - Check configuration\n  format  - Format {SINGBOX_NAME} configuration\n  api     - {SINGBOX_NAME} API management commands\n  dash    - Get API links for management panels\n  backup  - Create archive of {WORK_DIR}\n  backups - List created archives in {ENTWARE_DIR}\n  restore - Restore {WORK_DIR} from archive in {ENTWARE_DIR}\n  reset   - Reset {WORK_DIR} to default\n  clean   - Clear {SINGBOX_NAME} cache file\n  sync    - Synchronize {SINGBOX_NAME} configuration\n  headers - Generate fake client headers for subscriptions\n\nOpkgTun (KeeneticOS v5+):\n  tun create [ipv4] [name] - Create interface with IP address and name\n  tun delete [name]        - Delete interface by name\n  tun list                 - List all OpkgTun interfaces",
+    "ru": "Использование:\n  skeen [команда]\n\nДоступные Команды:\n  start   - Запустить сервис\n  stop    - Остановить сервис\n  restart - Полный перезапуск\n  reload  - Перезагрузка только {SINGBOX_NAME}\n  kill    - Принудительная остановка\n  status  - Показать статус\n  version - Показать версию\n  help    - Помощь по любой команде\n  iface   - Показать таблицу сетевых интерфейсов\n  connstat- Диагностика соединений\n  update  - Проверить и установить обновления\n  test    - Тестировать правила фаервола\n  deps    - Проверить зависимости\n  check   - Проверить конфигурацию\n  format  - Отформатировать конфигурацию {SINGBOX_NAME}\n  api     - Команды API управления {SINGBOX_NAME}\n  dash    - Получить ссылки на API панелей управления\n  backup  - Создать архив {WORK_DIR}\n  backups - Список созданных архивов в {ENTWARE_DIR}\n  restore - Восстановить {WORK_DIR} из архива в {ENTWARE_DIR}\n  reset   - Сбросить {WORK_DIR} в значение по умолчанию\n  clean   - Очистить кэш файл {SINGBOX_NAME}\n  sync    - Синхронизировать конфигурацию {SINGBOX_NAME}\n  headers - Сгенерировать фейковые заголовки клиента для подписок\n\nOpkgTun (KeeneticOS v5+):\n  tun create \u003cipv4\u003e \u003cимя\u003e  - Создать интерфейс с IP-адресом и именем\n  tun delete \u003cимя\u003e         - Удалить интерфейс по имени\n  tun list                 - Список всех интерфейсов OpkgTun"
+  },
+  "USE_THE_FOLLOWING_FORMAT_TO_CREATE_AN_OP": {
+    "en": "Use the following format to create an OpkgTun interface:",
+    "ru": "Используйте следующий формат для создания интерфейса OpkgTun:"
+  },
+  "USING_MIRROR_MIRROR": {
+    "en": "Using mirror: {MIRROR}",
+    "ru": "Используем зеркало: {MIRROR}"
+  },
+  "WAITING_FOR_HOTSPOT_CHAIN_ATTEMPT_OF_MAX": {
+    "en": "Waiting for HOTSPOT chain: {attempt} of {max_attempts}...",
+    "ru": "Ожидание HOTSPOT цепочки: {attempt} из {max_attempts}..."
+  },
+  "WITH_A_BACKUP_OF_THE_CURRENT_CONFIGURATI": {
+    "en": "with a backup of the current configuration created\\n",
+    "ru": "с созданием резервной копии текущей\\n"
+  },
+  "YES": {
+    "en": "yes",
+    "ru": "да"
+  },
+  "YOU_CAN_ONLY_DELETE_AN_OPKGTUN_INTERFACE": {
+    "en": "You can only delete an OpkgTun interface",
+    "ru": "Вы можете удалять только интерфейсы типа OpkgTun"
+  },
+  "CONFIGURATION_DOCUMENTATION_URL": {
+    "en": "https://github.com/jinndi/SKeen/blob/main/docs/CONFIGURATION.md",
+    "ru": "https://github.com/jinndi/SKeen/blob/main/docs/CONFIGURATION-RU.md"
+  },
+  "DETECTED_CPU_ARCHITECTURE": {
+    "en": "Detected CPU architecture: {arch_display}",
+    "ru": "Обнаружена архитектура CPU: {arch_display}"
+  },
+  "OPKGTUN_INTERFACE_NAME_INSTRUCTIONS": {
+    "en": "Use the name {opkgtun_name_display} for the {interface_name_display} field in the tun configuration",
+    "ru": "Используйте имя {opkgtun_name_display} для поля {interface_name_display} в конфигурации tun"
+  },
+  "FIREWALL_TESTING": {
+    "en": "Testing: {iptables_display}",
+    "ru": "Тестирование: {iptables_display}"
+  },
+  "MENU_RESTART": {
+    "en": "Restart",
+    "ru": "Перезапустить"
+  },
+  "MENU_UPDATES": {
+    "en": "Updates",
+    "ru": "Обновление"
+  },
+  "MENU_TEST": {
+    "en": "Test",
+    "ru": "Тестировать"
+  },
+  "MENU_UNINSTALL": {
+    "en": "Uninstall",
+    "ru": "Удаление"
+  },
+  "MENU_EXIT": {
+    "en": "Exit",
+    "ru": "Выход"
+  },
+  "AWK_CONNTRACK_TCP_ESTABLISHED": {
+    "en": "TCP connection established",
+    "ru": "TCP-соединение установлено"
+  },
+  "AWK_CONNTRACK_TCP_CLOSE_WAIT": {
+    "en": "Peer closed; local side not closed",
+    "ru": "Удалённая сторона закрыла соединение"
+  },
+  "AWK_CONNTRACK_TCP_CLOSE": {
+    "en": "Closed or not fully tracked",
+    "ru": "Закрыто или отслежено не полностью"
+  },
+  "AWK_CONNTRACK_TCP_OTHER": {
+    "en": "TCP state reported by conntrack",
+    "ru": "Состояние TCP из conntrack"
+  },
+  "AWK_CONNTRACK_ICMP_UNREPLIED": {
+    "en": "No reply to ICMP exchange observed yet",
+    "ru": "Ответ на ICMP-обмен ещё не замечен"
+  },
+  "AWK_CONNTRACK_UNREPLIED": {
+    "en": "No reply observed yet (may be normal)",
+    "ru": "Ответ пока не замечен (это может быть нормально)"
+  },
+  "AWK_CONNTRACK_ICMP_ASSURED": {
+    "en": "Reply to ICMP exchange observed; entry is confirmed",
+    "ru": "Ответ на ICMP-обмен получен; запись подтверждена"
+  },
+  "AWK_CONNTRACK_ASSURED": {
+    "en": "Reply observed; flow is confirmed",
+    "ru": "Ответ получен; поток подтверждён"
+  },
+  "AWK_CONNTRACK_UDP": {
+    "en": "UDP flow; TCP states do not apply",
+    "ru": "UDP-поток; состояния TCP неприменимы"
+  },
+  "AWK_CONNTRACK_ICMP": {
+    "en": "ICMP packet is tracked by conntrack; TCP states do not apply",
+    "ru": "ICMP-пакет отслеживается conntrack; состояния TCP неприменимы"
+  },
+  "AWK_CONNTRACK_OTHER": {
+    "en": "Protocol flow; TCP states do not apply",
+    "ru": "Поток протокола; состояния TCP неприменимы"
+  },
+  "FAKEIP_CLIENT_COUNT": {
+    "en": ", clients: {clients_count}",
+    "ru": ", клиентов: {clients_count}"
+  }
+}

@@ -12,8 +12,9 @@ Documentation comments and blank lines inside the top-level `RESERVED_IPV4` and
 `RESERVED_IPV6` string constants are removed from generated output; other quoted
 text is left unchanged. The tool does not alter the readable source files.
 
-Build both distributable scripts from the repository root with `shfmt` on
-`PATH`:
+The build compiles the English and Russian scripts from the single `skeen.sh`
+template and the root `translations.json` catalog, then formats and minifies
+each artifact. Run it from the repository root with `shfmt` on `PATH`:
 
 ```sh
 sh .github/build-shell-scripts.sh [output-directory]
