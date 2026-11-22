@@ -49,8 +49,8 @@ Run these commands from `dashboard/`:
 | --- | --- |
 | `npm run build` | Build and minify the standalone dashboard. |
 | `npm run build:dashboard` | Same as `npm run build`. |
-| `npm run build:api` | Build the repository-root `skeen-api` release file, embedding the dashboard. |
-| `npm run build:all` | Build both the standalone dashboard and repository-root `skeen-api`. |
+| `npm run build:api` | Build the `dist/skeen-api` release file, embedding the dashboard. |
+| `npm run build:all` | Build both the standalone dashboard and `dist/skeen-api`. |
 
 The dashboard build writes `index.min.html` in this folder. Generated build output and `node_modules/` are excluded from Git by the repository-root `.gitignore`; CI installs dependencies from this folder and builds the required output during deployment.
 

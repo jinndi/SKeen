@@ -17,7 +17,7 @@ async function build() {
   const dashboardOutputPath = path.join(dashboardDir, "index.min.html");
   const apiTemplatePath = path.join(repositoryDir, "skeen-api.lua");
   const apiVersionPath = path.join(repositoryDir, "api-version");
-  const apiOutputPath = path.join(repositoryDir, "skeen-api");
+  const apiOutputPath = path.join(repositoryDir, "dist", "skeen-api");
 
   if (!fs.existsSync(dashboardHtmlPath)) {
     throw new Error("dashboard/index.html not found!");
@@ -148,10 +148,11 @@ async function build() {
     `Lua minified (${templateSize} -> ${outputSize} bytes)`,
   );
 
+  fs.mkdirSync(path.dirname(apiOutputPath), { recursive: true });
   fs.writeFileSync(apiOutputPath, cleanLua, "utf8");
 
   console.log(
-    `Done! Release file skeen-api created (${outputSize} bytes).`,
+    `Done! Release file dist/skeen-api created (${outputSize} bytes).`,
   );
 }
 

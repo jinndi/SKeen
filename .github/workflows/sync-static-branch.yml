@@ -32,7 +32,7 @@ jobs:
         run: |
           npm ci --prefix dashboard
           npm --prefix dashboard run build:api
-          cp skeen-api skeen-api_tmp
+          cp dist/skeen-api skeen-api_tmp
           cp api-version api-version_tmp
 
       - name: Build optimized shell scripts
