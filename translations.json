@@ -73,7 +73,7 @@
   },
   "AWK_MARK_DEC_HEX_COUNT_PURPOSE": {
     "en": "Mark (dec / hex)|Count|Purpose",
-    "ru": "Метка (dec / hex)|Количество|Назначение"
+    "ru": "Метка (dec / hex)|Кол-во|Назначение"
   },
   "AWK_MARK_IS_NOT_SET": {
     "en": "Mark is not set",
@@ -129,7 +129,7 @@
   },
   "AWK_TCP_STATE_MEANING_COUNT": {
     "en": "TCP state|Meaning|Count",
-    "ru": "Состояние TCP|Значение|Количество"
+    "ru": "Состояние TCP|Значение|Кол-во"
   },
   "AWK_WAITING_FOR_FINAL_CLOSE_ACKNOWLEDGEMENT": {
     "en": "Waiting for final close acknowledgement",
@@ -871,9 +871,9 @@
     "en": "| Protocol ",
     "ru": "| Протокол "
   },
-  "PROTOCOL_STATE_MEANING_COUNT": {
-    "en": "Protocol|State|Meaning|Count",
-    "ru": "Протокол|Состояние|Значение|Количество"
+  "PROTOCOL_STATE_COUNT_MEANING": {
+    "en": "Proto.|State|Count|Meaning",
+    "ru": "Прото.|Состояние|Кол-во|Значение"
   },
   "RELEASE_VERSION_KEENETICOS_IS_LOWER_THAN": {
     "en": "Release version KeeneticOS is lower than 5",

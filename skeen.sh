@@ -2994,7 +2994,7 @@ show_connstat() {
       sort -t'|' -k2,2nr)"
 
     if [ -n "$ct_summary" ]; then
-      { printf '%s\n' "--PROTOCOL_STATE_MEANING_COUNT--"
+      { printf '%s\n' "--PROTOCOL_STATE_COUNT_MEANING--"
         printf '%s\n' "$ct_summary" | awk -F'|' '
         { s=$2
           if($1=="tcp") {
@@ -3012,7 +3012,7 @@ show_connstat() {
           else if($1=="udp") m="--AWK_CONNTRACK_UDP--"
           else if($1=="icmp" || $1=="icmpv6") m="--AWK_CONNTRACK_ICMP--"
           else m="--AWK_CONNTRACK_OTHER--"
-          printf "%s|%s|%s|%s\n",$1,s,m,$3 }
+          printf "%s|%s|%s|%s\n",$1,s,$3,m }
         '
       } | print_aligned_table
     else
