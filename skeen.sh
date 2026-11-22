@@ -2321,7 +2321,7 @@ check_hook_table() {
 
 apply_firewall() {
   local hook_table="${1:-}"
-  local check iptables eth_subnets set_name
+  local check iptables eth_subnets set_name tables protocols
 
   check=$(echo "$SKEEN_IPTABLES_LIST" | sed 's/iptables//g; s/ip6tables//g; s/ //g')
   if [ -n "$check" ] || [ -z "$SKEEN_IPTABLES_LIST" ]; then
@@ -2382,30 +2382,21 @@ apply_firewall() {
       done
     fi
 
-    local protocols=""
+    case "$SKEEN_FIREWALL_MODE" in
+      hybrid) tables="$TABLE_TPROXY $TABLE_REDIRECT" ;;
+      tproxy) tables="$TABLE_TPROXY" ;;
+      redirect) tables="$TABLE_REDIRECT" ;;
+      *) tables="" ;;
+    esac
 
-    if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ]; then
-      for table in "$TABLE_TPROXY" "$TABLE_REDIRECT"; do
-        ! check_hook_table "$table" "$hook_table" && continue
-        check_and_create_chain "$iptables" "$table" "$CHAIN_PREROUTING" || return 0
-        protocols="$(get_protocols "$table")"
-        set_chain_rules "$iptables" "$table" "$CHAIN_PREROUTING" "$protocols"
-        goto_chain_rules "$iptables" "$table" PREROUTING "$CHAIN_PREROUTING"
-        [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$table" "$protocols"
-      done
-    elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ] && check_hook_table "$TABLE_TPROXY" "$hook_table"; then
-      check_and_create_chain "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING" || return 0
-      protocols="$(get_protocols "$TABLE_TPROXY")"
-      set_chain_rules "$iptables" "$TABLE_TPROXY" "$CHAIN_PREROUTING" "$protocols"
-      goto_chain_rules "$iptables" "$TABLE_TPROXY" PREROUTING "$CHAIN_PREROUTING"
-      [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$TABLE_TPROXY" "$protocols"
-    elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ] && check_hook_table "$TABLE_REDIRECT" "$hook_table"; then
-      check_and_create_chain "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING" || return 0
-      protocols="$(get_protocols "$TABLE_REDIRECT")"
-      set_chain_rules "$iptables" "$TABLE_REDIRECT" "$CHAIN_PREROUTING" "$protocols"
-      goto_chain_rules "$iptables" "$TABLE_REDIRECT" PREROUTING "$CHAIN_PREROUTING"
-      [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$TABLE_REDIRECT"
-    fi
+    for table in $tables; do
+      check_hook_table "$table" "$hook_table" || continue
+      check_and_create_chain "$iptables" "$table" "$CHAIN_PREROUTING" || return 0
+      protocols="$(get_protocols "$table")"
+      set_chain_rules "$iptables" "$table" "$CHAIN_PREROUTING" "$protocols"
+      goto_chain_rules "$iptables" "$table" PREROUTING "$CHAIN_PREROUTING"
+      [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$table" "$protocols"
+    done
   done
 
   [ -f "$WAIT_ROUTE_FILE" ] && rm -f "$WAIT_ROUTE_FILE"
@@ -3824,7 +3815,7 @@ show_iface() {
 }
 
 show_menu() {
-  local autostart_status running_status running_text output version ipv4 ipv6 sb_dns_work_text
+  local autostart_status running_status running_text running_state output version ipv4 ipv6 sb_dns_work_text
 
   check_tty
   check_skeen_config && printf "\033[1A\033[2K\033[1A\033[2K"
@@ -3840,9 +3831,11 @@ show_menu() {
   if is_running; then
     running_status="$(green "running")"
     running_text="Stop"
+    running_state=1
   else
     running_status="$(red "stopped")"
     running_text="Start"
+    running_state=0
   fi
 
   add_line() {
@@ -3865,7 +3858,7 @@ show_menu() {
   add_line "State" "$running_status"
   add_line "Autostart" "$autostart_status"
 
-  if [ "$running_text" = "Stop" ]; then
+  if [ "$running_state" = "1" ]; then
     if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ] || [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]; then
       sb_dns_work_text="$(green yes)"
     else
