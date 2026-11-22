@@ -75,7 +75,7 @@ jobs:
           sudo rsync -a lib/ opt/lib/
           sudo cp etc/opkg.conf opt/etc/opkg.conf
           sudo cp /etc/resolv.conf etc/resolv.conf
-          sudo cp "${GITHUB_WORKSPACE}/.github/entware/doinstall" opt/etc/init.d/doinstall
+          sudo cp "${GITHUB_WORKSPACE}/tools/entware/doinstall" opt/etc/init.d/doinstall
           sudo chmod +x opt/etc/init.d/doinstall
 
       - name: Initialize opkg and install base packages

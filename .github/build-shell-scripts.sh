@@ -16,7 +16,7 @@ BUILD_DIR=$(mktemp -d)
 trap 'rm -rf "$BUILD_DIR"' EXIT HUP INT TERM
 
 (
-  cd "$ROOT_DIR/.github/i18n"
+  cd "$ROOT_DIR/tools/shell-i18n"
   go test ./...
 )
 
@@ -27,7 +27,7 @@ for locale in en ru; do
   esac
 
   (
-    cd "$ROOT_DIR/.github/i18n"
+    cd "$ROOT_DIR/tools/shell-i18n"
     go run . \
       -input "$ROOT_DIR/skeen.sh" \
       -catalog "$ROOT_DIR/translations.json" \
@@ -36,7 +36,7 @@ for locale in en ru; do
 
   shfmt -s -mn "$BUILD_DIR/$output.source" > "$BUILD_DIR/$output.formatted"
   (
-    cd "$ROOT_DIR/.github/shell-minifier"
+    cd "$ROOT_DIR/tools/shell-minifier"
     go run .
   ) < "$BUILD_DIR/$output.formatted" > "$BUILD_DIR/$output"
   sh -n "$BUILD_DIR/$output"

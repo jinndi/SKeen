@@ -25,7 +25,7 @@ The default output directory is `dist/`; the generated files are `skeen` and
 tests:
 
 ```sh
-cd .github/shell-minifier
+cd tools/shell-minifier
 go test ./...
 ```
 
