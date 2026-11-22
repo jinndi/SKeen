@@ -1,5 +1,30 @@
 # Changelog
 
+## [5.14.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.13.0...SKeen-v5.14.0) (2026-11-22)
+
+
+### 🚀 Feat
+
+* **i18n:** implement internationalization system for shell scripts ([1b11085](https://github.com/jinndi/SKeen/commit/1b11085e67fb3beb5ef32036308a6d71a5e264af))
+* **shell-minifier:** enable comment stripping in reserved address constants ([e30489a](https://github.com/jinndi/SKeen/commit/e30489a4ed6ce4383a9c5ac396e447086ca16a98))
+
+
+### 🐛 Fix
+
+* **en:** improve sing-box service stability and error handling ([6099c01](https://github.com/jinndi/SKeen/commit/6099c011efce295516543a87dcb7abb690840660))
+
+
+### 🛠 Refactor
+
+* **core:** simplify firewall logic and menu state handling ([24319b8](https://github.com/jinndi/SKeen/commit/24319b81019b72d5891a1a58cca2e1fb3b51368d))
+* **ui:** adjust protocol statistics table layout and translations ([b7b5951](https://github.com/jinndi/SKeen/commit/b7b5951a905926b93e4788a654a9928a7961a144))
+
+
+### 📦 Build
+
+* **ci:** implement go-based shell script minification pipeline ([d1b82d3](https://github.com/jinndi/SKeen/commit/d1b82d34748923bd12eef3f7511e975706867cbf))
+* **ci:** relocate skeen-api build output to dist directory ([6c59b76](https://github.com/jinndi/SKeen/commit/6c59b7670b63dce1784c6cb65eb37ae6bdad7c24))
+
 ## [5.13.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.12.0...SKeen-v5.13.0) (2026-11-12)
 
 
