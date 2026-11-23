@@ -363,7 +363,7 @@ let data = {}
 let dataFile = {}
 
 // Загрузка нод из URL или из сохраненной подписки в Sub-Store
-if (url) {
+if (isPresent(url)) {
   log(`Чтение подписки напрямую из URL: ${url}`)
   try {
     data = parser.parse(await produceArtifact({
@@ -383,7 +383,7 @@ if (url) {
     log(`${e.message ?? e}`)
     throw new Error(`Не удалось загрузить подписку из URL '${url}'. Проверьте формат, требование к HWID и User-Agent.`)
   }
-} else {
+} else if (isPresent(name)) {
   log(`Загрузка подписки "${name}" (тип: ${type === 'collection' ? 'коллекция' : 'одиночная'})`)
   try {
     data = parser.parse(await produceArtifact({
@@ -400,7 +400,7 @@ if (url) {
   }
 }
 
-if (fileName){
+if (isPresent(fileName)) {
   try {
     dataFile = parser.parse(await produceArtifact({
       name: fileName,
@@ -416,12 +416,18 @@ if (fileName){
   }
 }
 
-// Слияние полученного ответа в массивы outbounds и endpoints
+// Слияние полученного ответа для записи в отдельные массивы sing-box.
 outbounds = [...dataFile.outbounds ?? [], ...data.outbounds ?? []]
 endpoints = [...dataFile.endpoints ?? [], ...data.endpoints ?? []]
 
-// Объединяем outbounds и endpoints в один общий массив прокси
-proxies = [...outbounds, ...endpoints]
+// Для selector-групп сохраняем порядок источников: сначала fileName
+// (outbounds и endpoints), затем подписка (endpoints и outbounds).
+proxies = [
+  ...(dataFile.outbounds ?? []),
+  ...(dataFile.endpoints ?? []),
+  ...(data.endpoints ?? []),
+  ...(data.outbounds ?? []),
+]
 log(`Загружено: ${outbounds.length} узлов (outbounds), ${endpoints.length} эндпоинтов (endpoints)`)
 
 // Теги из шаблона резервируем, но не изменяем. При совпадениях переименовываем

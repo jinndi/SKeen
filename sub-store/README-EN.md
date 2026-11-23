@@ -309,7 +309,7 @@ Multi-line format for the Sub-Store editor (without the `outbound=` prefix):
 
 ## Node Order and Tag Uniqueness
 
-- The order in a `selector` group is: elements defined in the template; country `urltest` groups sorted alphabetically by English country name; nodes from the `fileName` file matching `🔖`; matching nodes from the subscription (`name` or `url`); then unique single country nodes not already present. Original order is preserved within each source. Nodes are processed as combined `outbounds` first, then `endpoints`; for each type, `fileName` entries precede subscription entries.
+- The order in a `selector` group is: elements defined in the template; country `urltest` groups sorted alphabetically by English country name; matching nodes from the `fileName` file (`outbounds` first, then `endpoints`); matching nodes from the subscription (`name` or `url`, `endpoints` first, then `outbounds`); then unique single country nodes not already present. Original order is preserved within each source.
 - For example, given an empty group and the rule `📂Main🔖game🌐🇩🇪|🇫🇮`, the resulting list will be:
 
   ```text

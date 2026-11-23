@@ -5,11 +5,24 @@ import vm from 'node:vm'
 
 const templateSource = await readFile(new URL('./template.js', import.meta.url), 'utf8')
 
-async function runTemplate({ outbound, proxies, templateOutbounds, countryUrltestTolerance }) {
+async function runTemplate({
+  outbound,
+  proxies,
+  templateOutbounds,
+  countryUrltestTolerance,
+  name = 'test',
+  fileName,
+  url,
+  fileProxies = proxies,
+  fileEndpoints = [],
+  subscriptionEndpoints = [],
+}) {
   const context = {
     $arguments: {
       type: 'collection',
-      name: 'test',
+      name,
+      fileName,
+      url,
       outbound,
       countryUrltestTolerance,
       includeUnsupportedProxy: false,
@@ -19,10 +32,15 @@ async function runTemplate({ outbound, proxies, templateOutbounds, countryUrltes
       endpoints: [],
     }),
     ProxyUtils: {},
-    produceArtifact: async () => JSON.stringify({
-      outbounds: proxies,
-      endpoints: [],
-    }),
+    produceArtifact: async ({ type }) => {
+      if (type !== 'file' && !name && (!url || !url.trim())) {
+        throw new Error('Unexpected subscription artifact request without a name or URL')
+      }
+      return JSON.stringify({
+        outbounds: type === 'file' ? fileProxies : proxies,
+        endpoints: type === 'file' ? fileEndpoints : subscriptionEndpoints,
+      })
+    },
     console: { log() {} },
   }
 
@@ -32,6 +50,63 @@ async function runTemplate({ outbound, proxies, templateOutbounds, countryUrltes
   )
   return JSON.parse(result)
 }
+
+test('fileName works without a subscription name or URL', async () => {
+  const config = await runTemplate({
+    outbound: '📂Main',
+    name: null,
+    fileName: 'local-config',
+    proxies: [],
+    fileProxies: [{ tag: '🇩🇪 Berlin' }],
+    templateOutbounds: [
+      { tag: 'Main', type: 'selector', outbounds: [] },
+    ],
+  })
+
+  assert.deepEqual(selector(config).outbounds, ['🇩🇪 Berlin'])
+})
+
+test('blank URL is ignored when fileName is provided', async () => {
+  const config = await runTemplate({
+    outbound: '📂Main',
+    name: null,
+    url: '  ',
+    fileName: 'local-config',
+    proxies: [],
+    fileProxies: [{ tag: '🇩🇪 Berlin' }],
+    templateOutbounds: [
+      { tag: 'Main', type: 'selector', outbounds: [] },
+    ],
+  })
+
+  assert.deepEqual(selector(config).outbounds, ['🇩🇪 Berlin'])
+})
+
+test('file endpoints are listed after file outbounds and country groups', async () => {
+  const config = await runTemplate({
+    outbound: '📂Main',
+    fileName: 'local-config',
+    proxies: [{ tag: 'subscription-node' }],
+    fileProxies: [
+      { tag: '🇩🇪 Berlin' },
+      { tag: '🇩🇪 Frankfurt' },
+    ],
+    fileEndpoints: [{ tag: 'file-endpoint' }],
+    subscriptionEndpoints: [{ tag: 'subscription-endpoint' }],
+    templateOutbounds: [
+      { tag: 'Main', type: 'selector', outbounds: [] },
+    ],
+  })
+
+  assert.deepEqual(selector(config).outbounds, [
+    '🇩🇪 Germany',
+    '🇩🇪 Berlin',
+    '🇩🇪 Frankfurt',
+    'file-endpoint',
+    'subscription-endpoint',
+    'subscription-node',
+  ])
+})
 
 function selector(config, tag = 'Main') {
   return config.outbounds.find(outbound => outbound.tag === tag)
