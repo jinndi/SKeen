@@ -3432,6 +3432,14 @@ const translations = {
   secProxyRouter: { ru: "Проксирование роутера", en: "Proxy router" },
   secUpdates: { ru: "Обновления", en: "Updates" },
   secUpdateSingbox: { ru: "Обновления Sing-box", en: "Sing-box updates" },
+  secUpdateSingboxChannel: { ru: "Канал обновлений для sing-box", en: "sing-box update channel" },
+  optUpdateSingboxOfficial: { ru: "Официальный", en: "Official" },
+  optUpdateSingboxSkeen: { ru: "skb - skeen-box", en: "skb - skeen-box" },
+  optUpdateSingboxSkeenUpx: { ru: "skb-upx - skeen-box", en: "skb-upx - skeen-box" },
+  optUpdateSingboxPodkop: { ru: "pdk - podkop-engine", en: "pdk - podkop-engine" },
+  optUpdateSingboxPodkopFull: { ru: "pdk-full - podkop-engine-full", en: "pdk-full - podkop-engine-full" },
+  optUpdateSingboxLx: { ru: "lx - sing-box-lx", en: "lx - sing-box-lx" },
+  optUpdateSingboxLxUpx: { ru: "lx-upx - sing-box-lx", en: "lx-upx - sing-box-lx" },
   secBetaSingbox: { ru: "Бета-версии Sing-box", en: "Sing-box beta versions" },
   secUpdateSkeen: { ru: "Обновления SKeen", en: "SKeen updates" },
   secUpdateSkeenApi: { ru: "Обновления SKeen API", en: "SKeen API updates" },
@@ -3557,7 +3565,7 @@ const SKEEN_DEFAULT_SCHEMA = {
     proxy_router: 1
   },
   update: {
-    singbox: { enabled: 1, beta: 0 },
+    singbox: { enabled: 1, beta: 0, channel: "official" },
     skeen: { enabled: 1, api: 1 }
   }
 };
@@ -3712,8 +3720,12 @@ const helpTexts = {
     en: "Enable Sing-box update check (does not work for external binaries, CLI only)."
   },
   "update.singbox.beta": {
-    ru: "Включает проверку pre-release версий (CLI).",
-    en: "Enable checking pre-release versions (CLI)."
+    ru: "Включает проверку pre-release версий (CLI). Для podkop-engine доступны только стабильные релизы.",
+    en: "Enable checking pre-release versions (CLI). podkop-engine only provides stable releases."
+  },
+  "update.singbox.channel": {
+    ru: "Выберите репозиторий релизов для установки и проверки обновлений sing-box. Официальная версия — github.com/SagerNet/sing-box; skeen-box — сборки для роутеров без лишних build tags (github.com/jinndi/skeen-box); podkop-engine — экспериментальная сборка (github.com/podkop-net/podkop-engine); sing-box-lx — экспериментальная сборка (github.com/Leadaxe/sing-box-lx). Варианты UPX используют сжатые бинарники там, где они поддерживаются.",
+    en: "Choose the release repository used to install and check for sing-box updates. Official: github.com/SagerNet/sing-box; skeen-box: router builds without extra build tags (github.com/jinndi/skeen-box); podkop-engine: experimental build (github.com/podkop-net/podkop-engine); sing-box-lx: experimental build (github.com/Leadaxe/sing-box-lx). UPX options use compressed binaries where supported."
   },
   "update.skeen.enabled": {
     ru: "Включить проверку обновлений SKeen (CLI).",
@@ -5763,6 +5775,15 @@ function renderFirewallAccordion(data) {
 function renderUpdatesAccordion(data) {
   const updateSection = renderSection(t('secUpdates'), [
     renderSettingRow(t('secUpdateSingbox'), 'update.singbox.enabled', `<input type="checkbox" class="sk-checkbox" id="f_update_singbox_enabled" ${data.update?.singbox?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
+    renderSettingRow(t('secUpdateSingboxChannel'), 'update.singbox.channel', `<select id="f_update_singbox_channel" onchange="syncFormToText()">
+      <option value="official" ${(!data.update?.singbox?.channel || data.update.singbox.channel === 'official') ? 'selected' : ''}>${t('optUpdateSingboxOfficial')}</option>
+      <option value="skb" ${data.update?.singbox?.channel === 'skb' ? 'selected' : ''}>${t('optUpdateSingboxSkeen')}</option>
+      <option value="skb-upx" ${data.update?.singbox?.channel === 'skb-upx' ? 'selected' : ''}>${t('optUpdateSingboxSkeenUpx')}</option>
+      <option value="pdk" ${data.update?.singbox?.channel === 'pdk' ? 'selected' : ''}>${t('optUpdateSingboxPodkop')}</option>
+      <option value="pdk-full" ${data.update?.singbox?.channel === 'pdk-full' ? 'selected' : ''}>${t('optUpdateSingboxPodkopFull')}</option>
+      <option value="lx" ${data.update?.singbox?.channel === 'lx' ? 'selected' : ''}>${t('optUpdateSingboxLx')}</option>
+      <option value="lx-upx" ${data.update?.singbox?.channel === 'lx-upx' ? 'selected' : ''}>${t('optUpdateSingboxLxUpx')}</option>
+    </select>`),
     renderSettingRow(t('secBetaSingbox'), 'update.singbox.beta', `<input type="checkbox" class="sk-checkbox" id="f_update_singbox_beta" ${data.update?.singbox?.beta ? 'checked' : ''} onchange="syncFormToText()">`),
     renderSettingRow(t('secUpdateSkeen'), 'update.skeen.enabled', `<input type="checkbox" class="sk-checkbox" id="f_update_skeen_enabled" ${data.update?.skeen?.enabled ? 'checked' : ''} onchange="syncFormToText()">`),
     renderSettingRow(t('secUpdateSkeenApi'), 'update.skeen.api', `<input type="checkbox" class="sk-checkbox" id="f_update_skeen_api" ${data.update?.skeen?.api ? 'checked' : ''} onchange="syncFormToText()">`)
@@ -5942,6 +5963,7 @@ function collectFormData() {
     result.firewall.proxy_router = document.getElementById('f_firewall_proxy_router')?.checked ? 1 : 0;
 
     result.update.singbox.enabled = document.getElementById('f_update_singbox_enabled')?.checked ? 1 : 0;
+    result.update.singbox.channel = document.getElementById('f_update_singbox_channel')?.value || 'official';
     result.update.singbox.beta = document.getElementById('f_update_singbox_beta')?.checked ? 1 : 0;
     result.update.skeen.enabled = document.getElementById('f_update_skeen_enabled')?.checked ? 1 : 0;
     result.update.skeen.api = document.getElementById('f_update_skeen_api')?.checked ? 1 : 0;
