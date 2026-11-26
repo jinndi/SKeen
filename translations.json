@@ -43,9 +43,9 @@
     "en": "Autostart script created successfully",
     "ru": "Скрипт автозапуска создан успешно"
   },
-  "AUTO_MUST_BE_1_STABLE_2_BETA_OR_3_EXTERN": {
-    "en": "AUTO must be 1 (stable), 2 (beta), or 3 (external)",
-    "ru": "AUTO может быть: 1 (stable), 2 (beta) или 3 (external)"
+  "AUTO_VALUE_OUT_OF_ALLOWED_VALUES": {
+    "en": "AUTO value: '{auto_opt}' is outside the allowed values: 1-3, 4-[1-10]",
+    "ru": "Значение AUTO: '{auto_opt}' вне допустимых значений: 1-3, 4-[1-10]"
   },
   "AWK_ACTIVE_CONNECTION": {
     "en": "Active connection",
@@ -399,10 +399,6 @@
     "en": "Downloading {SKEEN_NAME} script at {SKEEN_SCRIPT}",
     "ru": "Загрузка скрипта {SKEEN_NAME}..."
   },
-  "ENTER_1_2_OR_3": {
-    "en": "Enter 1, 2, or 3.",
-    "ru": "Введите 1, 2 или 3."
-  },
   "ENTER_THE_NAME_OF_THE_BACKUP_ARCHIVE_FIL": {
     "en": "Enter the name of the backup archive file\\n",
     "ru": "Введите имя файла резервного архива\\n"
@@ -731,9 +727,17 @@
     "en": "Memory: %s MB (peak: %s MB)\\n",
     "ru": "Память: %s MB (пиковая: %s MB)\\n"
   },
-  "MESSAGE_1_LATEST_STABLE_N_2_LATEST_ALPHA_BETA_RC": {
-    "en": " 1) Latest stable\\n 2) Latest alpha/beta/rc\\n 3) Use custom binary\\n\\n",
-    "ru": " 1) Последняя стабильная\\n 2) Последняя alpha/beta/rc\\n 3) Буду использовать свой бинарник\\n\\n"
+  "SINGBOX_INSTALLATION_OPTIONS_LIST": {
+    "en": " 1) Latest stable\\n 2) Latest alpha/beta/rc\\n 3) Use custom binary\\n 4) Choose a fork\\n\\n",
+    "ru": " 1) Последняя стабильная\\n 2) Последняя alpha/beta/rc\\n 3) Буду использовать свой бинарник\\n 4) Выбрать из форков\\n\\n"
+  },
+  "FORK_CHANNEL_OPTIONS_HEADER": {
+    "en": "Fork releases:\\n\\n",
+    "ru": "Релизы форков:\\n\\n"
+  },
+  "FORK_CHANNEL_OPTIONS": {
+    "en": " skeen-box — builds without extra build tags for routers based on the official sing-box\\n More details: {gh}{FORK_SKB_REPO}\\n  1) skb     — stable releases\\n  2) skb     — alpha/beta/rc releases\\n  3) skb-upx — stable releases compressed with UPX\\n  4) skb-upx — alpha/beta/rc releases compressed with UPX\\n\\n podkop-engine — experimental build based on stable sing-box releases\\n More details: {gh}{FORK_PDK_REPO}\\n  5) pdk      — basic package\\n  6) pdk-full — full package\\n\\n sing-box-lx — experimental build based on stable sing-box releases\\n More details: {gh}{FORK_LX_REPO}\\n  7)  lx     — stable channel\\n  8)  lx     — pre-release channel\\n  9)  lx-upx — stable channel compressed with UPX (except mips)\\n  10) lx-upx — pre-release channel compressed with UPX (except mips)\\n\\n 0) Go back\\n\\n",
+    "ru": " skeen-box — без лишних тегов сборки для роутеров на основе официального sing-box\\n Подробнее: {gh}{FORK_SKB_REPO}\\n  1) skb     — стабильные релизы\\n  2) skb     — alpha/beta/rc релизы\\n  3) skb-upx — стабильные релизы со сжатием UPX\\n  4) skb-upx — alpha/beta/rc релизы со сжатием UPX\\n\\n podkop-engine — экспериментальная сборка на основе стабильных релизов sing-box\\n Подробнее: {gh}{FORK_PDK_REPO}\\n  5) pdk      — базовая комплектация\\n  6) pdk-full — полная комплектация\\n\\n sing-box-lx — экспериментальная сборка на основе стабильных релизов sing-box\\n Подробнее: {gh}{FORK_LX_REPO}\\n  7)  lx     — стабильный канал\\n  8)  lx     — пререлиз канал\\n  9)  lx-upx — стабильный канал со сжатием UPX (кроме mips)\\n  10) lx-upx — пререлиз канал со сжатием UPX (кроме mips)\\n\\n 0) Вернуться назад\\n\\n"
   },
   "MESSAGE_80_AND_95_THRESHOLDS_ARE_HEURISTICS_GROW": {
     "en": "80% and 95% thresholds are heuristics; growth rate is not measured.",
@@ -742,14 +746,6 @@
   "MESSAGE_ONE_SNAPSHOT_CANNOT_SHOW_IF_THEY": {
     "en": "{message} One snapshot cannot show if they continue.",
     "ru": "{message} По снимку неясно, продолжаются ли потери."
-  },
-  "MIRROR_SKEEN": {
-    "en": "{MIRROR}skeen",
-    "ru": "{MIRROR}skeen_ru"
-  },
-  "MIRROR_URL_MUST_START_WITH_HTTP_S_AND_EN": {
-    "en": "Mirror URL must start with http(s):// and end with static/",
-    "ru": "URL зеркала должен начинаться с http(s):// и заканчиваться на static/"
   },
   "MODE": {
     "en": "Mode",
@@ -931,9 +927,21 @@
     "en": "Selected {channel} installation option for {SINGBOX_NAME}",
     "ru": "Выбран {channel} вариант установки {SINGBOX_NAME}"
   },
-  "SELECT_AN_OPTION_1_3": {
-    "en": "Select an option [1-3]: ",
-    "ru": "Выберите пункт [1-3]: "
+  "SELECT_AN_OPTION_1_4": {
+    "en": "Select an option [1-4]: ",
+    "ru": "Выберите пункт [1-4]: "
+  },
+  "SELECT_A_FORK_OPTION_0_10": {
+    "en": "Select a fork [0-10]: ",
+    "ru": "Выберите форк [0-10]: "
+  },
+  "ENTER_1_2_3_OR_4": {
+    "en": "Enter 1, 2, 3 or 4",
+    "ru": "Введите 1, 2, 3 или 4"
+  },
+  "ENTER_0_TO_10": {
+    "en": "Enter a number from 0 to 10",
+    "ru": "Введите число от 0 до 10"
   },
   "SELECT_OPTION": {
     "en": "Select option:",
@@ -1178,10 +1186,6 @@
   "USE_THE_FOLLOWING_FORMAT_TO_CREATE_AN_OP": {
     "en": "Use the following format to create an OpkgTun interface:",
     "ru": "Используйте следующий формат для создания интерфейса OpkgTun:"
-  },
-  "USING_MIRROR_MIRROR": {
-    "en": "Using mirror: {MIRROR}",
-    "ru": "Используем зеркало: {MIRROR}"
   },
   "WAITING_FOR_HOTSPOT_CHAIN_ATTEMPT_OF_MAX": {
     "en": "Waiting for HOTSPOT chain: {attempt} of {max_attempts}...",

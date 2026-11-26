@@ -56,9 +56,10 @@ readonly SINGBOX_CONFIG_MERGED_PATH="${WORK_DIR}/.config_merged.json"
 readonly SINGBOX_CONFIG_EXT_PATH="${WORK_DIR}/config_ext.json"
 readonly SINGBOX_CONFIG_EXT_DIR_PATH="${WORK_DIR}/config_ext"
 readonly SINGBOX_CONFIG_EXT_MERGED_PATH="${WORK_DIR}/.config_merged_ext.json"
-readonly SINGBOX_API_URL="https://github.com/SagerNet/sing-box/releases/latest"
-readonly SINGBOX_API_URL_BETA="https://github.com/SagerNet/sing-box/releases.atom"
-readonly SINGBOX_SPACE_MB=128
+readonly SINGBOX_REPO="SagerNet/sing-box"
+readonly FORK_SKB_REPO="jinndi/skeen-box"
+readonly FORK_PDK_REPO="podkop-net/podkop-engine"
+readonly FORK_LX_REPO="Leadaxe/sing-box-lx"
 
 readonly FIREWALL_HOOK_FILE="${NETFILTER_DIR}/${SKEEN_PROC}_firewall.sh"
 readonly WAIT_ROUTE_FILE="/tmp/${SKEEN_PROC}_wait_route"
@@ -129,29 +130,30 @@ ff00::/8           # Multicast (RFC 4291)
 readonly DELIMETER="------------------------------------------------"
 
 is_tty() {
-  [ "${FORCE_COLOR:-0}" = "1" ] || [ -t 1 ] || [ -t 2 ]
-  ret=$?
+  [ -t 1 ] || [ -t 2 ]; ret=$?
   is_tty() { return "$ret"; }
   return "$ret"
 }
 
-cyan() { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-cyan_bold() { is_tty && printf '\033[1;38;5;30m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-red() { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-green() { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-yellow() { is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+use_color() { [ "${FORCE_COLOR:-0}" = "1" ] || is_tty; }
 
-echomsg() { cyan "[INFO] $1"; }
-echook() { green "[OK] $1"; }
+cyan()      { use_color && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+cyan_bold() { use_color && printf '\033[1;38;5;30m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+red()       { use_color && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+green()     { use_color && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+yellow()    { use_color && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+
+echomsg()  { cyan "[INFO] $1"; }
+echook()   { green "[OK] $1"; }
 echowarn() { yellow "[WARN] $1"; }
-echoerr() { red "[ERROR] $1"; }
-exiterr() { red "[FATAL] $1"; exit 1; }
+echoerr()  { red "[ERROR] $1"; }
+exiterr()  { red "[FATAL] $1"; exit 1; }
 
 check_tty() { is_tty || { echoerr "--COMMAND_SUPPORTS_ONLY_TTY--"; exit 1; }; }
 
-logger_notice() { logger -p notice -t "$SKEEN_NAME" "$1"; }
+logger_notice()  { logger -p notice -t "$SKEEN_NAME" "$1"; }
 logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
-logger_error() { logger -p error -t "$SKEEN_NAME" "$1"; }
+logger_error()   { logger -p error -t "$SKEEN_NAME" "$1"; }
 
 if is_tty; then
   cleanup() { { stty sane </dev/tty; } 2>/dev/null || true; }
@@ -249,7 +251,8 @@ create_skeen_config() {
   "update": {
     "singbox": {
       "enabled": 1,
-      "beta": ${BETA_ENABLED:-0}
+      "beta": ${BETA_ENABLED:-0},
+      "channel": "${FORK_CHANNEL:-official}"
     },
     "skeen": {
       "enabled": 1,
@@ -550,12 +553,14 @@ get_update_config() {
     jsonfilter -i "$config_path" \
       -e UPDATE_SINGBOX_ENABLED='@.update.singbox.enabled' \
       -e UPDATE_SINGBOX_BETA='@.update.singbox.beta' \
+      -e UPDATE_SINGBOX_CHANNEL='@.update.singbox.channel' \
       -e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled' \
       -e UPDATE_SKEEN_API='@.update.skeen.api'
   )"
 
   : "${UPDATE_SINGBOX_ENABLED:=1}"
   : "${UPDATE_SINGBOX_BETA:=0}"
+  : "${UPDATE_SINGBOX_CHANNEL:=}"
   : "${UPDATE_SKEEN_ENABLED:=1}"
   : "${UPDATE_SKEEN_API:=0}"
 }
@@ -584,8 +589,7 @@ run_curl() {
   fi
 
   # shellcheck disable=SC2086
-  curl -fL --connect-timeout 5 --max-time 1800 --speed-limit 1000 --speed-time 15 \
-    --retry 2 --retry-delay 2 --retry-all-errors $proxy_opts "$@"
+  curl -fL --connect-timeout 5 --speed-limit 1000 --speed-time 15 $proxy_opts "$@"
 }
 
 get_current_version() {
@@ -640,11 +644,11 @@ get_latest_version() {
   local api_url="${1:-}" sing_beta="${2:-}" latest_release tag
 
   if [ "$sing_beta" = "1" ]; then
-    latest_release="$(run_curl -s "$api_url")"
+    latest_release="$(run_curl -s --max-time 10 "$api_url")"
     tag="$(echo "$latest_release" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')"
   else
-    latest_release="$(run_curl -sI -H "Cache-Control: no-cache" "${api_url}?$(date +%s)")"
-    tag="$(echo "$latest_release" | grep -i "^location:" | sed -E 's/.*tag\/(.*)/\1/' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+    latest_release="$(run_curl -sI --max-time 10 -H "Cache-Control: no-cache" "${api_url}?$(date +%s)")"
+    tag="$(echo "$latest_release" | grep -i "^location:" | sed -E 's/.*tag\/(.*)/\1/' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?')"
   fi
 
   [ -z "$tag" ] && return 1
@@ -660,7 +664,7 @@ show_header() {
 }
 
 check_free_space() {
-  local required_mb="${1:-$SINGBOX_SPACE_MB}"
+  local required_mb="${1:-120}"
   local path="${2:-$ENTWARE_DIR}"
   local free_mb free_mb_display
 
@@ -692,38 +696,65 @@ get_os_release() {
 }
 
 ask_install_singbox() {
-  local opt channel
+  local opt channel auto_opt="${AUTO:-}" auto_fork=""
 
-  if [ -n "$AUTO" ]; then
-    opt=$AUTO
-  else
-    check_tty; show_header; printf "\n"
-
-    cyan "--SINGBOX_NAME_INSTALLATION_OPTIONS--"
-    # shellcheck disable=SC3045
-    printf "--MESSAGE_1_LATEST_STABLE_N_2_LATEST_ALPHA_BETA_RC--"
-
-    while :; do
-      # shellcheck disable=SC3045
-      printf "--SELECT_AN_OPTION_1_3--" >/dev/tty
-      read -r opt </dev/tty
-
-      opt=${opt:-1}
-      case "$opt" in
-        1|2|3) break ;;
-        *) echoerr "--ENTER_1_2_OR_3--"; printf "\n" ;;
-      esac
-    done
-  fi
-
-  # The selected channel is interpolated by the translation marker below.
-  # shellcheck disable=SC2034
-  case "$opt" in
-    1) channel="stable" ;;
-    2) BETA_ENABLED=1; channel="beta" ;;
-    3) EXTERNAL_ENABLED=1; channel="external" ;;
-    *) exiterr "--AUTO_MUST_BE_1_STABLE_2_BETA_OR_3_EXTERN--" ;;
+  case "$auto_opt" in
+    "") : ;; [1-4]) : ;; 4-[1-9]|4-10) auto_fork=${auto_opt#4-}; auto_opt=4 ;;
+    *) exiterr "--AUTO_VALUE_OUT_OF_ALLOWED_VALUES--" ;;
   esac
+
+  while :; do
+    if [ -n "$auto_opt" ]; then
+      opt="$auto_opt"; auto_opt=""
+    else
+      check_tty; show_header; printf "\n"
+
+      cyan "--SINGBOX_NAME_INSTALLATION_OPTIONS--"
+      # shellcheck disable=SC3045
+      printf "--SINGBOX_INSTALLATION_OPTIONS_LIST--"
+
+      while :; do
+        # shellcheck disable=SC3045
+        printf "--SELECT_AN_OPTION_1_4--" >/dev/tty
+        read -r opt </dev/tty
+
+        opt=${opt:-1}
+        case "$opt" in
+          1|2|3|4) break ;;
+          *) echoerr "--ENTER_1_2_3_OR_4--"; printf "\\n" ;;
+        esac
+      done
+    fi
+
+    if [ "$opt" = "4" ]; then
+      if [ -n "$auto_fork" ]; then
+        opt="$auto_fork"; auto_fork=""
+      else
+        cyan "--FORK_CHANNEL_OPTIONS_HEADER--"
+        local gh="https://github.com/"
+        # shellcheck disable=SC3045
+        printf "--FORK_CHANNEL_OPTIONS--"
+        while :; do
+          # shellcheck disable=SC3045
+          printf "--SELECT_A_FORK_OPTION_0_10--" >/dev/tty
+          read -r opt </dev/tty
+          case "${opt:-}" in [0-9]|10) break ;; *) echoerr "--ENTER_0_TO_10--" ;; esac
+        done
+      fi
+      if [ "$opt" = "0" ]; then continue; fi
+      case "$opt" in
+        1|2) channel="skb" ;; 3|4)  channel="skb-upx" ;;
+        5)   channel="pdk" ;; 6)    channel="pdk-full" ;;
+        7|8) channel="lx"  ;; 9|10) channel="lx-upx" ;;
+      esac
+      case "$opt" in 2|4|8|10) BETA_ENABLED=1 ;; esac
+      FORK_CHANNEL="$channel"
+    else
+      case "$opt" in 1) : ;; 2) BETA_ENABLED=1 ;; 3) EXTERNAL_ENABLED=1 ;; esac
+      FORK_CHANNEL="official"
+    fi
+    break
+  done
 
   echomsg "--SELECTED_CHANNEL_INSTALLATION_OPTION_FOR--"
 }
@@ -820,8 +851,7 @@ install_dependency() {
     if [ "$pkg_name" = "$SERVICE_API_PROC" ]; then
       if [ ! -f "$SERVICE_API_SCRIPT" ]; then
         local url="${REPO_REFS_BASE_URL}/static/${SERVICE_API_PROC}"
-        [ -n "$MIRROR" ] && url="${MIRROR}${SERVICE_API_PROC}"
-        run_curl -s -o "$SERVICE_API_SCRIPT" "$url" && chmod +x "$SERVICE_API_SCRIPT"
+        run_curl -s --max-time 10 -o "$SERVICE_API_SCRIPT" "$url" && chmod +x "$SERVICE_API_SCRIPT"
       fi
     else
       opkg install "$pkg_name" >/dev/null 2>&1
@@ -847,73 +877,127 @@ install_dependencies() {
 }
 
 download_singbox() {
-  local beta="${1:-}" version="${2:-$latest_version}" pkg_url
+  local beta="${1:-}" version="${2:-$latest_version}"
+  local channel="${FORK_CHANNEL:-official}" variant="official" repo="$SINGBOX_REPO" api_url suffix
+  local required_mb=120 reserve_mb=2 tmp_free_mb opt_free_mb old_binary_kb=0 old_binary_mb path free_mb
+  local dl_pkg_path="" dl_active=0
 
-  if [ -z "$version" ] && [ -z "$MIRROR" ]; then
+  cleanup_download() { if [ "${dl_active:-0}" = "1" ] && [ -n "${dl_pkg_path:-}" ]; then rm -f "$dl_pkg_path"; fi }
+  on_download_interrupt() { cleanup_download; trap - INT TERM HUP; exit 130; }
+
+  PKG_TMP_DIR="$TMP_DIR"
+
+  case "$channel" in
+    skb|skb-upx) repo="$FORK_SKB_REPO"; variant="skb"; required_mb=80 ;;
+    pdk|pdk-full) repo="$FORK_PDK_REPO"; variant="pdk"; required_mb=55 ;;
+    lx|lx-upx) repo="$FORK_LX_REPO"; variant="lx" ;;
+  esac
+
+  api_url="https://github.com/${repo}/releases/latest"
+  [ "$beta" = "1" ] && api_url="https://github.com/${repo}/releases.atom"
+
+  if [ -z "$version" ]; then
     echomsg "--FETCHING_THE_LATEST_VERSION--"
-    local api_url="$SINGBOX_API_URL"
-    [ "$beta" = "1" ] && api_url="$SINGBOX_API_URL_BETA"
     version="$(get_latest_version "$api_url" "$beta")"
     [ -z "$version" ] && echoerr "--FAILED_TO_FETCH_VERSION--" && exit 1
-
+    reserve_mb=20
     echook "--LATEST_VERSION_IS_VERSION--"
   fi
 
-  if [ -z "$MIRROR" ]; then
-    PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
-    pkg_url="https://github.com/SagerNet/sing-box/releases/download/v${version}/${PKG_NAME} $CURL_RESOLVE_FIX"
-  else
-    PKG_NAME="sing-box_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}"
-    local sing_folder="sing-box"
-    [ "$beta" = "1" ] && sing_folder="sing-box-beta"
-    pkg_url="${MIRROR}${sing_folder}/${PKG_NAME}"
+  case "$variant:$PKG_ARCH" in
+    official:*) PKG_FORMAT="ipk"; PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}" ;;
+    skb:aarch64_*) PKG_FORMAT="binary"; suffix="arm64_naive"; PKG_NAME="skeen-box_${version}_linux_${suffix}" ;;
+    skb:mipsel_*) PKG_FORMAT="binary"; suffix="mipsle_naive"; PKG_NAME="skeen-box_${version}_linux_${suffix}" ;;
+    skb:mips_*) PKG_FORMAT="binary"; suffix="mips"; PKG_NAME="skeen-box_${version}_linux_${suffix}" ;;
+    pdk:*) PKG_FORMAT="ipk"; suffix="${PKG_OS}_${PKG_ARCH}"; PKG_NAME="podkop-engine_${version}_${suffix}${PKG_SUFFIX}" ;;
+    lx:aarch64_*) PKG_FORMAT="tar.gz"; suffix="linux-arm64"; PKG_NAME="sing-box-${version}-${suffix}.tar.gz" ;;
+    lx:mipsel_*) PKG_FORMAT="tar.gz"; suffix="linux-mipsle-softfloat"; PKG_NAME="sing-box-${version}-${suffix}.tar.gz" ;;
+    lx:mips_*) PKG_FORMAT="tar.gz"; suffix="linux-mips-softfloat"; PKG_NAME="sing-box-${version}-${suffix}.tar.gz" ;;
+    *) echoerr "--UNSUPPORTED_CPU_ARCHITECTURE--"; return 1 ;;
+  esac
+
+  case "$channel:$PKG_ARCH" in
+    skb-upx:*) PKG_NAME="${PKG_NAME}_upx"; required_mb=40 ;;
+    pdk-full:*) PKG_NAME="podkop-engine-full_${version}_${suffix}${PKG_SUFFIX}"; required_mb=70 ;;
+    lx-upx:aarch64_*|lx-upx:mipsel_*) PKG_NAME="${PKG_NAME%.tar.gz}.upx.tar.gz"; required_mb=40 ;;
+  esac
+
+  tmp_free_mb="$(df -Pm /tmp 2>/dev/null | awk 'NR == 2 {print $4}')"
+  case "$tmp_free_mb" in ''|*[!0-9]*) ;;
+    *) if [ "$tmp_free_mb" -ge "$required_mb" ]; then PKG_TMP_DIR="/tmp"; fi ;;
+  esac
+
+  opt_free_mb="$(df -Pm "$ENTWARE_DIR" 2>/dev/null | awk 'NR == 2 {print $4}')"
+  if [ -f "$SINGBOX_BIN_PATH" ]; then
+    old_binary_kb="$(du -k "$SINGBOX_BIN_PATH" 2>/dev/null | awk 'NR == 1 {print $1}')"
+    case "$old_binary_kb" in ''|*[!0-9]*) old_binary_kb=0 ;; esac
   fi
+
+  case "$opt_free_mb" in
+  ''|*[!0-9]*) ;; *) old_binary_mb=$(((old_binary_kb + 1023) / 1024))
+  free_mb="$((opt_free_mb + old_binary_mb + reserve_mb))"
+  if [ "$free_mb" -lt "$required_mb" ]; then
+    path="$ENTWARE_DIR"; echoerr "--INSUFFICIENT_FREE_SPACE_ON_PATH_REQUIRED--"
+    [ -n "$latest_version" ] && return 1; exit 1
+  fi ;; esac
+
+  dl_pkg_path="${PKG_TMP_DIR}/${PKG_NAME}"; dl_active=1
 
   echomsg "--DOWNLOADING_PKG_NAME--"
-
-  mkdir -p "$TMP_DIR"
+  mkdir -p "$PKG_TMP_DIR"
+  trap on_download_interrupt INT TERM HUP
 
   # shellcheck disable=SC2086
-  if run_curl -o "${TMP_DIR}/${PKG_NAME}" $pkg_url; then
-    echook "--DOWNLOADED_PKG_NAME_SUCCESSFULLY--"; return 0
-  else
-    echoerr "--FAILED_TO_DOWNLOAD_PKG_NAME--"
-    rm -f "${TMP_DIR}/${PKG_NAME}"
-    [ -n "$latest_version" ] && return 1 || exit 1
+  if run_curl --max-time 1800 -o "$dl_pkg_path" $CURL_RESOLVE_FIX \
+    "https://github.com/${repo}/releases/download/v${version}/${PKG_NAME}"; then
+    dl_active=0; trap - INT TERM HUP
+    echook "--DOWNLOADED_PKG_NAME_SUCCESSFULLY--"
+    return 0
   fi
+
+  trap - INT TERM HUP; cleanup_download; dl_active=0
+  echoerr "--FAILED_TO_DOWNLOAD_PKG_NAME--"
+  [ -n "$latest_version" ] && return 1; exit 1
 }
 
 install_singbox() {
-  local tmp_unpack_dir
-  tmp_unpack_dir="$(mktemp -d "${TMP_DIR}/sing-box-unpack.XXXXXX")" || {
-    echoerr "--FAILED_TO_CREATE_TEMPORARY_DIRECTORY_FOR--"; return 1
-  }
+  local tmp_unpack_dir="" binary_path=""
+  local base_tmp_dir="${PKG_TMP_DIR:-$TMP_DIR}"
+  local pkg_path="${base_tmp_dir}/${PKG_NAME}"
 
-  echomsg "--EXTRACTING_PKG_NAME--"
+  cleanup_install() { [ -n "$tmp_unpack_dir" ] && rm -rf "$tmp_unpack_dir"; rm -f "$pkg_path"; }
+  on_interrupt() { cleanup_install; trap - INT TERM HUP; exit 130; }
+  finish_install() { cleanup_install; trap - INT TERM HUP; }
+  trap on_interrupt INT TERM HUP
 
-  if tar -xzf "${TMP_DIR}/${PKG_NAME}" -C "$tmp_unpack_dir" && tar -xzf "$tmp_unpack_dir/data.tar.gz" -C "$tmp_unpack_dir"; then
-    echook "--EXTRACTION_COMPLETED--"
+  if [ "${PKG_FORMAT:-}" = "binary" ]; then
+    binary_path="$pkg_path"
   else
-    rm -rf "$tmp_unpack_dir"; rm -f "${TMP_DIR}/${PKG_NAME}"
-    echoerr "--EXTRACTION_ERROR_FOR_PKG_NAME--"; return 1
+    tmp_unpack_dir="$(mktemp -d "${base_tmp_dir}/sing-box-unpack.XXXXXX")" || {
+      echoerr "--FAILED_TO_CREATE_TEMPORARY_DIRECTORY_FOR--"; finish_install; return 1
+    }
+
+    echomsg "--EXTRACTING_PKG_NAME--"
+    if ! {
+      tar -xzf "$pkg_path" -C "$tmp_unpack_dir" &&
+      { [ "${PKG_FORMAT:-}" = "tar.gz" ] || { [ -f "$tmp_unpack_dir/data.tar.gz" ] &&
+        tar -xzf "$tmp_unpack_dir/data.tar.gz" -C "$tmp_unpack_dir"; }; }
+    }; then
+      echoerr "--EXTRACTION_ERROR_FOR_PKG_NAME--"; finish_install; return 1
+    fi
+    binary_path="$(find "$tmp_unpack_dir" -type f -size +5M ! -name '*.*' -print 2>/dev/null | sed -n '1p')"
   fi
 
-  if [ ! -f "$tmp_unpack_dir/usr/bin/sing-box" ]; then
-    rm -rf "$tmp_unpack_dir"
-    rm -f "${TMP_DIR}/${PKG_NAME}"
-    echoerr "--BINARY_FILE_SING_BOX_NOT_FOUND_INSIDE_TH--"; return 1
+  if [ ! -f "$binary_path" ]; then
+    echoerr "--BINARY_FILE_SING_BOX_NOT_FOUND_INSIDE_TH--"; finish_install; return 1
   fi
+  echook "--EXTRACTION_COMPLETED--"
 
   echomsg "--INSTALLING_SINGBOX_NAME_TO_SINGBOX_BIN_P--"
-  [ -f "$SINGBOX_BIN_PATH" ] && rm -f "$SINGBOX_BIN_PATH"
-  mv -f "$tmp_unpack_dir/usr/bin/sing-box" "$SINGBOX_BIN_PATH"
-  chmod 755 "$SINGBOX_BIN_PATH"
-  rm -f "$SINGBOX_RUN_VERSION"
-  rm -rf "$tmp_unpack_dir"
-  rm -f "${TMP_DIR}/${PKG_NAME}"
+  rm -f "$SINGBOX_BIN_PATH"; mv -f "$binary_path" "$SINGBOX_BIN_PATH"
+  chmod 755 "$SINGBOX_BIN_PATH"; rm -f "$SINGBOX_RUN_VERSION"
 
-  echook "--SINGBOX_NAME_SUCCESSFULLY_INSTALLED--"
-  return 0
+  echook "--SINGBOX_NAME_SUCCESSFULLY_INSTALLED--"; finish_install; return 0
 }
 
 download_singbox_config() {
@@ -933,7 +1017,7 @@ download_singbox_config() {
 
   [ -f "$SINGBOX_CONFIG" ] && mv -f "$SINGBOX_CONFIG" "$backup_config"
 
-  local arch beta_part config_name config_url
+  local arch beta_part config_name
 
   case "$(uname -m)" in
     aarch64|arm*) arch="" ;;
@@ -942,13 +1026,7 @@ download_singbox_config() {
   beta_part="$([ "$beta" = "1" ] && echo "_beta" || echo "")"
   config_name="config${beta_part}${arch}.json"
 
-  if [ -n "$MIRROR" ]; then
-    config_url="${MIRROR}${config_name}"
-  else
-    config_url="${REPO_REFS_BASE_URL}/main/${config_name}"
-  fi
-
-  if ! run_curl -o "$SINGBOX_CONFIG" "$config_url"; then
+  if ! run_curl --max-time 10 -o "$SINGBOX_CONFIG" "${REPO_REFS_BASE_URL}/main/${config_name}"; then
     [ -f "$backup_config" ] && mv -f "$backup_config" "$SINGBOX_CONFIG"
     echoerr "--FAILED_TO_DOWNLOAD_SINGBOX_NAME_CONFIGUR--"
     return 1
@@ -965,7 +1043,6 @@ download_initial_ruleset() {
   local tar_file="${ruleset_path}.tar.gz"
   local bak_path="${ruleset_path}_bak"
 
-  [ -n "$MIRROR" ] && ruleset_url="${MIRROR}ruleset.tar.gz"
   mkdir -p "$WORK_DIR"
 
   if [ -d "$ruleset_path" ]; then
@@ -974,7 +1051,7 @@ download_initial_ruleset() {
 
   echomsg "--DOWNLOADING_INITIAL_RULESET--"
 
-  if ! run_curl -o "$tar_file" "$ruleset_url"; then
+  if ! run_curl --max-time 120 -o "$tar_file" "$ruleset_url"; then
     rm -f "$tar_file"; rm -rf "$ruleset_path"
     [ -d "$bak_path" ] && mv -f "$bak_path" "$ruleset_path"
     echoerr "--FAILED_TO_DOWNLOAD_INITIAL_RULESET--"; return 1
@@ -1052,20 +1129,15 @@ download_skeen_script() {
 
   [ -f "$SKEEN_SCRIPT" ] && mv -f "$SKEEN_SCRIPT" "$backup_script"
 
-  if [ -n "$MIRROR" ]; then
-    script_url="--MIRROR_SKEEN--"
-  fi
-
   # shellcheck disable=SC2086
-  if ! run_curl -o "$SKEEN_SCRIPT" $script_url; then
+  if ! run_curl --max-time 120 -o "$SKEEN_SCRIPT" $script_url; then
     [ -f "$backup_script" ] && mv -f "$backup_script" "$SKEEN_SCRIPT"
     echoerr "--FAILED_TO_DOWNLOAD_SKEEN_NAME_SCRIPT--"
     [ "$action" != "update" ] && exit 1
     return 1
   fi
 
-  chmod 755 "$SKEEN_SCRIPT"
-  chmod +x "$SKEEN_SCRIPT"
+  chmod 755 "$SKEEN_SCRIPT"; chmod +x "$SKEEN_SCRIPT"
 
   [ -f "$backup_script" ] && rm -f "$backup_script"
 
@@ -1101,20 +1173,11 @@ is_running() {
 }
 
 install() {
-  MIRROR="${MIRROR:-}"; AUTO="${AUTO:-}";
-  BETA_ENABLED=0; EXTERNAL_ENABLED=0
-
-  if [ -n "$MIRROR" ]; then
-    case "$MIRROR" in
-    https://*static/ | http://*static/) echomsg "--USING_MIRROR_MIRROR--" ;;
-    *) exiterr "--MIRROR_URL_MUST_START_WITH_HTTP_S_AND_EN--"; ;;
-    esac
-  fi
+  AUTO="${AUTO:-}"; BETA_ENABLED=0; EXTERNAL_ENABLED=0
 
   get_os_release
   ask_install_singbox
   if [ "$EXTERNAL_ENABLED" != "1" ]; then
-    check_free_space
     get_architecture
     download_singbox "$BETA_ENABLED"
     install_singbox
@@ -3121,10 +3184,9 @@ show_connstat() {
 }
 
 update_core() {
-  check_free_space
   get_os_release
   get_architecture
-  download_singbox || return 1
+  download_singbox "$UPDATE_SINGBOX_BETA" || return 1
   if is_running; then stop || exit 1; fi
   install_singbox
   echook "--SINGBOX_NAME_CORE_HAS_BEEN_SUCCESSFULLY--"
@@ -3175,7 +3237,7 @@ ask_and_update() {
   current_version=$(get_current_version "$proc")
   [ -z "$current_version" ] && current_version="--CURRENT_VERSION_NOT_INSTALLED--"
 
-  case "$api" in *atom) beta="1" ;; esac
+  case "$api" in *atom) beta="1" ;; */releases/latest) beta="0" ;; esac
   latest_version=$(get_latest_version "$api" "$beta")
   [ -z "$latest_version" ] && echoerr "--FAILED_TO_FETCH_VERSION_NUMBER--" && return 1
 
@@ -3220,11 +3282,18 @@ check_updates() {
   # sing-box
   if get_singbox_config && [ "$SINGBOX_EXTERNAL_ENABLED" != "1" ]; then
     if [ "$UPDATE_SINGBOX_ENABLED" = "1" ]; then
-      local api_url="$SINGBOX_API_URL"
-      [ "$UPDATE_SINGBOX_BETA" = "1" ] && api_url="$SINGBOX_API_URL_BETA"
+      local repo="$SINGBOX_REPO" api_url
+      FORK_CHANNEL="${UPDATE_SINGBOX_CHANNEL:-official}"
 
-      ask_and_update "$SINGBOX_NAME" "sing" "$api_url" \
-        update_core "https://github.com/SagerNet/sing-box/releases"
+      case "$FORK_CHANNEL" in
+        skb|skb-upx) repo="$FORK_SKB_REPO" ;;
+        pdk|pdk-full) repo="$FORK_PDK_REPO" ;;
+        lx|lx-upx) repo="$FORK_LX_REPO" ;;
+        *) FORK_CHANNEL="official" ;;
+      esac
+      api_url="https://github.com/${repo}/releases/latest"
+      [ "$UPDATE_SINGBOX_BETA" = "1" ] && api_url="https://github.com/${repo}/releases.atom"
+      ask_and_update "$SINGBOX_NAME $FORK_CHANNEL" "sing" "$api_url" update_core "https://github.com/${repo}/releases"
     fi
   fi
 
@@ -3766,7 +3835,7 @@ sync_config() {
     echoerr "--FAILED_TO_CREATE_TEMPORARY_FILE--"; return 1
   }
 
-  if ! run_curl -s "$address" -o "$config_tmp"; then
+  if ! run_curl -s --max-time 20 "$address" -o "$config_tmp"; then
     rm -f "$config_tmp"
     echoerr "--FAILED_TO_DOWNLOAD_CONFIGURATION_FROM_AD--"; return 1
   fi
