@@ -194,5 +194,3 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 - [singbox-internals](https://singbox-internals.hidandelion.com/ru/) - sing-box изнутри.
 - [Разбор современного sing-box 1.14](https://www.qichiyu.com/1111.html) — для тех, кто понимает китайский язык.
 - [Полный разбор Sub-Store](https://www.qichiyu.com/1119.html) — для тех, кто понимает китайский язык.
-- [jinndi/skeen-box](https://github.com/jinndi/skeen-box) — sing-box билды c патчем REALITY и UPX сжатием.
-- [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — альтернативное ядро c XHTTP.

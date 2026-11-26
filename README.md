@@ -197,5 +197,3 @@ The full configuration reference is available in [docs/CONFIGURATION.md](docs/CO
 - [singbox-internals](https://singbox-internals.hidandelion.com) - sing-box Internals.
 - [An In-Depth Look at Modern sing-box 1.14](https://www.qichiyu.com/1111.html) — for Chinese speakers.
 - [Complete Sub-Store Guide](https://www.qichiyu.com/1119.html) — for Chinese speakers.
-- [jinndi/skeen-box](https://github.com/jinndi/skeen-box) — sing-box builds with REALITY patch and UPX compression.
-- [sing-box-lx core (XHTTP)](https://github.com/Leadaxe/sing-box-lx) — alternative core with XHTTP.
