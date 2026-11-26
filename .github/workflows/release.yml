@@ -27,8 +27,8 @@ jobs:
       - uses: actions/setup-go@v5
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
-          go-version-file: .github/shell-minifier/go.mod
-          cache-dependency-path: .github/shell-minifier/go.sum
+          go-version-file: tools/shell-minifier/go.mod
+          cache-dependency-path: tools/shell-minifier/go.sum
 
       - name: Install shfmt
         if: ${{ steps.release.outputs.releases_created == 'true' }}
@@ -40,7 +40,7 @@ jobs:
       - name: Test and build scripts
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: |
-          (cd .github/shell-minifier && go test ./...)
+          (cd tools/shell-minifier && go test ./...)
           sh .github/build-shell-scripts.sh dist
 
       - name: Upload SKeen

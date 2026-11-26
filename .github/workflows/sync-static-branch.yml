@@ -25,8 +25,8 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: .github/shell-minifier/go.mod
-          cache-dependency-path: .github/shell-minifier/go.sum
+          go-version-file: tools/shell-minifier/go.mod
+          cache-dependency-path: tools/shell-minifier/go.sum
 
       - name: Build skeen-api
         run: |
@@ -41,7 +41,7 @@ jobs:
           curl -fsSL -o "$RUNNER_TEMP/shfmt" "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
           chmod +x "$RUNNER_TEMP/shfmt"
           export PATH="$RUNNER_TEMP:$PATH"
-          (cd .github/shell-minifier && go test ./...)
+          (cd tools/shell-minifier && go test ./...)
           sh .github/build-shell-scripts.sh dist
           mv dist/skeen skeen_min
           mv dist/skeen_ru skeen_ru_min

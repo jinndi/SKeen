@@ -728,8 +728,8 @@
     "ru": "Память: %s MB (пиковая: %s MB)\\n"
   },
   "SINGBOX_INSTALLATION_OPTIONS_LIST": {
-    "en": " 1) Latest stable\\n 2) Latest alpha/beta/rc\\n 3) Use custom binary\\n 4) Choose a fork\\n\\n",
-    "ru": " 1) Последняя стабильная\\n 2) Последняя alpha/beta/rc\\n 3) Буду использовать свой бинарник\\n 4) Выбрать из форков\\n\\n"
+    "en": " 1) Official stable\\n 2) Official alpha/beta/rc\\n 3) I will use my own binary\\n 4) Choose from forks\\n\\n",
+    "ru": " 1) Официальная стабильная\\n 2) Официальная alpha/beta/rc\\n 3) Буду использовать свой бинарник\\n 4) Выбрать из форков\\n\\n"
   },
   "FORK_CHANNEL_OPTIONS_HEADER": {
     "en": "Fork releases:\\n\\n",
