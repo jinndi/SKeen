@@ -730,7 +730,7 @@ ask_install_singbox() {
       if [ -n "$auto_fork" ]; then
         opt="$auto_fork"; auto_fork=""
       else
-        cyan "--FORK_CHANNEL_OPTIONS_HEADER--"
+        printf '\n'; cyan "--FORK_CHANNEL_OPTIONS_HEADER--"; echo
         local gh="https://github.com/"
         # shellcheck disable=SC3045
         printf "--FORK_CHANNEL_OPTIONS--"
