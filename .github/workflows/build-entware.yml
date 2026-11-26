@@ -138,55 +138,18 @@ jobs:
       - name: Install SKeen
         if: inputs.install_skeen
         env:
-          MIRROR: https://raw.githack.com/jinndi/SKeen/static/
-          AUTO: '3'
+          URL: https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/static/skeen_ru
+          AUTO: '4-4'
         run: |
           cd "rootfs-${{ matrix.arch }}"
 
           echo "Installing SKeen for ${{ matrix.arch }}"
-          echo "sing-box option: AUTO=3 (external)"
+          echo "sing-box option: AUTO: ${AUTO}"
 
-          curl -fsSL --connect-timeout 10 \
-            "${MIRROR}skeen_ru" |
-            sudo env MIRROR="$MIRROR" AUTO="3" \
-              chroot . /opt/bin/sh
+          curl -fsSL --connect-timeout 10 "$URL" |
+            sudo env AUTO="${AUTO}" chroot . /opt/bin/sh
 
           sudo mv opt/etc/init.d/S99SKeen opt/root/S99SKeen
-
-      - name: Get SKeen-Box URL
-        if: inputs.install_skeen
-        id: skeen-box
-        env:
-          SKEEN_BOX_RELEASE_API: https://api.github.com/repos/jinndi/skeen-box/releases/latest
-          ARCH: ${{ matrix.arch }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          case "$ARCH" in
-            mipsel)  suffix="mipsle_upx" ;;
-            mips)    suffix="mips_upx" ;;
-            aarch64) suffix="arm64_upx" ;;
-            *) echo "::error::Unsupported architecture: $ARCH"; exit 1 ;;
-          esac
-
-          url=$(curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 5 \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "$SKEEN_BOX_RELEASE_API" |
-            jq -er --arg suffix "_${suffix}" \
-              '[.assets[] | select(.name | endswith($suffix) and test("^skeen-box_[0-9].*_linux"))][0].browser_download_url')
-
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-
-      - name: Download SKeen-Box
-        if: inputs.install_skeen
-        env:
-          URL: ${{ steps.skeen-box.outputs.url }}
-        run: |
-          curl -fL --retry 3 --retry-delay 2 "$URL" -o /tmp/sing-box
-          sudo install -m 755 /tmp/sing-box \
-            "rootfs-${{ matrix.arch }}/opt/bin/sing-box"
-          rm -f /tmp/sing-box
 
       - name: Cleanup chroot mounts
         if: always()
