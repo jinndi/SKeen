@@ -4,47 +4,7 @@
   <summary>Не устанавливается?</summary>
 <br>
 
-1. [Попробуйте оффлайн-установщик Entware с предустановленным SKeen](https://github.com/jinndi/SKeen/tree/static/entware).
-
-2. Если основной способ загрузки недоступен, воспользуйтесь одним из вариантов ниже:
-
-**`Авто-подбор зеркала (рекомендуется):`**
-
-```sh
-( c="curl -sfL --connect-timeout 3"; s="skeen_ru";  \
-m="https://raw.githack.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
-m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
-m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
-m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; $c "${m}${s}" | MIRROR="$m" sh || \
-echo "Ошибка: Не удалось загрузить скрипт. Ни один из серверов не доступен." )
-```
-
-Либо выберите конкретное зеркало вручную:
-
-**`CDN Githack`**
-
-```sh
-m="https://raw.githack.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
-```
-
-**`Proxy GHFast`**
-
-```sh
-m="https://ghfast.top/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
-```
-
-**`Proxy GHProxy`**
-
-```sh
-m="https://ghproxy.net/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
-```
-
-**`Proxy GH-Proxy (alt)`**
-
-```sh
-m="https://gh-proxy.com/https://raw.githubusercontent.com/jinndi/SKeen/static/"; curl -sfL --connect-timeout 3 "${m}skeen_ru" | MIRROR="$m" sh
-```
-
+[Попробуйте оффлайн-установщик Entware с предустановленным SKeen](https://github.com/jinndi/SKeen/tree/static/entware).
 </details>
 
 <details>

@@ -39,25 +39,17 @@ SKeen настраивает прозрачное проксирование н�
 
 Убедитесь, что установлен Entware. В противном случае найдите инструкцию для вашей модели в [Центре поддержки](https://support.netcraze.ru/): «Руководство пользователя» → «Управление» → «OPKG» → «Установка репозитория Entware на USB-накопитель» или «Установка OPKG Entware на встроенную память роутера».
 
-> [!TIP]
-> Ничего **совсем** не устанавливается?
->
-> Попробуйте [оффлайн-установщик Entware с предустановленным SKeen](https://github.com/jinndi/SKeen/tree/static/entware).
-
 **Выполните команду в SSH из среды Entware:**
 
 ```sh
 curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --resolve release-assets.githubusercontent.com:443:185.199.108.133 | sh
 ```
 
-<details>
-  <summary>Не устанавливается? (нажмите, чтобы развернуть)</summary>
-<br>
+> [!TIP]
+> Ничего **совсем** не устанавливается?
+>
+> Попробуйте [оффлайн-установщик Entware с предустановленным SKeen](https://github.com/jinndi/SKeen/tree/static/entware).
 
-1. [Попробуйте оффлайн-установщик Entware с предустановленным SKeen](https://github.com/jinndi/SKeen/tree/static/entware).
-2. См. также [руководство по устранению неполадок](docs/TROUBLESHOOTING-RU.md).
-
-</details>
 
 > [!NOTE]
 > Вам будет предложено установить `sing-box` из официального репозитория (стабильную или бета-версию). Также установку можно пропустить, чтобы позже указать свой бинарный файл в `skeen.json`.

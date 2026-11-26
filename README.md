@@ -40,11 +40,6 @@ The project's guiding principles are described in [SKeen's philosophy](docs/PHIL
 
 Make sure that Entware is installed. Otherwise, find the instructions for your model in the [Support Center](https://support.keenetic.com/) → User Guide → Management → OPKG → Installing the Entware repository on a USB drive / Installing OPKG Entware on internal router memory.
 
-> [!TIP]
-> Nothing gets installed **at all**?
->
-> Try the [offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
-
 **Run the following command via SSH from the Entware environment:**
 
 ```sh
@@ -53,14 +48,10 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen --resolv
 
 Russian-localized version: See [README-RU.md](README-RU.md)
 
-<details>
-  <summary>Still can't install it? (click to expand)</summary>
-<br>
-
-1. [Try the offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
-2. See also the [troubleshooting guide](docs/TROUBLESHOOTING.md).
-
-</details>
+> [!TIP]
+> Nothing gets installed **at all**?
+>
+> Try the [offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
 
 > [!NOTE]
 > You will be prompted to install `sing-box` from the official repository (either the stable or beta version). You can also skip the installation to configure a custom binary file later in `skeen.json`.
