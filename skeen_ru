@@ -1,0 +1,3447 @@
+#!/bin/sh
+PATH="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ACTION="${1:-}"
+CALLER="${2:-}"
+[ -z "$CALLER" ]&&CALLER="cli"
+[ -z "$ACTION" ]&&CALLER="menu"
+readonly gq="lua luasocket skeen-api iptables ip-full ipset net-tools conntrack curl tar jsonfilter logger"
+readonly ai="/opt"
+readonly ag="$ai/etc/skeen"
+readonly gy="$ai/tmp"
+readonly dy="/tmp/.skeen"
+readonly gg="$ai/etc/ndm/netfilter.d"
+readonly gb="/lib/modules"
+readonly dc="$ai/lib/modules"
+readonly cj="--resolve release-assets.githubusercontent.com:443:185.199.108.133"
+readonly dj="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
+readonly aa="SKeen"
+readonly cl="5.14.0"
+readonly aw="skeen"
+readonly an="$ai/bin/$aw"
+readonly ap="$dy/$aw.sh"
+readonly ex="https://github.com/jinndi/SKeen/releases/latest"
+readonly ao="$ag/$aw.json"
+readonly as="$dy/$aw.json"
+readonly aj="$ai/etc/init.d/S99SKeen"
+readonly fo="$ex/download/skeen_ru"
+readonly ew="https://github.com/jinndi/SKeen/blob/main/docs/CONFIGURATION-RU.md"
+readonly ck="skeen-api"
+readonly ab="$ai/bin/$ck"
+readonly h="Sing-box"
+readonly ac="/tmp/run/skeen.pid"
+readonly aq="$dy/version"
+readonly ak="$ai/bin/skeen-box"
+readonly de="$ag/config.json"
+readonly ee="$ag/config"
+readonly dl="$ag/.config_merged.json"
+readonly ce="$ag/config_ext.json"
+readonly dg="$ag/config_ext"
+readonly cu="$ag/.config_merged_ext.json"
+readonly ff="SagerNet/sing-box"
+readonly dx="jinndi/skeen-box"
+readonly dw="podkop-net/podkop-engine"
+readonly ed="Leadaxe/sing-box-lx"
+readonly ah="$gg/${aw}_firewall.sh"
+readonly bj="/tmp/${aw}_wait_route"
+readonly bi="skeen_exclude_net"
+readonly bc="skeen_exclude_port"
+readonly ae="skeen_fakeip_net"
+readonly ax="$ag/pure_cidr.list"
+readonly av="skeen_fakeip_src"
+readonly ar="skeen"
+readonly at="skeen_mask"
+readonly bq="skeen_divert"
+readonly bd="skeen_tun"
+readonly dv="_NDM_HOTSPOT_DNSREDIR"
+readonly bu="skeen_dns_out"
+readonly bp="nat"
+readonly cz="mangle"
+readonly ay="0x12"
+readonly cv="12"
+readonly dq=53
+readonly gi="0.0.0.0/8
+10.0.0.0/8
+100.64.0.0/10
+127.0.0.0/8
+169.254.0.0/16
+172.16.0.0/12
+192.0.0.0/24
+192.0.2.0/24
+192.31.196.0/24
+192.52.193.0/24
+192.88.99.0/24
+192.168.0.0/16
+198.51.100.0/24
+203.0.113.0/24
+224.0.0.0/4
+240.0.0.0/4
+255.255.255.255/32
+78.47.125.180/32
+"
+readonly gj="::/128
+::1/128
+::/96
+::ffff:0:0/96
+64:ff9b::/96
+64:ff9b:1::/48
+100::/64
+100:0:0:1::/64
+2001::/23
+2001::/32
+2001:2::/48
+2001:20::/28
+2001:db8::/32
+2002::/16
+3fff::/20
+fe80::/10
+ff00::/8
+"
+readonly be="------------------------------------------------"
+BO(){
+[ -t 1 ]||[ -t 2 ]
+ret=$?
+BO(){ return "$ret";}
+return "$ret"
+}
+Av(){ [ "${FORCE_COLOR:-0}" = "1" ]||BO;}
+AD(){ Av&&printf '\033[36m%s\033[0m\n' "$1"||printf '%s\n' "$1";}
+As(){ Av&&printf '\033[1;38;5;30m%s\033[0m\n' "$1"||printf '%s\n' "$1";}
+Bn(){ Av&&printf '\033[31m%s\033[0m\n' "$1"||printf '%s\n' "$1";}
+AL(){ Av&&printf '\033[32m%s\033[0m\n' "$1"||printf '%s\n' "$1";}
+Bs(){ Av&&printf '\033[33m%s\033[0m\n' "$1"||printf '%s\n' "$1";}
+P(){ AD "[INFO] $1";}
+U(){ AL "[OK] $1";}
+T(){ Bs "[WARN] $1";}
+O(){ Bn "[ERROR] $1";}
+AE(){
+Bn "[FATAL] $1"
+exit 1
+}
+AK(){ BO||{
+O "Команда только для терминала"
+exit 1
+};}
+Ah(){ logger -p notice -t "$aa" "$1";}
+BR(){ logger -p warning -t "$aa" "$1";}
+h(){ logger -p error -t "$aa" "$1";}
+if BO;then
+cleanup(){ { stty sane </dev/tty;} 2>/dev/null||true;}
+trap cleanup EXIT
+trap 'exit 143' TERM
+trap 'printf "\n"; exit 130' INT
+fi
+AW(){ if [ ! -d "$dy" ];then mkdir -p "$dy"&&chmod 700 "$dy";fi;}
+AQ(){
+if [ "$1" = "force" ];then
+rm -f "$ao" "$as"
+elif [ -f "$ao" ];then
+P "Конфигурационный файл $aa уже существует, пропускаем создание"
+return
+fi
+P "Создаем конфигурационный файл $aa..."
+mkdir -p "$(dirname "$ao")"
+cat <<EOF >"$ao"
+// $ew
+{
+  "auto_start": {
+    "enabled": 1
+  },
+  "policy": {
+    "enabled": 0,
+    "segment": "br1"
+  },
+  "network": {
+    "ipv6": 1,
+    "tuning": 0
+  },
+  "singbox": {
+    "config": {
+      "use_dir": 0,
+      "url": "",
+      "split": 1
+    },
+    "api": {
+      "url": "http://127.0.0.1:9999",
+      "secret": ""
+    },
+    "external": {
+      "enabled": ${EXTERNAL_ENABLED:-0},
+      "path": "",
+      "config": {
+        "use_dir": 0,
+        "url": "",
+        "split": 1
+      },
+      "api": {
+        "url": "",
+        "secret": ""
+      }
+    }
+  },
+  "services": {
+    "api": {
+      "auto_start": 1,
+      "port": 3000,
+      "secret": "",
+      "cors_origin": ["*"],
+      "dashboard": 1
+    },
+    "proxy": {
+      "enabled": 0,
+      "port": "",
+      "user": "",
+      "pass": ""
+    }
+  },
+  "firewall": {
+    "intercept": {
+      "dns": 1,
+      "fakeip": {
+        "enabled": 0,
+        "clients": []
+      }
+    },
+    "exclude": {
+      "port": ["137:139", 445, 1900],
+      "ipv4_cidr": [],
+      "ipv6_cidr": []
+    },
+    "redirect_dns": {
+      "enabled": 0,
+      "to_port": "",
+      "use_policy": 1
+    },
+    "proxy_router": 1
+  },
+  "update": {
+    "singbox": {
+      "enabled": 1,
+      "beta": ${BETA_ENABLED:-0},
+      "channel": "${FORK_CHANNEL:-official}"
+    },
+    "skeen": {
+      "enabled": 1,
+      "api": 1
+    }
+  }
+}
+EOF
+cp -fp "$ao" "$as" >/dev/null 2>&1
+[ ! -f "$aj" ]&&AU >/dev/null 2>&1
+U "Конфигурационный файл $aa создан успешно"
+}
+V(){
+if [ -f "${as:-}" ];then
+echo "$as"
+elif [ -f "${ao:-}" ];then
+echo "$ao"
+fi
+}
+AY(){
+local path="${1:-}"
+local hm config_path
+config_path="$(V)"
+hm="$(jsonfilter -i "$config_path" -e "$path[*]")"
+if [ -n "$hm" ];then
+printf '%s\n' "$hm"
+return 0
+fi
+hm="$(jsonfilter -i "$config_path" -e "$path")"||return 0
+case "$hm" in
+'[ ]'|'[]'|'')return 0;;
+*)printf '%s\n' "$hm"
+esac
+}
+Be(){ [ "$(sha256sum "$1"|cut -d ' ' -f 1)" != "$(sha256sum "$2"|cut -d ' ' -f 1)" ];}
+AP(){
+[ ! -f "$ao" ]&&AQ
+if [ ! -f "$as" ]||Be "$ao" "$as";then
+if AW&&cp -fp "$ao" "$as";then
+chmod 700 "$as"
+else
+AE "Не удалось синхронизировать $ao в память"
+fi
+fi
+}
+Ac(){
+local sing_pid gp fe=0
+if [ -f "$ac" ];then
+read -r sing_pid <"$ac"
+if [ -n "$sing_pid" ]&&[ -d "/proc/$sing_pid" ];then
+gp="$(readlink -f "/proc/$sing_pid/exe" 2>/dev/null)"
+fi
+fi
+case "$gp" in ""|"$SINGBOX_BIN");;*)fe=1;esac
+if [ "$fe" = "0" ]&&[ -n "$sing_pid" ]&&[ -d "/proc/$sing_pid" ];then
+[ ! -f "$SINGBOX_BIN" ]&&fe=1
+fi
+if [ "$fe" = "1" ]&&kill -0 "$sing_pid" 2>/dev/null;then
+P "Завершаем $h (pid: $sing_pid)..."
+kill -9 "$sing_pid"
+clean_firewall
+rm -f "$ac"
+fi
+if [ -f "$SINGBOX_BIN" ]&&[ ! -x "$SINGBOX_BIN" ];then
+chmod +x "$SINGBOX_BIN" 2>/dev/null||true
+fi
+}
+Af(){
+local config_path
+config_path="$(V)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" -e AUTO_START_ENABLED='@.auto_start.enabled')"
+: "${AUTO_START_ENABLED:=1}"
+}
+Ba(){
+local config_path
+config_path="$(V)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
+-e NETWORK_IPV6='@.network.ipv6' \
+-e NETWORK_TUNING='@.network.tuning')"
+: "${NETWORK_IPV6:=1}"
+: "${NETWORK_TUNING:=0}"
+}
+get_singbox_config(){
+local mode="${1:-}" config_path
+config_path="$(V)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
+-e sing_config_use_dir='@.singbox.config.use_dir' \
+-e sing_config_url='@.singbox.config.url' \
+-e sing_config_split='@.singbox.config.split' \
+-e sing_api_url='@.singbox.api.url' \
+-e sing_api_secret='@.singbox.api.secret' \
+-e SINGBOX_EXTERNAL_ENABLED='@.singbox.external.enabled' \
+-e sing_external_path='@.singbox.external.path' \
+-e sing_external_config_use_dir='@.singbox.external.config.use_dir' \
+-e sing_external_config_url='@.singbox.external.config.url' \
+-e sing_external_config_split='@.singbox.external.config.split' \
+-e sing_external_api_url='@.singbox.external.api.url' \
+-e sing_external_api_secret='@.singbox.external.api.secret')"
+: "${sing_config_use_dir:=0}"
+: "${sing_config_url:=}"
+: "${sing_config_split:=1}"
+: "${sing_api_url:=http://127.0.0.1:9999}"
+: "${sing_api_secret:=}"
+: "${SINGBOX_EXTERNAL_ENABLED:=0}"
+: "${sing_external_path:=/opt/bin/sing-box}"
+: "${sing_external_config_use_dir:=$sing_config_use_dir}"
+: "${sing_external_config_url:=$sing_config_url}"
+: "${sing_external_config_split:=$sing_config_split}"
+: "${sing_external_api_url:=$sing_api_url}"
+: "${sing_external_api_secret:=$sing_api_secret}"
+Aw(){
+local use_dir="${1:-0}" ca="${2:-}" bw="${3:-}" src
+if [ "$use_dir" = "1" ];then
+mkdir -p "$ca"
+if [ -z "$(ls -A "$ca")" ];then
+if [ -f "$bw" ]&&[ "$SINGBOX_CONFIG_SPLIT" = "1" ];then
+Ak "$bw" "$ca"||echo '{}' >"$ca/config.json"
+else
+echo '{}' >"$ca/config.json"
+fi
+fi
+if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ];then
+SINGBOX_CONFIG="$cu"
+else
+SINGBOX_CONFIG="$dl"
+fi
+SINGBOX_CONFIG_DIR="$ca"
+else
+if [ ! -f "$bw" ];then
+if [ -d "$ca" ]&&[ -n "$(ls -A "$ca")" ];then
+"$SINGBOX_BIN" merge "$bw" -C "$ca" >/dev/null 2>&1||echo '{}' >"$bw"
+elif
+src="$de"
+[ -f "$src" ]||{
+src="$ce"
+[ -f "$src" ]
+}
+then
+cp -f "$src" "$bw"
+else
+echo '{}' >"$bw"
+fi
+fi
+SINGBOX_CONFIG="$bw"
+fi
+}
+SINGBOX_CONFIG_DIR=""
+if [ "$SINGBOX_EXTERNAL_ENABLED" = "1" ];then
+[ -f "$sing_external_path" ]||sing_external_path="$(command -v "$sing_external_path")"
+SINGBOX_BIN="$sing_external_path"
+SINGBOX_CONFIG_URL="$sing_external_config_url"
+SINGBOX_CONFIG_SPLIT="$sing_external_config_split"
+Aw "$sing_external_config_use_dir" "$dg" "$ce"
+export BOX_API_URL="$sing_external_api_url"
+export BOX_API_SECRET="$sing_external_api_secret"
+else
+SINGBOX_BIN="$ak"
+SINGBOX_CONFIG_URL="$sing_config_url"
+SINGBOX_CONFIG_SPLIT="$sing_config_split"
+Aw "$sing_config_use_dir" "$ee" "$de"
+export BOX_API_URL="$sing_api_url"
+export BOX_API_SECRET="$sing_api_secret"
+fi
+if [ "$mode" = "--json" ]&&[ -z "$SINGBOX_CONFIG_DIR" ];then
+printf '{"path":"%s","is_dir":%s}\n' "$SINGBOX_CONFIG" "false"
+return 0
+fi
+if [ -n "$SINGBOX_CONFIG_DIR" ];then
+if [ "$mode" = "--json" ];then
+printf '{"path":"%s","is_dir":%s}\n' "$SINGBOX_CONFIG_DIR" "true"
+return 0
+fi
+if [ ! -f "$SINGBOX_CONFIG" ]||[ -n "$(find "$SINGBOX_CONFIG_DIR" -mindepth 1 -newer "$SINGBOX_CONFIG" -print -quit)" ];then
+if ! "$SINGBOX_BIN" merge "$SINGBOX_CONFIG" -C "$SINGBOX_CONFIG_DIR" >/dev/null 2>&1;then
+O "Ошибка слияния конфига $h из $SINGBOX_CONFIG_DIR"
+fi
+fi
+fi
+Ac
+}
+AJ(){
+local mode="${1:-}" config_path
+config_path="$(V)"
+if [ -n "$config_path" ];then
+eval "$(jsonfilter -i "$config_path" \
+-e SERVICE_API_AUTO_START='@.services.api.auto_start' \
+-e SERVICE_API_PORT='@.services.api.port' \
+-e SERVICE_API_SECRET='@.services.api.secret' \
+-e SERVICE_API_DASHBOARD='@.services.api.dashboard')"
+[ "$mode" = "--json" ]&&SERVICE_API_CORS_ORIGIN="$(jsonfilter -i "$config_path" -e '@.services.api.cors_origin' 2>/dev/null)"
+fi
+: "${SERVICE_API_AUTO_START:=1}"
+: "${SERVICE_API_PORT:=3000}"
+: "${SERVICE_API_SECRET:=}"
+: "${SERVICE_API_CORS_ORIGIN:='["*"]'}"
+: "${SERVICE_API_DASHBOARD:=1}"
+if [ "$mode" = "--json" ];then
+printf '{"port":%s,"secret":"%s","cors_origin":%s,"dashboard":%s}\n' \
+"$SERVICE_API_PORT" "$SERVICE_API_SECRET" "$SERVICE_API_CORS_ORIGIN" "$SERVICE_API_DASHBOARD"
+fi
+}
+AS(){
+local config_path
+if command -v jsonfilter >/dev/null 2>&1;then
+config_path="$(V)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
+-e SERVICE_PROXY_ENABLED='@.services.proxy.enabled' \
+-e SERVICE_PROXY_PORT='@.services.proxy.port' \
+-e SERVICE_PROXY_USER='@.services.proxy.user' \
+-e SERVICE_PROXY_PASS='@.services.proxy.pass' 2> \
+/dev/null)"
+fi
+: "${SERVICE_PROXY_ENABLED:=0}"
+: "${SERVICE_PROXY_PORT:=}"
+: "${SERVICE_PROXY_USER:=}"
+: "${SERVICE_PROXY_PASS:=}"
+}
+Al(){
+local config_path
+config_path="$(V)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
+-e POLICY_ENABLED='@.policy.enabled' \
+-e POLICY_SEGMENT='@.policy.segment' \
+-e NETWORK_IPV6='@.network.ipv6' \
+-e NETWORK_TUNING='@.network.tuning' \
+-e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
+-e FIREWALL_INTERCEPT_FAKEIP='@.firewall.intercept.fakeip.enabled' \
+-e FIREWALL_REDIRECT_DNS_ENABLED='@.firewall.redirect_dns.enabled' \
+-e FIREWALL_REDIRECT_DNS_PORT='@.firewall.redirect_dns.to_port' \
+-e FIREWALL_REDIRECT_DNS_USE_POLICY='@.firewall.redirect_dns.use_policy' \
+-e FIREWALL_PROXY_ROUTER='@.firewall.proxy_router')"
+: "${POLICY_ENABLED:=0}"
+: "${POLICY_SEGMENT:=br1}"
+: "${NETWORK_IPV6:=1}"
+: "${NETWORK_TUNING:=0}"
+: "${FIREWALL_INTERCEPT_DNS:=1}"
+: "${FIREWALL_INTERCEPT_FAKEIP:=0}"
+: "${FIREWALL_REDIRECT_DNS_ENABLED:=0}"
+: "${FIREWALL_REDIRECT_DNS_PORT:=}"
+: "${FIREWALL_REDIRECT_DNS_USE_POLICY:=1}"
+: "${FIREWALL_PROXY_ROUTER:=0}"
+}
+Au(){
+local config_path
+config_path="$(V)"
+[ -n "$config_path" ]&&eval "$(jsonfilter -i "$config_path" \
+-e UPDATE_SINGBOX_ENABLED='@.update.singbox.enabled' \
+-e UPDATE_SINGBOX_BETA='@.update.singbox.beta' \
+-e UPDATE_SINGBOX_CHANNEL='@.update.singbox.channel' \
+-e UPDATE_SKEEN_ENABLED='@.update.skeen.enabled' \
+-e UPDATE_SKEEN_API='@.update.skeen.api')"
+: "${UPDATE_SINGBOX_ENABLED:=1}"
+: "${UPDATE_SINGBOX_BETA:=0}"
+: "${UPDATE_SINGBOX_CHANNEL:=}"
+: "${UPDATE_SKEEN_ENABLED:=1}"
+: "${UPDATE_SKEEN_API:=0}"
+}
+Ab(){
+local ec=""
+local ef="Прокси-сервис включен, но"
+AS
+if [ -n "$SERVICE_PROXY_ENABLED" ]&&[ "$SERVICE_PROXY_ENABLED" = "1" ];then
+if [ -z "$SERVICE_PROXY_PORT" ];then
+O "$ef 'service_proxy.port' не задан"&&return 1
+elif ! AB;then
+O "$ef $h не запущен"&&return 1
+elif ! netstat -tuln 2>/dev/null|grep -q ":$SERVICE_PROXY_PORT";then
+O "$ef процесс не слушает на порту $SERVICE_PROXY_PORT"&&return 1
+else
+ec="--socks5-hostname 127.0.0.1:$SERVICE_PROXY_PORT"
+if [ -n "$SERVICE_PROXY_USER" ]&&[ -n "$SERVICE_PROXY_PASS" ];then
+ec="$ec --proxy-user $SERVICE_PROXY_USER:$SERVICE_PROXY_PASS"
+fi
+fi
+fi
+curl -fL --connect-timeout 5 --speed-limit 1000 --speed-time 15 $ec "$@"
+}
+AA(){
+local proc="${1:-}"
+case "$proc" in
+"sing")if
+[ -f "$SINGBOX_BIN" ]
+then
+local cached_path="" cached_size="" cached_mtime="" cached_inode="" cached_hash="" cached_ver=""
+local file_metadata hash_output binary_hash ver raw_output
+if [ -f "$aq" ];then
+IFS='|' read -r cached_path cached_size cached_mtime cached_inode cached_hash cached_ver <"$aq" 2>/dev/null
+fi
+file_metadata="$(stat -L -t "$SINGBOX_BIN" 2>/dev/null|awk 'NF >= 15 { print $(NF - 13) "|" $(NF - 2) "|" $(NF - 7) }')"
+if [ -n "$file_metadata" ]&&[ "$cached_path" = "$SINGBOX_BIN" ]&&[ "$cached_size|$cached_mtime|$cached_inode" = "$file_metadata" ];then
+echo "$cached_ver"
+return 0
+fi
+hash_output="$(sha256sum "$SINGBOX_BIN" 2>/dev/null)"
+binary_hash="${hash_output%% *}"
+if [ -n "$binary_hash" ]&&[ "$cached_hash" = "$binary_hash" ];then
+if [ -n "$file_metadata" ]&&AW;then
+echo "$SINGBOX_BIN|$file_metadata|$binary_hash|$cached_ver" >"$aq"
+fi
+echo "$cached_ver"
+return 0
+fi
+raw_output="$("$SINGBOX_BIN" version 2>/dev/null)"
+set -- $raw_output
+ver="${3:-unknown}"
+if [ -n "$file_metadata" ]&&[ -n "$binary_hash" ]&&AW;then
+echo "$SINGBOX_BIN|$file_metadata|$binary_hash|$ver" >"$aq"
+fi
+echo "$ver"
+fi
+;;
+"skeen")echo "$cl";;
+"skeen-api")[ -f "$ab" ]&&"$ab" -v
+esac
+}
+Aq(){
+local api_url="${1:-}" hi="${2:-}" cg tag
+if [ "$hi" = "1" ];then
+cg="$(Ab -s --max-time 10 "$api_url")"
+tag="$(echo "$cg"|grep -oE '<title>[^<]+'|grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?'|head -n 1|sed 's/^v//')"
+else
+cg="$(Ab -sI --max-time 10 -H "Cache-Control: no-cache" "$api_url?$(date +%s)")"
+tag="$(echo "$cg"|grep -i "^location:"|sed -E 's/.*tag\/(.*)/\1/'|tr -d '\r'|grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?')"
+fi
+[ -z "$tag" ]&&return 1
+echo "$tag"
+}
+Bl(){
+AD "
+░█▀▀▀█ ░█ ▄▀ █▀▀ █▀▀ █▀▀▄
+─▀▀▀▄▄ ░█▀▄  █▀▀ █▀▀ █  █
+░█▄▄▄█ ░█ ░█ ▀▀▀ ▀▀▀ ▀  ▀"
+}
+Ax(){
+local al="${1:-120}"
+local path="${2:-$ai}"
+local co em
+co="$(df -Pm "$path" 2>/dev/null|awk 'NR == 2 {print $4}')"
+em="${co:-0}"
+case "$co" in ''|*[!0-9]*)T "Не удалось определить свободное место на $path ($em)"
+return 0
+esac
+if [ "$co" -lt "$al" ];then
+AE "Недостаточно свободного места на $path: требуется ${al}MB, доступно ${co}MB"
+fi
+return 0
+}
+BQ(){
+local fj
+fj="$(command -v opkg)"
+if [ "$fj" != "/opt/bin/opkg" ];then
+AE "Неподдерживаемая система!"
+else
+PKG_OS="openwrt"
+PKG_SUFFIX=".ipk"
+fi
+}
+BT(){
+local opt channel cw="${AUTO:-}" ep=""
+case "$cw" in
+""):;;[1-4]):;;4-[1-9]|4-10)ep=${cw#4-}
+cw=4
+;;
+*)AE "Значение AUTO: '$cw' вне допустимых значений: 1-3, 4-[1-10]"
+esac
+while :;do
+if [ -n "$cw" ];then
+opt="$cw"
+cw=""
+else
+AK
+Bl
+printf "\n"
+AD "Варианты установки $h:"
+printf ' 1) Официальная стабильная\n 2) Официальная alpha/beta/rc\n 3) Буду использовать свой бинарник\n 4) Выбрать из форков\n\n'
+while :;do
+printf "Выберите пункт [1-4]: " >/dev/tty
+read -r opt </dev/tty
+opt=${opt:-1}
+case "$opt" in
+1|2|3|4)break;;
+*)O "Введите 1, 2, 3 или 4"
+printf '\n'
+esac
+done
+fi
+if [ "$opt" = "4" ];then
+if [ -n "$ep" ];then
+opt="$ep"
+ep=""
+else
+printf '\n'
+AD "Релизы форков:"
+echo
+local gh="https://github.com/"
+printf " skeen-box — без лишних тегов сборки для роутеров на основе официального sing-box\\n Подробнее: $gh$dx\\n  1) skb     — стабильные релизы\\n  2) skb     — alpha/beta/rc релизы\\n  3) skb-upx — стабильные релизы со сжатием UPX\\n  4) skb-upx — alpha/beta/rc релизы со сжатием UPX\\n\\n podkop-engine — экспериментальная сборка на основе стабильных релизов sing-box\\n Подробнее: $gh$dw\\n  5) pdk      — базовая комплектация\\n  6) pdk-full — полная комплектация\\n\\n sing-box-lx — экспериментальная сборка на основе стабильных релизов sing-box\\n Подробнее: $gh$ed\\n  7)  lx     — стабильный канал\\n  8)  lx     — пререлиз канал\\n  9)  lx-upx — стабильный канал со сжатием UPX (кроме mips)\\n  10) lx-upx — пререлиз канал со сжатием UPX (кроме mips)\\n\\n 0) Вернуться назад\\n\\n"
+while :;do
+printf "Выберите форк [0-10]: " >/dev/tty
+read -r opt </dev/tty
+case "${opt:-}" in [0-9]|10)break;;*)O "Введите число от 0 до 10";esac
+done
+fi
+if [ "$opt" = "0" ];then continue;fi
+case "$opt" in
+1|2)channel="skb";;3|4)channel="skb-upx";;
+5)channel="pdk";;6)channel="pdk-full";;
+7|8)channel="lx";;9|10)channel="lx-upx"
+esac
+case "$opt" in 2|4|8|10)BETA_ENABLED=1;esac
+FORK_CHANNEL="$channel"
+else
+case "$opt" in 1):;;2)BETA_ENABLED=1;;3)EXTERNAL_ENABLED=1;esac
+FORK_CHANNEL="official"
+fi
+break
+done
+P "Выбран $channel вариант установки $h"
+}
+CP(){
+local bin="/opt/bin/opkg"
+local fg="mips"
+local b5 b6
+b5=$(hexdump -s 4 -n 1 -e '1/1 "%d"' "$bin" 2>/dev/null)
+b6=$(hexdump -s 5 -n 1 -e '1/1 "%d"' "$bin" 2>/dev/null)
+[ -z "$b5" ]||[ -z "$b6" ]&&echo ""&&return
+[ "$b5" -eq 2 ]&&fg="${fg}64"
+[ "$b6" -eq 1 ]&&fg="${fg}el"
+echo "$fg"
+}
+BA(){
+local gn
+local ci
+local ek
+gn=$(opkg print-architecture 2>/dev/null|tr '[:upper:]' '[:lower:]')
+case "$gn" in
+*aarch64*|*arm64*|*armv8*)ci="aarch64";;
+*mips*)ci="$(CP)";;
+*)ci=""
+esac
+[ -z "$ci" ]&&AE "Неподдерживаемая архитектура CPU"
+ek=$(tr '[:upper:]' '[:lower:]' </proc/cpuinfo|tr -d '[:space:]')
+case "$ci" in
+aarch64)case "$ek" in
+*0xd03*)PKG_ARCH="${ci}_cortex-a53";;
+*0xd08*)PKG_ARCH="${ci}_cortex-a72";;
+*0xd0b*)PKG_ARCH="${ci}_cortex-a76";;
+*)PKG_ARCH="${ci}_generic"
+esac
+;;
+mipsel)case "$ek" in
+*74k*)PKG_ARCH="${ci}_74kc";;
+*24kf*|*fpu:yes*|*fpuexception:yes*)PKG_ARCH="${ci}_24kc_24kf";;
+*24k*|*34k*|*1004k*|*interaptiv*)PKG_ARCH="${ci}_24kc";;
+*)PKG_ARCH="${ci}_mips32"
+esac
+;;
+mips)case "$ek" in
+*24k*)PKG_ARCH="${ci}_24kc";;
+*4kec*)PKG_ARCH="${ci}_4kec";;
+*)PKG_ARCH="${ci}_mips32"
+esac
+;;
+mips64el)PKG_ARCH="${ci}_mips64r2"
+;;
+mips64)if
+echo "$ek"|grep -qi octeon
+then
+PKG_ARCH="${ci}_octeonplus"
+else
+PKG_ARCH="${ci}_mips64r2"
+fi
+esac
+local arch_display
+arch_display="$(AL "$PKG_ARCH")"
+P "Обнаружена архитектура CPU: $arch_display"
+}
+CM(){
+local hb
+hb=$(stty -g </dev/tty)
+stty -icanon -echo min 1 time 0 </dev/tty
+dd bs=1 count=1 </dev/tty 2>/dev/null
+stty "$hb" </dev/tty
+echo >/dev/tty
+}
+Bc(){
+pkg_name="${1:-lua}"
+if {
+if [ "$pkg_name" = "$ck" ];then
+if [ ! -f "$ab" ];then
+local url="$dj/static/$ck"
+Ab -s --max-time 10 -o "$ab" "$url"&&chmod +x "$ab"
+fi
+else
+opkg install "$pkg_name" >/dev/null 2>&1
+fi
+};then
+U "Установлено"
+else
+O "Не удалось установить"
+fi
+}
+Aj(){
+P "Проверка зависимостей"
+opkg update >/dev/null 2>&1||true
+for pkg_name in $gq;do
+printf "[%s] " "$pkg_name"
+Bc "$pkg_name"
+done
+U "Все зависимости проверены"
+}
+Az(){
+local beta="${1:-}" version="${2:-$latest_version}"
+local channel="${FORK_CHANNEL:-official}" fw="official" repo="$ff" api_url bn
+local al=120 fy=2 eu es cq=0 ez path co
+local dl_pkg_path="" dl_active=0
+Ay(){ if [ "${dl_active:-0}" = "1" ]&&[ -n "${dl_pkg_path:-}" ];then rm -f "$dl_pkg_path";fi;}
+on_download_interrupt(){
+Ay
+trap - INT TERM HUP
+exit 130
+}
+PKG_TMP_DIR="$gy"
+case "$channel" in
+skb|skb-upx)repo="$dx"
+fw="skb"
+al=80
+;;
+pdk|pdk-full)repo="$dw"
+fw="pdk"
+al=55
+;;
+lx|lx-upx)repo="$ed"
+fw="lx"
+esac
+api_url="https://github.com/$repo/releases/latest"
+[ "$beta" = "1" ]&&api_url="https://github.com/$repo/releases.atom"
+if [ -z "$version" ];then
+P "Получение последней версии..."
+version="$(Aq "$api_url" "$beta")"
+[ -z "$version" ]&&O "Не удалось получить версию"&&exit 1
+fy=20
+U "Последняя версия: $version"
+fi
+case "$fw:$PKG_ARCH" in
+official:*)PKG_FORMAT="ipk"
+PKG_NAME="sing-box_${version}_${PKG_OS}_$PKG_ARCH$PKG_SUFFIX"
+;;
+skb:aarch64_*)PKG_FORMAT="binary"
+bn="arm64_naive"
+PKG_NAME="skeen-box_${version}_linux_$bn"
+;;
+skb:mipsel_*)PKG_FORMAT="binary"
+bn="mipsle_naive"
+PKG_NAME="skeen-box_${version}_linux_$bn"
+;;
+skb:mips_*)PKG_FORMAT="binary"
+bn="mips"
+PKG_NAME="skeen-box_${version}_linux_$bn"
+;;
+pdk:*)PKG_FORMAT="ipk"
+bn="${PKG_OS}_$PKG_ARCH"
+PKG_NAME="podkop-engine_${version}_$bn$PKG_SUFFIX"
+;;
+lx:aarch64_*)PKG_FORMAT="tar.gz"
+bn="linux-arm64"
+PKG_NAME="sing-box-$version-$bn.tar.gz"
+;;
+lx:mipsel_*)PKG_FORMAT="tar.gz"
+bn="linux-mipsle-softfloat"
+PKG_NAME="sing-box-$version-$bn.tar.gz"
+;;
+lx:mips_*)PKG_FORMAT="tar.gz"
+bn="linux-mips-softfloat"
+PKG_NAME="sing-box-$version-$bn.tar.gz"
+;;
+*)O "Неподдерживаемая архитектура CPU"
+return 1
+esac
+case "$channel:$PKG_ARCH" in
+skb-upx:*)PKG_NAME="${PKG_NAME}_upx"
+al=40
+;;
+pdk-full:*)PKG_NAME="podkop-engine-full_${version}_$bn$PKG_SUFFIX"
+al=70
+;;
+lx-upx:aarch64_*|lx-upx:mipsel_*)PKG_NAME="${PKG_NAME%.tar.gz}.upx.tar.gz"
+al=40
+esac
+eu="$(df -Pm /tmp 2>/dev/null|awk 'NR == 2 {print $4}')"
+case "$eu" in ''|*[!0-9]*);;
+*)if [ "$eu" -ge "$al" ];then PKG_TMP_DIR="/tmp";fi
+esac
+es="$(df -Pm "$ai" 2>/dev/null|awk 'NR == 2 {print $4}')"
+if [ -f "$ak" ];then
+cq="$(du -k "$ak" 2>/dev/null|awk 'NR == 1 {print $1}')"
+case "$cq" in ''|*[!0-9]*)cq=0;esac
+fi
+case "$es" in
+''|*[!0-9]*);;*)ez=$(((cq + 1023)/1024))
+co="$((es+ez+fy))"
+if [ "$co" -lt "$al" ];then
+path="$ai"
+O "Недостаточно свободного места на $path: требуется ${al}MB, доступно ${co}MB"
+[ -n "$latest_version" ]&&return 1
+exit 1
+fi
+esac
+dl_pkg_path="$PKG_TMP_DIR/$PKG_NAME"
+dl_active=1
+P "Загрузка $PKG_NAME..."
+mkdir -p "$PKG_TMP_DIR"
+trap on_download_interrupt INT TERM HUP
+if Ab --max-time 1800 -o "$dl_pkg_path" $cj \
+"https://github.com/$repo/releases/download/v$version/$PKG_NAME";then
+dl_active=0
+trap - INT TERM HUP
+U "$PKG_NAME загружен успешно"
+return 0
+fi
+trap - INT TERM HUP
+Ay
+dl_active=0
+O "Не удалось загрузить $PKG_NAME"
+[ -n "$latest_version" ]&&return 1
+exit 1
+}
+BH(){
+local tmp_unpack_dir="" dn=""
+local fh="${PKG_TMP_DIR:-$gy}"
+local pkg_path="$fh/$PKG_NAME"
+BE(){
+[ -n "$tmp_unpack_dir" ]&&rm -rf "$tmp_unpack_dir"
+rm -f "$pkg_path"
+}
+on_interrupt(){
+BE
+trap - INT TERM HUP
+exit 130
+}
+AX(){
+BE
+trap - INT TERM HUP
+}
+trap on_interrupt INT TERM HUP
+if [ "${PKG_FORMAT:-}" = "binary" ];then
+dn="$pkg_path"
+else
+tmp_unpack_dir="$(mktemp -d "$fh/sing-box-unpack.XXXXXX")"||{
+O "Не удалось создать временную директорию для распаковки"
+AX
+return 1
+}
+P "Распаковка $PKG_NAME"
+if ! {
+tar -xzf "$pkg_path" -C "$tmp_unpack_dir"&&{ [ "${PKG_FORMAT:-}" = "tar.gz" ]||{ [ -f "$tmp_unpack_dir/data.tar.gz" ]&&tar -xzf "$tmp_unpack_dir/data.tar.gz" -C "$tmp_unpack_dir";};}
+};then
+O "Ошибка распаковки $PKG_NAME"
+AX
+return 1
+fi
+dn="$(find "$tmp_unpack_dir" -type f -size +5M ! -name '*.*' -print 2>/dev/null|sed -n '1p')"
+fi
+if [ ! -f "$dn" ];then
+O "Бинарный файл sing-box не найден внутри пакета!"
+AX
+return 1
+fi
+U "Распаковка завершена"
+P "Установка $h в $ak"
+rm -f "$ak"
+mv -f "$dn" "$ak"
+chmod 755 "$ak"
+rm -f "$aq"
+U "$h успешно установлен"
+AX
+return 0
+}
+AV(){
+local beta="${1:-}" fq="${2:-}"
+get_singbox_config
+local backup_config="$SINGBOX_CONFIG.bak"
+if [ "$fq" != "force" ]&&[ -f "$SINGBOX_CONFIG" ]&&[ "$(wc -c <"$SINGBOX_CONFIG")" -gt 3 ];then
+P "Конгифурация $h найдена, пропускаем загрузку"
+return
+fi
+P "Загрузка конфигурации $h..."
+mkdir -p "$(dirname "$SINGBOX_CONFIG")"
+[ -f "$SINGBOX_CONFIG" ]&&mv -f "$SINGBOX_CONFIG" "$backup_config"
+local arch beta_part config_name
+case "$(uname -m)" in
+aarch64|arm*)arch="";;
+*)arch="_lite"
+esac
+beta_part="$([ "$beta" = "1" ]&&echo "_beta"||echo "")"
+config_name="config$beta_part$arch.json"
+if ! Ab --max-time 10 -o "$SINGBOX_CONFIG" "$dj/main/configs/$config_name";then
+[ -f "$backup_config" ]&&mv -f "$backup_config" "$SINGBOX_CONFIG"
+O "Не удалось загрузить конфигурацию $h"
+return 1
+fi
+rm -f "$backup_config"
+U "Конфигурация $h загружена"
+}
+AR(){
+local gw="https://github.com/jinndi/singbox_ruleset/raw/refs/heads/main/ruleset.tar.gz"
+local bf="$ag/ruleset"
+local dt="$bf.tar.gz"
+local cx="${bf}_bak"
+mkdir -p "$ag"
+if [ -d "$bf" ];then
+rm -rf "$cx"
+mv -f "$bf" "$cx"
+fi
+P "Загрузка начального набора правил..."
+if ! Ab --max-time 120 -o "$dt" "$gw";then
+rm -f "$dt"
+rm -rf "$bf"
+[ -d "$cx" ]&&mv -f "$cx" "$bf"
+O "Не удалось загрузить начальный набор правил"
+return 1
+fi
+if ! tar -tzf "$dt" >/dev/null 2>&1||! tar -xzf "$dt" -C "$ag" >/dev/null 2>&1;then
+rm -f "$dt"
+rm -rf "$bf"
+[ -d "$cx" ]&&mv -f "$cx" "$bf"
+O "Не удалось распаковать архив правил или он поврежден"
+return 1
+fi
+rm -f "$dt"
+rm -rf "$cx"
+U "Начальный набор правил загружен успешно"
+}
+AU(){
+P "Создание скрипта автозапуска $aa..."
+[ -f "$aj" ]&&rm -f "$aj"
+mkdir -p "$(dirname "$aj")"
+{
+echo "#!/bin/sh"
+echo "PATH=$PATH"
+echo "$aw start init"
+} >"$aj"
+chmod 755 "$aj"
+chmod +x "$aj"
+U "Скрипт автозапуска создан успешно"
+}
+CA(){
+local eb="${1:-}"
+local gid="${2:-1000}"
+local max=65535
+while [ "$gid" -le "$max" ];do
+if ! grep -q ":$gid:[^:]*$" "$eb" 2>/dev/null;then
+echo "$gid"
+return 0
+fi
+gid=$((gid+1))
+done
+AE "Нет свободного GID"
+}
+Ap(){
+local name="$aw"
+local eb="$ai/etc/group"
+local gl
+if ! grep -q "^$name:" "$eb" 2>/dev/null;then
+gl=$(CA "$eb" 1000)
+P "Создание группы $name с GID $gl..."
+addgroup -g "$gl" "$name" >/dev/null 2>&1||AE "Не удалось создать группу $name"
+U "Группа $name создана успешно"
+return 2
+else
+return 0
+fi
+}
+Ae(){
+local fq="${1:-}"
+local bv="$an.bak"
+local hc="$fo $cj"
+P "Загрузка скрипта $aa..."
+[ -f "$an" ]&&mv -f "$an" "$bv"
+if ! Ab --max-time 120 -o "$an" $hc;then
+[ -f "$bv" ]&&mv -f "$bv" "$an"
+O "Не удалось загрузить скрипт $aa"
+[ "$fq" != "update" ]&&exit 1
+return 1
+fi
+chmod 755 "$an"
+chmod +x "$an"
+[ -f "$bv" ]&&rm -f "$bv"
+U "Скрипт $aa загружен успешно"
+return 0
+}
+J(){
+local hg="${1:-0}"
+local fq="${2:-}"
+if [ "$CALLER" = "init" ]||[ "$CALLER" = "netfilter" ];then
+exit 0
+elif [ "$CALLER" != "menu" ];then
+exit "$hg"
+fi
+echo "$be"
+printf "Нажмите любую клавишу для открытия меню..." >/dev/tty
+CM
+if [ "$fq" = "reload" ];then
+exec sh "$an"
+else
+Bg
+fi
+}
+AB(){
+start-stop-daemon -K -t -p "$ac" >/dev/null 2>&1
+}
+install(){
+AUTO="${AUTO:-}"
+BETA_ENABLED=0
+EXTERNAL_ENABLED=0
+BQ
+BT
+if [ "$EXTERNAL_ENABLED" != "1" ];then
+BA
+Az "$BETA_ENABLED"
+BH
+fi
+Aj
+AQ
+AV "$BETA_ENABLED"
+AR
+AU
+Ap
+Ae
+if [ "$EXTERNAL_ENABLED" != "1" ];then
+"$ak" version
+elif [ ! -f /opt/bin/sing-box ];then
+P "Укажите путь к бинарному файлу $h в $ao"
+fi
+P "Настройте $h: отредактировав $SINGBOX_CONFIG"
+P "Настройте $aa: отредактировав $ao"
+U "Установка завершена"
+if [ -z "$AUTO" ];then J;fi
+}
+CO(){
+P "Удаление $aa..."
+AB&&stop
+P "Удаление скрипта автозапуска..."
+rm -f "$aj"
+P "Удаление скрипта фаервола..."
+rm -f "$ah"
+P "Удаление скрипта $aa..."
+rm -f "$an"
+P "Удаление кешей $aa..."
+rm -rf "$dy"
+P "Удаление группы $aw..."
+delgroup "$aw"
+if [ -f "$ak" ];then
+while :;do
+printf "Удалить %s? [y/n]: " "$h" >/dev/tty
+read -r opt </dev/tty
+opt=${opt:-n}
+case $opt in
+y|Y)P "Удаление файла $h..."
+rm -f "$ak"
+break
+;;
+n|N)P "Файл $ak оставлен!"
+break
+;;
+*)O "Пожалуйста, введите y (да) или n (нет)."
+esac
+done
+fi
+if [ -f "$ab" ]&&"$ab" stop;then
+P "Удаление файла $aa API..."
+rm -f "$ab"
+fi
+if [ -d "$ag" ];then
+T "Каталог конфигурации $ag незатронут"
+T "Для удаления вручную выполните: rm -rf $ag"
+fi
+U "$aa успешно удалён"
+echo "$be"
+AD "Для повторной установки используйте:"
+AL "curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru $cj | sh"
+exit 0
+}
+Bi(){
+local max_attempts=3
+local attempt=0
+local option
+while [ $attempt -lt $max_attempts ];do
+printf "Удалить, %s? [y/n]: " "$aa" >/dev/tty
+read -r option </dev/tty
+[ -z "$option" ]&&option="n"
+case "$option" in
+y|Y)CO;;
+n|N)break;;
+*)O "Некорректный вариант"
+attempt=$((attempt+1))
+esac
+done
+Bg
+}
+Ag(){
+local type="${1:-}"
+local bl port network
+if [ "$type" = "tun" ];then
+bl=$(jsonfilter -i "$SINGBOX_CONFIG" -e '@.inbounds[@.type="'"$type"'"].interface_name'|grep ^opkgtun)
+[ -z "$bl" ]&&return 0
+echo "tun"
+return 0
+fi
+port=$(jsonfilter -i "$SINGBOX_CONFIG" -e '@.inbounds[@.type="'"$type"'"].listen_port'|head -n1 2>/dev/null)
+[ -z "$port" ]&&return 0
+if [ "$type" = "redirect" ];then
+echo "$port|tcp"
+return 0
+fi
+network=$(jsonfilter -i "$SINGBOX_CONFIG" -e '@.inbounds[@.type="'"$type"'"].network'|head -n1 2>/dev/null)
+if [ -n "$network" ];then
+echo "$port|$network"
+else
+echo "$port|tcpudp"
+fi
+return 0
+}
+Bm(){
+if jsonfilter -i "$SINGBOX_CONFIG" -e '@.dns.servers[0]' >/dev/null 2>&1;then
+return 0
+fi
+return 1
+}
+Bo(){
+local port="${1:-}"
+local msg_err
+if [ -n "$port" ];then
+if netstat -lnt 2>/dev/null|grep -q ":$port\s";then
+msg_err="Порт $port занят. Освободите его и попробуйте снова"
+O "$msg_err"
+h "$msg_err"
+J 1
+fi
+fi
+return 0
+}
+CG(){
+local module="${1:-}"
+local ho="${module%.ko}"
+[ -d "/sys/module/$ho" ]&&return 0
+local path_os="$gb/$KERNEL_OS_V/$module"
+local path_entware="$dc/$module"
+local target_path=""
+if [ -f "$path_os" ];then
+target_path="$path_os"
+if [ ! -f "$path_entware" ];then
+mkdir -p "$dc"
+cp "$path_os" "$path_entware" 2>/dev/null
+fi
+elif [ -f "$path_entware" ];then
+target_path="$path_entware"
+fi
+if [ -n "$target_path" ];then
+if insmod "$target_path" >/dev/null 2>&1;then
+return 0
+fi
+elif [ "$module" = "xt_owner.ko" ];then
+return 0
+fi
+O "Модуль '$module' не найден или ошибка в загрузке"
+return 1
+}
+BI(){
+local modules="${1:-xt_TPROXY.ko xt_socket.ko xt_owner.ko xt_comment.ko ip_set_bitmap_port.ko}"
+local err_msg="Установите компонент роутера: «Модули ядра подсистемы Netfilter»"
+KERNEL_OS_V="$(uname -r)"
+for module in $modules;do
+if ! CG "$module";then
+O "$err_msg"
+h "$err_msg"
+J 1
+fi
+done
+}
+At(){
+local en=""
+if command -v iptables >/dev/null 2>&1&&ip -4 addr show scope global|grep -q "inet ";then
+en="iptables"
+fi
+local v6_disabled=1
+if [ -f /proc/sys/net/ipv6/conf/all/disable_ipv6 ];then
+read -r v6_disabled </proc/sys/net/ipv6/conf/all/disable_ipv6
+fi
+if [ "$v6_disabled" = "0" ]&&command -v ip6tables >/dev/null 2>&1;then
+local real_v6
+real_v6=$(ip -6 addr show scope global 2>/dev/null|grep -i 'inet6 [23]'|grep -ivE '2001:db8|2002:|2001:[0-3][0-9a-f]:')
+if [ -n "$real_v6" ]&&ip -6 route show default|grep -q ".";then
+en="${en:+$en }ip6tables"
+else
+T "IPv6 включён в конфигурации $aa, но внешнее IPv6-соединение недоступно. Отключите IPv6: network.ipv6=0" >&2
+fi
+fi
+echo "$en"
+}
+AN(){
+local af="_NDM_HOTSPOT_PREROUTING_MANGL" attempt=1 max_attempts=30
+if iptables -w -t mangle -S "$af" >/dev/null 2>&1;then
+return 0
+fi
+while [ "$attempt" -le "$max_attempts" ];do
+Ah "Ожидание HOTSPOT цепочки: $attempt из $max_attempts..."
+if iptables -w -t mangle -S "$af" >/dev/null 2>&1;then
+Ah "Цепочка $af найдена"
+return 0
+fi
+[ "$attempt" -eq "$max_attempts" ]&&break
+sleep 1
+attempt=$((attempt+1))
+done
+local err_msg="Цепочка $af не появилась за 30 проверок"
+h "$err_msg"
+AE "$err_msg"
+}
+BG(){
+local mark="" hs=""
+if [ "$POLICY_ENABLED" = "1" ]&&[ -n "$POLICY_SEGMENT" ];then
+hs="$(echo "$POLICY_SEGMENT"|tr '[:upper:]' '[:lower:]')"
+case "$hs" in
+br[0-9]|br[0-9][0-9])mark=$(iptables -t mangle -L -v -n|awk -v iface="$hs" '$0 ~ iface && /MARK set/ {print $NF}')
+;;
+*)local err_msg="Название сегмента должно начинаться с br + после до 2х цифр"
+h "$err_msg"
+T "$err_msg" >&2
+esac
+fi
+echo "$mark"
+}
+Ar(){
+BV(){
+local hl="1.1.1.1"
+[ "$IP_VERSION" = "6" ]&&hl="2606:4700:4700::1111"
+if [ "$IP_VERSION" = "6" ]&&! ip -6 route show default 2>/dev/null|grep -q .;then
+return 0
+fi
+local mark_arg=""
+[ -n "$SKEEN_MARK_POLICY" ]&&mark_arg="mark $SKEEN_MARK_POLICY"
+ip -"$IP_VERSION" route get "$hl" $mark_arg 2>/dev/null|grep -Eq "via|dev"
+}
+if ! BV;then
+[ -f "$bj" ]||touch "$bj"
+local msg="Проверьте подключение к интернету"
+local policy_segment_display="${SKEEN_POLICY_SEGMENT:-unknown}"
+[ -n "$SKEEN_MARK_POLICY" ]&&msg="$msg для сегмента $policy_segment_display"
+O "$msg"
+J 1
+fi
+case "$SKEEN_FIREWALL_MODE" in
+redirect|tun|dns|none)return 0
+esac
+ip -"$IP_VERSION" rule del fwmark "$ay" lookup "$cv" >/dev/null 2>&1||true
+ip -"$IP_VERSION" rule add fwmark "$ay" lookup "$cv" pref "$cv"||{
+msg="Не удалось добавить правило IP для семейства $IP_VERSION"
+O "$msg"
+h "$msg"
+J 1
+}
+ip -"$IP_VERSION" route replace local default dev lo table "$cv"||{
+msg="Не удалось заменить локальный маршрут в таблице $cv"
+O "$msg"
+h "$msg"
+J 1
+}
+}
+is_valid_ipv4(){
+local addr="${1:-}"
+local ip ha o1 o2 o3 o4 o
+ip="${addr%%/*}"
+ha="${addr#*/}"
+IFS=. read -r o1 o2 o3 o4 <<EOF
+$ip
+EOF
+[ "$o1" ]&&[ "$o2" ]&&[ "$o3" ]&&[ "$o4" ]||return 1
+for o in $o1 $o2 $o3 $o4;do
+[ "$o" -ge 0 ] 2>/dev/null||return 1
+[ "$o" -le 255 ] 2>/dev/null||return 1
+done
+if [ "$ip" != "$addr" ];then
+case "$ha" in ''|[0-9]|[1-2][0-9]|3[0-2]);;*)return 1;esac
+fi
+}
+is_valid_ipv6(){
+local addr="${1:-}"
+local gm ha
+gm="${addr%%/*}"
+ha="${addr#*/}"
+ip -6 route get "$gm" >/dev/null 2>&1||return 1
+if [ "$gm" != "$addr" ];then
+case "$ha" in
+''|[0-9]|[1-9][0-9]|1[0-2][0-8]);;
+*)return 1
+esac
+fi
+}
+Bb(){
+local label="${1:-}"
+local hh="${2:-}"
+local bo bb start gr p
+hh=$(printf '%s' "$hh"|tr ',\r' '  ')
+for p in $hh;do
+[ -z "$p" ]&&continue
+case "$p" in
+*-*)start="${p%-*}"
+gr="${p#*-}"
+;;
+*:*)start="${p%:*}"
+gr="${p#*:}"
+;;
+*)start="$p"
+gr="$p"
+esac
+start=$(printf '%s' "$start"|tr -cd '0-9')
+gr=$(printf '%s' "$gr"|tr -cd '0-9')
+if [ -z "$start" ]||[ -z "$gr" ];then
+bb="${bb:+$bb }$p"
+continue
+fi
+if [ "$start" -lt 1 ]||[ "$gr" -gt 65535 ]||[ "$start" -gt "$gr" ];then
+bb="${bb:+$bb }$p"
+else
+if [ "$start" -eq "$gr" ];then
+bo="${bo:+$bo }$start"
+else
+bo="${bo:+$bo }$start-$gr"
+fi
+fi
+done
+if [ -n "$bb" ];then
+local msg="Неверные $label порт(ы): $bb"
+BR "$msg"
+BO&&T "$msg" >&2
+fi
+printf '%s' "$bo"
+}
+BF(){
+local version="${1:-}"
+local fb="32"
+[ "$version" = "6" ]&&fb="128"
+local interfaces
+interfaces=$(ip -"$version" route show table all 2>/dev/null|awk '/default/ {for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}'|sort -u)
+[ -z "$interfaces" ]&&return 0
+local result
+result=$(echo "$interfaces"|while read -r dev;do
+[ -z "$dev" ]&&continue
+ip -"$version" addr show "$dev" scope global 2>/dev/null|awk -v pref="$fb" '/inet/ {split($2,a,"/"); print a[1] "/" pref}'
+done|sort -u|tr '\n' ' ')
+echo "$result"|xargs
+}
+BN(){
+local gs="${1:-}"
+local cr ej bm
+local dr line hk bt addr fn
+[ "$gs" = "4" ]&&bm="32"||bm="128"
+if [ "$gs" = "4" ];then
+cr="$gi"
+ej="$(AY '@.firewall.exclude.ipv4_cidr')"
+else
+cr="$gj"
+ej="$(AY '@.firewall.exclude.ipv6_cidr')"
+fi
+dr="$(BF "$gs")"
+while IFS= read -r line;do
+[ -z "$line" ]&&continue
+case "$line" in
+\#*)continue
+esac
+hk=$(echo "$line"|cut -d ' ' -f1)
+dr="$dr $hk"
+done <<EOF
+$cr
+EOF
+bt=""
+for addr in $ej;do
+[ -z "$addr" ]&&continue
+[ "${addr#*/}" = "$addr" ]&&addr="$addr/$bm"
+case "$gs" in
+4)fn=is_valid_ipv4;;
+6)fn=is_valid_ipv6
+esac
+if $fn "$addr";then
+dr="$dr $addr"
+else
+bt="$bt $addr"
+fi
+done
+[ -n "$bt" ]&&{
+BO&&T "Неверные IPv$gs исключения: $bt"
+BR "Неверные IPv$gs исключения: $bt"
+}
+echo "$dr"|sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+AC(){
+local iptables="${1:-}"
+local table="${2:-}"
+local af="${3:-}"
+shift 3
+$iptables -w -t "$table" -A "$af" "$@" >/dev/null 2>&1
+}
+Bv(){
+local table="${1:-}"
+if [ "$table" = "nat" ];then
+echo "tcp"
+elif [ "$table" = "mangle" ];then
+if [ "$SKEEN_TPROXY_NETWORK" = "udp" ];then
+echo "udp"
+else
+echo "tcp udp"
+fi
+fi
+}
+BC(){
+local iptables="${1:-}"
+local table="${2:-}"
+local af="${3:-}"
+$iptables -w -t "$table" -S "$af" >/dev/null 2>&1
+}
+AZ(){
+local iptables="${1:-}"
+local table="${2:-}"
+local af="${3:-}"
+if BC "$iptables" "$table" "$af";then
+return 1
+else
+$iptables -w -t "$table" -N "$af" 2>/dev/null
+fi
+}
+Ad(){
+local iptables="${1:-}"
+local table="${2:-}"
+local af="${3:-}"
+if BC "$iptables" "$table" "$af";then
+$iptables -w -t "$table" -F "$af" 2>/dev/null
+else
+$iptables -w -t "$table" -N "$af" 2>/dev/null
+fi
+}
+Q(){
+local iptables="${1:-}"
+local table="${2:-}"
+local af="${3:-}"
+local type="${4:-}"
+local ad="${5:-}"
+local connmark_match_opt=""
+An(){
+local af="${1:-}"
+connmark_match_opt="-m connmark --mark $ay"
+AC "$iptables" "$table" "$af" \
+-p tcp -m conntrack --ctstate NEW -j CONNMARK --set-mark "$ay"
+}
+Aa(){
+local proto="${1:-}"
+if [ -n "$connmark_match_opt" ]&&[ "$proto" = "tcp" ];then
+echo "$connmark_match_opt"
+fi
+}
+case "$type" in
+"ctdir_reply")AC "$iptables" "$table" "$af" -m conntrack --ctdir REPLY -j ACCEPT
+;;
+"socket")if
+printf '%s\n' "$ad"|grep -q "tcp"
+then
+Ad "$iptables" "$table" "$bq"||return 0
+AC "$iptables" "$table" "$bq" -j MARK --set-mark "$ay"
+AC "$iptables" "$table" "$bq" -j ACCEPT
+AC "$iptables" "$table" "$af" -p tcp -m socket --transparent -g "$bq"
+fi
+;;
+"intercept_dns")for proto in $ad
+do
+if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ];then
+AC "$iptables" "$table" "$af" \
+-p "$proto" --dport "$dq" -j TPROXY --on-ip "$PROXY_IP" \
+--on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$ay"
+else
+AC "$iptables" "$table" "$af" -p "$proto" --dport "$dq" -j ACCEPT
+fi
+done
+;;
+"exclude_set")if
+[ "$SKEEN_EXCLUDE_PORT" = "1" ]
+then
+for proto in $ad;do
+AC "$iptables" "$table" "$af" \
+-p "$proto" -m set --match-set "$bc" dst -j ACCEPT
+done
+fi
+AC "$iptables" "$table" "$af" \
+-m set --match-set "$bi$IP_VERSION" dst -j ACCEPT
+;;
+"intercept_fakeip")if
+[ "$SKEEN_INTERCEPT_FAKEIP" = "1" ]
+then
+AC "$iptables" "$table" "$af" \
+-m set ! --match-set "$ae$IP_VERSION" dst -j ACCEPT
+elif [ "$SKEEN_INTERCEPT_FAKEIP" = "2" ];then
+AC "$iptables" "$table" "$af" \
+-m set --match-set "$av" src \
+-m set ! --match-set "$ae$IP_VERSION" dst -j ACCEPT
+fi
+;;
+"tproxy")printf '%s\n' "$ad"|grep -q "tcp"&&An "$af"
+for proto in $ad;do
+AC "$iptables" "$table" "$af" \
+-p "$proto" $(Aa "$proto") -j TPROXY --on-ip "$PROXY_IP" \
+--on-port "$SKEEN_TPROXY_PORT" --tproxy-mark "$ay"
+done
+;;
+"keendns_accept")local k_port
+k_port=$($iptables -t mangle -L INPUT -v -n|awk '/_NDM_HTTP_INPUT_TLS_/ {split($NF, a, ":"); print a[2]}')
+[ -z "$k_port" ]&&return 0
+local rule="-m mark --mark $ay -j ACCEPT -m comment --comment skeen_keendns"
+for proto in $ad;do
+if ! $iptables -w -t "$table" -C "$af" -p "$proto" --dport "$k_port" $rule >/dev/null 2>&1;then
+$iptables -w -t "$table" -I "$af" -p "$proto" --dport "$k_port" $rule
+fi
+done
+;;
+"redirect")An "$af"
+AC "$iptables" "$table" "$af" \
+-p "$ad" $(Aa "$ad") -j REDIRECT --to-port "$SKEEN_REDIRECT_PORT"
+;;
+"proxy_router_dns")if
+[ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]
+then
+Ad "$iptables" "$table" "$bu"||return 0
+AC "$iptables" "$table" "$bu" -j MARK --set-mark "$ay"
+for proto in $ad;do
+AC "$iptables" "$table" "$af" -p "$proto" --dport "$dq" -g "$bu"
+done
+af="$bu"
+fi
+AC "$iptables" "$table" "$af" -j ACCEPT
+;;
+"proxy_router_mark")for proto in $ad
+do
+AC "$iptables" "$table" "$af" -p "$proto" -j MARK --set-mark "$ay"
+done
+AC "$iptables" "$table" "$af" -j ACCEPT
+esac
+}
+BJ(){
+local iptables="${1:-}"
+local table="${2:-}"
+local af="${3:-}"
+local ad="${4:-}"
+case "$af" in
+"$ar")if
+[ "$table" = "mangle" ]
+then
+Q "$iptables" "$table" "$af" "ctdir_reply" "$ad"
+Q "$iptables" "$table" "$af" "socket" "$ad"
+Q "$iptables" "$table" "$af" "intercept_dns" "$ad"
+Q "$iptables" "$table" "$af" "exclude_set" "$ad"
+Q "$iptables" "$table" "$af" "intercept_fakeip" "$ad"
+Q "$iptables" "$table" "$af" "tproxy" "$ad"
+Q "$iptables" "$table" "INPUT" "keendns_accept" "$ad"
+elif [ "$table" = "nat" ];then
+Q "$iptables" "$table" "$af" "ctdir_reply" "$ad"
+Q "$iptables" "$table" "$af" "exclude_set" "$ad"
+Q "$iptables" "$table" "$af" "intercept_fakeip" "$ad"
+Q "$iptables" "$table" "$af" "redirect" "$ad"
+fi
+;;
+"$at")Q "$iptables" "$table" "$af" "ctdir_reply" "$ad"
+if [ "$table" = "mangle" ];then
+Q "$iptables" "$table" "$af" "proxy_router_dns" "$ad"
+Q "$iptables" "$table" "$af" "exclude_set" "$ad"
+Q "$iptables" "$table" "$af" "proxy_router_mark" "$ad"
+elif [ "$table" = "nat" ];then
+Q "$iptables" "$table" "$af" "exclude_set" "$ad"
+Q "$iptables" "$table" "$af" "redirect" "$ad"
+fi
+esac
+}
+BB(){
+local iptables="${1:-}" table="${2:-}" af="${3:-}" fl="${4:-}"
+local fg="-m conntrack ! --ctstate INVALID -g $fl"
+local r1="$fg" r2=""
+$iptables -w -t "$table" -S "$fl" >/dev/null 2>&1||return 0
+case "$af" in
+PREROUTING)if
+[ -n "$SKEEN_MARK_POLICY" ]
+then
+r1="-m connmark --mark $SKEEN_MARK_POLICY $fg"
+[ "$table" != "$bp" ]&&[ "$SKEEN_PROXY_ROUTER" = "1" ]&&r2="-m mark --mark $ay $fg"
+fi
+;;
+OUTPUT)r1="-m owner ! --gid-owner $aw $fg"
+esac
+for r in "$r1" "$r2";do
+[ -z "$r" ]&&continue
+$iptables -w -t "$table" -C "$af" $r >/dev/null 2>&1||$iptables -w -t "$table" -A "$af" $r
+done
+}
+BK(){
+local iptables="${1:-}"
+local table="${2:-}"
+local ad="${3:-}"
+AZ "$iptables" "$table" "$at"||return 0
+BJ "$iptables" "$table" "$at" "$ad"
+BB "$iptables" "$table" OUTPUT "$at"
+}
+BX(){
+local major
+major="$(ndmc -c "show version"|awk '/release:/ {print $2}'|cut -d'.' -f1)"
+if [ "$major" -lt 5 ];then
+O "Версия KeeneticOS ниже 5-ой"&&return 1
+fi
+}
+CL(){
+local bh="${1:-}"
+local opkgtun_desc="${2:-}"
+local am="OpkgTun0"
+local dp er dk
+if [ -z "$bh" ]||[ -z "$opkgtun_desc" ];then
+P "Используйте следующий формат для создания интерфейса OpkgTun:"
+P "skeen tun create <ipv4> <имя>"
+return
+fi
+case "$opkgtun_desc" in
+[!A-Za-z0-9_-]*)AE "Недопустимое имя, допустимые символы: A–Z, a–z, 0–9, _ и -"
+esac
+if ! is_valid_ipv4 "$bh";then
+O "Неверный IPv4 адрес: $bh"
+return
+fi
+bh="${bh%%/*}"
+dp="$(ndmc -c show interface)"
+if echo "$dp"|grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$";then
+O "Интерфейс с именем '$opkgtun_desc' уже существует"
+return
+fi
+if echo "$dp"|awk -v ip="$bh" '/^[[:space:]]*address:/ {
+        sub(/.*: */, "", $0)
+        if ($0 == ip) found=1
+    }
+    END { exit !found }';then
+AE "IP адрес $bh уже используется"
+fi
+er="$(echo "$dp"|grep 'id:[[:space:]]*OpkgTun'|awk -F'OpkgTun' '{print $2}')"
+if [ -n "$er" ];then
+local i=0
+while printf '%s\n' "$er"|grep -qx "$i";do
+i=$((i+1))
+done
+am="OpkgTun$i"
+fi
+dk=$(echo "$am"|tr '[:upper:]' '[:lower:]')
+AM(){
+Bp "$opkgtun_desc"
+AE "Не удалось установить $1 для интерфейса"
+}
+ndmc -c interface "$am"||{ O "Не удалось создать интерфейс"&&return;}
+ndmc -c interface "$am" description "$opkgtun_desc"||AM "description"
+ndmc -c interface "$am" ip address "$bh/32"||AM "ip address"
+ndmc -c interface "$am" ip tcp adjust-mss pmtu||AM "ip tcp adjust-mss pmtu"
+ndmc -c ip route default "$bh" "$am"||AM "ip route default"
+ndmc -c interface "$am" ip global auto||AM "ip global auto"
+ndmc -c interface "$am" up&&ndmc -c system configuration save
+U "OpkgTun интерфейс с именем '$opkgtun_desc' был успешно создан"
+local opkgtun_name_display interface_name_display
+opkgtun_name_display="$(AL "\"$dk\"")"
+interface_name_display="$(Bs '"interface_name"')"
+echo "Используйте имя $opkgtun_name_display для поля $interface_name_display в конфигурации tun"
+}
+Bp(){
+local opkgtun_desc="${1:-}"
+local am
+if [ -z "$opkgtun_desc" ];then
+O "Пожалуйста, укажите имя для интерфейса OpkgTun"
+P "skeen tun delete <имя>"
+return
+fi
+if ndmc -c show interface|grep -q "^[[:space:]]*description:[[:space:]]*$opkgtun_desc$";then
+am=$(ndmc -c show interface|awk -v d="$opkgtun_desc" '
+      /^[[:space:]]*interface-name:/ { iface=$0; sub(/.*: */, "", iface) }
+      /^[[:space:]]*description:/   { desc=$0; sub(/.*: */, "", desc); if(desc==d){print iface; exit} }')
+case "$am" in
+OpkgTun[0-9]*)ndmc -c no interface "$am"||{
+O "Failed to delete the interface"&&return
+}
+ndmc -c system configuration save
+U "Интерфейс '$am' был успешно удален"
+;;
+*)O "Имя интерфейса: '$am' не является OpkgTun"
+O "Вы можете удалять только интерфейсы типа OpkgTun"
+esac
+else
+O "Интерфейс с именем $opkgtun_desc не существует"
+fi
+}
+CQ(){
+local eh
+eh="$(ndmc -c show interface|awk '/^Interface, name = "OpkgTun/ {p=1} /^Interface, name =/ && !/^Interface, name = "OpkgTun/ {p=0} p')"
+[ -z "$eh" ]&&P "Интерфейсы типа OpkgTun не найдены"||echo "$eh"
+}
+Bw(){
+iptables -w -t filter -S "$bd" >/dev/null 2>&1&&return 0
+iptables -w -t filter -N "$bd" 2>/dev/null
+iptables -w -t filter -F "$bd" 2>/dev/null
+iptables -w -t filter -A "$bd" -i opkgtun+ -j ACCEPT
+iptables -w -t filter -A "$bd" -o opkgtun+ -j ACCEPT
+iptables -w -t filter -A INPUT -i opkgtun+ -j "$bd"
+iptables -w -t filter -A OUTPUT -o opkgtun+ -j "$bd"
+}
+AT(){
+local gx="$an"
+if [ ! -f "$ap" ]||Be "$an" "$ap";then
+if AW&&cp -fp "$an" "$ap";then
+chmod 700 "$ap"
+gx=$ap
+fi
+elif [ -f "$ap" ];then
+gx="$ap"
+fi
+printf '%s apply_firewall netfilter "$%s"\n' "$gx" 'table'
+}
+Bk(){
+local da fc ev bl fm dz
+P "Подготовка фаервола:"
+da="Подготовка фаервола завершена"
+get_singbox_config
+fc="$(Ag "redirect")"
+SKEEN_REDIRECT_PORT="$(echo "$fc"|cut -d'|' -f1)"
+ev="$(Ag "tproxy")"
+SKEEN_TPROXY_PORT="$(echo "$ev"|cut -d'|' -f1)"
+SKEEN_TPROXY_NETWORK="$(echo "$ev"|cut -d'|' -f2)"
+for port in $SKEEN_REDIRECT_PORT $SKEEN_TPROXY_PORT;do Bo "$port";done
+bl="$(Ag "tun")"
+SKEEN_TUN_ENABLED="0"
+if [ -n "$bl" ];then
+SKEEN_TUN_ENABLED="1"
+for i in /sys/class/net/opkgtun*;do
+[ -e "$i" ]||continue
+ip link set dev "${i##*/}" txqueuelen 2000
+done
+fi
+if [ -n "$SKEEN_TPROXY_PORT" ]&&[ "$SKEEN_TPROXY_NETWORK" = "tcpudp" ];then
+SKEEN_FIREWALL_MODE="tproxy"
+SKEEN_TPROXY_NETWORK="tcp udp"
+elif [ -n "$SKEEN_REDIRECT_PORT" ]&&[ -n "$SKEEN_TPROXY_PORT" ]&&[ "$SKEEN_TPROXY_NETWORK" != "tcp" ];then
+SKEEN_FIREWALL_MODE="hybrid"
+elif [ -n "$SKEEN_REDIRECT_PORT" ];then
+SKEEN_FIREWALL_MODE="redirect"
+elif [ -n "$bl" ];then
+SKEEN_FIREWALL_MODE="tun"
+else
+SKEEN_FIREWALL_MODE="none"
+fi
+[ "$SKEEN_FIREWALL_MODE" != "none" ]&&AN
+AD " - Обнаружен режим фаервола: $SKEEN_FIREWALL_MODE $bl"
+Al
+SKEEN_INTERCEPT_DNS_ENABLED="0"
+SKEEN_REDIRECT_DNS_ENABLED="0"
+SKEEN_REDIRECT_DNS_PORT=""
+if Bm;then
+local msg_dns_detect=" - Обнаружена конфигурация DNS:"
+if [ "$FIREWALL_REDIRECT_DNS_ENABLED" = "1" ];then
+if [ -z "$FIREWALL_REDIRECT_DNS_PORT" ];then
+local msg_err="Включен редирект DNS, но порт не указан в конфигурации $aa"
+O "$msg_err"
+h "$msg_err"
+J 1
+fi
+Bo "$FIREWALL_REDIRECT_DNS_PORT"
+SKEEN_REDIRECT_DNS_ENABLED="1"
+SKEEN_REDIRECT_DNS_PORT="$FIREWALL_REDIRECT_DNS_PORT"
+SKEEN_REDIRECT_DNS_USE_POLICY="$FIREWALL_REDIRECT_DNS_USE_POLICY"
+[ "$SKEEN_FIREWALL_MODE" = "none" ]&&SKEEN_FIREWALL_MODE="dns"
+AD "$msg_dns_detect redirect"
+fi
+if [ "$FIREWALL_REDIRECT_DNS_ENABLED" = "1" ]&&[ "$FIREWALL_INTERCEPT_DNS" = "1" ];then
+T "Включен редирект и перехват DNS, будет работать только редирект"
+elif [ "$FIREWALL_INTERCEPT_DNS" = "1" ];then
+case "$SKEEN_FIREWALL_MODE" in
+tproxy|hybrid)SKEEN_INTERCEPT_DNS_ENABLED="1"
+AD "$msg_dns_detect intercept"
+;;
+*)T "В режиме '$SKEEN_FIREWALL_MODE' перехват DNS не работает"
+esac
+fi
+elif [ "$FIREWALL_REDIRECT_DNS_ENABLED" = "1" ]||[ "$FIREWALL_INTERCEPT_DNS" = "1" ];then
+T "Заданы настройки DNS в $aa, но $h не нестроен"
+fi
+if [ "$SKEEN_FIREWALL_MODE" = "tun" ]||[ "$SKEEN_FIREWALL_MODE" = "dns" ];then
+{
+echo "#!/bin/sh"
+echo "# $aa v$cl firewall hook"
+local tables="filter"
+if [ "$SKEEN_FIREWALL_MODE" = "dns" ];then
+tables="nat"
+SKEEN_IPTABLES_LIST="$(At)"
+else
+SKEEN_IPTABLES_LIST="iptables"
+fi
+printf '%s\n' "printf '%s\n' \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
+printf '%s\n' "printf '%s\n' \"$tables\" | grep -q \"\$table\" || exit 0"
+echo "logger -p notice -t \"$aa\" \"Обновление \$type правил \$table таблицы\""
+echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
+[ "$SKEEN_FIREWALL_MODE" = "tun" ]&&echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
+echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
+if [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ];then
+BI xt_comment.ko
+[ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ]&&SKEEN_MARK_POLICY="$(BG)"
+echo "export SKEEN_REDIRECT_DNS_ENABLED=\"$SKEEN_REDIRECT_DNS_ENABLED\""
+echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
+echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
+echo "export SKEEN_MARK_POLICY=\"${SKEEN_MARK_POLICY:-}\""
+fi
+AT
+} >"$ah"
+chmod +x "$ah"
+U "$da"
+return 0
+elif [ "$SKEEN_FIREWALL_MODE" = "none" ];then
+U "$da"
+return 0
+fi
+if [ "$SKEEN_FIREWALL_MODE" = "redirect" ];then
+SKEEN_FIREWALL_NETWORK="tcp"
+else
+SKEEN_FIREWALL_NETWORK="tcp udp"
+fi
+AD " - Проверка и загрузка модулей..."
+BI
+SKEEN_MARK_POLICY="$(BG)"
+fm=1
+if [ "$POLICY_ENABLED" != "1" ];then
+AD " - Политика отключена в skeen.json"
+elif [ -z "$POLICY_SEGMENT" ];then
+AD " - Имя сегмента не задано"
+elif [ -z "$SKEEN_MARK_POLICY" ];then
+T "Политика сегмента $POLICY_SEGMENT недоступна"
+else
+AD " - Маршрутизация политики сегмента: $POLICY_SEGMENT"
+fm=0
+fi
+[ "$fm" = 1 ]&&T "Маршрутизация всего устройства. Настроить политику для сегмента можно в skeen.json (policy.segment)."
+SKEEN_PROXY_ROUTER="0"
+[ "$FIREWALL_PROXY_ROUTER" = "1" ]&&SKEEN_PROXY_ROUTER="1"
+SKEEN_IPTABLES_LIST="$(At)"
+if [ -z "$SKEEN_IPTABLES_LIST" ];then
+local msg_err="Нет поддерживаемых iptables"
+O "$msg_err"
+h "$msg_err"
+J 1
+fi
+Br(){
+local cy="${1:-}"
+local ports="${2:-}"
+ipset create "$cy" bitmap:port range 0-65535 -exist
+ipset flush "$cy"
+if [ -n "$ports" ];then
+{
+for p in $ports;do
+printf "add %s %s\n" "$cy" "$p"
+done
+}|ipset restore
+fi
+}
+SKEEN_EXCLUDE_PORT="0"
+dz="$(Bb "exclude" "$(AY '@.firewall.exclude.port')")"
+if [ -n "$dz" ];then
+Br "$bc" "$dz"
+ipset del "$bc" 443 -! 2>/dev/null
+ipset del "$bc" 80 -! 2>/dev/null
+SKEEN_EXCLUDE_PORT="1"
+fi
+BL(){
+local hn="${1:-}"
+local family="${2:-}"
+local cy="$bi$hn"
+ipset create "$cy" hash:net family "$family" -exist
+ipset flush "$cy"
+BN "$hn"|tr ' ' '\n'|{
+while read -r addr;do
+[ -n "$addr" ]&&printf "add %s %s -exist\n" "$cy" "$addr"
+done
+}|ipset restore
+}
+if printf '%s\n' "$SKEEN_IPTABLES_LIST"|grep -q "iptables";then
+BL 4 inet
+fi
+if [ "$NETWORK_IPV6" = "1" ]&&printf '%s\n' "$SKEEN_IPTABLES_LIST"|grep -q "ip6tables";then
+BL 6 inet6
+fi
+Bd(){
+if [ ! -f "$ax" ];then
+touch "$ax"||{
+O "Ошибка создания файла $ax"
+return 1
+}
+fi
+local temp_file
+temp_file=$(mktemp)||{
+O "Ошибка создания временного файла для ipset $ae"
+return 1
+}
+{
+echo "create ${ae}4 hash:net family inet maxelem 65536 -exist"
+echo "add ${ae}4 198.18.0.0/15 -exist"
+if [ "$NETWORK_IPV6" = "1" ];then
+echo "create ${ae}6 hash:net family inet6 maxelem 65536 -exist"
+echo "add ${ae}6 fd00::/8 -exist"
+fi
+if [ -s "$ax" ];then
+awk -v S="$ae" -v V6="$NETWORK_IPV6" '
+          { sub(/#.*/, ""); gsub(/^[ \t]+|[ \t]+$/, "") }
+          $0 == "" { next }
+          /:/  { if (V6 == "1") print "add " S "6 " $0 " -exist"; next }
+               { print "add " S "4 " $0 " -exist" }
+        ' "$ax"
+fi
+} >"$temp_file"||{
+rm -f "$temp_file"
+O "Ошибка записи в временный файл ipset $ae"
+return 1
+}
+ipset restore <"$temp_file"
+rm -f "$temp_file"
+return 0
+}
+SKEEN_INTERCEPT_FAKEIP="0"
+if [ "$FIREWALL_INTERCEPT_FAKEIP" = "1" ];then
+if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ]||[ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ];then
+if Bd;then
+SKEEN_INTERCEPT_FAKEIP="1"
+local clients_src clients_src_count clients_count
+clients_src="$(AY '@.firewall.intercept.fakeip.clients')"
+if [ -n "$clients_src" ];then
+ipset create "$av" hash:net family inet maxelem 100 -exist
+ipset flush "$av"
+echo "$clients_src"|{
+while read -r addr;do
+[ -n "$addr" ]&&printf "add %s %s -exist\n" "$av" "$addr"
+done
+}|ipset restore
+clients_count="$(echo "$clients_src"|wc -l)"
+clients_src_count=", клиентов: $clients_count"
+SKEEN_INTERCEPT_FAKEIP="2"
+fi
+AD " - Перехват FakeIP включен$clients_src_count"
+else
+O "Не удалось настроить FakeIP перехват"
+fi
+else
+ipset destroy "${ae}4" -exist 2>/dev/null
+ipset destroy "${ae}6" -exist 2>/dev/null
+T "$h DNS не настроен, опция intercept.fakeip не будет работать!"
+fi
+fi
+{
+echo "#!/bin/sh"
+echo "# $aa v$cl firewall hook"
+printf '%s\n' "printf '%s\n' \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
+local postfix_tables=""
+[ "$SKEEN_TUN_ENABLED" = "1" ]&&postfix_tables="|filter"
+[ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]&&postfix_tables="$postfix_tables|nat"
+local redirect="$bp$postfix_tables"
+local hybrid="$bp|$cz$postfix_tables"
+local tproxy="$cz$postfix_tables"
+case "$SKEEN_FIREWALL_MODE" in
+hybrid)printf '%s\n' "printf '%s\n' \"$hybrid\" | grep -q \"\$table\" || exit 0";;
+tproxy)printf '%s\n' "printf '%s\n' \"$tproxy\" | grep -q \"\$table\" || exit 0";;
+redirect)printf '%s\n' "printf '%s\n' \"$redirect\" | grep -q \"\$table\" || exit 0";;
+*)printf '%s\n' "exit 0"
+esac
+echo "logger -p notice -t \"$aa\" \"Обновление \$type правил \$table таблицы\""
+echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
+echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
+echo "export SKEEN_TPROXY_NETWORK=\"$SKEEN_TPROXY_NETWORK\""
+echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
+echo "export SKEEN_FIREWALL_NETWORK=\"$SKEEN_FIREWALL_NETWORK\""
+echo "export SKEEN_POLICY_SEGMENT=\"$POLICY_SEGMENT\""
+echo "export SKEEN_MARK_POLICY=\"$SKEEN_MARK_POLICY\""
+echo "export SKEEN_IPTABLES_LIST=\"$SKEEN_IPTABLES_LIST\""
+echo "export SKEEN_EXCLUDE_PORT=\"$SKEEN_EXCLUDE_PORT\""
+echo "export SKEEN_INTERCEPT_FAKEIP=\"$SKEEN_INTERCEPT_FAKEIP\""
+echo "export SKEEN_INTERCEPT_DNS_ENABLED=\"$SKEEN_INTERCEPT_DNS_ENABLED\""
+echo "export SKEEN_REDIRECT_DNS_ENABLED=\"$SKEEN_REDIRECT_DNS_ENABLED\""
+echo "export SKEEN_REDIRECT_DNS_PORT=\"$SKEEN_REDIRECT_DNS_PORT\""
+echo "export SKEEN_REDIRECT_DNS_USE_POLICY=\"$SKEEN_REDIRECT_DNS_USE_POLICY\""
+echo "export SKEEN_TUN_ENABLED=\"$SKEEN_TUN_ENABLED\""
+echo "export SKEEN_PROXY_ROUTER=\"$SKEEN_PROXY_ROUTER\""
+AT
+} >"$ah"
+chmod +x "$ah"
+U "$da"
+}
+AO(){
+local match="${1:-}"
+local bx="${2:-}"
+[ -z "$bx" ]&&return 0
+if [ -n "$match" ];then
+printf '%s\n' "$match"|grep -q "$bx"||return 1
+fi
+}
+apply_firewall(){
+local bx="${1:-}"
+local check iptables fr set_name tables ad
+check=$(echo "$SKEEN_IPTABLES_LIST"|sed 's/iptables//g; s/ip6tables//g; s/ //g')
+if [ -n "$check" ]||[ -z "$SKEEN_IPTABLES_LIST" ];then
+local iptables_display
+iptables_display="${iptables:-unknown}"
+local msg_err="Неизвестный iptables: $iptables_display"
+h "$msg_err"
+O "$msg_err"
+J 1
+fi
+if [ "$SKEEN_FIREWALL_MODE" != "none" ]||[ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ];then
+P "Применение правил фаервола..."
+fi
+if [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]&&AO "nat" "$bx";then
+local mark_option=""
+[ "$SKEEN_REDIRECT_DNS_USE_POLICY" = "1" ]&&[ -n "$SKEEN_MARK_POLICY" ]&&mark_option="-m mark --mark $SKEEN_MARK_POLICY"
+local args="-i br+ $mark_option -m pkttype --pkt-type unicast \
+      --dport $dq -j REDIRECT --to-ports $SKEEN_REDIRECT_DNS_PORT \
+      -m comment --comment skeen_dns"
+for iptables in $SKEEN_IPTABLES_LIST;do
+for proto in tcp udp;do
+if ! $iptables -w -t nat -C "$dv" -p "$proto" $args >/dev/null 2>&1;then
+$iptables -w -t nat -I "$dv" -p "$proto" $args
+fi
+done
+done
+fi
+[ "$SKEEN_TUN_ENABLED" = "1" ]&&AO "filter" "$bx"&&Bw
+case "$SKEEN_FIREWALL_MODE" in tun|dns|none)return 0;esac
+AO "nat|mangle" "$bx"||return 0
+for iptables in $SKEEN_IPTABLES_LIST;do
+if [ "$iptables" = "iptables" ];then
+IP_VERSION="4"
+PROXY_IP="127.0.0.1"
+elif [ "$iptables" = "ip6tables" ];then
+IP_VERSION="6"
+PROXY_IP="::1"
+fi
+Ar
+if [ -f "$bj" ];then
+fr="$(BF "$IP_VERSION")"
+set_name="$bi$IP_VERSION"
+for ip in $fr;do
+ipset add "$set_name" "$ip" -exist
+done
+fi
+case "$SKEEN_FIREWALL_MODE" in
+hybrid)tables="$cz $bp";;
+tproxy)tables="$cz";;
+redirect)tables="$bp";;
+*)tables=""
+esac
+for table in $tables;do
+AO "$table" "$bx"||continue
+AZ "$iptables" "$table" "$ar"||return 0
+ad="$(Bv "$table")"
+BJ "$iptables" "$table" "$ar" "$ad"
+BB "$iptables" "$table" PREROUTING "$ar"
+[ "$SKEEN_PROXY_ROUTER" = "1" ]&&BK "$iptables" "$table" "$ad"
+done
+done
+[ -f "$bj" ]&&rm -f "$bj"
+U "Правила фаервола применены"
+}
+clean_firewall(){
+if [ -n "$is_check_update" ]&&[ "$is_check_update" -eq 1 ];then
+"$ap" clean_firewall update
+return 0
+fi
+echo "$be"
+P "Очистка правил фаервола..."
+BM(){
+local iptables="${1:-}"
+local table="${2:-}"
+local af="${3:-}"
+local hq="${4:-}"
+if ! BC "$iptables" "$table" "$af";then
+return 0
+fi
+$iptables -w -t "$table" -S "$hq" 2>/dev/null|grep -w "$af"|sed "s/^-A/$iptables -w -t $table -D/"|sh 2>/dev/null
+$iptables -w -t "$table" -F "$af" 2>/dev/null
+$iptables -w -t "$table" -X "$af" 2>/dev/null
+}
+for ch in INPUT OUTPUT;do
+BM "iptables" "filter" "$bd" "$ch"
+done
+for ipt_cmd in iptables ip6tables;do
+$ipt_cmd -w -t nat -S $dv 2>/dev/null|sed -n "s/^-A /$ipt_cmd -w -t nat -D /p"|grep "skeen_dns"|sh 2>/dev/null
+$ipt_cmd -w -t mangle -S INPUT 2>/dev/null|sed -n "s/^-A /$ipt_cmd -w -t mangle -D /p"|grep "skeen_keendns"|sh 2>/dev/null
+for table in nat mangle;do
+for ch in "$ar" "$bq";do
+BM "$ipt_cmd" "$table" "$ch" PREROUTING
+done
+for ch in "$at" "$bu";do
+BM "$ipt_cmd" "$table" "$ch" OUTPUT
+done
+done
+done
+for ip_ver in 4 6;do
+ip -"$ip_ver" rule del fwmark "$ay" lookup "$cv" >/dev/null 2>&1||true
+ip -"$ip_ver" route flush table "$cv" 2>/dev/null
+done
+if command -v ipset >/dev/null 2>&1;then
+for ip_ver in 4 6;do
+for name in $bi $ae;do
+set_name="$name$ip_ver"
+ipset flush "$set_name" -exist 2>/dev/null
+ipset destroy "$set_name" -exist 2>/dev/null
+done
+done
+for set_name in "$bc" "$av";do
+ipset flush "$set_name" -exist 2>/dev/null
+ipset destroy "$set_name" -exist 2>/dev/null
+done
+fi
+rm -f "$ah" 2>/dev/null
+U "Очистка фаервола завершена"
+}
+Am(){
+Bh(){
+local gd
+gd=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+local ct=65536
+[ "$gd" -le 128 ]&&ct=8192||[ "$gd" -le 256 ]&&ct=16384||[ "$gd" -le 512 ]&&ct=32768
+[ "${1:-}" ]&&ct=$((ct*15/10))
+echo "$ct"
+}
+Ba
+local ct_max_base ct_max_tuned
+ct_max_base="$(Bh)"
+ct_max_tuned="$([ "$NETWORK_TUNING" = "1" ]&&Bh "1"||echo "$ct_max_base")"
+sysctl -q -w \
+net.ipv4.ip_forward=1 \
+net.ipv4.conf.all.src_valid_mark=0 \
+net.ipv4.conf.all.rp_filter=0 \
+net.ipv4.conf.default.rp_filter=0 \
+net.ipv4.conf.all.route_localnet=1 \
+net.ipv4.conf.lo.route_localnet=1 \
+net.ipv4.ip_nonlocal_bind=1 \
+net.netfilter.nf_conntrack_max="$ct_max_base"
+if [ -f /proc/net/if_inet6 ];then
+if [ "$NETWORK_IPV6" = "0" ];then
+sysctl -q -w net.ipv6.conf.all.disable_ipv6=1 net.ipv6.conf.default.disable_ipv6=1
+for iface in /sys/class/net/lo /sys/class/net/t2s* /sys/class/net/ezcfg0;do
+[ -e "$iface" ]&&sysctl -q -w "net.ipv6.conf.${iface##*/}.disable_ipv6=0"
+done
+else
+sysctl -q -w net.ipv6.conf.all.disable_ipv6=0 net.ipv6.conf.default.disable_ipv6=0 \
+net.ipv6.conf.all.forwarding=1 net.ipv6.conf.default.forwarding=1
+fi
+fi
+[ "$NETWORK_TUNING" = "1" ]||return 0
+sysctl -q -w \
+net.core.netdev_max_backlog=2000 \
+net.core.somaxconn=512 \
+net.ipv4.tcp_keepalive_time=60 \
+net.ipv4.tcp_keepalive_probes=6 \
+net.ipv4.tcp_keepalive_intvl=10 \
+net.netfilter.nf_conntrack_max="$ct_max_tuned" \
+net.netfilter.nf_conntrack_tcp_timeout_established=1800 \
+net.netfilter.nf_conntrack_udp_timeout=60 \
+net.netfilter.nf_conntrack_udp_timeout_stream=180 \
+net.netfilter.nf_conntrack_checksum=0 \
+net.ipv4.tcp_fastopen=3 \
+net.ipv4.tcp_mtu_probing=1 \
+net.ipv4.tcp_slow_start_after_idle=0 \
+net.ipv4.tcp_sack=1 \
+net.ipv4.tcp_syncookies=1 \
+net.ipv4.tcp_tw_reuse=1 \
+net.ipv4.tcp_fin_timeout=15 \
+net.ipv4.tcp_timestamps=1 \
+net.ipv4.tcp_max_syn_backlog=512 \
+net.ipv4.tcp_max_tw_buckets=8192 \
+net.ipv4.ip_local_port_range="10000 60001"
+[ "$ct_max_base" -gt 32768 ]||return 0
+case "$(uname -m)" in
+aarch64|arm*)sysctl -q -w \
+net.core.rmem_max=4194304 \
+net.core.wmem_max=4194304 \
+net.core.rmem_default=229376 \
+net.core.wmem_default=229376 \
+net.ipv4.tcp_moderate_rcvbuf=1 \
+net.ipv4.tcp_rmem="4096 87380 4194304" \
+net.ipv4.tcp_wmem="4096 65536 4194304" \
+net.ipv4.udp_rmem_min=8192 \
+net.ipv4.udp_wmem_min=8192 \
+net.ipv4.tcp_limit_output_bytes=262144
+esac
+}
+CB(){
+if [ -r /proc/sys/fs/file-max ];then
+file_max=$(cat /proc/sys/fs/file-max)
+ulimit_n=$((file_max/2))
+else
+ulimit_n=$(ulimit -Hn)
+fi
+[ "$ulimit_n" -lt 4096 ]&&ulimit_n=4096
+echo "$ulimit_n"
+}
+BY(){
+local timeout=40
+local fk msg
+P "Запуск $h..."
+ulimit -n "$(CB)"||AE "Не удалось установить ulimit -n"
+start-stop-daemon -S -b -m -p "$ac" -x "$SINGBOX_BIN" \
+-c "root:$aw" -- run -D "$ag" -c "$SINGBOX_CONFIG"
+fk=$?
+if [ $fk -ne 0 ];then
+rm -f "$ac"
+msg="Не удалось запустить $h"
+O "$msg"
+h "$msg"
+return 1
+fi
+while ! AB&&[ $timeout -gt 0 ];do
+usleep 250000
+timeout=$((timeout-1))
+done
+if ! AB;then
+rm -f "$ac"
+msg="$h не запустился вовремя"
+O "$msg"
+h "$msg"
+return 1
+fi
+[ -s "$ac" ]&&renice -3 -p "$(cat "$ac")" >/dev/null 2>&1
+U "$h запущен"
+Ah "$h запущен"
+return 0
+}
+start(){
+get_singbox_config
+local no_sb_found_msg="$h не найден, сначала установите его"
+if [ "$CALLER" = "init" ];then
+if AJ&&[ "$SERVICE_API_AUTO_START" = "1" ];then
+[ -f "$ab" ]&&"$ab" start||true
+fi
+Af
+if [ "$AUTO_START_ENABLED" != "1" ];then
+return 0
+fi
+elif [ ! -f "$SINGBOX_BIN" ];then
+O "$no_sb_found_msg"
+J 1
+elif AB;then
+U "$h уже запущен"
+return 0
+fi
+BD&&echo "$be"
+Am
+Bk
+if [ "$SKEEN_FIREWALL_MODE" != "none" ]&&[ "$CALLER" != "init" ];then
+echo "$be"&&apply_firewall
+fi
+Ap
+[ $? -eq 2 ]&&echo "$be"
+if [ ! -f "$SINGBOX_BIN" ];then
+h "$no_sb_found_msg"
+else
+echo "$be"
+BY||{
+if [ "$CALLER" != "init" ];then
+clean_firewall
+J 1
+fi
+}
+fi
+return 0
+}
+Bf(){
+local timeout=40
+local msg
+P "Остановка $h..."
+if ! AB;then
+U "$h уже остановлен"
+return 0
+fi
+if ! start-stop-daemon -K -p "$ac" >/dev/null 2>&1;then
+msg="Не удалось отправить сигнал остановки $h (процесс не найден или уже завершен)"
+O "$msg"
+h "$msg"
+rm -f "$ac"
+return 1
+fi
+while AB&&[ $timeout -gt 0 ];do
+usleep 250000
+timeout=$((timeout-1))
+done
+if AB;then
+msg="$h не остановился вовремя"
+O "$msg"
+h "$msg"
+return 1
+fi
+rm -f "$ac"
+msg="$h остановлен"
+U "$msg"
+Ah "$msg"
+return 0
+}
+stop(){
+if Bf&&clean_firewall;then
+[ "$on_restart" = "1" ]&&echo "$be"
+return 0
+else
+return 1
+fi
+}
+CN(){
+if ! AB;then
+U "$h не запущен"
+return 0
+fi
+P "Принудительная остановка $aw..."
+if start-stop-daemon -K -s 9 -p "$ac" >/dev/null 2>&1;then
+rm -f "$ac"
+clean_firewall
+U "$h успешно остановлен"
+else
+O "Не удалось принудительно завершить $h"
+return 1
+fi
+}
+version(){
+local ga bg sb_version
+get_singbox_config
+ga="$(AA "skeen")"
+bg="$(AA "skeen-api")"
+sb_version="$(AA "sing")"
+{ [ -z "$bg" ]&&bg="$(Bn "не найден")";}||bg="$(AD "$bg")"
+{ [ -z "$sb_version" ]&&sb_version="$(Bn "не найден")";}||sb_version="$(AD "v$sb_version")"
+if [ "$CALLER" = "cli" ];then
+printf "$aa: %s\n" "$(AD "v$ga")"
+printf "$aa API: %s\n" "$(AD "$bg")"
+printf "$h: %s\n" "$sb_version"&&[ -f "$SINGBOX_BIN" ]&&$SINGBOX_BIN version|sed -nE '/^(Environment|Tags|Revision|CGO):/p'
+fi
+}
+CC(){
+if AB;then
+stop
+else
+start
+fi
+J
+}
+restart(){
+on_restart=1
+stop||J 1
+start||J 1
+on_restart=0
+J
+}
+reload(){
+BD&&echo "$be"
+get_singbox_config
+Bf&&BY||return 1
+}
+CH(){
+local pid="${1:-}"
+local up stat fv
+[ -r "/proc/$pid/stat" ]||return 1
+read -r up _ </proc/uptime
+read -r stat <"/proc/$pid/stat"
+stat="${stat#*) }"
+set -- $stat
+fv=$((${up%.*}-${20:-0}/100))
+printf "%dd %dh %dm\n" \
+$((fv/86400)) \
+$(((fv % 86400)/3600)) \
+$(((fv % 3600)/60))
+}
+status(){
+local pid gv gu he
+[ -f "$ac" ]&&pid="$(cat "$ac")"
+printf '\033[1m%s\033[0m\n' "$h"
+if [ -n "$pid" ];then
+set -- $(awk '$1=="VmRSS:"{r=$2} $1=="VmHWM:"{h=$2} $1=="Threads:"{t=$2} END{print r,h,t}' "/proc/$pid/status")
+gv="${1:-0}"
+gu="${2:-0}"
+he="${3:-0}"
+printf 'Статус: %s\n' "running"
+printf 'PID: %s\n' "$pid"
+printf 'Время работы: %s\n' "$(CH "$pid")"
+printf 'Память: %s MB (пиковая: %s MB)\n' "$((gv/1024))" "$((gu/1024))"
+printf 'Потоки: %s\n' "$he"
+printf 'Дескрипторы: %s (лимит: %s)\n' "$(find "/proc/$pid/fd" -type l 2>/dev/null|wc -l)" "$(awk '/Max open files/ {print $5}' "/proc/$pid/limits" 2>/dev/null)"
+else
+printf 'Статус: %s\n' "stopped"
+fi
+if [ -f "$ab" ];then
+printf '\n\033[1m%s\033[0m\n' "$aa API"
+"$ab" status
+fi
+}
+CI(){
+local running="false" mode="unknown" sb_version="unknown" pid line version_data
+if [ -f "$ac" ];then
+IFS= read -r pid <"$ac" 2>/dev/null
+[ -n "$pid" ]&&kill -0 "$pid" 2>/dev/null&&running="true"
+fi
+if [ -f "$ah" ];then
+while IFS='=' read -r line mode;do
+[ "$line" = "export SKEEN_FIREWALL_MODE" ]||continue
+mode="${mode#\"}"
+mode="${mode%\"}"
+break
+done <"$ah"
+[ -z "$mode" ]&&mode="unknown"
+fi
+if [ ! -f "$aq" ];then
+get_singbox_config
+sb_version="$(AA "sing")"
+else
+IFS= read -r version_data <"$aq" 2>/dev/null
+sb_version="${version_data##*|}"
+fi
+[ -z "$sb_version" ]&&sb_version="unknown"
+printf '{"running":%s,"version":"%s","mode":"%s","sb_version":"%s"}\n' \
+"$running" "${cl:-unknown}" "$mode" "${sb_version:-unknown}"
+}
+AG(){
+LC_ALL=C awk -v max_width="${1:-28}" -F'|' '
+    function trim(s) { sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
+    function width(s) { gsub(/[\200-\277]/,"",s); return length(s) }
+    function repeat(c,n,o,i) { for(i=0;i<n;i++) o=o c; return o }
+    function border(i) { printf "+"; for(i=1;i<=columns;i++) printf "%s+",repeat("-",widths[i]+2); printf "\n" }
+    function wrap(r,c,s,w,n,i,x,l) {
+      n=split(s,w,/[ \t]+/); l=1
+      for(i=1;i<=n;i++) {
+        if(x=="") x=w[i]
+        else if(width(x " " w[i])<=widths[c]) x=x " " w[i]
+        else { wrapped[r,c,l++]=x; x=w[i] } }
+      wrapped[r,c,l]=x; if(l>row_lines[r]) row_lines[r]=l }
+    { rows=NR; if(NF>columns) columns=NF
+      for(i=1;i<=NF;i++) { cells[NR,i]=trim($i); w=width(cells[NR,i]); if(w>max_width) w=max_width; if(w>widths[i]) widths[i]=w } }
+    END {
+      if(!rows) exit
+      for(r=1;r<=rows;r++) for(c=1;c<=columns;c++) wrap(r,c,cells[r,c])
+      border()
+      for(r=1;r<=rows;r++) {
+        for(l=1;l<=row_lines[r];l++) {
+          printf "|"; for(c=1;c<=columns;c++) { v=wrapped[r,c,l]; printf " %s%s |",v,repeat(" ",widths[c]-width(v)) }
+          printf "\n" }
+        if(r==1) border() }
+      border() }
+  '|while IFS= read -r line;do
+case "$line" in +*)AD "$line";;"| Протокол "*|"| Состояние "*|"| Метка "*|"| Счётчик "*|"| Состояние TCP "*)AD "$line";;*)printf '%s\n' "$line";esac
+done
+}
+Bx(){
+local ds gc eo cn ey eg fu by
+local bz et
+AK
+As "=== Диагностика соединений ==="
+printf '\n'
+if [ -r /proc/sys/net/netfilter/nf_conntrack_count ]&&[ -r /proc/sys/net/netfilter/nf_conntrack_max ];then
+if command -v conntrack >/dev/null 2>&1;then ds="$(conntrack -C 2>/dev/null)";fi
+case "$ds" in
+''|*[!0-9]*)ds="$(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null)"
+esac
+gc="$(cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null)"
+case "$ds:$gc" in
+*[!0-9:]*|:*|*:|*:0)T "Таблица conntrack: не удалось прочитать число записей/лимит";;
+*)eo="$(awk -v count="$ds" -v max="$gc" 'BEGIN { printf "%d", count * 1000 / max }')"
+printf 'Таблица conntrack: %s / %s записей (заполнена на %s.%s%%)\n' \
+"$ds" "$gc" "$((eo/10))" "$((eo%10))"
+if [ "$eo" -ge 1000 ];then
+Bn "Оценка: КРИТИЧНО — достигнут или превышен лимит таблицы conntrack"
+elif [ "$eo" -ge 950 ];then
+Bn "Оценка: КРИТИЧНО — таблица conntrack почти заполнена"
+elif [ "$eo" -ge 800 ];then
+Bs "Оценка: ВНИМАНИЕ — таблица заполнена более чем на 80%"
+else
+AL "Оценка: ниже порога предупреждения"
+fi
+P "Пороги 80% и 95% ориентировочные; скорость роста не измеряется."
+esac
+else
+T "Таблица conntrack: системные счётчики недоступны"
+fi
+printf '\n'
+As "--- Отслеживаемые соединения conntrack ---"
+if command -v conntrack >/dev/null 2>&1;then
+cn="$(conntrack -L -o extended 2>/dev/null|awk '
+      { proto=$3; state=(proto=="tcp" ? $6 : "—")
+        mark="unmarked"
+        for(i=1;i<=NF;i++) {
+          if(proto!="tcp" && $i=="[UNREPLIED]") state="UNREPLIED"
+          else if(proto!="tcp" && $i=="[ASSURED]") state="ASSURED"
+          else if($i~/^mark=/) mark=substr($i,6) }
+        count[proto "|" state]++; marks[mark]++ }
+      END {
+        for(key in count) {
+          split(key,p,"|")
+          printf "C|%s|%s|%s\n",p[1],p[2],count[key] }
+        for(mark in marks) printf "M|%s|%s\n",mark,marks[mark] }
+      ')"
+ey="$(printf '%s\n' "$cn"|awk -F'|' '$1=="C" { print $2 "|" $3 "|" $4 }'|sort -t'|' -k1,1 -k2,2)"
+eg="$(printf '%s\n' "$cn"|awk -F'|' '$1=="M" { print $2 "|" $3 }'|sort -t'|' -k2,2nr)"
+if [ -n "$ey" ];then
+{
+printf '%s\n' "Прото.|Состояние|Кол-во|Значение"
+printf '%s\n' "$ey"|awk -F'|' '
+        { s=$2
+          if($1=="tcp") {
+            if(s=="ESTABLISHED") m="TCP-соединение установлено"
+            else if(s=="SYN_SENT") m="Ожидается ответ удалённой стороны"
+            else if(s=="SYN_RECV") m="Ожидается завершение TCP handshake"
+            else if(s=="FIN_WAIT") m="Соединение закрывается"
+            else if(s=="CLOSE_WAIT") m="Удалённая сторона закрыла соединение"
+            else if(s=="LAST_ACK") m="Ожидается подтверждение закрытия"
+            else if(s=="TIME_WAIT") m="Недавно закрыто; запись истечёт сама"
+            else if(s=="CLOSE") m="Закрыто или отслежено не полностью"
+            else m="Состояние TCP из conntrack"
+          } else if(s=="UNREPLIED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-обмен ещё не замечен" : "Ответ пока не замечен (это может быть нормально)")
+          else if(s=="ASSURED") m=($1=="icmp" || $1=="icmpv6" ? "Ответ на ICMP-обмен получен; запись подтверждена" : "Ответ получен; поток подтверждён")
+          else if($1=="udp") m="UDP-поток; состояния TCP неприменимы"
+          else if($1=="icmp" || $1=="icmpv6") m="ICMP-пакет отслеживается conntrack; состояния TCP неприменимы"
+          else m="Поток протокола; состояния TCP неприменимы"
+          printf "%s|%s|%s|%s\n",$1,s,$3,m }
+        '
+}|AG
+else
+T "conntrack не вернул данные (пусто или нет доступа)"
+fi
+else
+T "Утилита conntrack не установлена; сводка недоступна"
+fi
+printf '\n'
+As "--- Счётчики событий conntrack ---"
+if command -v conntrack >/dev/null 2>&1;then
+bz="$(conntrack -S 2>/dev/null|awk '
+      { for(i=1;i<=NF;i++) { split($i,p,"="); if(p[1]!="cpu" && p[2]~/^[0-9]+$/) total[p[1]]+=p[2] } }
+      END { for(key in total) print key,total[key] }
+    '|sort -k1,1)"
+if [ -n "$bz" ];then
+printf '%s\n' "$bz"|awk '
+        BEGIN { print "Счётчик|Значение|Пояснение" }
+        $1=="insert_failed" {
+          m="Не удалось добавить запись; проверьте, растёт ли"
+          m=m "" }
+        $1=="early_drop" { m="Записи удалялись раньше срока; проверьте рост" }
+        $1=="drop" { m="Пакеты отброшены conntrack; проверьте рост" }
+        $1=="invalid" {
+          m="Пакеты помечены INVALID; часто это обычный сетевой шум"
+          m=m "" }
+        $1=="error" { m="Ошибки обработки; счётчик накопительный" }
+        $1=="ignore" { m="Пакеты намеренно не отслеживались; часто это нормально" }
+        $1=="found" { m="Найдена существующая запись; информационный счётчик" }
+        $1=="insert" { m="Добавлены новые записи; информационный счётчик" }
+        $1=="search_restart" {
+          m="Перезапуск поиска; обычно информативно"
+          m=m "" }
+        m!="" { print $1 "|" $2 "|" m; m="" }
+      '|AG
+P "Счётчики накопительные; после перезагрузки системы они сбрасываются. Ненулевые значения не доказывают сбой."
+P "При сбое сравните снимки; рост insert_failed, early_drop или drop требует проверки."
+by="$(printf '%s\n' "$bz"|awk '
+        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") { seen[$1]=1; if($2>0) nonzero=1 }
+        END { if(nonzero) print "nonzero"
+          else if(seen["insert_failed"] && seen["early_drop"] && seen["drop"]) print "zero"
+          else print "missing" } ')"
+if [ "$by" = "nonzero" ];then
+fu="Зафиксированы возможные потери пакетов или записей."
+fu="$fu По снимку неясно, продолжаются ли потери."
+T "$fu"
+elif [ "$by" = "zero" ];then
+U "Счётчики insert_failed, early_drop и drop равны нулю."
+echo "Признаков потерь по ним нет."
+else
+T "Некоторые счётчики потерь недоступны; по этому снимку нельзя подтвердить их отсутствие."
+fi
+else
+T "Данные счётчиков недоступны"
+fi
+else
+T "Счётчики недоступны без утилиты conntrack"
+fi
+printf '\n'
+As "--- Локальные TCP-сокеты (netstat) ---"
+echo "netstat показывает сокеты роутера; conntrack учитывает трафик клиентов."
+if ! command -v netstat >/dev/null 2>&1;then
+T "netstat не установлен"
+else
+et="$(netstat -antp 2>/dev/null|awk '
+      $1~/^tcp/ && $6!="" { count[$6]++ }
+      END { for(s in count) printf "%s|%s\n",s,count[s] }
+    ')"
+if [ -z "$et" ];then
+T "Данные TCP-сокетов недоступны"
+else
+printf '%s\n' "$et"|sort -t'|' -k1,1|awk -F'|' '
+        BEGIN { print "Состояние TCP|Значение|Кол-во" }
+        { s=$1; m=s
+          if(s=="ESTABLISHED") m="Соединение активно"; else if(s=="SYN_SENT") m="Ожидается ответ удалённой стороны"
+          else if(s=="SYN_RECV") m="Ожидается завершение TCP handshake"
+          else if(s=="FIN_WAIT1" || s=="FIN_WAIT2") m="Соединение закрывается"
+          else if(s=="CLOSE_WAIT") { m="Удалённая сторона закрыла; приложение ещё не закрыло сокет"; m=m "" }
+          else if(s=="LAST_ACK") m="Ожидается подтверждение закрытия"
+          else if(s=="TIME_WAIT") m="Недавно закрыто; запись истечёт сама"
+          else if(s=="LISTEN") m="Ожидание входящих подключений"
+          printf "%s|%s|%s\n",s,m,$2 }'|AG
+P "Итог: проверяйте долго открытые сокеты и рост их числа."
+fi
+fi
+printf '\n'
+As "--- Метки соединений ---"
+if [ -n "$eg" ];then
+printf '%s\n' "$eg"|awk -F'|' '
+      BEGIN { print "Метка (dec / hex)|Кол-во|Назначение" }
+      { mark=$1; value=mark; count=$2
+        if(mark=="unmarked") { value="нет"; d="conntrack не видит метку" }
+        else {
+          if(mark~/^[0-9]+$/) value=mark " / " sprintf("0x%x",mark+0)
+          if(mark=="0" || mark=="0x0") d="Метка не установлена"
+          else if(mark=="18" || mark=="0x12") d="SKeen: метка TProxy/policy routing (0x12)"
+          else d="Другая метка; источник неизвестен по значению" }
+        printf "%s|%s|%s\n",value,count,d }
+    '|AG
+else
+echo "Соединения с меткой не найдены"
+fi
+}
+update_core(){
+BQ
+BA
+Az "$UPDATE_SINGBOX_BETA"||return 1
+if AB;then stop||exit 1;fi
+BH
+U "Ядро $h успешно обновлено"
+}
+update_skeen(){
+if Ae "update";then
+U "$aa успешно обновлен"
+is_update_skeen=1
+else
+O "Ошибка обновления $aa"
+fi
+}
+Bj(){
+local proc="${1:-}"
+local fz="0"
+[ "$proc" != "skeen" ]&&return
+AS
+Al
+if [ "$SERVICE_PROXY_ENABLED" = "1" ]||[ "$FIREWALL_PROXY_ROUTER" = "1" ];then
+fz="1"
+fi
+if [ "$fz" = "1" ];then
+if ! AB;then
+start||J 1
+sleep 2
+fi
+elif AB;then stop||J 1;fi
+}
+BP(){
+local name="${1:-}"
+local proc="${2:-}"
+local api="${3:-}"
+local hj="${4:-}"
+local releases="${5:-}"
+local bk beta opt
+latest_version=""
+Bj "$proc"
+P "Проверка обновлений $name..."
+bk=$(AA "$proc")
+[ -z "$bk" ]&&bk="не установлено"
+case "$api" in *atom)beta="1";;*/releases/latest)beta="0";esac
+latest_version=$(Aq "$api" "$beta")
+[ -z "$latest_version" ]&&O "Не удалось получить номер последней версии"&&return 1
+if [ "$bk" != "$latest_version" ];then
+printf '%s %s\n' "$(AD "Текущая версия $name:")" "$(Bn "$bk")"
+printf '%s %s\n' "$(AD "Доступна новая версия:")" "$(AL "$latest_version")"
+printf '%s %s\n' "$(AD "Подробнее:")" "$(AL "$releases")"
+while :;do
+printf "Выполнить обновление? [y/n] (по умолчанию: n): " >/dev/tty
+read -r opt </dev/tty
+[ -z "$opt" ]&&opt=n
+case $opt in
+y|Y)"$hj"||return 1
+break
+;;
+n|N)break;;
+*)O "Неверный вариант"
+esac
+done
+else
+U "Последняя версия $name $latest_version уже установлена"
+fi
+return 0
+}
+BW(){
+AK
+is_check_update=1
+is_update_skeen=0
+Au
+if [ "$UPDATE_SINGBOX_ENABLED" != "1" ]&&[ "$UPDATE_SKEEN_ENABLED" != "1" ];then
+T "Обновления отключены в конфигурации $aa!"
+J 1
+fi
+if get_singbox_config&&[ "$SINGBOX_EXTERNAL_ENABLED" != "1" ];then
+if [ "$UPDATE_SINGBOX_ENABLED" = "1" ];then
+local repo="$ff" api_url
+FORK_CHANNEL="${UPDATE_SINGBOX_CHANNEL:-official}"
+case "$FORK_CHANNEL" in
+skb|skb-upx)repo="$dx";;
+pdk|pdk-full)repo="$dw";;
+lx|lx-upx)repo="$ed";;
+*)FORK_CHANNEL="official"
+esac
+api_url="https://github.com/$repo/releases/latest"
+[ "$UPDATE_SINGBOX_BETA" = "1" ]&&api_url="https://github.com/$repo/releases.atom"
+BP "$h $FORK_CHANNEL" "sing" "$api_url" update_core "https://github.com/$repo/releases"
+fi
+fi
+if [ "$UPDATE_SKEEN_ENABLED" = "1" ];then
+BP "$aa" "skeen" "$ex" \
+update_skeen "https://github.com/jinndi/SKeen/releases"
+fi
+if [ "$UPDATE_SKEEN_API" = "1" ]&&[ -f "$ab" ];then
+"$ab" update
+fi
+unset is_check_update
+if [ "$is_update_skeen" -eq 1 ];then
+exec sh "$an" deps menu
+else
+J "" reload
+fi
+}
+Ai(){
+if [ -f "$ah" ];then
+set -a
+eval "$(grep -E '^export [A-Za-z_][A-Za-z0-9_]*=' "$ah"|sed 's/^export //')"
+set +a
+fi
+}
+AF(){
+local ba
+if echo "$3"|grep -Eq "$4";then
+AL "[OK($1/$2)] $5"
+else
+Bn "[MISS($1/$2)] $5"
+fi
+}
+AI(){
+local ba
+local hr="PREROUTING"
+[ "$2" = "$at" ]&&hr="OUTPUT"
+[ "$2" = "$bd" ]&&hr="INPUT/OUTPUT"
+AD "Тест $hr $1 $2"
+ba="$($3 -w -t "$1" -nvL "$2" 2>/dev/null)"
+if [ "$1" = "mangle" ]&&[ "$2" = "INPUT" ];then
+AF "$1" "$2" "$ba" "skeen_keendns" "KeenDNS accept"
+return 0
+fi
+AF "$1" "$2" "$ba" "[1-9][0-9]* references" "Reference"
+if [ "$2" = "$dv" ];then
+AF "$1" "$2" "$ba" "skeen_dns" "DNS redirect"
+return 0
+fi
+if [ "$2" = "$bd" ];then
+AF "$1" "$2" "$ba" "skeen_tun" "Accept"
+return 0
+fi
+AF "$1" "$2" "$ba" "ctdir REPLY" "REPLY accept"
+if [ "$1" = "mangle" ];then
+case "$2" in
+"$ar")[ "$SKEEN_FIREWALL_MODE" = "tproxy" ]&&AF "$1" "$2" "$ba" "$bq" "Socket accept"
+[ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ]&&comment="DNS intercept"||comment="DNS exclude"
+AF "$1" "$2" "$ba" "dpt:$dq" "$comment"
+;;
+"$at")[ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ]&&comment="DNS mark"||comment="DNS exclude"
+AF "$1" "$2" "$ba" "dpt:$dq" "$comment"
+esac
+fi
+if [ "$SKEEN_EXCLUDE_PORT" = "1" ];then
+AF "$1" "$2" "$ba" "$bc" "Port exclude"
+fi
+AF "$1" "$2" "$ba" "$bi" "Subnet exclude"
+if [ "$2" = "$ar" ]&&[ "$SKEEN_INTERCEPT_FAKEIP" != "0" ];then
+AF "$1" "$2" "$ba" "$ae" "FakeIP intercept"
+fi
+if [ "$1" = "mangle" ]&&[ "$2" = "$at" ];then
+AF "$1" "$2" "$ba" "MARK" "Mark set"
+elif [ "$1" = "nat" ]&&[ "$2" = "$at" ];then
+AF "$1" "$2" "$ba" "redir" "TCP Redirect"
+fi
+[ "$2" = "$at" ]&&return 0
+if [ "$1" = "mangle" ];then
+AF "$1" "$2" "$ba" "redirect" "TProxy redirect"
+elif [ "$1" = "nat" ];then
+AF "$1" "$2" "$ba" "redir" "TCP Redirect"
+fi
+}
+BZ(){
+local tables
+if ! AB;then
+O "Тестирование доступно только когда $aa запущен"
+J 1
+else
+if [ ! -f "$ah" ];then
+O "Файл по пути $ah отсутствует!"
+P "Пожалуйста, перезагрузите $h"
+J 1
+fi
+Ai
+fi
+if [ "$SKEEN_FIREWALL_MODE" = "hybrid" ];then
+tables="nat mangle"
+elif [ "$SKEEN_FIREWALL_MODE" = "tproxy" ];then
+tables="mangle"
+elif [ "$SKEEN_FIREWALL_MODE" = "redirect" ];then
+tables="nat"
+elif [ "$SKEEN_FIREWALL_MODE" = "tun" ];then
+tables="filter"
+elif [ "$SKEEN_REDIRECT_DNS_ENABLED" != "1" ];then
+T "Тестирование доступно в режимах tun, redirect, tproxy и hybrid"
+T "А также при заданных параметрах редиректа DNS"
+J 1
+fi
+if [ -z "$SKEEN_IPTABLES_LIST" ];then
+O "Утилита iptables не установлена?"
+J 1
+fi
+if [ "$SKEEN_FIREWALL_MODE" = "tun" ];then
+AI filter "$bd" "iptables"
+else
+for iptables in $SKEEN_IPTABLES_LIST;do
+[ "$iptables" = "ip6tables" ]&&echo "$be"
+local iptables_display
+iptables_display="$(AD "$iptables")"
+Bs "Тестирование: $iptables_display"
+echo "$be"
+[ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ]&&AI nat "$dv" "$iptables"
+for table in $tables;do
+AI "$table" "$ar" "$iptables"
+[ "$table" = "mangle" ]&&AI "$table" INPUT "$iptables"
+[ "$SKEEN_PROXY_ROUTER" = "1" ]&&AI "$table" "$at" "$iptables"
+done
+[ "$SKEEN_TUN_ENABLED" = "1" ]&&[ "$iptables" = "iptables" ]&&AI filter "$bd" "iptables"
+done
+fi
+J
+}
+CD(){
+find "$ai" -maxdepth 1 -type f -name "skeen_*.tar"
+}
+BU(){
+local au fx ft al
+if [ -d "$ag" ]&&[ "$(ls -A "$ag")" ];then
+al="$(du -sm "$ag"|awk '{print $1}')"
+Ax "$al"
+P "Создание резервной копии конфигурации..."
+au="$ai/skeen_$(date '+%Y-%m-%d_%H%M%S').tar"
+fx=$(dirname "$ag")
+ft=$(basename "$ag")
+if tar -cf "$au" -C "$fx" "$ft";then
+U "Резервная копия успешно создана: $au"
+else
+O "Ошибка создания резервной копии!"
+return 1
+fi
+else
+T "Конфигурация не найдена, резервное копирование пропущено"
+fi
+return 0
+}
+Bq(){
+local tarname="${1:-}"
+local au
+restore(){
+local au="$ai/${1:-}"
+local cb al
+if [ -f "$au" ]&&tar -tf "$au"|grep -q "^skeen/";then
+al="$(du -sm "$au"|awk '{print $1}')"
+Ax "$al"
+cb="$ai/skeen_backup"
+mv "$ag" "$cb"
+mkdir -p "$ag"
+P "Распаковка архива $au..."
+if tar --strip-components=1 -xf "$au" -C "$ag";then
+rm -rf "$cb"
+U "Резервная копия успешно восстановлена"
+else
+rm -rf "$ag"
+mv "$cb" "$ag"
+O "Ошибка распаковки архива $au"
+return 1
+fi
+else
+O "Архив отсутствует или папка 'skeen' не найдена"
+return 1
+fi
+return 0
+}
+if BO&&[ "$CALLER" = "cli" ]&&[ -z "$tarname" ];then
+while :;do
+printf 'Введите имя файла резервного архива\n'
+printf 'находящегося в корневом каталоге /opt,\n'
+printf "например %s: " "$(AD "skeen.tar")" >/dev/tty
+read -r tarname </dev/tty
+[ -z "$tarname" ]&&exit 1
+restore "$tarname"&&break
+done
+elif [ -n "$tarname" ];then
+restore "$tarname"
+else
+O "Имя архива не указано"
+return 1
+fi
+}
+Bz(){
+AK
+while :;do
+printf 'Будет выполнен полный сброс конфигурации,\n'
+printf 'с созданием резервной копии текущей\n'
+printf "Продолжить? [y/n]: " >/dev/tty
+read -r option </dev/tty
+[ -z "$option" ]&&option="n"
+case "$option" in
+y|Y)if
+BU
+then
+rm -rf "$ag"
+mkdir -p "$ag"
+Au
+AV "$UPDATE_SINGBOX_BETA" "force"
+AR
+AQ "force"
+U "Сброс конфигурации выполнен"
+else
+O "Не удалось сбросить конфигурацию!"
+fi
+break
+;;
+n|N)break;;
+*)O "Неверный вариант"
+esac
+done
+J
+}
+CE(){
+local cache_file_enabled cache_file_path msg_not_found="Кэш файл не найден по пути"
+get_singbox_config
+if [ ! -s "$SINGBOX_CONFIG" ];then
+O "Файл конфигурации с параметром experimental.cache_file не найден"
+return 0
+fi
+eval "$(jsonfilter -i "$SINGBOX_CONFIG" \
+-e cache_file_enabled='@.experimental.cache_file.enabled' \
+-e cache_file_path='@.experimental.cache_file.path')"
+if [ "$cache_file_enabled" != "1" ];then
+T "Кэш файл отключен в конфигурации $h"
+fi
+if [ -z "$cache_file_path" ];then
+cache_file_path="$ag/cache.db"
+else
+if ! echo "$cache_file_path"|grep -q "^/";then
+cache_file_path="$ag/$cache_file_path"
+if [ ! -f "$cache_file_path" ];then
+O "$msg_not_found: $cache_file_path"
+return 0
+fi
+elif [ ! -f "$cache_file_path" ];then
+O "$msg_not_found: $cache_file_path"
+return 0
+fi
+fi
+rm -f "$cache_file_path"
+U "Кэш очищен. Перезапустите $aa для применения изменений"
+}
+Ao(){
+P "Проверка конфигурации $aa..."
+if jsonfilter -i "$(V)" -e '@.auto_start' >/dev/null;then
+U "$aa JSON корректен"
+else
+local err_msg="$aa конфигурация не корректна"
+O "$err_msg"
+h "$err_msg"
+fi
+}
+BS(){
+if get_singbox_config&&[ -f "$SINGBOX_BIN" ];then
+P "Проверка конфигурации $h..."
+local config="-c $SINGBOX_CONFIG"
+[ -n "$SINGBOX_CONFIG_DIR" ]&&config="-C $SINGBOX_CONFIG_DIR"
+if $SINGBOX_BIN check $config;then
+U "Конфигурация $h корректна"
+else
+local err_msg="$h конфигурация не корректна"
+h "$err_msg"
+if [ "$CALLER" != "init" ];then
+O "$err_msg"
+J 1
+fi
+fi
+fi
+}
+BD(){
+Ao
+BS
+}
+Bt(){
+if get_singbox_config&&[ -f "$SINGBOX_BIN" ];then
+P "Форматирование конфигурации $h..."
+local config="-c $SINGBOX_CONFIG"
+[ -n "$SINGBOX_CONFIG_DIR" ]&&config="-C $SINGBOX_CONFIG_DIR"
+if $SINGBOX_BIN format -w $config;then
+U "Конфигурация отформатирована успешно"
+else
+O "Ошибка форматирования конфигурации"
+fi
+else
+O "Исполняемый файл $h отсутствует"
+fi
+}
+CS(){
+local gk="Поддерживается только в $h 1.14.0+"
+shift
+AK
+get_singbox_config
+if [ -f "$SINGBOX_BIN" ];then
+local version major minor
+version="$(AA "sing")"
+major="${version%%.*}"
+minor="${version#1.}"
+minor="${minor%%.*}"
+if [ "$major" -eq 1 ]&&[ "$minor" -eq 14 ];then
+case "$version" in
+*alpha*|*beta*)AE "$gk"
+esac
+fi
+if [ "${version%%.*}" -ge 1 ]&&[ "$minor" -ge 14 ];then
+"$SINGBOX_BIN" api "$@"
+else
+AE "$gk"
+fi
+else
+AE "Исполняемый файл $h отсутствует"
+fi
+}
+Bu(){
+get_singbox_config
+local f="$SINGBOX_CONFIG" json=0 o="" fst=1
+[ "${1:-}" = "--json" ]&&json=1
+[ "$json" -eq 1 ]&&o="["
+ip="$(ip -4 addr show dev br0 2>/dev/null|awk '/inet /{print $2}'|cut -d/ -f1)"
+: "${ip:=192.168.1.1}"
+fa(){
+[ "$1" = "0.0.0.0" ]||[ "$1" = "::" ]&&echo "$ip:$2"&&return
+[ "$1" != "127.0.0.1" ]&&[ -n "$1" ]&&echo "$1:$2"
+}
+local panels="" apis=""
+CR(){
+local type="$1" addr="$2" has_p="$3" hf="$4" go="${5:-1}"
+[ -n "$addr" ]||return
+if [ "$json" -eq 1 ];then
+[ "$type" = "skeen_api" ]||[ "$has_p" -ne 1 ]||[ "$go" -eq 0 ]&&return
+[ "$fst" -eq 0 ]&&o="$o,"
+o="$o{\"type\":\"$type\",\"url\":\"http://$addr\"}"
+fst=0
+else
+local label
+label="$(AD "$hf API$([ "$has_p" -eq 1 ]&&echo "+UI")$([ "$go" -eq 0 ]&&Bn " (off)")")"
+[ "$has_p" -eq 1 ]&&panels="$panels\n$label: http://$addr"||apis="$apis\n$label: http://$addr"
+fi
+}
+[ "$json" -eq 0 ]&&{
+AJ 2>/dev/null
+[ -n "${SERVICE_API_PORT:-}" ]&&{
+local skeen_api_run=1
+[ -n "${ab:-}" ]&&"$ab" status >/dev/null 2>&1||skeen_api_run=0
+CR "skeen_api" "$(fa "$ip" "$SERVICE_API_PORT")" "${SERVICE_API_DASHBOARD:-0}" "SKeen" "$skeen_api_run"
+}
+}
+local sb_run=1
+AB >/dev/null 2>&1||sb_run=0
+local s i=0 t l p d
+s=$(jsonfilter -i "$f" -e '@.services' 2>/dev/null)
+while t=$(jsonfilter -s "$s" -e "@[$i].type" 2>/dev/null)&&[ -n "$t" ];do
+[ "$t" = "api" ]&&{
+l=$(jsonfilter -s "$s" -e "@[$i].listen")
+p=$(jsonfilter -s "$s" -e "@[$i].listen_port")
+d=$(jsonfilter -s "$s" -e "@[$i].dashboard")
+local has_p=1
+[ "$d" = "false" ]||[ "$(jsonfilter -s "$s" -e "@[$i].dashboard.enabled")" = "false" ]&&has_p=0
+CR "api" "$(fa "$l" "$p")" "$has_p" "Sing-box" "$sb_run"
+}
+i=$((i+1))
+done
+eval "$(jsonfilter -i "$f" -e 'cc=@.experimental.clash_api.external_controller' -e 'ext_ui=@.experimental.clash_api.external_ui' 2>/dev/null)"
+[ -n "$cc" ]&&{
+local has_p=0
+[ -n "$ext_ui" ]&&has_p=1
+CR "clash_api" "$(fa "${cc%%:*}" "${cc##*:}")" "$has_p" "Clash" "$sb_run"
+}
+if [ "$json" -eq 1 ];then printf "%s]\n" "$o";else printf "%b\n" "$panels\n$apis"|sed '/^$/d';fi
+}
+Ak(){
+local src_file="${1:-}"
+local target_dir="${2:-}"
+mkdir -p "$target_dir"
+local KEYS=""
+eval "$(jsonfilter -i "$src_file" -e 'KEYS=@')"
+local schema_val=""
+schema_val="$(jsonfilter -i "$src_file" -e "@['\$schema']")"
+local schema_prefix=""
+if [ -n "$schema_val" ];then
+schema_val="$(echo "$schema_val"|sed 's#\\/#/#g')"
+schema_prefix="$(printf '  "$schema": "%s",\n' "$schema_val")"
+fi
+for key in $KEYS;do
+case "$key" in
+\$*)continue
+esac
+local val
+val=$(jsonfilter -i "$src_file" -e "@['$key']")
+if [ -n "$val" ];then
+val=$(echo "$val"|sed 's#\\/#/#g')
+printf '{\n%s  "%s": %s\n}\n' "$schema_prefix" "$key" "$val" >"$target_dir/$key.json"
+fi
+done
+}
+CJ(){
+local address="${1:-}" az
+get_singbox_config
+if [ -z "$address" ];then
+[ -z "$SINGBOX_CONFIG_URL" ]&&O "Адрес для синхронизации не указан"&&return 1
+address="$SINGBOX_CONFIG_URL"
+fi
+if ! echo "$address"|grep -qE '^https?://';then
+O "URL должен начинаться с http:// или https://"
+return 1
+fi
+az="$(mktemp /tmp/skeen_sync.XXXXXX)"||{
+O "Не удалось создать временный файл"
+return 1
+}
+if ! Ab -s --max-time 20 "$address" -o "$az";then
+rm -f "$az"
+O "Не удалось загрузить конфигурацию с $address"
+return 1
+fi
+if ! $SINGBOX_BIN check -c "$az";then
+rm -f "$az"
+O "$h конфигурация c ошибками, синхронизация отменена!"
+return 1
+fi
+if [ -n "$SINGBOX_CONFIG_DIR" ];then
+local tmp_target_dir
+tmp_target_dir="$(mktemp -d /tmp/skeen_dir.XXXXXX)"||{
+rm -f "$az"
+O "Не удалось создать временную директорию"
+return 1
+}
+if [ "$SINGBOX_CONFIG_SPLIT" = "1" ];then
+if ! Ak "$az" "$tmp_target_dir";then
+rm -rf "$tmp_target_dir"
+rm -f "$az"
+O "Ошибка при разделении конфигурации, синхронизация отменена!"
+return 1
+fi
+else
+mv -f "$az" "$tmp_target_dir/config.json"
+fi
+local backup_dir="${SINGBOX_CONFIG_DIR}_backup"
+rm -rf "$backup_dir"
+cp -a "$SINGBOX_CONFIG_DIR" "$backup_dir" 2>/dev/null
+rm -rf "${SINGBOX_CONFIG_DIR:?}"
+mv -f "$tmp_target_dir" "$SINGBOX_CONFIG_DIR"
+elif [ -f "$SINGBOX_CONFIG" ];then
+cp -f "$SINGBOX_CONFIG" "$SINGBOX_CONFIG.bak"
+if ! mv -f "$az" "$SINGBOX_CONFIG";then
+mv -f "$SINGBOX_CONFIG.bak" "$SINGBOX_CONFIG"
+O "Не удалось сохранить файл конфигурации, выполнен откат!"
+return 1
+fi
+else
+mv -f "$az" "$SINGBOX_CONFIG"
+fi
+rm -f "$az"
+U "Конфигурация синхронизирована, перезапустите $aa для применения изменений"
+return 0
+}
+CF(){
+local hwid line hp os ver ht json
+AK
+hwid="$(tr '[:lower:]' '[:upper:]' </proc/sys/kernel/random/uuid)"
+line="$(printf '%s\n' \
+"Windows|10.0.19045,Windows 10|10.0.22631,Windows 11|10.0.26100,Windows 11 24H2|10.0.19042,Windows 10 20H2" \
+"Linux|5.15.0-88,Ubuntu 22.04 LTS|6.8.0-45,Ubuntu 24.04 LTS|6.1.0-21,Debian 12|6.9.7,Arch Linux|6.6.2,Manjaro" \
+"macOS|14.5.0,MacBook Pro|14.6.0,MacBook Air|15.0.0,Mac mini|13.6.7,MacBook Pro M1"|awk 'BEGIN{srand()} {a[NR]=$0} END{print a[int(rand()*NR)+1]}')"
+hp="$(printf '%s' "${line#*|}"|tr '|' '\n'|awk 'BEGIN{srand()} {a[NR]=$0} END{print a[int(rand()*NR)+1]}')"
+os="${line%%|*}"
+ver="${hp%%,*}"
+ht="${hp#*,}"
+json="{\"x-hwid\":\"$hwid\",\"x-device-os\":\"$os\",\"x-ver-os\":\"$ver\",\"x-device-model\":\"$ht\"}"
+AD "Сгенерированные случайные параметры устройства:"
+for k in x-hwid x-device-os x-ver-os x-device-model;do
+printf '  %s: ' "$k"
+AL "$(jsonfilter -s "$json" -e "@['$k']")"
+done
+printf '\n'
+AD "Sub-Store: Добавьте в конец ссылки подписки параметр:"
+AL "$(printf '%s' "#headers=$json"|sed 's/ /%20/g')"
+}
+CK(){
+AK
+local G='\e[32m' R='\e[31m' W='\e[1m' N='\e[0m' Y='\e[33m' B='\e[36m' M='\e[35m'
+local ip_data ln_data mt_data tf_data v6_flags
+printf "\n  $W%-10s %-4s %-5s %-6s %-10s %-10s$N\n" "INTERFACE" "IPv6" "MTU" "LINK" "RX/TX (MB)" "IP ADDRESS"
+printf "  %-10s %-4s %-5s %-6s %-10s %-10s\n" "----------" "----" "-----" "------" "----------" "----------"
+ip_data="$(ip -o addr show|awk '{print $2,$3,$4}'|cut -d/ -f1)"
+ln_data="$(grep . /sys/class/net/*/operstate 2>/dev/null)"
+mt_data="$(awk '{print FILENAME ":" $0}' /sys/class/net/*/mtu 2>/dev/null|sed 's|/sys/class/net/||;s|/mtu||')"
+tf_data="$(cat /proc/net/dev|tail -n +3|tr ':' ' '|awk '{$1=$1;print}')"
+v6_flags="$(awk '{print FILENAME ":" $0}' /proc/sys/net/ipv6/conf/*/disable_ipv6 2>/dev/null|sed 's|/proc/sys/net/ipv6/conf/||;s|/disable_ipv6||')"
+echo "$tf_data"|sort|awk -v g="$G" -v r="$R" -v n="$N" -v y="$Y" -v b="$B" -v m="$M" -v ipd="$ip_data" -v lnd="$ln_data" -v mtd="$mt_data" -v v6f="$v6_flags" '
+  BEGIN {
+    split(lnd, a_ln, "\n"); for (i in a_ln) { split(a_ln[i], t, /[\/:]/); link[t[5]] = t[7] }
+    split(mtd, a_mt, "\n"); for (i in a_mt) { split(a_mt[i], t, ":"); mtu[t[1]] = t[2] }
+    split(v6f, a_v6, "\n"); for (i in a_v6) { split(a_v6[i], t, ":"); v6_sys[t[1]] = t[2] }
+    split(ipd, i_arr, "\n"); for (x in i_arr) {
+      split(i_arr[x], t, " ")
+      if (t[2] == "inet") ip4[t[1]] = t[3]
+      if (t[2] == "inet6" && !ip6[t[1]]) ip6[t[1]] = t[3]
+    }
+  }
+  {
+    ifc = $1
+    rx = int($2/1048576); tx = int($10/1048576)
+    tr_p = rx "/" tx
+    v6_s = (v6_sys[ifc] == "0") ? g"on  "n : r"off "n
+    ln_raw = link[ifc]
+    if (ln_raw == "up") ln_s = g"up    "n
+    else if (ln_raw == "unknown") ln_s = n"unk   "n
+    else ln_s = r"down  "n
+    printf "  %-10s %s %s%-5s%s %s ", ifc, v6_s, b, (mtu[ifc] ? mtu[ifc] : "-"), n, ln_s
+    printf "%s%s%s/%s%s%s", b, rx, n, m, tx, n
+    pad = 10 - length(tr_p)
+    for (p=0; p<pad; p++) printf " "
+    printf " %s%s%s\n", y, (ip4[ifc] ? ip4[ifc] : "-"), n
+    if (ip6[ifc]) {
+      printf "                                          %s%s%s\n", b, ip6[ifc], n
+    }
+  }'
+}
+Bg(){
+local cm di ei ea output version ipv4 ipv6 cs
+AK
+Ao&&printf "\033[1A\033[2K\033[1A\033[2K"
+Ai
+get_singbox_config
+if Af&&[ "$AUTO_START_ENABLED" = "1" ];then
+cm="$(AL "да")"
+else
+cm="$(Bn "нет")"
+fi
+if AB;then
+di="$(AL "running")"
+ei="Остановить"
+ea=1
+else
+di="$(Bn "stopped")"
+ei="Запустить"
+ea=0
+fi
+AH(){
+local key="${1:-}"
+local val="${2:-}"
+local hd=10
+local pad gf="          "
+pad=$((hd-${#key}))
+[ $pad -lt 1 ]&&pad=1
+while [ ${#gf} -gt $pad ];do gf="${gf%?}";done
+output="$output\n $key$gf $val"
+}
+AH "$aa" "$(AD "v$(AA "skeen")")"
+version="$(AD "v$(AA "sing")")"
+[ "$version" = "$(AD "v")" ]&&version="$(Bn "не установлен")"
+AH "$h" "$version"
+AH "Состояние" "$di"
+AH "Автостарт" "$cm"
+if [ "$ea" = "1" ];then
+if [ "$SKEEN_INTERCEPT_DNS_ENABLED" = "1" ]||[ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ];then
+cs="$(AL "да")"
+else
+cs="$(Bn "нет")"
+fi
+AH "Sing DNS" "$cs"
+if [ "$SKEEN_FIREWALL_MODE" != "none" ]&&[ "$SKEEN_FIREWALL_MODE" != "tun" ];then
+case "$SKEEN_IPTABLES_LIST" in *ipt*)ipv4="$(AD "4")";esac
+case "$SKEEN_IPTABLES_LIST" in *ip6t*)ipv6="$(AD "6")";esac
+[ -n "$SKEEN_POLICY_SEGMENT" ]&&AH "Сегмент" "$(AD "$SKEEN_POLICY_SEGMENT")"
+[ "$SKEEN_TUN_ENABLED" = "1" ]&&AH "OpkgTun" "$(AD "да")"
+AH "Режим" "$(AD "$SKEEN_FIREWALL_MODE")"
+AH "Сеть" "$(AD "$SKEEN_FIREWALL_NETWORK")"
+AH "IP вер." "$ipv4 $ipv6"
+else
+AH "Режим" "$(AD "$SKEEN_FIREWALL_MODE")"
+fi
+fi
+output="$output\n\n$(AD "Выберите опцию:")"
+output="$output\n  $(AL "1.") $ei"
+output="$output\n  $(AL "2.") Перезапустить"
+output="$output\n  $(AL "3.") Обновление"
+output="$output\n  $(AL "4.") Тестировать"
+output="$output\n  $(AL "5.") Удаление"
+output="$output\n  $(AL "0.") Выход\n"
+Bl
+printf '%b\n' "$output"
+max_attempts=3
+attempt=0
+while [ $attempt -lt $max_attempts ];do
+printf "Выбор [0-5]: " >/dev/tty
+read -r option </dev/tty
+printf "\n"
+case "$option" in
+[1-5])echo "$be"
+case "$option" in
+1)CC;;
+2)restart;;
+3)BW;;
+4)BZ;;
+5)Bi
+esac
+;;
+0)exit 0;;
+*)O "Неверный вариант"
+attempt=$((attempt+1))
+esac
+done
+AE "Достигнуто максимальное количество попыток, выход из меню."
+}
+By(){
+printf '%s\n' "Использование:
+  skeen [команда]
+
+Доступные Команды:
+  start   - Запустить сервис
+  stop    - Остановить сервис
+  restart - Полный перезапуск
+  reload  - Перезагрузка только $h
+  kill    - Принудительная остановка
+  status  - Показать статус
+  version - Показать версию
+  help    - Помощь по любой команде
+  iface   - Показать таблицу сетевых интерфейсов
+  connstat- Диагностика соединений
+  update  - Проверить и установить обновления
+  test    - Тестировать правила фаервола
+  deps    - Проверить зависимости
+  check   - Проверить конфигурацию
+  format  - Отформатировать конфигурацию $h
+  api     - Команды API управления $h
+  dash    - Получить ссылки на API панелей управления
+  backup  - Создать архив $ag
+  backups - Список созданных архивов в $ai
+  restore - Восстановить $ag из архива в $ai
+  reset   - Сбросить $ag в значение по умолчанию
+  clean   - Очистить кэш файл $h
+  sync    - Синхронизировать конфигурацию $h
+  headers - Сгенерировать фейковые заголовки клиента для подписок
+
+OpkgTun (KeeneticOS v5+):
+  tun create <ipv4> <имя>  - Создать интерфейс с IP-адресом и именем
+  tun delete <имя>         - Удалить интерфейс по имени
+  tun list                 - Список всех интерфейсов OpkgTun"
+}
+case "$CALLER:$ACTION" in
+netfilter:apply_firewall)apply_firewall "$3"
+exit 0
+;;
+update:clean_firewall)rm -f "$ap"
+clean_firewall
+exit 0
+;;
+netfilter:*)exit 0
+esac
+if [ -f "$an" ];then
+AP
+case "$ACTION" in
+start)start;;
+stop)stop;;
+restart)restart;;
+reload)reload;;
+kill)CN;;
+status)if [ "$2" = "--json" ];then CI;else status;fi;;
+version)version;;
+iface)CK;;
+connstat)Bx;;
+update)BW;;
+test)BZ;;
+deps)Aj
+J
+;;
+check)BD;;
+format)Bt;;
+api)CS "$@";;
+dash)Bu "$2";;
+backup)BU;;
+backups)CD;;
+restore)Bq "$2";;
+reset)Bz;;
+clean)CE;;
+sync)CJ "$2";;
+headers)CF;;
+tun)AK
+BX||return 1
+case "$2" in
+create)CL "$3" "$4";;
+delete)Bp "$3";;
+list)CQ;;
+*)By|awk '/OpkgTun / {flag=1} flag'
+esac
+;;
+get_singbox_config)get_singbox_config --json;;
+get_api_config)AJ --json;;
+"")Bg;;
+help|*)By
+esac
+else
+install
+fi
