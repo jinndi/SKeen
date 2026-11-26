@@ -1026,7 +1026,7 @@ download_singbox_config() {
   beta_part="$([ "$beta" = "1" ] && echo "_beta" || echo "")"
   config_name="config${beta_part}${arch}.json"
 
-  if ! run_curl --max-time 10 -o "$SINGBOX_CONFIG" "${REPO_REFS_BASE_URL}/main/${config_name}"; then
+  if ! run_curl --max-time 10 -o "$SINGBOX_CONFIG" "${REPO_REFS_BASE_URL}/main/configs/${config_name}"; then
     [ -f "$backup_config" ] && mv -f "$backup_config" "$SINGBOX_CONFIG"
     echoerr "--FAILED_TO_DOWNLOAD_SINGBOX_NAME_CONFIGUR--"
     return 1
