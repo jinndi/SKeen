@@ -1,5 +1,82 @@
 # Changelog
 
+## [5.16.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.15.0...SKeen-v5.16.0) (2026-11-27)
+
+
+### 🚀 Feat
+
+* **cli:** add dash command to retrieve API links ([3c6d4de](https://github.com/jinndi/SKeen/commit/3c6d4dec54a50c6035562f642c97307100491f08))
+* **i18n:** implement internationalization system for shell scripts ([1b11085](https://github.com/jinndi/SKeen/commit/1b11085e67fb3beb5ef32036308a6d71a5e264af))
+* **shell-minifier:** enable comment stripping in reserved address constants ([e30489a](https://github.com/jinndi/SKeen/commit/e30489a4ed6ce4383a9c5ac396e447086ca16a98))
+* **sing-box:** implement fork selection and optimize curl usage ([ca5b389](https://github.com/jinndi/SKeen/commit/ca5b3892d4174ce3a863090a263f2cf983706893))
+
+
+### 🐛 Fix
+
+* **en:** improve sing-box service stability and error handling ([6099c01](https://github.com/jinndi/SKeen/commit/6099c011efce295516543a87dcb7abb690840660))
+* update regex to support hyphens in beta version tags ([b1d060d](https://github.com/jinndi/SKeen/commit/b1d060d3252ac5b742c6b0cbbbe43cbc9cee3019))
+
+
+### 🎨 Style
+
+* **ui:** adjust spacing and remove trailing newlines in fork selection ([660552d](https://github.com/jinndi/SKeen/commit/660552d653b953125bf2ece3d90001d032b91dbc))
+
+
+### 🛠 Refactor
+
+* **ci:** cleanup workflows and reorganize configuration files ([eb544ba](https://github.com/jinndi/SKeen/commit/eb544ba4ce8ec15f4dad5adb338c447b79f0fa20))
+* **core:** simplify firewall logic and menu state handling ([24319b8](https://github.com/jinndi/SKeen/commit/24319b81019b72d5891a1a58cca2e1fb3b51368d))
+* **i18n:** simplify current version display strings ([ddcc2aa](https://github.com/jinndi/SKeen/commit/ddcc2aae7f0634e252c5aec177caaa3204e46d5a))
+* **ui:** adjust protocol statistics table layout and translations ([b7b5951](https://github.com/jinndi/SKeen/commit/b7b5951a905926b93e4788a654a9928a7961a144))
+
+
+### 📦 Build
+
+* **ci:** implement go-based shell script minification pipeline ([d1b82d3](https://github.com/jinndi/SKeen/commit/d1b82d34748923bd12eef3f7511e975706867cbf))
+* **ci:** relocate skeen-api build output to dist directory ([6c59b76](https://github.com/jinndi/SKeen/commit/6c59b7670b63dce1784c6cb65eb37ae6bdad7c24))
+
+
+### 🤖 CI/CD
+
+* **build:** remove redundant busybox and library symlink logic ([a175161](https://github.com/jinndi/SKeen/commit/a175161864f9b72b7016343373bea776e55eded6))
+* **entware:** update SKeen installation source and configuration ([8d55a04](https://github.com/jinndi/SKeen/commit/8d55a047324883db37e3752fea46ac75f6de3357))
+* **workflow:** update paths for shell-minifier and refine translations ([4e78d2c](https://github.com/jinndi/SKeen/commit/4e78d2c1f1a5177e793ca59b94994c62e86c2139))
+
+
+### ⚙️ Config
+
+* update CORS allowed origins and format JSON files ([8a0009f](https://github.com/jinndi/SKeen/commit/8a0009f767000f58688911a3d02d25e5b93e3211))
+
+
+### 🔌 API
+
+* add dash endpoint to expose API links ([dd17365](https://github.com/jinndi/SKeen/commit/dd173655cbf8e5871e7537489af5426109737944))
+* implement gzip compression for embedded dashboard ([3ed54ad](https://github.com/jinndi/SKeen/commit/3ed54ad5f0748846314342b09081186cedc83484))
+
+
+### 📊 Dashboard
+
+* add sing-box update channel selection ([dd14a8b](https://github.com/jinndi/SKeen/commit/dd14a8bbe1ca656a1816d6a0a6cc04c5e2df60dd))
+* implement design tokens and mobile viewport optimizations ([cbc18cc](https://github.com/jinndi/SKeen/commit/cbc18cc7a86dc7c9e7a994d9f653694e58317688))
+* implement service drawer and responsive design and ([583b212](https://github.com/jinndi/SKeen/commit/583b212f1ab63f3f180bb67db5787952c0e30b65))
+* optimize service polling and initialization logic ([7c93a44](https://github.com/jinndi/SKeen/commit/7c93a44a3726a7bcaad3fca924051ae40e0acee5))
+
+
+### 🧰 Chore
+
+* **config:** update lite configurations and cleanup backup files ([90d39d4](https://github.com/jinndi/SKeen/commit/90d39d454ea5a5868c71677d793a9967bf4c5fcd))
+* **docs:** add sing-box channel documentation and update configuration guides ([5832e35](https://github.com/jinndi/SKeen/commit/5832e35281972da677957b4143576ff4eac4a059))
+* **docs:** document gzip support and new dashboard endpoint ([ad0b7bc](https://github.com/jinndi/SKeen/commit/ad0b7bcd5f324c9b77dae448485e594c77aaecf3))
+* **docs:** update SKeen API disk space requirements ([c22b7c1](https://github.com/jinndi/SKeen/commit/c22b7c1464c4c27dd904b5e15a8db2658a85c677))
+* **main:** release SKeen 5.13.0 ([bd280e1](https://github.com/jinndi/SKeen/commit/bd280e10bdbe7cff5b423e6400d7a03caf99ad47))
+* **main:** release SKeen 5.13.0 ([a5a43c5](https://github.com/jinndi/SKeen/commit/a5a43c591c130dc81fb43c67c68c17174a33abbb))
+* **main:** release SKeen 5.14.0 ([0ee4361](https://github.com/jinndi/SKeen/commit/0ee43618b2b66e32ec530da063111cbd777014e4))
+* **main:** release SKeen 5.14.0 ([5369005](https://github.com/jinndi/SKeen/commit/53690055e74c9a132929e44429e14b1b6ba031af))
+* **main:** release SKeen 5.15.0 ([c647f8b](https://github.com/jinndi/SKeen/commit/c647f8b93979d6c7add5166ddf3d602eb3a5329f))
+* **main:** release SKeen 5.15.0 ([a039565](https://github.com/jinndi/SKeen/commit/a039565b796f0496f4d4bf1edfdda62acfda9427))
+* **release:** bump API version to v1.3.0 & SKeen to 5.13.0 ([7cc7315](https://github.com/jinndi/SKeen/commit/7cc731526df7723240b61b4fc80172557c6ce25e))
+* set proxy_router to enabled by default ([4201d4d](https://github.com/jinndi/SKeen/commit/4201d4dd064eacd72c00f9c3e392768b0a1dab71))
+
 ## [5.15.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.14.0...SKeen-v5.15.0) (2026-11-27)
 
 
