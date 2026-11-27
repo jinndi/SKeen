@@ -116,7 +116,8 @@ The file `/opt/etc/skeen/skeen.json` has the following settings:
   "update": {          /// Update settings (skeen update)
     "singbox": {       // Sing-box updates (does not work with singbox.external.enabled=1)
       "enabled": 1,    // Enable Sing-box update check (0 = disabled)
-      "beta": 0        // If set to 1, enables checking for pre-release versions (alpha, beta, rc)
+      "beta": 0,       // If set to 1, enables checking for pre-release versions (alpha, beta, rc)
+      "channel": ""    // Release channel: official, skb, skb-upx, pdk, pdk-full, lx, or lx-upx
     },
     "skeen": {
       "enabled": 1,    // Enable SKeen update check (0 = disabled)
@@ -189,3 +190,4 @@ Is this solution right for you? Everyone decides for themselves based on current
 
 **`firewall.proxy_router`** - Note that enabling this feature will force the use of sing-box DNS (if it is configured and enabled). Additionally, if you have not added the IP addresses or subnets (`ipv4_cidr` / `ipv6_cidr`) of your built-in router VPN servers to `firewall.exclude`, traffic to them will also route through sing-box, creating unnecessary overhead.
 
+The **`update.singbox.channel`** setting selects the release source for the bundled `sing-box`. Available values and their projects are listed in the [channels and installation options table](SING-BOX-CHANNELS.md). Pre-release versions are controlled separately by `update.singbox.beta`.

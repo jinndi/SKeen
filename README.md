@@ -54,7 +54,7 @@ Russian-localized version: See [README-RU.md](README-RU.md)
 > Try the [offline Entware installer with SKeen preinstalled](https://github.com/jinndi/SKeen/tree/static/entware).
 
 > [!NOTE]
-> You will be prompted to install `sing-box` from the official repository (either the stable or beta version). You can also skip the installation to configure a custom binary file later in `skeen.json`.
+> You will be prompted to install `sing-box` from the official repository (either the stable or beta version). You can also skip the installation to configure a custom binary file later in `skeen.json`. Other available installation options are listed in the [sing-box channels table](./docs/SING-BOX-CHANNELS.md).
 
 **Configure the following:**
 
