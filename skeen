@@ -775,7 +775,7 @@ PKG_NAME="sing-box_${version}_linux_$bo"
 ;;
 skb:mips_*)PKG_FORMAT="binary"
 bo="mips"
-PKG_NAME="skeen-box_${version}_linux_$bo"
+PKG_NAME="sing-box_${version}_linux_$bo"
 ;;
 pdk:*)PKG_FORMAT="ipk"
 bo="${PKG_OS}_$PKG_ARCH"
