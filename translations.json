@@ -336,8 +336,8 @@
     "ru": "curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru {CURL_RESOLVE_FIX} | sh"
   },
   "CURRENT_VERSION_NAME": {
-    "en": "Current version {name}:",
-    "ru": "Текущая версия {name}:"
+    "en": "Current version:",
+    "ru": "Текущая версия:"
   },
   "DELETE_GROUP_SKEEN_PROC": {
     "en": "Delete group {SKEEN_PROC}...",
