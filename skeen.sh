@@ -32,7 +32,7 @@ readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:18
 readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.14.0"
+readonly SKEEN_VERSION="5.15.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="${RUN_DIR}/${SKEEN_PROC}.sh"
@@ -908,7 +908,7 @@ download_singbox() {
     official:*) PKG_FORMAT="ipk"; PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}" ;;
     skb:aarch64_*) PKG_FORMAT="binary"; suffix="arm64_naive"; PKG_NAME="sing-box_${version}_linux_${suffix}" ;;
     skb:mipsel_*) PKG_FORMAT="binary"; suffix="mipsle_naive"; PKG_NAME="sing-box_${version}_linux_${suffix}" ;;
-    skb:mips_*) PKG_FORMAT="binary"; suffix="mips"; PKG_NAME="skeen-box_${version}_linux_${suffix}" ;;
+    skb:mips_*) PKG_FORMAT="binary"; suffix="mips"; PKG_NAME="sing-box_${version}_linux_${suffix}" ;;
     pdk:*) PKG_FORMAT="ipk"; suffix="${PKG_OS}_${PKG_ARCH}"; PKG_NAME="podkop-engine_${version}_${suffix}${PKG_SUFFIX}" ;;
     lx:aarch64_*) PKG_FORMAT="tar.gz"; suffix="linux-arm64"; PKG_NAME="sing-box-${version}-${suffix}.tar.gz" ;;
     lx:mipsel_*) PKG_FORMAT="tar.gz"; suffix="linux-mipsle-softfloat"; PKG_NAME="sing-box-${version}-${suffix}.tar.gz" ;;
