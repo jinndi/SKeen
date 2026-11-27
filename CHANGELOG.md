@@ -1,5 +1,44 @@
 # Changelog
 
+## [5.15.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.14.0...SKeen-v5.15.0) (2026-11-27)
+
+
+### 🚀 Feat
+
+* **sing-box:** implement fork selection and optimize curl usage ([ca5b389](https://github.com/jinndi/SKeen/commit/ca5b3892d4174ce3a863090a263f2cf983706893))
+
+
+### 🐛 Fix
+
+* update regex to support hyphens in beta version tags ([b1d060d](https://github.com/jinndi/SKeen/commit/b1d060d3252ac5b742c6b0cbbbe43cbc9cee3019))
+
+
+### 🎨 Style
+
+* **ui:** adjust spacing and remove trailing newlines in fork selection ([660552d](https://github.com/jinndi/SKeen/commit/660552d653b953125bf2ece3d90001d032b91dbc))
+
+
+### 🛠 Refactor
+
+* **ci:** cleanup workflows and reorganize configuration files ([eb544ba](https://github.com/jinndi/SKeen/commit/eb544ba4ce8ec15f4dad5adb338c447b79f0fa20))
+* **i18n:** simplify current version display strings ([ddcc2aa](https://github.com/jinndi/SKeen/commit/ddcc2aae7f0634e252c5aec177caaa3204e46d5a))
+
+
+### 🤖 CI/CD
+
+* **entware:** update SKeen installation source and configuration ([8d55a04](https://github.com/jinndi/SKeen/commit/8d55a047324883db37e3752fea46ac75f6de3357))
+* **workflow:** update paths for shell-minifier and refine translations ([4e78d2c](https://github.com/jinndi/SKeen/commit/4e78d2c1f1a5177e793ca59b94994c62e86c2139))
+
+
+### 📊 Dashboard
+
+* add sing-box update channel selection ([dd14a8b](https://github.com/jinndi/SKeen/commit/dd14a8bbe1ca656a1816d6a0a6cc04c5e2df60dd))
+
+
+### 🧰 Chore
+
+* **docs:** add sing-box channel documentation and update configuration guides ([5832e35](https://github.com/jinndi/SKeen/commit/5832e35281972da677957b4143576ff4eac4a059))
+
 ## [5.14.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.13.0...SKeen-v5.14.0) (2026-11-22)
 
 
