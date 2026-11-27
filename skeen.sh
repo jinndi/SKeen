@@ -645,7 +645,7 @@ get_latest_version() {
 
   if [ "$sing_beta" = "1" ]; then
     latest_release="$(run_curl -s --max-time 10 "$api_url")"
-    tag="$(echo "$latest_release" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' | head -n 1 | sed 's/^v//')"
+    tag="$(echo "$latest_release" | grep -oE '<title>[^<]+' | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?' | head -n 1 | sed 's/^v//')"
   else
     latest_release="$(run_curl -sI --max-time 10 -H "Cache-Control: no-cache" "${api_url}?$(date +%s)")"
     tag="$(echo "$latest_release" | grep -i "^location:" | sed -E 's/.*tag\/(.*)/\1/' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?')"
