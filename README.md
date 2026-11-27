@@ -60,7 +60,7 @@ Russian-localized version: See [README-RU.md](README-RU.md)
 
 1. SKeen in [`/opt/etc/skeen/skeen.json`](./docs/CONFIGURATION.md).
 2. sing-box in [`/opt/etc/skeen/config.json`](./examples/configs/stable/config-commented.jsonc).
-3. The Sing-box web dashboard is accessible at `http://192.168.1.1:9999`. By default, it uses the router's IP address (typically `192.168.1.1`).
+3. The Sing-box web dashboard is accessible at `http://192.168.1.1:9090`. By default, it uses the router's IP address (typically `192.168.1.1`).
 4. SKeen API with its dashboard runs by default on port `3000` without authentication; for launch and configuration instructions, [see here](./docs/SKEEN-API.md) or below in the **Web Panels** section.
 
 **Important:**

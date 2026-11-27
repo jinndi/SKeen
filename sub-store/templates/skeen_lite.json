@@ -129,11 +129,7 @@
         "https://sdash.u1.pw"
       ],
       "access_control_allow_private_network": true,
-      "dashboard": {
-        "enabled": true,
-        "path": "duakboard",
-        "download_url": "https://github.com/imduaky/duakboard/releases/latest/download/duakboard.zip"
-      }
+      "dashboard": false
     }
   ],
 
@@ -146,13 +142,16 @@
     },
     "clash_api": {
       "external_controller": "0.0.0.0:9090",
+      "secret": "",
+      "external_ui": "zashboard",
+      "external_ui_download_url": "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip",
+      "external_ui_download_detour": "🌍 Proxy",
       "access_control_allow_origin": [
         "http://clash.razord.top",
         "https://clash.razord.top",
         "http://yacd.haishan.me",
         "https://yacd.haishan.me",
         "https://yacd.metacubex.one",
-        "http://board.zash.run.place",
         "https://board.zash.run.place",
         "https://d.metacubex.one",
         "https://metacubexd.pages.dev"

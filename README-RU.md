@@ -58,7 +58,7 @@ curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --res
 
 1. SKeen — в файле [`/opt/etc/skeen/skeen.json`](./docs/CONFIGURATION-RU.md).
 2. sing-box — в файле [`/opt/etc/skeen/config.json`](./examples/configs/stable/config-commented.jsonc).
-3. Sing-box веб-панель доступна по адресу `http://192.168.1.1:9999`. По умолчанию используется IP-адрес роутера (обычно `192.168.1.1`).
+3. Sing-box веб-панель доступна по адресу `http://192.168.1.1:9090`. По умолчанию используется IP-адрес роутера (обычно `192.168.1.1`).
 4. Skeen API с панелью по умолчанию на `3000` порту без авторизации, запуск и настройку [смотрите тут](./docs/SKEEN-API-RU.md), или ниже в разделе **Веб-панели**.
 
 **Важно:**
