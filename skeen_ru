@@ -537,7 +537,7 @@ Aq(){
 local api_url="${1:-}" hi="${2:-}" cg tag
 if [ "$hi" = "1" ];then
 cg="$(Ab -s --max-time 10 "$api_url")"
-tag="$(echo "$cg"|grep -oE '<title>[^<]+'|grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?'|head -n 1|sed 's/^v//')"
+tag="$(echo "$cg"|grep -oE '<title>[^<]+'|grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?'|head -n 1|sed 's/^v//')"
 else
 cg="$(Ab -sI --max-time 10 -H "Cache-Control: no-cache" "$api_url?$(date +%s)")"
 tag="$(echo "$cg"|grep -i "^location:"|sed -E 's/.*tag\/(.*)/\1/'|tr -d '\r'|grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?')"
@@ -613,7 +613,7 @@ printf '\n'
 AD "Релизы форков:"
 echo
 local gh="https://github.com/"
-printf " skeen-box — без лишних тегов сборки для роутеров на основе официального sing-box\\n Подробнее: $gh$dx\\n  1) skb     — стабильные релизы\\n  2) skb     — alpha/beta/rc релизы\\n  3) skb-upx — стабильные релизы со сжатием UPX\\n  4) skb-upx — alpha/beta/rc релизы со сжатием UPX\\n\\n podkop-engine — экспериментальная сборка на основе стабильных релизов sing-box\\n Подробнее: $gh$dw\\n  5) pdk      — базовая комплектация\\n  6) pdk-full — полная комплектация\\n\\n sing-box-lx — экспериментальная сборка на основе стабильных релизов sing-box\\n Подробнее: $gh$ed\\n  7)  lx     — стабильный канал\\n  8)  lx     — пререлиз канал\\n  9)  lx-upx — стабильный канал со сжатием UPX (кроме mips)\\n  10) lx-upx — пререлиз канал со сжатием UPX (кроме mips)\\n\\n 0) Вернуться назад\\n\\n"
+printf " skeen-box: без лишних тегов сборки для роутеров на основе официального sing-box\\n Подробнее: $gh$dx\\n  1) skb     — стабильные релизы\\n  2) skb     — alpha/beta/rc релизы\\n  3) skb-upx — стабильные релизы со сжатием UPX\\n  4) skb-upx — alpha/beta/rc релизы со сжатием UPX\\n\\n podkop-engine: экспериментальная сборка на основе стабильных релизов sing-box\\n Подробнее: $gh$dw\\n  5) pdk      — базовая комплектация\\n  6) pdk-full — полная комплектация\\n\\n sing-box-lx: экспериментальная сборка на основе стабильных релизов sing-box\\n Подробнее: $gh$ed\\n  7)  lx     — стабильный канал\\n  8)  lx     — пререлиз канал\\n  9)  lx-upx — стабильный канал со сжатием UPX (кроме mips)\\n  10) lx-upx — пререлиз канал со сжатием UPX (кроме mips)\\n\\n 0) Вернуться назад\\n\\n"
 while :;do
 printf "Выберите форк [0-10]: " >/dev/tty
 read -r opt </dev/tty
@@ -767,11 +767,11 @@ PKG_NAME="sing-box_${version}_${PKG_OS}_$PKG_ARCH$PKG_SUFFIX"
 ;;
 skb:aarch64_*)PKG_FORMAT="binary"
 bn="arm64_naive"
-PKG_NAME="skeen-box_${version}_linux_$bn"
+PKG_NAME="sing-box_${version}_linux_$bn"
 ;;
 skb:mipsel_*)PKG_FORMAT="binary"
 bn="mipsle_naive"
-PKG_NAME="skeen-box_${version}_linux_$bn"
+PKG_NAME="sing-box_${version}_linux_$bn"
 ;;
 skb:mips_*)PKG_FORMAT="binary"
 bn="mips"
@@ -2692,7 +2692,7 @@ case "$api" in *atom)beta="1";;*/releases/latest)beta="0";esac
 latest_version=$(Aq "$api" "$beta")
 [ -z "$latest_version" ]&&O "Не удалось получить номер последней версии"&&return 1
 if [ "$bk" != "$latest_version" ];then
-printf '%s %s\n' "$(AD "Текущая версия $name:")" "$(Bn "$bk")"
+printf '%s %s\n' "$(AD "Текущая версия:")" "$(Bn "$bk")"
 printf '%s %s\n' "$(AD "Доступна новая версия:")" "$(AL "$latest_version")"
 printf '%s %s\n' "$(AD "Подробнее:")" "$(AL "$releases")"
 while :;do
