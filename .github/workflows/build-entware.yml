@@ -224,6 +224,8 @@ jobs:
           git ls-files -z "entware/${PREFIX}-*.tar.gz" |
             xargs -0 -r git rm -f --ignore-unmatch
 
+          mkdir -p entware
+
           # Возвращаем скачанные архивы и добавляем их
           for f in /tmp/new-rootfs/*.tar.gz; do
             [ -f "$f" ] || continue
