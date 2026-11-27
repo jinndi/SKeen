@@ -906,8 +906,8 @@ download_singbox() {
 
   case "$variant:$PKG_ARCH" in
     official:*) PKG_FORMAT="ipk"; PKG_NAME="sing-box_${version}_${PKG_OS}_${PKG_ARCH}${PKG_SUFFIX}" ;;
-    skb:aarch64_*) PKG_FORMAT="binary"; suffix="arm64_naive"; PKG_NAME="skeen-box_${version}_linux_${suffix}" ;;
-    skb:mipsel_*) PKG_FORMAT="binary"; suffix="mipsle_naive"; PKG_NAME="skeen-box_${version}_linux_${suffix}" ;;
+    skb:aarch64_*) PKG_FORMAT="binary"; suffix="arm64_naive"; PKG_NAME="sing-box_${version}_linux_${suffix}" ;;
+    skb:mipsel_*) PKG_FORMAT="binary"; suffix="mipsle_naive"; PKG_NAME="sing-box_${version}_linux_${suffix}" ;;
     skb:mips_*) PKG_FORMAT="binary"; suffix="mips"; PKG_NAME="skeen-box_${version}_linux_${suffix}" ;;
     pdk:*) PKG_FORMAT="ipk"; suffix="${PKG_OS}_${PKG_ARCH}"; PKG_NAME="podkop-engine_${version}_${suffix}${PKG_SUFFIX}" ;;
     lx:aarch64_*) PKG_FORMAT="tar.gz"; suffix="linux-arm64"; PKG_NAME="sing-box-${version}-${suffix}.tar.gz" ;;
