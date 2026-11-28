@@ -32,7 +32,7 @@ readonly CURL_RESOLVE_FIX="--resolve release-assets.githubusercontent.com:443:18
 readonly REPO_REFS_BASE_URL="https://raw.githubusercontent.com/jinndi/SKeen/refs/heads"
 
 readonly SKEEN_NAME="SKeen"
-readonly SKEEN_VERSION="5.16.0"
+readonly SKEEN_VERSION="5.17.0"
 readonly SKEEN_PROC="skeen"
 readonly SKEEN_SCRIPT="${ENTWARE_DIR}/bin/${SKEEN_PROC}"
 readonly SKEEN_RUN_SCRIPT="${RUN_DIR}/${SKEEN_PROC}.sh"
@@ -690,11 +690,7 @@ check_free_space() {
 }
 
 get_os_release() {
-  local release_path
-
-  release_path="$(command -v opkg)"
-
-  if [ "$release_path" != "/opt/bin/opkg" ]; then
+  if [ "$(command -v opkg 2>/dev/null || true)" != "/opt/bin/opkg" ]; then
     exiterr "--UNSUPPORTED_THE_SYSTEM_OS--"
   else
     PKG_OS="openwrt"
@@ -1131,6 +1127,17 @@ download_skeen_script() {
   local action="${1:-}"
   local backup_script="${SKEEN_SCRIPT}.bak"
   local script_url="$SKEEN_SCRIPT_URL $CURL_RESOLVE_FIX"
+  local current_script="${0:-}"
+  local install_script_tmp="${SKEEN_SCRIPT}.tmp.$$"
+
+  if [ "$action" != "update" ] && [ -f "$current_script" ] && [ -r "$current_script" ] && [ "$current_script" != "$SKEEN_SCRIPT" ]; then
+    echomsg "--INSTALLING_CURRENT_SKEEN_SCRIPT_AT_SKEEN_S--"
+    if cp "$current_script" "$install_script_tmp" && chmod 755 "$install_script_tmp" && mv -f "$install_script_tmp" "$SKEEN_SCRIPT"; then
+      echook "--CURRENT_SKEEN_SCRIPT_INSTALLED_SUCCESSFULL--"
+      return 0
+    fi
+    rm -f "$install_script_tmp"
+  fi
 
   echomsg "--DOWNLOADING_SKEEN_NAME_SCRIPT_AT_SKEEN_S--"
 

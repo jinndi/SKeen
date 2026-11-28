@@ -43,10 +43,10 @@ Make sure that Entware is installed. Otherwise, find the instructions for your m
 **Run the following command via SSH from the Entware environment:**
 
 ```sh
-curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen --resolve release-assets.githubusercontent.com:443:185.199.108.133 | sh
+curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/static/install.sh | sh
 ```
 
-Russian-localized version: See [README-RU.md](README-RU.md)
+Before selecting a `sing-box` installation option, the installer prompts you to choose English or Russian.
 
 > [!TIP]
 > Nothing gets installed **at all**?

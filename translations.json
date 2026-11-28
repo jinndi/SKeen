@@ -320,8 +320,8 @@
     "ru": "Создание группы {name} с GID {gid_num}..."
   },
   "CURL_LS_HTTPS_GITHUB_COM_JINNDI_SKEEN_RE": {
-    "en": "curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen {CURL_RESOLVE_FIX} | sh",
-    "ru": "curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru {CURL_RESOLVE_FIX} | sh"
+    "en": "curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/static/install.sh | sh",
+    "ru": "curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/static/install.sh | sh"
   },
   "CURRENT_VERSION_NAME": {
     "en": "Current version:",
@@ -386,6 +386,14 @@
   "DOWNLOADING_SKEEN_NAME_SCRIPT_AT_SKEEN_S": {
     "en": "Downloading {SKEEN_NAME} script at {SKEEN_SCRIPT}",
     "ru": "Загрузка скрипта {SKEEN_NAME}..."
+  },
+  "INSTALLING_CURRENT_SKEEN_SCRIPT_AT_SKEEN_S": {
+    "en": "Installing the currently {SKEEN_NAME} script at {SKEEN_SCRIPT}",
+    "ru": "Установка текущего скрипта {SKEEN_NAME} в {SKEEN_SCRIPT}"
+  },
+  "CURRENT_SKEEN_SCRIPT_INSTALLED_SUCCESSFULL": {
+    "en": "Currently {SKEEN_NAME} script installed successfully",
+    "ru": "Текущий скрипт {SKEEN_NAME} установлен успешно"
   },
   "ENTER_THE_NAME_OF_THE_BACKUP_ARCHIVE_FIL": {
     "en": "Enter the name of the backup archive file\\n",

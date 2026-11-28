@@ -42,8 +42,10 @@ SKeen настраивает прозрачное проксирование н�
 **Выполните команду в SSH из среды Entware:**
 
 ```sh
-curl -Ls https://github.com/jinndi/SKeen/releases/latest/download/skeen_ru --resolve release-assets.githubusercontent.com:443:185.199.108.133 | sh
+curl -Ls https://raw.githubusercontent.com/jinndi/SKeen/static/install.sh | sh
 ```
+
+Перед выбором варианта установки `sing-box` установщик предложит выбрать язык: английский или русский.
 
 > [!TIP]
 > Ничего **совсем** не устанавливается?

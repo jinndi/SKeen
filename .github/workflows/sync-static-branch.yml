@@ -34,6 +34,7 @@ jobs:
           npm --prefix dashboard run build:api
           cp dist/skeen-api skeen-api_tmp
           cp api-version api-version_tmp
+          cp install.sh install.sh_tmp
 
       - name: Build optimized shell scripts
         run: |
@@ -66,8 +67,9 @@ jobs:
           mv skeen_ru_min skeen_ru
           mv skeen-api_tmp skeen-api
           mv api-version_tmp api-version
+          mv install.sh_tmp install.sh
 
-          FILES="skeen skeen_ru skeen-api api-version"
+          FILES="skeen skeen_ru skeen-api api-version install.sh"
 
           if [ -n "$(git status --porcelain $FILES)" ]; then
             git add $FILES

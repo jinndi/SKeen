@@ -138,8 +138,9 @@ jobs:
       - name: Install SKeen
         if: inputs.install_skeen
         env:
-          URL: https://raw.githubusercontent.com/jinndi/SKeen/refs/heads/static/skeen_ru
+          URL: https://raw.githubusercontent.com/jinndi/SKeen/static/install.sh
           AUTO: '4-4'
+          INSTALL_LANG: ru
         run: |
           cd "rootfs-${{ matrix.arch }}"
 
@@ -147,7 +148,7 @@ jobs:
           echo "sing-box option: AUTO: ${AUTO}"
 
           curl -fsSL --connect-timeout 10 "$URL" |
-            sudo env AUTO="${AUTO}" chroot . /opt/bin/sh
+            sudo env AUTO="${AUTO}" INSTALL_LANG="${INSTALL_LANG}" chroot . /opt/bin/sh
 
           sudo mv opt/etc/init.d/S99SKeen opt/root/S99SKeen
 
