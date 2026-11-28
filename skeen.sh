@@ -2733,7 +2733,10 @@ start() {
     echook "--SINGBOX_NAME_ALREADY_STARTED--"; return 0
   fi
 
-  check_config && echo "$DELIMETER"
+  if [ "$on_restart" != "1" ]; then
+    if ! check_config; then [ "$CALLER" != "init" ] && press_any_key_to_menu 1; fi
+    echo "$DELIMETER"
+  fi
 
   apply_sysctl_network_tuning
 
@@ -2797,6 +2800,9 @@ stop_singbox() {
 }
 
 stop() {
+  if [ "$on_restart" != "1" ]; then
+    if ! check_config; then press_any_key_to_menu 1; fi; echo "$DELIMETER"
+  fi
   if stop_singbox && clean_firewall; then
     [ "$on_restart" = "1" ] && echo "$DELIMETER"
     return 0
@@ -2848,15 +2854,15 @@ switch_state() {
 }
 
 restart() {
-  on_restart=1
+  if ! check_config; then press_any_key_to_menu 1; fi
+  echo "$DELIMETER"; on_restart=1
   stop || press_any_key_to_menu 1
   start || press_any_key_to_menu 1
-  on_restart=0
-  press_any_key_to_menu
+  on_restart=0; press_any_key_to_menu
 }
 
 reload() {
-  check_config && echo "$DELIMETER"
+  if ! check_config; then press_any_key_to_menu 1; fi; echo "$DELIMETER"
   get_singbox_config
   stop_singbox && start_singbox || return 1
 }
@@ -3617,9 +3623,11 @@ check_skeen_config() {
   echomsg "--CHECKING_SKEEN_NAME_CONFIGURATION--"
   if jsonfilter -i "$(get_skeen_config_path)" -e '@.auto_start' >/dev/null; then
     echook "--SKEEN_NAME_JSON_IS_VALID--"
+    return 0
   else
     local err_msg="--SKEEN_NAME_CONFIGURATION_IS_INVALID--"
-    echoerr "$err_msg"; logger_error "$err_msg"
+    logger_error "$err_msg"; echoerr "$err_msg"
+    return 1
   fi
 }
 
@@ -3633,17 +3641,17 @@ check_singbox_config() {
       echook "--SINGBOX_NAME_CONFIGURATION_IS_VALID--"
     else
       local err_msg="--SINGBOX_NAME_CONFIGURATION_IS_INVALID--"
-      logger_error "$err_msg"
-      if [ "$CALLER" != "init" ]; then
-        echoerr "$err_msg"; press_any_key_to_menu 1
-      fi
+      logger_error "$err_msg"; echoerr "$err_msg"
+      return 1
     fi
   fi
+  return 0
 }
 
 check_config() {
-  check_skeen_config
-  check_singbox_config
+  check_skeen_config || return 1
+  check_singbox_config || return 1
+  return 0
 }
 
 format_config() {
