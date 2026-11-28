@@ -135,11 +135,16 @@ is_tty() {
   return "$ret"
 }
 
-cyan()      { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-cyan_bold() { is_tty && printf '\033[1;38;5;30m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-red()       { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-green()     { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-yellow()    { is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+color() {
+  local code="${1:-}" text="${2:-}"
+  if is_tty; then printf '\033[%sm%s\033[0m\n' "$code" "$text"; else printf '%s\n' "$text"; fi
+}
+
+cyan()      { color 36 "$1"; }
+cyan_bold() { color '1;38;5;30' "$1"; }
+red()       { color 31 "$1"; }
+green()     { color 32 "$1"; }
+yellow()    { color 33 "$1"; }
 
 echomsg()  { cyan "[INFO] $1"; }
 echook()   { green "[OK] $1"; }
@@ -149,9 +154,10 @@ exiterr()  { red "[FATAL] $1"; exit 1; }
 
 check_tty() { is_tty || { echoerr "--COMMAND_SUPPORTS_ONLY_TTY--"; exit 1; }; }
 
-logger_notice()  { logger -p notice -t "$SKEEN_NAME" "$1"; }
-logger_warning() { logger -p warning -t "$SKEEN_NAME" "$1"; }
-logger_error()   { logger -p error -t "$SKEEN_NAME" "$1"; }
+log_message() { logger -p "$1" -t "$SKEEN_NAME" "$2"; }
+logger_notice()  { log_message notice "$1"; }
+logger_warning() { log_message warning "$1"; }
+logger_error()   { log_message error "$1"; }
 
 if is_tty; then
   cleanup() { { stty sane </dev/tty; } 2>/dev/null || true; }
@@ -517,12 +523,12 @@ get_firewall_config() {
   local config_path
   config_path="$(get_skeen_config_path)"
 
+  get_network_config
+
   [ -n "$config_path" ] && eval "$(
     jsonfilter -i "$config_path" \
       -e POLICY_ENABLED='@.policy.enabled' \
       -e POLICY_SEGMENT='@.policy.segment' \
-      -e NETWORK_IPV6='@.network.ipv6' \
-      -e NETWORK_TUNING='@.network.tuning' \
       -e FIREWALL_INTERCEPT_DNS='@.firewall.intercept.dns' \
       -e FIREWALL_INTERCEPT_FAKEIP='@.firewall.intercept.fakeip.enabled' \
       -e FIREWALL_REDIRECT_DNS_ENABLED='@.firewall.redirect_dns.enabled' \
@@ -533,8 +539,6 @@ get_firewall_config() {
 
   : "${POLICY_ENABLED:=0}"
   : "${POLICY_SEGMENT:=br1}"
-  : "${NETWORK_IPV6:=1}"
-  : "${NETWORK_TUNING:=0}"
   : "${FIREWALL_INTERCEPT_DNS:=1}"
   : "${FIREWALL_INTERCEPT_FAKEIP:=0}"
   : "${FIREWALL_REDIRECT_DNS_ENABLED:=0}"
@@ -1685,29 +1689,19 @@ chain_exists() {
   $iptables -w -t "$table" -S "$chain" >/dev/null 2>&1
 }
 
-check_and_create_chain() {
-  local iptables="${1:-}"
-  local table="${2:-}"
-  local chain="${3:-}"
+ensure_chain() {
+  local iptables="${1:-}" table="${2:-}" chain="${3:-}" flush="${4:-0}"
 
   if chain_exists "$iptables" "$table" "$chain"; then
-    return 1
-  else
-    $iptables -w -t "$table" -N "$chain" 2>/dev/null
-  fi
-}
-
-create_or_flush_chain() {
-  local iptables="${1:-}"
-  local table="${2:-}"
-  local chain="${3:-}"
-
-  if chain_exists "$iptables" "$table" "$chain"; then
+    [ "$flush" = "1" ] || return 1
     $iptables -w -t "$table" -F "$chain" 2>/dev/null
   else
     $iptables -w -t "$table" -N "$chain" 2>/dev/null
   fi
 }
+
+check_and_create_chain() { ensure_chain "$1" "$2" "$3"; }
+create_or_flush_chain() { ensure_chain "$1" "$2" "$3" 1; }
 
 add_skeen_rules() {
   local iptables="${1:-}"
@@ -2067,6 +2061,17 @@ get_skeen_run_script_cmd() {
   printf '%s apply_firewall netfilter "$%s"\n' "$script" 'table'
 }
 
+write_firewall_hook_header() {
+  local iptables_list="${1:-}" tables="${2:-}" skip="${3:-0}"
+
+  echo "#!/bin/sh"; echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
+  printf '%s\n' "printf '%s\\n' \"$iptables_list\" | grep -q \"\$type\" || exit 0"
+  if [ "$skip" = "1" ]; then echo "exit 0"; else
+    printf '%s\n' "printf '%s\\n' \"$tables\" | grep -q \"\$table\" || exit 0"
+    echo "--LOGGER_P_NOTICE_T_SKEEN_NAME_UPDATING_TY--"
+  fi
+}
+
 prepare_firewall() {
   local complete_msg redirect_data tproxy_data has_opkgtun route_all exclude_ports
 
@@ -2151,9 +2156,6 @@ prepare_firewall() {
 
   if [ "$SKEEN_FIREWALL_MODE" = "tun" ] || [ "$SKEEN_FIREWALL_MODE" = "dns" ]; then
     {
-      echo "#!/bin/sh"
-      echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
-
       local tables="filter"
       if [ "$SKEEN_FIREWALL_MODE" = "dns" ]; then
         tables="nat"
@@ -2162,10 +2164,7 @@ prepare_firewall() {
         SKEEN_IPTABLES_LIST="iptables"
       fi
 
-      printf '%s\n' "printf '%s\n' \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
-      printf '%s\n' "printf '%s\n' \"$tables\" | grep -q \"\$table\" || exit 0"
-
-      echo "--LOGGER_P_NOTICE_T_SKEEN_NAME_UPDATING_TY--"
+      write_firewall_hook_header "$SKEEN_IPTABLES_LIST" "$tables"
 
       echo "export SKEEN_FIREWALL_MODE=\"$SKEEN_FIREWALL_MODE\""
 
@@ -2356,11 +2355,6 @@ prepare_firewall() {
   fi
 
   {
-    echo "#!/bin/sh"
-    echo "# $SKEEN_NAME v${SKEEN_VERSION} firewall hook"
-
-    printf '%s\n' "printf '%s\n' \"$SKEEN_IPTABLES_LIST\" | grep -q \"\$type\" || exit 0"
-
     local postfix_tables=""
     [ "$SKEEN_TUN_ENABLED" = "1" ] && postfix_tables="|filter"
     [ "$SKEEN_REDIRECT_DNS_ENABLED" = "1" ] && postfix_tables="${postfix_tables}|nat"
@@ -2369,14 +2363,12 @@ prepare_firewall() {
     local hybrid="${TABLE_REDIRECT}|${TABLE_TPROXY}${postfix_tables}"
     local tproxy="${TABLE_TPROXY}${postfix_tables}"
 
+    local hook_tables="" skip_hook=0
     case "$SKEEN_FIREWALL_MODE" in
-      hybrid) printf '%s\n' "printf '%s\n' \"$hybrid\" | grep -q \"\$table\" || exit 0" ;;
-      tproxy) printf '%s\n' "printf '%s\n' \"$tproxy\" | grep -q \"\$table\" || exit 0" ;;
-      redirect) printf '%s\n' "printf '%s\n' \"$redirect\" | grep -q \"\$table\" || exit 0" ;;
-      *) printf '%s\n' "exit 0" ;;
+      hybrid) hook_tables="$hybrid" ;; tproxy) hook_tables="$tproxy" ;; redirect) hook_tables="$redirect" ;;
+      *) skip_hook=1 ;;
     esac
-
-    echo "--LOGGER_P_NOTICE_T_SKEEN_NAME_UPDATING_TY--"
+    write_firewall_hook_header "$SKEEN_IPTABLES_LIST" "$hook_tables" "$skip_hook"
 
     echo "export SKEEN_REDIRECT_PORT=\"$SKEEN_REDIRECT_PORT\""
     echo "export SKEEN_TPROXY_PORT=\"$SKEEN_TPROXY_PORT\""
