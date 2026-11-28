@@ -3894,8 +3894,8 @@ show_iface() {
   local G='\e[32m' R='\e[31m' W='\e[1m' N='\e[0m' Y='\e[33m' B='\e[36m' M='\e[35m'
   local ip_data ln_data mt_data tf_data v6_flags
 
-  printf "\n  ${W}%-10s %-4s %-5s %-6s %-10s %-10s${N}\n" "INTERFACE" "IPv6" "MTU" "LINK" "RX/TX (MB)" "IP ADDRESS"
-  printf "  %-10s %-4s %-5s %-6s %-10s %-10s\n" "----------" "----" "-----" "------" "----------" "----------"
+  printf "${W}%-10s %-4s %-5s %-6s %-10s %-10s${N}\n" "INTERFACE" "IPv6" "MTU" "LINK" "RX/TX (MB)" "IP ADDRESS"
+  printf "%-10s %-4s %-5s %-6s %-10s %-10s\n" "----------" "----" "-----" "------" "----------" "----------"
 
   ip_data="$(ip -o addr show | awk '{print $2,$3,$4}' | cut -d/ -f1)"
   ln_data="$(grep . /sys/class/net/*/operstate 2>/dev/null)"
@@ -3923,13 +3923,13 @@ show_iface() {
     if (ln_raw == "up") ln_s = g"up    "n
     else if (ln_raw == "unknown") ln_s = n"unk   "n
     else ln_s = r"down  "n
-    printf "  %-10s %s %s%-5s%s %s ", ifc, v6_s, b, (mtu[ifc] ? mtu[ifc] : "-"), n, ln_s
+    printf "%-10s %s %s%-5s%s %s ", ifc, v6_s, b, (mtu[ifc] ? mtu[ifc] : "-"), n, ln_s
     printf "%s%s%s/%s%s%s", b, rx, n, m, tx, n
     pad = 10 - length(tr_p)
     for (p=0; p<pad; p++) printf " "
     printf " %s%s%s\n", y, (ip4[ifc] ? ip4[ifc] : "-"), n
     if (ip6[ifc]) {
-      printf "                                          %s%s%s\n", b, ip6[ifc], n
+      printf "                                        %s%s%s\n", b, ip6[ifc], n
     }
   }'
 }
