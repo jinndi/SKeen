@@ -115,10 +115,10 @@ In the base `config.json` template, the following domains are pre-configured for
 
 | Dashboard URL | Used API | Panel Connection Address | Brief Description |
 | :--- | :--- | :--- | :--- |
-| **[sing-box-dashboard.sagernet.org](https://sing-box-dashboard.sagernet.org)** *(in Chrome)*<br>[HTTP version](http://sing-box-dashboard.sagernet.org) *(others)* | Native `sing-box` API (`9999`) | `http://192.168.1.1:9999` | Built-in `sing-box` web dashboard (files are stored locally on the router). |
-| **[sdash.u1.pw](https://sdash.u1.pw)** *(in Chrome)*<br>[HTTP version](http://sdash.u1.pw) *(others)* | Native `sing-box` API (`9999`) | `http://192.168.1.1:9999` | Very lightweight web interface for `sing-box` management. |
-| **[board.zash.run.place](https://board.zash.run.place)** *(in Chrome)*<br>[HTTP version](http://board.zash.run.place) *(others)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Remote **Zashboard** frontend for managing proxy connections. |
-| **[d.metacubex.one](https://d.metacubex.one)** / **[metacubexd.pages.dev](https://metacubexd.pages.dev)** *(Chrome only)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Alternative **MetacubexD** (Yacd-meta) web interface for Clash API. |
+| **[sing-box-dashboard.sagernet.org](https://sing-box-dashboard.sagernet.org)** *(Chrome only)*<br>[HTTP version](http://sing-box-dashboard.sagernet.org) *(other browsers)* | Native `sing-box` API (`9999`) | `http://192.168.1.1:9999` | Official `sing-box` web dashboard. |
+| **[sdash.u1.pw](https://sdash.u1.pw)** *(Chrome only)*<br>[HTTP version](http://sdash.u1.pw) *(other browsers)* | Native `sing-box` API (`9999`) | `http://192.168.1.1:9999` | Very lightweight web interface for managing `sing-box`. |
+| **[board.zash.run.place](https://board.zash.run.place)** *(Chrome only)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Remote **Zashboard** frontend for managing proxy connections. (Dashboard files are stored locally on the router, so the panel is available at http://192.168.1.1:9090 in any browser on the local network.) |
+| **[d.metacubex.one](https://d.metacubex.one)** / **[metacubexd.pages.dev](https://metacubexd.pages.dev)** *(Chrome only)* | Clash API (`9090`) | `http://192.168.1.1:9090` | Alternative **MetacubexD** (Yacd-meta) web interface for the Clash API. |
 
 And others, they are easily accessible from the `SKeen dashboard` ("Services" tab)
 
