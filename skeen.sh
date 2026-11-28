@@ -3149,7 +3149,7 @@ show_connstat() {
           else if(s=="LAST_ACK") m="--AWK_WAITING_FOR_FINAL_CLOSE_ACKNOWLEDGEMENT--"
           else if(s=="TIME_WAIT") m="--AWK_RECENTLY_CLOSED_EXPIRES_AUTOMATICALLY--"
           else if(s=="LISTEN") m="--AWK_WAITING_FOR_INCOMING_CONNECTIONS--"
-          printf "%s|%s|%s\n",s,m,$2 }' | print_aligned_table
+          printf "%s|%s|%s\n",s,$2,m }' | print_aligned_table
       echomsg "--SUMMARY_INVESTIGATE_SOCKETS_THAT_PERSIST--"
     fi
   fi

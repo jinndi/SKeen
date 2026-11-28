@@ -56,8 +56,8 @@
     "ru": "Соединение закрывается"
   },
   "AWK_COUNTER_VALUE_MEANING": {
-    "en": "Counter|Value|Meaning",
-    "ru": "Счётчик|Значение|Пояснение"
+    "en": "Counter|Count|Explanation",
+    "ru": "Счётчик|Кол-во|Пояснение"
   },
   "AWK_ENTRIES_EVICTED_EARLY_CHECK_IF_INCREASIN": {
     "en": "Entries evicted early; check if increasing",
@@ -72,8 +72,8 @@
     "ru": "Перезапуск поиска; обычно информативно"
   },
   "AWK_MARK_DEC_HEX_COUNT_PURPOSE": {
-    "en": "Mark (dec / hex)|Count|Purpose",
-    "ru": "Метка (dec / hex)|Кол-во|Назначение"
+    "en": "Mark (dec / hex)|Count|Explanation",
+    "ru": "Метка (dec / hex)|Кол-во|Пояснение"
   },
   "AWK_MARK_IS_NOT_SET": {
     "en": "Mark is not set",
@@ -128,8 +128,8 @@
     "ru": "SKeen: метка TProxy/policy routing (0x12)"
   },
   "AWK_TCP_STATE_MEANING_COUNT": {
-    "en": "TCP state|Meaning|Count",
-    "ru": "Состояние TCP|Значение|Кол-во"
+    "en": "TCP state|Count|Explanation",
+    "ru": "Состояние TCP|Кол-во|Пояснение"
   },
   "AWK_WAITING_FOR_FINAL_CLOSE_ACKNOWLEDGEMENT": {
     "en": "Waiting for final close acknowledgement",
@@ -868,8 +868,8 @@
     "ru": "| Протокол "
   },
   "PROTOCOL_STATE_COUNT_MEANING": {
-    "en": "Proto.|State|Count|Meaning",
-    "ru": "Прото.|Состояние|Кол-во|Значение"
+    "en": "Proto.|State|Count|Explanation",
+    "ru": "Прото.|Состояние|Кол-во|Пояснение"
   },
   "RELEASE_VERSION_KEENETICOS_IS_LOWER_THAN": {
     "en": "Release version KeeneticOS is lower than 5",
