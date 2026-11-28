@@ -22,7 +22,7 @@ exiterr() {
   exit 1
 }
 
-if [ "${SKIP_FREE_SPACE_CHECK:-0}" != "1" ]; then
+if [ "${SKIP_COMPATIBILITY_CHECKS:-0}" != "1" ]; then
   if [ "$(id -u)" -ne 0 ]; then
     exiterr 'Run this installer as root.'
   fi
