@@ -140,7 +140,7 @@ jobs:
         env:
           URL: https://raw.githubusercontent.com/jinndi/SKeen/static/install.sh
           AUTO: '4-4'
-          TMPDIR: '/root'
+          TMPDIR: /opt/tmp
           INSTALL_LANG: 'ru'
           SKIP_COMPATIBILITY_CHECKS: '1'
         run: |
@@ -151,7 +151,7 @@ jobs:
 
           curl -fsSL --connect-timeout 10 "$URL" |
             sudo env AUTO="${AUTO}" INSTALL_LANG="${INSTALL_LANG}" TMPDIR="${TMPDIR}" \
-            SKIP_COMPATIBILITY_CHECKS="${SKIP_COMPATIBILITY_CHECKS}" chroot . /opt/bin/sh
+              SKIP_COMPATIBILITY_CHECKS="${SKIP_COMPATIBILITY_CHECKS}" chroot . /opt/bin/sh
 
           sudo mv opt/etc/init.d/S99SKeen opt/root/S99SKeen
 
