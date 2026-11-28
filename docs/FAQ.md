@@ -278,3 +278,18 @@ An additional kill switch does not solve the NDM chain-recreation issue: its rul
 
 SKeen is not intended to impose access restrictions; its purpose is not to limit users or devices. In addition, Keenetic's access control relies on MAC addresses, which can be spoofed, for example by using the address of a device on the allowlist. Integrating this feature would therefore make the project more complex without providing reliable protection.
 </details>
+
+<details>
+  <summary>20. Why can't I choose a specific sing-box version to install or update to?</summary>
+<br>
+
+When installing or updating the bundled sing-box, SKeen lets you choose a release source (channel) and release type—stable or pre-release. It installs the latest available version in the selected channel, not an arbitrary release number. See the [sing-box installation options table](./SING-BOX-CHANNELS.md) for details about channels.
+
+Selecting a specific version number for installation or automatic updates is intentionally not supported:
+
+- **Security.** New releases may include vulnerability fixes, including CVEs. A pinned older version does not receive those fixes automatically and may become vulnerable over time. Installing the latest version is not, by itself, a security guarantee: follow sing-box releases and the project's security advisories.
+- **Compatibility.** sing-box evolves quickly: configuration formats, options, and behavior can change between versions. A configuration prepared for one version may fail validation or behave differently on another. SKeen does not test or support every combination of arbitrary core versions and configurations.
+- **Installation and update maintenance.** Using one rule—install the current release in the selected channel—keeps installer and automatic-update behavior predictable. Pinning an older version could leave a device without current fixes.
+
+If you need to pin or test a specific build, you can skip installing the bundled core and configure your own binary through `singbox.external` in [`skeen.json`](CONFIGURATION.md). In that case, you are responsible for installation, compatibility checks, and updates—including applying security fixes. Do not use this approach without understanding the implications, and check sing-box security guidance regularly.
+</details>
