@@ -94,9 +94,16 @@ case "$language" in
   *) printf '%s\n' 'Downloading the SKeen script...' ;;
 esac
 
-if ! curl -fsSL --connect-timeout 10 -o "$INSTALLER_FILE" "$RELEASE_BASE_URL/$script_name" \
-  --resolve release-assets.githubusercontent.com:443:185.199.108.133;
-then
+if ! : >"$INSTALLER_FILE"; then
+  case "$language" in
+    ru) exiterr "Не удалось записать временный файл установщика: $INSTALLER_FILE" ;;
+    *) exiterr "Cannot write installer temporary file:  $INSTALLER_FILE" ;;
+  esac
+fi
+
+if ! curl -fsSL --connect-timeout 10 -o "$INSTALLER_FILE" \
+  --resolve release-assets.githubusercontent.com:443:185.199.108.133 \
+  "$RELEASE_BASE_URL/$script_name"; then
   case "$language" in
     ru) exiterr 'Не удалось загрузить SKeen скрипт.' ;;
     *) exiterr 'Failed to download the SKeen script.' ;;
