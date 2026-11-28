@@ -159,6 +159,11 @@ logger_notice()  { log_message notice "$1"; }
 logger_warning() { log_message warning "$1"; }
 logger_error()   { log_message error "$1"; }
 
+log_firewall_update() {
+  local type="${1:-unknown}" table="${2:-unknown}"
+  [ "$CALLER" = "netfilter" ] && logger_notice "--LOGGER_P_NOTICE_T_SKEEN_NAME_UPDATING_RULES--" || true
+}
+
 if is_tty; then
   cleanup() { { stty sane </dev/tty; } 2>/dev/null || true; }
   trap cleanup EXIT; trap 'exit 143' TERM
@@ -2037,13 +2042,14 @@ tun_list() {
 }
 
 set_tun_rules() {
-  iptables -w -t filter -S "$CHAIN_TUN" >/dev/null 2>&1 && return 0
+  iptables -w -t filter -S "$CHAIN_TUN" >/dev/null 2>&1 && return 1
   iptables -w -t filter -N "$CHAIN_TUN" 2>/dev/null
   iptables -w -t filter -F "$CHAIN_TUN" 2>/dev/null
   iptables -w -t filter -A "$CHAIN_TUN" -i opkgtun+ -j ACCEPT
   iptables -w -t filter -A "$CHAIN_TUN" -o opkgtun+ -j ACCEPT
   iptables -w -t filter -A INPUT -i opkgtun+ -j "$CHAIN_TUN"
   iptables -w -t filter -A OUTPUT -o opkgtun+ -j "$CHAIN_TUN"
+  return 0
 }
 
 get_skeen_run_script_cmd() {
@@ -2068,7 +2074,6 @@ write_firewall_hook_header() {
   printf '%s\n' "printf '%s\\n' \"$iptables_list\" | grep -q \"\$type\" || exit 0"
   if [ "$skip" = "1" ]; then echo "exit 0"; else
     printf '%s\n' "printf '%s\\n' \"$tables\" | grep -q \"\$table\" || exit 0"
-    echo "--LOGGER_P_NOTICE_T_SKEEN_NAME_UPDATING_TY--"
   fi
 }
 
@@ -2407,7 +2412,7 @@ check_hook_table() {
 
 apply_firewall() {
   local hook_table="${1:-}"
-  local check iptables eth_subnets set_name tables protocols
+  local check iptables eth_subnets set_name tables protocols dns_rule_added
 
   check=$(echo "$SKEEN_IPTABLES_LIST" | sed 's/iptables//g; s/ip6tables//g; s/ //g')
   if [ -n "$check" ] || [ -z "$SKEEN_IPTABLES_LIST" ]; then
@@ -2435,17 +2440,21 @@ apply_firewall() {
       -m comment --comment skeen_dns"
 
     for iptables in $SKEEN_IPTABLES_LIST; do
+      dns_rule_added=0
       for proto in tcp udp; do
         # shellcheck disable=SC2086
         if ! $iptables -w -t nat -C "$CHAIN_DNS" -p "$proto" $args >/dev/null 2>&1; then
-          $iptables -w -t nat -I "$CHAIN_DNS" -p "$proto" $args
+          if $iptables -w -t nat -I "$CHAIN_DNS" -p "$proto" $args; then dns_rule_added=1; fi
         fi
       done
+      [ "$dns_rule_added" = "1" ] && log_firewall_update "$iptables" "$hook_table"
     done
   fi
 
   # TUN
-  [ "$SKEEN_TUN_ENABLED" = "1" ] && check_hook_table "filter" "$hook_table" && set_tun_rules
+  if [ "$SKEEN_TUN_ENABLED" = "1" ] && check_hook_table "filter" "$hook_table"; then
+    if set_tun_rules; then log_firewall_update iptables "$hook_table"; fi
+  fi
 
   # Exclude modes && tables
   case "$SKEEN_FIREWALL_MODE" in tun|dns|none) return 0 ;; esac
@@ -2487,6 +2496,7 @@ apply_firewall() {
       goto_chain_rules "$iptables" "$table" PREROUTING "$CHAIN_PREROUTING"
       [ "$SKEEN_PROXY_ROUTER" = "1" ] && set_proxy_router_rules "$iptables" "$table" "$protocols"
     done
+    log_firewall_update "$iptables" "$hook_table"
   done
 
   [ -f "$WAIT_ROUTE_FILE" ] && rm -f "$WAIT_ROUTE_FILE"

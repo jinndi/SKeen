@@ -699,9 +699,9 @@
     "en": "located in the /opt root directory,\\n",
     "ru": "находящегося в корневом каталоге /opt,\\n"
   },
-  "LOGGER_P_NOTICE_T_SKEEN_NAME_UPDATING_TY": {
-    "en": "logger -p notice -t \"{SKEEN_NAME}\" \"Updating $type rules for $table table\"",
-    "ru": "logger -p notice -t \"{SKEEN_NAME}\" \"Обновление $type правил $table таблицы\""
+  "LOGGER_P_NOTICE_T_SKEEN_NAME_UPDATING_RULES": {
+    "en": "Updating {type} rules for {table} table",
+    "ru": "Обновление {type} правил {table} таблицы"
   },
   "MARK": {
     "en": "| Mark ",
