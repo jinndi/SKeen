@@ -94,10 +94,10 @@ case "$language" in
   *) printf '%s\n' 'Downloading the SKeen script...' ;;
 esac
 
-if ! : >"$INSTALLER_FILE"; then
+if ! mkdir -p "$INSTALLER_DIR" || ! : >"$INSTALLER_FILE"; then
   case "$language" in
-    ru) exiterr "Не удалось записать временный файл установщика: $INSTALLER_FILE" ;;
-    *) exiterr "Cannot write installer temporary file:  $INSTALLER_FILE" ;;
+    ru) exiterr "Не удалось создать временный файл установщика: $INSTALLER_FILE" ;;
+    *) exiterr "Cannot create installer temporary file:  $INSTALLER_FILE" ;;
   esac
 fi
 
