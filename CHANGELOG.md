@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.17.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.16.0...SKeen-v5.17.0) (2026-11-28)
+
+
+### 🚀 Feat
+
+* **install:** introduce unified install.sh script with language selection ([60e9c7c](https://github.com/jinndi/SKeen/commit/60e9c7cb2c4dceaed37c6c89c1eec98f2d718911))
+
 ## [5.16.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.15.0...SKeen-v5.16.0) (2026-11-28)
 
 
