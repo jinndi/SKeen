@@ -22,38 +22,40 @@ exiterr() {
   exit 1
 }
 
-if [ "$(id -u)" -ne 0 ]; then
-  exiterr 'Run this installer as root.'
-fi
+if [ "${SKIP_FREE_SPACE_CHECK:-0}" != "1" ]; then
+  if [ "$(id -u)" -ne 0 ]; then
+    exiterr 'Run this installer as root.'
+  fi
 
-fail_compatibility() {
-  printf '%s\n' 'SKeen installation is not supported on this system.' >&2
-  exiterr "$1"
-}
+  fail_compatibility() {
+    printf '%s\n' 'SKeen installation is not supported on this system.' >&2
+    exiterr "$1"
+  }
 
-if [ "$(command -v opkg 2>/dev/null || true)" != "/opt/bin/opkg" ]; then
-  fail_compatibility 'Entware opkg was not found at /opt/bin/opkg.'
-fi
-if [ -e /opt/bin/skeen ]; then
-  printf '%s\n' 'SKeen is already installed. Remove it first or run the update from SKeen.' >&2
-  exit 1
-fi
-if ! command -v curl >/dev/null 2>&1; then
-  fail_compatibility 'curl is required to download SKeen.'
-fi
+  if [ "$(command -v opkg 2>/dev/null || true)" != "/opt/bin/opkg" ]; then
+    fail_compatibility 'Entware opkg was not found at /opt/bin/opkg.'
+  fi
+  if [ -e /opt/bin/skeen ]; then
+    printf '%s\n' 'SKeen is already installed. Remove it first or run the update from SKeen.' >&2
+    exit 1
+  fi
+  if ! command -v curl >/dev/null 2>&1; then
+    fail_compatibility 'curl is required to download SKeen.'
+  fi
 
-opkg_arch=$(opkg print-architecture 2>/dev/null | tr '[:upper:]' '[:lower:]' || true)
-case "$opkg_arch" in
-  *aarch64* | *arm64* | *armv8* | *mipsel* | *mipsle* | *mips_*) : ;;
-  *) fail_compatibility 'Supported architectures: aarch64, mipsel, mips.' ;;
-esac
+  opkg_arch=$(opkg print-architecture 2>/dev/null | tr '[:upper:]' '[:lower:]' || true)
+  case "$opkg_arch" in
+    *aarch64* | *arm64* | *armv8* | *mipsel* | *mipsle* | *mips_*) : ;;
+    *) fail_compatibility 'Supported architectures: aarch64, mipsel, mips.' ;;
+  esac
 
-free_mb=$(df -Pm /opt 2>/dev/null | awk 'NR == 2 {print $4}')
-case "$free_mb" in
-  '' | *[!0-9]*) fail_compatibility 'Unable to determine free space on /opt.' ;;
-esac
-if [ "$free_mb" -le 30 ]; then
-  fail_compatibility "More than 30 MB of free space is required on /opt (available: ${free_mb} MB)."
+  free_mb=$(df -Pm /opt 2>/dev/null | awk 'NR == 2 {print $4}')
+  case "$free_mb" in
+    '' | *[!0-9]*) fail_compatibility 'Unable to determine free space on /opt.' ;;
+  esac
+  if [ "$free_mb" -le 30 ]; then
+    fail_compatibility "More than 30 MB of free space is required on /opt (available: ${free_mb} MB)."
+  fi
 fi
 
 if [ -n "${INSTALL_LANG:-}" ]; then
