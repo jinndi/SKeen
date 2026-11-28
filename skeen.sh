@@ -130,18 +130,16 @@ ff00::/8           # Multicast (RFC 4291)
 readonly DELIMETER="------------------------------------------------"
 
 is_tty() {
-  [ -t 1 ] || [ -t 2 ]; ret=$?
+  [ "${FORCE_COLOR:-0}" = "1" ] || [ -t 1 ] || [ -t 2 ]; ret=$?
   is_tty() { return "$ret"; }
   return "$ret"
 }
 
-use_color() { [ "${FORCE_COLOR:-0}" = "1" ] || is_tty; }
-
-cyan()      { use_color && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-cyan_bold() { use_color && printf '\033[1;38;5;30m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-red()       { use_color && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-green()     { use_color && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
-yellow()    { use_color && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+cyan()      { is_tty && printf '\033[36m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+cyan_bold() { is_tty && printf '\033[1;38;5;30m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+red()       { is_tty && printf '\033[31m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+green()     { is_tty && printf '\033[32m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
+yellow()    { is_tty && printf '\033[33m%s\033[0m\n' "$1" || printf '%s\n' "$1"; }
 
 echomsg()  { cyan "[INFO] $1"; }
 echook()   { green "[OK] $1"; }
