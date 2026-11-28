@@ -23,14 +23,6 @@
     "en": "Assessment: CRITICAL — conntrack table limit reached or exceeded",
     "ru": "Оценка: КРИТИЧНО — достигнут или превышен лимит таблицы conntrack"
   },
-  "ASSESSMENT_INSERT_FAILED_EARLY_DROP_AND": {
-    "en": "Assessment: insert_failed, early_drop, and drop are zero.",
-    "ru": "Счётчики insert_failed, early_drop и drop равны нулю."
-  },
-  "ASSESSMENT_POSSIBLE_PACKET_ENTRY_DROPS_W": {
-    "en": "Assessment: possible packet/entry drops were recorded.",
-    "ru": "Зафиксированы возможные потери пакетов или записей."
-  },
   "ASSESSMENT_WARNING_CONNTRACK_TABLE_IS_OV": {
     "en": "Assessment: WARNING — conntrack table is over 80% full",
     "ru": "Оценка: ВНИМАНИЕ — таблица заполнена более чем на 80%"
@@ -218,10 +210,6 @@
   "COMMAND_SUPPORTS_ONLY_TTY": {
     "en": "Command supports only tty",
     "ru": "Команда только для терминала"
-  },
-  "COMPARE_COUNTER_SNAPSHOTS_DURING_A_FAULT": {
-    "en": "Compare counter snapshots during a fault. Rising insert_failed, early_drop, or drop needs investigation.",
-    "ru": "При сбое сравните снимки; рост insert_failed, early_drop или drop требует проверки."
   },
   "CONFIGURATION_DIRECTORY_WORK_DIR_IS_RETA": {
     "en": "Configuration directory {WORK_DIR} is retained",
@@ -743,10 +731,6 @@
     "en": "80% and 95% thresholds are heuristics; growth rate is not measured.",
     "ru": "Пороги 80% и 95% ориентировочные; скорость роста не измеряется."
   },
-  "MESSAGE_ONE_SNAPSHOT_CANNOT_SHOW_IF_THEY": {
-    "en": "{message} One snapshot cannot show if they continue.",
-    "ru": "{message} По снимку неясно, продолжаются ли потери."
-  },
   "MODE": {
     "en": "Mode",
     "ru": "Режим"
@@ -1055,10 +1039,6 @@
     "en": "skeen tun delete \u003cname\u003e",
     "ru": "skeen tun delete \u003cимя\u003e"
   },
-  "SOME_LOSS_COUNTERS_ARE_UNAVAILABLE_THIS": {
-    "en": "Some loss counters are unavailable; this snapshot cannot confirm their absence.",
-    "ru": "Некоторые счётчики потерь недоступны; по этому снимку нельзя подтвердить их отсутствие."
-  },
   "STARTING_SINGBOX_NAME": {
     "en": "Starting {SINGBOX_NAME}...",
     "ru": "Запуск {SINGBOX_NAME}..."
@@ -1091,14 +1071,6 @@
     "en": "Sub-Store: Add the following parameter to the end of your subscription link:",
     "ru": "Sub-Store: Добавьте в конец ссылки подписки параметр:"
   },
-  "SUMMARY_COUNTERS_ACCUMULATE_AND_RESET_WH": {
-    "en": "Summary: counters accumulate and reset when the system reboots. Nonzero values alone do not prove a current fault.",
-    "ru": "Счётчики накопительные; после перезагрузки системы они сбрасываются. Ненулевые значения не доказывают сбой."
-  },
-  "SUMMARY_INVESTIGATE_SOCKETS_THAT_PERSIST": {
-    "en": "Summary: investigate sockets that persist or keep increasing.",
-    "ru": "Итог: проверяйте долго открытые сокеты и рост их числа."
-  },
   "SYNC_URL_ADDRESS_IS_NOT_SPECIFIED": {
     "en": "Sync URL address is not specified",
     "ru": "Адрес для синхронизации не указан"
@@ -1122,10 +1094,6 @@
   "TEST_REF_1_2": {
     "en": "Test {ref} {1} {2}",
     "ru": "Тест {ref} {1} {2}"
-  },
-  "THESE_COUNTERS_SHOW_NO_LOSS_SIGNAL": {
-    "en": "These counters show no loss signal.",
-    "ru": "Признаков потерь по ним нет."
   },
   "THE_FILE_AT_PATH_FIREWALL_HOOK_FILE_IS_M": {
     "en": "The file at path {FIREWALL_HOOK_FILE} is missing!",

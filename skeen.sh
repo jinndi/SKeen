@@ -2985,7 +2985,7 @@ print_aligned_table() {
 }
 
 show_connstat() {
-  local ct_count ct_max percent conntrack_report ct_summary mark_summary message loss_counter_status
+  local ct_count ct_max percent conntrack_report ct_summary mark_summary
   local conntrack_stats tcp_summary
 
   check_tty
@@ -3102,23 +3102,6 @@ show_connstat() {
           m=m "" }
         m!="" { print $1 "|" $2 "|" m; m="" }
       ' | print_aligned_table
-      echomsg "--SUMMARY_COUNTERS_ACCUMULATE_AND_RESET_WH--"
-      echomsg "--COMPARE_COUNTER_SNAPSHOTS_DURING_A_FAULT--"
-      loss_counter_status="$(printf '%s\n' "$conntrack_stats" | awk '
-        ($1=="insert_failed" || $1=="early_drop" || $1=="drop") { seen[$1]=1; if($2>0) nonzero=1 }
-        END { if(nonzero) print "nonzero"
-          else if(seen["insert_failed"] && seen["early_drop"] && seen["drop"]) print "zero"
-          else print "missing" } ')"
-      if [ "$loss_counter_status" = "nonzero" ]; then
-        message="--ASSESSMENT_POSSIBLE_PACKET_ENTRY_DROPS_W--"
-        message="--MESSAGE_ONE_SNAPSHOT_CANNOT_SHOW_IF_THEY--"
-        echowarn "$message"
-      elif [ "$loss_counter_status" = "zero" ]; then
-        echook "--ASSESSMENT_INSERT_FAILED_EARLY_DROP_AND--"
-        echo "--THESE_COUNTERS_SHOW_NO_LOSS_SIGNAL--"
-      else
-        echowarn "--SOME_LOSS_COUNTERS_ARE_UNAVAILABLE_THIS--"
-      fi
     else
       echowarn "--COUNTER_DATA_IS_UNAVAILABLE--"
     fi
@@ -3150,7 +3133,6 @@ show_connstat() {
           else if(s=="TIME_WAIT") m="--AWK_RECENTLY_CLOSED_EXPIRES_AUTOMATICALLY--"
           else if(s=="LISTEN") m="--AWK_WAITING_FOR_INCOMING_CONNECTIONS--"
           printf "%s|%s|%s\n",s,$2,m }' | print_aligned_table
-      echomsg "--SUMMARY_INVESTIGATE_SOCKETS_THAT_PERSIST--"
     fi
   fi
 
