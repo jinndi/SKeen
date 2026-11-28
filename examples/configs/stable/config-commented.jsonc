@@ -686,7 +686,6 @@
     // },
 
     // Используем API Clash для определенных сайтов, в примере для доступа к фронту Zashboard панели из локальной сети роутера.
-    // Для использования - откройте ссылку с https://board.zash.run.place (Chrome)
     // В Chrome можно использовать HTTPS, но в других браузерах - нет.
     // выберите протокол HTTP, в качестве адреса введите 192.168.1.1 и указанный порт 9090
     "clash_api": {
@@ -701,7 +700,6 @@
         "http://yacd.haishan.me",
         "https://yacd.haishan.me",
         "https://yacd.metacubex.one",
-        "https://board.zash.run.place",
         "https://d.metacubex.one",
         "https://metacubexd.pages.dev"
       ],
