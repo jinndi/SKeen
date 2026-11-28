@@ -1,5 +1,36 @@
 # Changelog
 
+## [5.16.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.15.0...SKeen-v5.16.0) (2026-11-28)
+
+
+### 🚀 Feat
+
+* **core:** configuration validation flow and error handling ([5bb1288](https://github.com/jinndi/SKeen/commit/5bb12880f8d041c2109064f37e83444bd1d1e05f))
+* **firewall:** implement structured logging for firewall rule updates ([c4c7895](https://github.com/jinndi/SKeen/commit/c4c78954c4ce5faf03dadac4f28325fb9fb7ce07))
+
+
+### 🐛 Fix
+
+* **cli:** check tty logic ([9960936](https://github.com/jinndi/SKeen/commit/99609369e80eaf8d665566abdc347c6bf8473bc2))
+
+
+### 🎨 Style
+
+* **ui:** adjust interface table formatting and indentation ([6cf57f8](https://github.com/jinndi/SKeen/commit/6cf57f8f6c1b9b23908625fd6505cb9f138b733b))
+
+
+### 🛠 Refactor
+
+* remove connection statistics loss assessment logic ([05a5ec8](https://github.com/jinndi/SKeen/commit/05a5ec8bf2577edc22602abbbe66c45ecddf1952))
+* reorder connection statistics columns and update labels ([1082e8e](https://github.com/jinndi/SKeen/commit/1082e8ed196982d664d35015b7c450436d12889c))
+* shorten local variable names in version check ([6328820](https://github.com/jinndi/SKeen/commit/632882054f66d693bdf8874c5b1816ed39dcea0f))
+* simplify internal helper functions and logging ([322d835](https://github.com/jinndi/SKeen/commit/322d835e5ffb905588bccd6067c32a84782b2e02))
+
+
+### 🧰 Chore
+
+* **config:** add additional ports to exclude list in skeen.sh ([0762c0a](https://github.com/jinndi/SKeen/commit/0762c0aa3b12625d6c6114379dd6adf9ffa0bd1e))
+
 ## [5.15.0](https://github.com/jinndi/SKeen/compare/SKeen-v5.14.0...SKeen-v5.15.0) (2026-11-27)
 
 
