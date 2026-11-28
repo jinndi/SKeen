@@ -141,7 +141,7 @@ jobs:
           URL: https://raw.githubusercontent.com/jinndi/SKeen/static/install.sh
           AUTO: '4-4'
           TMPDIR: '/root'
-          INSTALL_LANG: ru
+          INSTALL_LANG: 'ru'
           SKIP_COMPATIBILITY_CHECKS: '1'
         run: |
           cd "rootfs-${{ matrix.arch }}"
